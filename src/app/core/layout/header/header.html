@@ -1,0 +1,56 @@
+<header class="app-header">
+  <button
+    type="button"
+    class="app-header__menu-btn"
+    aria-label="Abrir menu"
+    (click)="menuToggle.emit()"
+  >
+    <svg
+      width="22"
+      height="22"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+    >
+      <path d="M3 6h18M3 12h18M3 18h18" stroke-linecap="round" />
+    </svg>
+  </button>
+
+  <div class="app-header__brand">
+    <svg class="app-header__logo-icon" width="34" height="34" viewBox="0 0 34 34" fill="none">
+      <path
+        d="M17 3 3 12v3c0 9 6 13.5 14 16 8-2.5 14-7 14-16v-3L17 3Z"
+        stroke="currentColor"
+        stroke-width="1.6"
+        stroke-linejoin="round"
+      />
+      <path
+        d="M12 17.5c1.6 1.7 3.2 2.6 5 2.6s3.4-.9 5-2.6"
+        stroke="currentColor"
+        stroke-width="1.6"
+        stroke-linecap="round"
+      />
+      <path d="M17 13v7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+    </svg>
+    <span class="app-header__wordmark">
+      <em>Lar Escola</em>
+      <strong>REDENÇÃO</strong>
+    </span>
+  </div>
+
+  <button type="button" class="app-header__admin-btn">
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+    >
+      <circle cx="12" cy="8" r="4" />
+      <path d="M4 20c0-4 3.6-6 8-6s8 2 8 6" stroke-linecap="round" />
+    </svg>
+    Admin
+  </button>
+</header>

@@ -1,0 +1,24 @@
+.layout-body {
+  display: flex;
+  min-height: calc(100dvh - 3.75rem);
+  position: relative;
+}
+
+.layout-body__content {
+  flex: 1;
+  min-width: 0;
+  padding: 1.5rem;
+}
+
+.layout-body__backdrop {
+  position: fixed;
+  inset: 3.75rem 0 0 0;
+  background: rgba(17, 24, 33, 0.4);
+  z-index: 180;
+}
+
+@media (min-width: 901px) {
+  .layout-body__backdrop {
+    display: none;
+  }
+}

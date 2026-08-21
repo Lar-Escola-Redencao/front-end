@@ -1,0 +1,92 @@
+<div class="manager">
+  <div class="manager__toolbar">
+    <button type="button" class="btn btn-primary" (click)="openCreateModal()">Novo parceiro</button>
+  </div>
+
+  @if (partners().length === 0) {
+    <p class="manager__empty">Nenhum parceiro cadastrado ainda.</p>
+  } @else {
+    <div class="manager__table-wrap">
+      <table class="manager__table">
+        <thead>
+          <tr>
+            <th class="col-id">#</th>
+            <th>Nome</th>
+            <th>Logo</th>
+            <th class="col-active">Ativo</th>
+            <th class="col-action">Excluir</th>
+            <th class="col-action">Editar</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (partner of pagedPartners(); track partner.id) {
+            <tr>
+              <td class="col-id" data-label="#">{{ partner.id }}</td>
+              <td data-label="Nome">{{ partner.name }}</td>
+              <td data-label="Logo">
+                @if (partner.logoUrl) {
+                  <img [src]="partner.logoUrl" [alt]="partner.name" class="manager__logo" />
+                } @else {
+                  <span class="manager__logo manager__logo--fallback">{{
+                    initials(partner.name)
+                  }}</span>
+                }
+              </td>
+              <td class="col-active" data-label="Ativo">
+                <app-toggle-switch
+                  [checked]="partner.active"
+                  (checkedChange)="onToggleActive(partner, $event)"
+                  [ariaLabel]="'Ativar ' + partner.name"
+                />
+              </td>
+              <td class="col-action" data-label="Excluir">
+                <button
+                  type="button"
+                  class="icon-btn icon-btn--danger"
+                  aria-label="Excluir parceiro"
+                  (click)="askDelete(partner)"
+                >
+                  🗑
+                </button>
+              </td>
+              <td class="col-action" data-label="Editar">
+                <button
+                  type="button"
+                  class="icon-btn"
+                  aria-label="Editar parceiro"
+                  (click)="openEditModal(partner)"
+                >
+                  ✎
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <app-pagination [total]="partners().length" [(page)]="page" [(pageSize)]="pageSize" />
+  }
+</div>
+
+@if (formModalOpen()) {
+  <app-partner-form-modal
+    [partner]="editingPartner()"
+    (saved)="onSaved()"
+    (closed)="closeFormModal()"
+  />
+}
+
+@if (pendingDelete(); as partner) {
+  <app-confirm-dialog
+    title="Excluir parceiro"
+    [message]="
+      'Tem certeza que deseja excluir o parceiro \'' +
+      partner.name +
+      '\'? Essa ação não pode ser desfeita.'
+    "
+    [busy]="deleting()"
+    (confirmed)="confirmDelete()"
+    (cancelled)="cancelDelete()"
+  />
+}

@@ -1,0 +1,15 @@
+<app-header (menuToggle)="toggleSidebar()" />
+
+<div class="layout-body">
+  <app-sidebar [open]="sidebarOpen()" (navigated)="closeSidebar()" />
+
+  @if (sidebarOpen()) {
+    <div class="layout-body__backdrop" (click)="closeSidebar()"></div>
+  }
+
+  <main class="layout-body__content">
+    <router-outlet />
+  </main>
+</div>
+
+<app-toast-container />

@@ -1,0 +1,17 @@
+.manager__logo {
+  width: 2.75rem;
+  height: 2.75rem;
+  object-fit: contain;
+  border-radius: var(--radius-sm);
+  background: var(--color-gray-50);
+  border: 1px solid var(--color-gray-100);
+}
+
+.manager__logo--fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  color: var(--color-primary);
+  background: var(--color-primary-light);
+}

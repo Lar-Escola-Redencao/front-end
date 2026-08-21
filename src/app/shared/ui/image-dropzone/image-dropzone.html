@@ -1,0 +1,26 @@
+<div
+  class="dropzone"
+  [class.dropzone--dragging]="isDraggingOver()"
+  [class.dropzone--invalid]="invalid()"
+  role="button"
+  tabindex="0"
+  (click)="openFilePicker()"
+  (keydown.enter)="openFilePicker()"
+  (dragover)="onDragOver($event)"
+  (dragleave)="onDragLeave()"
+  (drop)="onDrop($event)"
+>
+  @if (imageUrl()) {
+    <img [src]="imageUrl()" alt="Pré-visualização da imagem" class="dropzone__preview" />
+  } @else {
+    <span class="dropzone__label">Selecione ou arraste uma imagem</span>
+  }
+
+  <input
+    #fileInput
+    type="file"
+    accept="image/*"
+    class="dropzone__input"
+    (change)="onFileInputChange($event)"
+  />
+</div>

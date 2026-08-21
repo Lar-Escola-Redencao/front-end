@@ -1,0 +1,5 @@
+.confirm-message {
+  color: var(--color-gray-600);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}

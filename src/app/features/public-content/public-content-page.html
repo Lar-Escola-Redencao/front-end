@@ -1,0 +1,23 @@
+<div class="page">
+  <div class="page__header">
+    <h1 class="page__title">Conteúdo público</h1>
+
+    <select class="page__section-select" [value]="section()" (change)="onSectionChange($event)">
+      <option value="" disabled>Escolha uma seção</option>
+      <option value="partners">Parceiros</option>
+      <option value="social-links">Redes sociais</option>
+    </select>
+  </div>
+
+  @switch (section()) {
+    @case ('partners') {
+      <app-partners-manager />
+    }
+    @case ('social-links') {
+      <app-social-links-manager />
+    }
+    @default {
+      <p class="page__empty">Nenhuma seção selecionada</p>
+    }
+  }
+</div>

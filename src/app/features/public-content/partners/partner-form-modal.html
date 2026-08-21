@@ -1,0 +1,42 @@
+<app-modal [title]="isEditMode() ? 'Editar parceiro' : 'Novo parceiro'" (closed)="closed.emit()">
+  <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
+    @if (isEditMode()) {
+      <div class="form-field form-field--inline">
+        <label>Ativo</label>
+        <app-toggle-switch [(checked)]="active" />
+      </div>
+    }
+
+    <div class="form-field">
+      <label for="partner-name">Nome</label>
+      <input
+        id="partner-name"
+        type="text"
+        formControlName="name"
+        placeholder="Nome"
+        [class.invalid]="form.controls.name.invalid && form.controls.name.touched"
+      />
+      @if (form.controls.name.invalid && form.controls.name.touched) {
+        <span class="field-error">Informe o nome do parceiro.</span>
+      }
+    </div>
+
+    <div class="form-field">
+      <app-image-dropzone
+        [imageUrl]="form.controls.logoUrl.value || null"
+        [invalid]="form.controls.logoUrl.invalid && imageTouched()"
+        (imageSelected)="onImageSelected($event)"
+      />
+      @if (form.controls.logoUrl.invalid && imageTouched()) {
+        <span class="field-error">Selecione uma imagem para o parceiro.</span>
+      }
+    </div>
+  </form>
+
+  <div modal-footer>
+    <button type="button" class="btn btn-secondary" (click)="closed.emit()">Cancelar</button>
+    <button type="button" class="btn btn-primary" [disabled]="saving()" (click)="onSubmit()">
+      {{ saving() ? 'Salvando...' : 'Salvar' }}
+    </button>
+  </div>
+</app-modal>

@@ -1,0 +1,10 @@
+<app-modal [title]="title()" (closed)="cancelled.emit()">
+  <p class="confirm-message">{{ message() }}</p>
+
+  <div modal-footer>
+    <button type="button" class="btn btn-secondary" (click)="cancelled.emit()">Cancelar</button>
+    <button type="button" class="btn btn-danger" [disabled]="busy()" (click)="confirmed.emit()">
+      {{ busy() ? 'Excluindo...' : confirmLabel() }}
+    </button>
+  </div>
+</app-modal>
