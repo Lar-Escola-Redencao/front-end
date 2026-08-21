@@ -98,7 +98,7 @@
         <label for="idPapel">Papel de Acesso</label>
         <select id="idPapel" formControlName="idPapel" (change)="verificarErros()" (blur)="verificarErros()">
           <option value="">Selecione...</option>
-          <option *ngFor="let papel of papeis" [value]="papel.id">{{ papel.nome }}</option>
+          <option *ngFor="let papel of papeis" [value]="papel.id">{{ papel.nomePapel }}</option>
         </select>
         <span class="error-text" *ngIf="erros['idPapel']">{{ erros['idPapel'] }}</span>
       </div>

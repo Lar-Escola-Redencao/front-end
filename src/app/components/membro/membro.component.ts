@@ -2,6 +2,7 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MembroService } from '../../services/membro.service';
+import { PapelService } from '../../services/papel.service'; // <-- Importe o serviço novo aqui!
 import { Membro, CriarMembroDTO, AtualizarMembroDTO } from '../../models/membro.model';
 
 @Component({
@@ -17,7 +18,7 @@ export class MembroComponent implements OnInit {
   membrosFiltrados: Membro[] = [];
   papeisDisponiveis: string[] = [];
   filtroPapel = '';
-  papeis: { id: number, nome: string }[] = [];
+  papeis: { id: number, nome?: string, nomePapel?: string }[] = [];
 
   modalAberto = false;
   modoEdicao = false;
@@ -27,6 +28,7 @@ export class MembroComponent implements OnInit {
 
   constructor(
     private membroService: MembroService,
+    private papelService: PapelService,
     private fb: FormBuilder,
     private cdr: ChangeDetectorRef
   ) {
@@ -42,19 +44,26 @@ export class MembroComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.carregarPapeis();
     this.carregarMembros();
   }
 
   // listagem e filtros
+  carregarPapeis(): void {
+    this.papelService.listarTodos().subscribe({
+      next: (dados) => {
+        this.papeis = dados;
+      },
+      error: (err) => console.error('Erro ao carregar papéis da API:', err)
+    });
+  }
   carregarMembros(): void {
     this.membroService.listarTodos().subscribe({
       next: (dados) => {
         this.membros = dados;
         this.papeisDisponiveis = [...new Set(dados.map(m => m.nomePapel))];
-        this.extrairPapeis(dados);
         this.aplicarFiltro();
 
-        // O setTimeout acorda o Angular depois que o roteador termina o trampo!
         setTimeout(() => {
           this.cdr.detectChanges();
         });
@@ -64,16 +73,6 @@ export class MembroComponent implements OnInit {
         alert('Erro ao carregar membros');
       }
     });
-  }
-
-  private extrairPapeis(membros: Membro[]): void {
-    const mapa = new Map<number, { id: number, nome: string }>();
-    membros.forEach(m => {
-      if (!mapa.has(m.idPapel)) {
-        mapa.set(m.idPapel, { id: m.idPapel, nome: m.nomePapel });
-      }
-    });
-    this.papeis = Array.from(mapa.values());
   }
 
   aplicarFiltro(): void {
