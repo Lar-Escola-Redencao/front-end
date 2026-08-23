@@ -2,12 +2,13 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Membro, CriarMembroDTO, AtualizarMembroDTO } from '../models/membro.model';
+import { environment } from '../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class MembroService {
-  private apiUrl = '/membro';
+  private apiUrl = `${environment.apiUrl}/membro`;
 
   constructor(private http: HttpClient) {}
 
