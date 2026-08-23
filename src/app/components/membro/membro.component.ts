@@ -2,7 +2,7 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MembroService } from '../../services/membro.service';
-import { PapelService } from '../../services/papel.service'; // <-- Importe o serviço novo aqui!
+import { PapelService } from '../../services/papel.service';
 import { Membro, CriarMembroDTO, AtualizarMembroDTO } from '../../models/membro.model';
 
 @Component({
@@ -33,11 +33,11 @@ export class MembroComponent implements OnInit {
     private cdr: ChangeDetectorRef
   ) {
     this.formMembro = this.fb.group({
-      nomeCompleto: ['', [Validators.required, Validators.maxLength(150)]],
-      email: ['', [Validators.required, Validators.email, Validators.maxLength(100)]],
+      nomeCompleto: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(60)]],
+      email: ['', [Validators.required, Validators.email, Validators.minLength(5), Validators.maxLength(100)]],
       senha: [''],
       cpf: ['', [Validators.required, Validators.minLength(14), Validators.maxLength(14)]],
-      endereco: ['', Validators.required],
+      endereco: ['', [Validators.required, Validators.minLength(5), Validators.maxLength(150)]],
       telefone: ['', [Validators.required, Validators.minLength(14), Validators.maxLength(15)]],
       idPapel: ['', Validators.required]
     });
@@ -87,7 +87,11 @@ export class MembroComponent implements OnInit {
     this.membroSelecionadoId = null;
     this.formMembro.reset();
     this.erros = {};
-    this.formMembro.get('senha')?.setValidators([Validators.required]);
+    this.formMembro.get('senha')?.setValidators([
+      Validators.required,
+      Validators.minLength(8),
+      Validators.maxLength(50)
+    ]);
     this.formMembro.get('senha')?.updateValueAndValidity();
     this.modalAberto = true;
   }
@@ -119,8 +123,14 @@ export class MembroComponent implements OnInit {
         } else if (controle.hasError('email')) {
           this.erros[campo] = '⚠ Digite um e-mail válido.';
         } else if (controle.hasError('minlength')) {
-          if (campo === 'cpf')this.erros[campo] = '⚠ CPF incompleto.';
-          if (campo === 'telefone') this.erros[campo] = '⚠ Telefone incompleto.';
+          const min = controle.getError('minlength').requiredLength;
+          if (campo === 'cpf') this.erros[campo] = '⚠ CPF incompleto.';
+          else if (campo === 'telefone') this.erros[campo] = '⚠ Telefone incompleto.';
+          else if (campo === 'senha') this.erros[campo] = `⚠ A senha deve ter no mínimo ${min} caracteres.`;
+          else this.erros[campo] = `⚠ Mínimo de ${min} caracteres.`;
+        } else if (controle.hasError('maxlength')) {
+          const max = controle.getError('maxlength').requiredLength;
+          this.erros[campo] = `⚠ Máximo de ${max} caracteres.`;
         }
       }
     }

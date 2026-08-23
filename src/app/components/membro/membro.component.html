@@ -12,63 +12,76 @@
   </div>
 
   <!-- tabela de listagem -->
-  <div class="tabela-card">
-      <table class="tabela-membros">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Nome</th>
-            <th>Email</th>
-            <th>CPF</th>
-            <th>Papel</th>
-            <th>Excluir</th>
-            <th>Editar</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let membro of membrosFiltrados">
-            <td>{{ membro.id }}</td>
-            <td>{{ membro.nomeCompleto }}</td>
-            <td>{{ membro.email }}</td>
-            <td>{{ membro.cpf }}</td>
-            <td>{{ membro.nomePapel }}</td>
-            <td class="acoes-icone">
-              <button (click)="deletarMembro(membro.id)" class="btn-icone btn-icone-excluir" title="Excluir">
-                <span class="material-symbols-outlined">delete</span>
-              </button>
-            </td>
-            <td class="acoes-icone">
-              <button (click)="abrirEdicao(membro)" class="btn-icone btn-icone-editar" title="Editar">
-                <span class="material-symbols-outlined">edit</span>
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+  <div class="tabela-card" *ngIf="membrosFiltrados.length > 0; else estadoVazio">
+    <table class="tabela-membros">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Nome</th>
+          <th>Email</th>
+          <th>CPF</th>
+          <th>Papel</th>
+          <th>Editar</th>
+          <th>Excluir</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let membro of membrosFiltrados">
+          <td>{{ membro.id }}</td>
+          <td>{{ membro.nomeCompleto }}</td>
+          <td>{{ membro.email }}</td>
+          <td>{{ membro.cpf }}</td>
+          <td>{{ membro.nomePapel }}</td>
+          <td class="acoes-icone">
+            <button (click)="abrirEdicao(membro)" class="btn-icone btn-icone-editar" title="Editar">
+              <span class="material-symbols-outlined">edit</span>
+            </button>
+          </td>
+          <td class="acoes-icone">
+            <button (click)="deletarMembro(membro.id)" class="btn-icone btn-icone-excluir" title="Excluir">
+              <span class="material-symbols-outlined">delete</span>
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- estado vazio -->
+  <ng-template #estadoVazio>
+    <div class="estado-vazio">
+      <p *ngIf="!filtroPapel">Nenhum usuário cadastrado ainda</p>
+      <p *ngIf="filtroPapel">Nenhum {{ filtroPapel }} cadastrado ainda</p>
     </div>
+  </ng-template>
 </div>
 
 <!-- modal de cadastro e edição -->
 <div class="modal-overlay" *ngIf="modalAberto" (click)="fecharModal()">
   <div class="modal-card" (click)="$event.stopPropagation()">
+
+    <!-- cabeçalho fixo -->
     <div class="modal-header">
       <h3>{{ modoEdicao ? 'Editar Usuário' : 'Cadastrar Novo Usuário' }}</h3>
       <button class="btn-fechar" (click)="fecharModal()">&times;</button>
     </div>
 
     <!-- formulário -->
-    <form [formGroup]="formMembro" (ngSubmit)="salvar()">
-      <div class="form-group">
-        <label for="nomeCompleto">Nome Completo</label>
-        <input id="nomeCompleto" type="text" formControlName="nomeCompleto" (blur)="verificarErros()" maxlength="150">
-        <span class="error-text" *ngIf="erros['nomeCompleto']">{{ erros['nomeCompleto'] }}</span>
-      </div>
+    <form [formGroup]="formMembro" (ngSubmit)="salvar()" class="form-membro">
 
-      <div class="form-group">
-        <label for="email">E-mail</label>
-        <input id="email" type="email" formControlName="email" (blur)="verificarErros()" maxlength="100">
-        <span class="error-text" *ngIf="erros['email']">{{ erros['email'] }}</span>
-      </div>
+      <!-- área com scroll: só os campos -->
+      <div class="form-scroll">
+        <div class="form-group">
+          <label for="nomeCompleto">Nome Completo</label>
+          <input id="nomeCompleto" type="text" formControlName="nomeCompleto" (blur)="verificarErros()" minlength="3" maxlength="60">
+          <span class="error-text" *ngIf="erros['nomeCompleto']">{{ erros['nomeCompleto'] }}</span>
+        </div>
+
+        <div class="form-group">
+          <label for="email">E-mail</label>
+          <input id="email" type="email" formControlName="email" (blur)="verificarErros()" minlength="5" maxlength="100">
+          <span class="error-text" *ngIf="erros['email']">{{ erros['email'] }}</span>
+        </div>
 
       <div class="form-group" *ngIf="!modoEdicao">
         <label for="senha">Senha</label>
@@ -76,33 +89,36 @@
         <span class="error-text" *ngIf="erros['senha']">{{ erros['senha'] }}</span>
       </div>
 
-      <div class="form-group">
-        <label for="cpf">CPF</label>
-        <input id="cpf" type="text" formControlName="cpf" placeholder="000.000.000-00" (input)="aplicarMascaraCpf($event)" (blur)="verificarErros()" maxlength="14">
-        <span class="error-text" *ngIf="erros['cpf']">{{ erros['cpf'] }}</span>
+        <div class="form-group">
+          <label for="cpf">CPF</label>
+          <input id="cpf" type="text" formControlName="cpf" (input)="aplicarMascaraCpf($event)" (blur)="verificarErros()" minlength="14" maxlength="14">
+          <span class="error-text" *ngIf="erros['cpf']">{{ erros['cpf'] }}</span>
+        </div>
+
+        <div class="form-group">
+          <label for="endereco">Endereço</label>
+          <input id="endereco" type="text" formControlName="endereco" placeholder="Rua, Número, Bairro, Cidade - UF"
+            (blur)="verificarErros()" minlength="5" maxlength="150">
+          <span class="error-text" *ngIf="erros['endereco']">{{ erros['endereco'] }}</span>
+        </div>
+
+        <div class="form-group">
+          <label for="telefone">Telefone</label>
+          <input id="telefone" type="text" formControlName="telefone" (input)="aplicarMascaraTelefone($event)" (blur)="verificarErros()" minlength="14" maxlength="15">
+          <span class="error-text" *ngIf="erros['telefone']">{{ erros['telefone'] }}</span>
+        </div>
+
+        <div class="form-group">
+          <label for="idPapel">Papel de Acesso</label>
+          <select id="idPapel" formControlName="idPapel" (change)="verificarErros()" (blur)="verificarErros()">
+            <option value="">Selecione...</option>
+            <option *ngFor="let papel of papeis" [value]="papel.id">{{ papel.nomePapel }}</option>
+          </select>
+          <span class="error-text" *ngIf="erros['idPapel']">{{ erros['idPapel'] }}</span>
+        </div>
       </div>
 
-      <div class="form-group">
-        <label for="endereco">Endereço</label>
-        <input id="endereco" type="text" formControlName="endereco" (blur)="verificarErros()">
-        <span class="error-text" *ngIf="erros['endereco']">{{ erros['endereco'] }}</span>
-      </div>
-
-      <div class="form-group">
-        <label for="telefone">Telefone</label>
-        <input id="telefone" type="text" formControlName="telefone" placeholder="(00) 00000-0000" (input)="aplicarMascaraTelefone($event)" (blur)="verificarErros()" maxlength="15">
-        <span class="error-text" *ngIf="erros['telefone']">{{ erros['telefone'] }}</span>
-      </div>
-
-      <div class="form-group">
-        <label for="idPapel">Papel de Acesso</label>
-        <select id="idPapel" formControlName="idPapel" (change)="verificarErros()" (blur)="verificarErros()">
-          <option value="">Selecione...</option>
-          <option *ngFor="let papel of papeis" [value]="papel.id">{{ papel.nomePapel }}</option>
-        </select>
-        <span class="error-text" *ngIf="erros['idPapel']">{{ erros['idPapel'] }}</span>
-      </div>
-
+      <!-- rodapé fixo -->
       <div class="modal-acoes">
         <button type="button" class="btn-cancelar" (click)="fecharModal()">Cancelar</button>
         <button type="submit" [disabled]="formMembro.invalid" class="btn-salvar">
