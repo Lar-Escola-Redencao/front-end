@@ -29,6 +29,7 @@ export class MembroComponent implements OnInit {
   erros: { [key: string]: string } = {};
   mostrarSenha = false;
   mostrarConfirmarSenha = false;
+  isLoading = false;
 
   private readonly senhaRegex = /^(?=.*[A-Z])(?=.*[0-9]).{6,}$/;
 
@@ -169,6 +170,7 @@ export class MembroComponent implements OnInit {
     this.erros = {};
     this.mostrarSenha = false;
     this.mostrarConfirmarSenha = false;
+    this.isLoading = false;
 
     this.formMembro.get('senha')?.setValidators([
       Validators.required,
@@ -188,6 +190,7 @@ export class MembroComponent implements OnInit {
     this.erros = {};
     this.mostrarSenha = false;
     this.mostrarConfirmarSenha = false;
+    this.isLoading = false;
 
     this.formMembro.get('senha')?.clearValidators();
     this.formMembro.get('confirmarSenha')?.clearValidators();
@@ -260,27 +263,39 @@ export class MembroComponent implements OnInit {
 
     if (this.formMembro.invalid) return;
 
+    this.isLoading = true;
+
     if (this.modoEdicao) {
       const { senha, confirmarSenha, ...dadosEdicao } = this.formMembro.value;
       const dto: AtualizarMembroDTO = dadosEdicao;
       this.membroService.atualizar(this.membroSelecionadoId!, dto).subscribe({
         next: () => {
+          this.isLoading = false;
           this.fecharModal();
           this.carregarMembros();
           this.toastr.success('Usuário atualizado com sucesso.', 'Sucesso');
         },
-        error: (err) => this.toastr.error(err.error?.message || 'Erro ao atualizar membro', 'Erro')
+        error: (err) => {
+          this.isLoading = false;
+          this.toastr.error(err.error?.message || 'Erro ao atualizar membro', 'Erro');
+          setTimeout(() => this.cdr.detectChanges());
+        }
       });
     } else {
       const { confirmarSenha, ...dadosCadastro } = this.formMembro.value;
       const dto: CriarMembroDTO = dadosCadastro;
       this.membroService.criar(dto).subscribe({
         next: () => {
+          this.isLoading = false;
           this.fecharModal();
           this.carregarMembros();
           this.toastr.success('Usuário cadastrado com sucesso.', 'Sucesso');
         },
-        error: (err) => this.toastr.error(err.error?.message || 'Erro ao cadastrar membro', 'Erro')
+        error: (err) => {
+          this.isLoading = false;
+          this.toastr.error(err.error?.message || 'Erro ao cadastrar membro', 'Erro');
+          setTimeout(() => this.cdr.detectChanges());
+        }
       });
     }
   }

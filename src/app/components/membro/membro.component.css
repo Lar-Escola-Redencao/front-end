@@ -335,6 +335,26 @@
   font-family: 'Poppins', sans-serif;
   cursor: pointer;
   box-shadow: 0 4px 10px rgba(75, 128, 213, 0.35);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  display: inline-block;
+  animation: girar 0.7s linear infinite;
+}
+
+@keyframes girar {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .btn-salvar:hover:not(:disabled) {

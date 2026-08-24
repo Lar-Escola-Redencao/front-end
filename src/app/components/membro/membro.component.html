@@ -148,9 +148,10 @@
 
       <!-- rodapé fixo -->
       <div class="modal-acoes">
-        <button type="button" class="btn-cancelar" (click)="fecharModal()">Cancelar</button>
-        <button type="submit" [disabled]="formMembro.invalid" class="btn-salvar">
-          {{ modoEdicao ? 'Atualizar' : 'Salvar' }}
+        <button type="button" class="btn-cancelar" [disabled]="isLoading" (click)="fecharModal()">Cancelar</button>
+        <button type="submit" [disabled]="formMembro.invalid || isLoading" class="btn-salvar">
+          <span *ngIf="isLoading" class="spinner" aria-hidden="true"></span>
+          <span>{{ isLoading ? 'Salvando...' : (modoEdicao ? 'Atualizar' : 'Salvar') }}</span>
         </button>
       </div>
     </form>
