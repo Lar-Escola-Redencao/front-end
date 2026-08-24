@@ -4,6 +4,8 @@ import { FormsModule, FormBuilder, FormGroup, ReactiveFormsModule, Validators } 
 import { MembroService } from '../../services/membro.service';
 import { PapelService } from '../../services/papel.service';
 import { Membro, CriarMembroDTO, AtualizarMembroDTO } from '../../models/membro.model';
+import { ToastrService } from 'ngx-toastr';
+import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-membro',
@@ -77,7 +79,8 @@ export class MembroComponent implements OnInit {
     private membroService: MembroService,
     private papelService: PapelService,
     private fb: FormBuilder,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private toastr: ToastrService
   ) {
     this.formMembro = this.fb.group({
       nomeCompleto: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(60)]],
@@ -147,7 +150,7 @@ export class MembroComponent implements OnInit {
       },
       error: (err) => {
         console.error('Erro na API:', err);
-        alert('Erro ao carregar membros');
+        this.toastr.error('Não foi possível carregar a lista de usuários.', 'Erro');
       }
     });
   }
@@ -261,25 +264,48 @@ export class MembroComponent implements OnInit {
       const { senha, confirmarSenha, ...dadosEdicao } = this.formMembro.value;
       const dto: AtualizarMembroDTO = dadosEdicao;
       this.membroService.atualizar(this.membroSelecionadoId!, dto).subscribe({
-        next: () => { this.fecharModal(); this.carregarMembros(); },
-        error: (err) => alert(err.error?.message || 'Erro ao atualizar membro')
+        next: () => {
+          this.fecharModal();
+          this.carregarMembros();
+          this.toastr.success('Usuário atualizado com sucesso.', 'Sucesso');
+        },
+        error: (err) => this.toastr.error(err.error?.message || 'Erro ao atualizar membro', 'Erro')
       });
     } else {
       const { confirmarSenha, ...dadosCadastro } = this.formMembro.value;
       const dto: CriarMembroDTO = dadosCadastro;
       this.membroService.criar(dto).subscribe({
-        next: () => { this.fecharModal(); this.carregarMembros(); },
-        error: (err) => alert(err.error?.message || 'Erro ao cadastrar membro')
+        next: () => {
+          this.fecharModal();
+          this.carregarMembros();
+          this.toastr.success('Usuário cadastrado com sucesso.', 'Sucesso');
+        },
+        error: (err) => this.toastr.error(err.error?.message || 'Erro ao cadastrar membro', 'Erro')
       });
     }
   }
 
   deletarMembro(id: number): void {
-    if (confirm('Tem certeza que deseja excluir este usuário?')) {
-      this.membroService.deletar(id).subscribe({
-        next: () => this.carregarMembros(),
-        error: () => alert('Erro ao excluir membro')
-      });
-    }
+    Swal.fire({
+      title: 'Tem certeza?',
+      text: 'Essa ação não poderá ser desfeita.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sim, excluir',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#e04b3a',
+      cancelButtonColor: '#757575',
+      reverseButtons: true
+    }).then((resultado) => {
+      if (resultado.isConfirmed) {
+        this.membroService.deletar(id).subscribe({
+          next: () => {
+            this.carregarMembros();
+            this.toastr.success('Usuário excluído com sucesso.', 'Sucesso');
+          },
+          error: () => this.toastr.error('Erro ao excluir membro.', 'Erro')
+        });
+      }
+    });
   }
 }
