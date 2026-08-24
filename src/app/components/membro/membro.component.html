@@ -69,7 +69,6 @@
     <!-- formulário -->
     <form [formGroup]="formMembro" (ngSubmit)="salvar()" class="form-membro">
 
-      <!-- área com scroll: só os campos -->
       <div class="form-scroll">
         <div class="form-group">
           <label for="nomeCompleto">Nome Completo</label>
@@ -77,35 +76,33 @@
           <span class="error-text" *ngIf="erros['nomeCompleto']">{{ erros['nomeCompleto'] }}</span>
         </div>
 
-        <div class="form-group">
-          <label for="email">E-mail</label>
-          <input id="email" type="email" formControlName="email" (blur)="verificarErros()" minlength="5" maxlength="100">
-          <span class="error-text" *ngIf="erros['email']">{{ erros['email'] }}</span>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="email">E-mail</label>
+            <input id="email" type="email" formControlName="email" (blur)="verificarErros()" minlength="5" maxlength="100">
+            <span class="error-text" *ngIf="erros['email']">{{ erros['email'] }}</span>
+          </div>
+
+          <div class="form-group">
+            <label for="cpf">CPF</label>
+            <input id="cpf" type="text" formControlName="cpf" (input)="aplicarMascaraCpf($event)" (blur)="verificarErros()" minlength="14" maxlength="14">
+            <span class="error-text" *ngIf="erros['cpf']">{{ erros['cpf'] }}</span>
+          </div>
         </div>
 
-      <div class="form-group" *ngIf="!modoEdicao">
-        <label for="senha">Senha</label>
-        <input id="senha" type="password" formControlName="senha" (blur)="verificarErros()">
-        <span class="error-text" *ngIf="erros['senha']">{{ erros['senha'] }}</span>
-      </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="telefone">Telefone</label>
+            <input id="telefone" type="text" formControlName="telefone" (input)="aplicarMascaraTelefone($event)" (blur)="verificarErros()" minlength="14" maxlength="15">
+            <span class="error-text" *ngIf="erros['telefone']">{{ erros['telefone'] }}</span>
+          </div>
 
-        <div class="form-group">
-          <label for="cpf">CPF</label>
-          <input id="cpf" type="text" formControlName="cpf" (input)="aplicarMascaraCpf($event)" (blur)="verificarErros()" minlength="14" maxlength="14">
-          <span class="error-text" *ngIf="erros['cpf']">{{ erros['cpf'] }}</span>
-        </div>
-
-        <div class="form-group">
-          <label for="endereco">Endereço</label>
-          <input id="endereco" type="text" formControlName="endereco" placeholder="Rua, Número, Bairro, Cidade - UF"
-            (blur)="verificarErros()" minlength="5" maxlength="150">
-          <span class="error-text" *ngIf="erros['endereco']">{{ erros['endereco'] }}</span>
-        </div>
-
-        <div class="form-group">
-          <label for="telefone">Telefone</label>
-          <input id="telefone" type="text" formControlName="telefone" (input)="aplicarMascaraTelefone($event)" (blur)="verificarErros()" minlength="14" maxlength="15">
-          <span class="error-text" *ngIf="erros['telefone']">{{ erros['telefone'] }}</span>
+          <div class="form-group">
+            <label for="endereco">Endereço</label>
+            <input id="endereco" type="text" formControlName="endereco" placeholder="Rua, Número, Bairro, Cidade - UF"
+              (blur)="verificarErros()" minlength="5" maxlength="150">
+            <span class="error-text" *ngIf="erros['endereco']">{{ erros['endereco'] }}</span>
+          </div>
         </div>
 
         <div class="form-group">
@@ -116,6 +113,37 @@
           </select>
           <span class="error-text" *ngIf="erros['idPapel']">{{ erros['idPapel'] }}</span>
         </div>
+
+        <div class="form-row" *ngIf="!modoEdicao">
+          <div class="form-group">
+            <label for="senha">Senha</label>
+            <div class="input-com-icone">
+              <input
+                id="senha"
+                [type]="mostrarSenha ? 'text' : 'password'"
+                formControlName="senha"
+                (input)="verificarErros()"
+                (blur)="verificarErros()">
+              <button type="button" class="btn-icone-senha" (click)="alternarVisibilidadeSenha('senha')" tabindex="-1">
+                <span class="material-symbols-outlined">{{ mostrarSenha ? 'visibility_off' : 'visibility' }}</span>
+              </button>
+            </div>
+            <span class="hint-text">Mín. 6 caracteres, 1 maiúscula e 1 número.</span>
+            <span class="error-text" *ngIf="erros['senha']">{{ erros['senha'] }}</span>
+          </div>
+
+          <div class="form-group">
+            <label for="confirmarSenha">Confirmar Senha</label>
+              <input
+                id="confirmarSenha"
+                [type]="mostrarConfirmarSenha ? 'text' : 'password'"
+                formControlName="confirmarSenha"
+                (input)="verificarErros()"
+                (blur)="verificarErros()">
+            <span class="error-text" *ngIf="erros['confirmarSenha']">{{ erros['confirmarSenha'] }}</span>
+          </div>
+        </div>
+
       </div>
 
       <!-- rodapé fixo -->

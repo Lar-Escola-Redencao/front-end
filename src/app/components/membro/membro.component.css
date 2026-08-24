@@ -167,7 +167,7 @@
 .modal-card {
   background: #fff;
   border-radius: 12px;
-  width: 480px;
+  width: 650px;
   max-width: 90vw;
   max-height: 85vh;
   overflow: hidden;
@@ -263,6 +263,39 @@
 .form-group input:focus,
 .form-group select:focus {
   border-color: #4b80d5;
+}
+
+.input-com-icone {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-com-icone input {
+  width: 100%;
+  padding-right: 2.5rem;
+}
+
+.btn-icone-senha {
+  position: absolute;
+  right: 0.5rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  color: #666;
+}
+
+.btn-icone-senha:hover {
+  color: #333;
+}
+
+.hint-text {
+  font-size: 0.8rem;
+  color: #777;
+  margin-top: 2px;
+  display: block;
 }
 
 .error-text {

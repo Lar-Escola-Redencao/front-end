@@ -25,6 +25,53 @@ export class MembroComponent implements OnInit {
   membroSelecionadoId: number | null = null;
   formMembro: FormGroup;
   erros: { [key: string]: string } = {};
+  mostrarSenha = false;
+  mostrarConfirmarSenha = false;
+
+  private readonly senhaRegex = /^(?=.*[A-Z])(?=.*[0-9]).{6,}$/;
+
+  private readonly mensagensErro: {
+    [campo: string]: { [tipoErro: string]: string | ((err: any) => string) }
+  } = {
+      nomeCompleto: {
+        required: '⚠ Campo obrigatório.',
+        minlength: (e) => `⚠ Mínimo de ${e.requiredLength} caracteres.`,
+        maxlength: (e) => `⚠ Máximo de ${e.requiredLength} caracteres.`
+      },
+      email: {
+        required: '⚠ Campo obrigatório.',
+        email: '⚠ Digite um e-mail válido.',
+        minlength: (e) => `⚠ Mínimo de ${e.requiredLength} caracteres.`,
+        maxlength: (e) => `⚠ Máximo de ${e.requiredLength} caracteres.`
+      },
+      senha: {
+        required: '⚠ Campo obrigatório.',
+        pattern: () => '⚠ A senha não contém os requisitos mínimos.',
+        maxlength: (e) => `⚠ Máximo de ${e.requiredLength} caracteres.`
+      },
+      confirmarSenha: {
+        required: '⚠ Campo obrigatório.',
+        senhasDiferentes: '⚠ As senhas não coincidem.'
+      },
+      cpf: {
+        required: '⚠ Campo obrigatório.',
+        minlength: '⚠ CPF incompleto.',
+        maxlength: '⚠ CPF incompleto.'
+      },
+      telefone: {
+        required: '⚠ Campo obrigatório.',
+        minlength: '⚠ Telefone incompleto.',
+        maxlength: '⚠ Telefone incompleto.'
+      },
+      endereco: {
+        required: '⚠ Campo obrigatório.',
+        minlength: (e) => `⚠ Mínimo de ${e.requiredLength} caracteres.`,
+        maxlength: (e) => `⚠ Máximo de ${e.requiredLength} caracteres.`
+      },
+      idPapel: {
+        required: '⚠ Campo obrigatório.'
+      }
+    };
 
   constructor(
     private membroService: MembroService,
@@ -36,6 +83,7 @@ export class MembroComponent implements OnInit {
       nomeCompleto: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(60)]],
       email: ['', [Validators.required, Validators.email, Validators.minLength(5), Validators.maxLength(100)]],
       senha: [''],
+      confirmarSenha: [''],
       cpf: ['', [Validators.required, Validators.minLength(14), Validators.maxLength(14)]],
       endereco: ['', [Validators.required, Validators.minLength(5), Validators.maxLength(150)]],
       telefone: ['', [Validators.required, Validators.minLength(14), Validators.maxLength(15)]],
@@ -46,9 +94,37 @@ export class MembroComponent implements OnInit {
   ngOnInit(): void {
     this.carregarPapeis();
     this.carregarMembros();
+
+    // reavalia a confirmação de senha sempre que um dos dois campos mudar
+    this.formMembro.get('senha')?.valueChanges.subscribe(() => this.checarSenhasIguais());
+    this.formMembro.get('confirmarSenha')?.valueChanges.subscribe(() => this.checarSenhasIguais());
+  }
+
+  // senha: comparação e visibilidade
+
+  private checarSenhasIguais(): void {
+    const senha = this.formMembro.get('senha');
+    const confirmarSenha = this.formMembro.get('confirmarSenha');
+    if (!senha || !confirmarSenha) return;
+
+    if (senha.value && confirmarSenha.value && senha.value !== confirmarSenha.value) {
+      confirmarSenha.setErrors({ ...(confirmarSenha.errors || {}), senhasDiferentes: true });
+    } else if (confirmarSenha.hasError('senhasDiferentes')) {
+      const { senhasDiferentes, ...resto } = confirmarSenha.errors || {};
+      confirmarSenha.setErrors(Object.keys(resto).length ? resto : null);
+    }
+  }
+
+  alternarVisibilidadeSenha(campo: 'senha' | 'confirmarSenha'): void {
+    if (campo === 'senha') {
+      this.mostrarSenha = !this.mostrarSenha;
+    } else {
+      this.mostrarConfirmarSenha = !this.mostrarConfirmarSenha;
+    }
   }
 
   // listagem e filtros
+
   carregarPapeis(): void {
     this.papelService.listarTodos().subscribe({
       next: (dados) => {
@@ -57,6 +133,7 @@ export class MembroComponent implements OnInit {
       error: (err) => console.error('Erro ao carregar papéis da API:', err)
     });
   }
+
   carregarMembros(): void {
     this.membroService.listarTodos().subscribe({
       next: (dados) => {
@@ -87,12 +164,18 @@ export class MembroComponent implements OnInit {
     this.membroSelecionadoId = null;
     this.formMembro.reset();
     this.erros = {};
+    this.mostrarSenha = false;
+    this.mostrarConfirmarSenha = false;
+
     this.formMembro.get('senha')?.setValidators([
       Validators.required,
-      Validators.minLength(8),
+      Validators.pattern(this.senhaRegex),
       Validators.maxLength(50)
     ]);
+    this.formMembro.get('confirmarSenha')?.setValidators([Validators.required]);
+
     this.formMembro.get('senha')?.updateValueAndValidity();
+    this.formMembro.get('confirmarSenha')?.updateValueAndValidity();
     this.modalAberto = true;
   }
 
@@ -100,8 +183,14 @@ export class MembroComponent implements OnInit {
     this.modoEdicao = true;
     this.membroSelecionadoId = membro.id;
     this.erros = {};
+    this.mostrarSenha = false;
+    this.mostrarConfirmarSenha = false;
+
     this.formMembro.get('senha')?.clearValidators();
+    this.formMembro.get('confirmarSenha')?.clearValidators();
     this.formMembro.get('senha')?.updateValueAndValidity();
+    this.formMembro.get('confirmarSenha')?.updateValueAndValidity();
+
     this.formMembro.patchValue(membro);
     this.modalAberto = true;
   }
@@ -118,19 +207,15 @@ export class MembroComponent implements OnInit {
     for (const campo in controles) {
       const controle = controles[campo];
       if (controle.invalid && (controle.dirty || controle.touched)) {
-        if (controle.hasError('required')) {
-          this.erros[campo] = '⚠ Campo obrigatório.';
-        } else if (controle.hasError('email')) {
-          this.erros[campo] = '⚠ Digite um e-mail válido.';
-        } else if (controle.hasError('minlength')) {
-          const min = controle.getError('minlength').requiredLength;
-          if (campo === 'cpf') this.erros[campo] = '⚠ CPF incompleto.';
-          else if (campo === 'telefone') this.erros[campo] = '⚠ Telefone incompleto.';
-          else if (campo === 'senha') this.erros[campo] = `⚠ A senha deve ter no mínimo ${min} caracteres.`;
-          else this.erros[campo] = `⚠ Mínimo de ${min} caracteres.`;
-        } else if (controle.hasError('maxlength')) {
-          const max = controle.getError('maxlength').requiredLength;
-          this.erros[campo] = `⚠ Máximo de ${max} caracteres.`;
+        const mensagensCampo = this.mensagensErro[campo] || {};
+        for (const tipoErro in controle.errors) {
+          const mensagem = mensagensCampo[tipoErro];
+          if (mensagem) {
+            this.erros[campo] = typeof mensagem === 'function'
+              ? mensagem(controle.getError(tipoErro))
+              : mensagem;
+            break;
+          }
         }
       }
     }
@@ -173,14 +258,15 @@ export class MembroComponent implements OnInit {
     if (this.formMembro.invalid) return;
 
     if (this.modoEdicao) {
-      const { senha, ...dadosEdicao } = this.formMembro.value;
+      const { senha, confirmarSenha, ...dadosEdicao } = this.formMembro.value;
       const dto: AtualizarMembroDTO = dadosEdicao;
       this.membroService.atualizar(this.membroSelecionadoId!, dto).subscribe({
         next: () => { this.fecharModal(); this.carregarMembros(); },
         error: (err) => alert(err.error?.message || 'Erro ao atualizar membro')
       });
     } else {
-      const dto: CriarMembroDTO = this.formMembro.value;
+      const { confirmarSenha, ...dadosCadastro } = this.formMembro.value;
+      const dto: CriarMembroDTO = dadosCadastro;
       this.membroService.criar(dto).subscribe({
         next: () => { this.fecharModal(); this.carregarMembros(); },
         error: (err) => alert(err.error?.message || 'Erro ao cadastrar membro')
