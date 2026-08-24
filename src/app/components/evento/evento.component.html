@@ -1,0 +1,196 @@
+<div class="container">
+  <div class="header-acoes">
+    <h2>Gerenciamento de Eventos</h2>
+    <div class="header-direita">
+      <select class="filtro-papel" [(ngModel)]="filtroTipo" (ngModelChange)="aplicarFiltro()">
+        <option value="">Todos os tipos</option>
+        <option *ngFor="let tipo of tiposDisponiveis" [value]="tipo">{{ tipo }}</option>
+      </select>
+      <button (click)="abrirCadastro()" class="btn-novo">Novo Evento</button>
+    </div>
+  </div>
+
+  <div class="tabela-card" *ngIf="eventosFiltrados.length > 0; else estadoVazio">
+    <table class="tabela-membros">
+      <thead>
+        <tr>
+          <th>Título</th>
+          <th>Data</th>
+          <th>Tipo</th>
+          <th>Valor</th>
+          <!-- Coluna nova pro preview -->
+          <th>Ver</th>
+          <th>Editar</th>
+          <th>Excluir</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let evento of eventosFiltrados">
+          <td>{{ evento.titulo }}</td>
+          <td>{{ evento.dataEvento | date:'dd/MM/yyyy HH:mm' }}</td>
+          <td>{{ evento.tipoEvento }}</td>
+          <td>{{ evento.valor ? (evento.valor | currency:'BRL') : 'Gratuito' }}</td>
+          <td class="acoes-icone">
+            <button (click)="abrirVisualizacao(evento)" class="btn-icone btn-icone-visualizar" title="Visualizar">
+              <span class="material-symbols-outlined">visibility</span>
+            </button>
+          </td>
+          <td class="acoes-icone">
+            <button (click)="abrirEdicao(evento)" class="btn-icone btn-icone-editar" title="Editar">
+              <span class="material-symbols-outlined">edit</span>
+            </button>
+          </td>
+          <td class="acoes-icone">
+            <button (click)="deletarEvento(evento.id)" class="btn-icone btn-icone-excluir" title="Excluir">
+              <span class="material-symbols-outlined">delete</span>
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <ng-template #estadoVazio>
+    <div class="estado-vazio">
+      <p *ngIf="!filtroTipo">Nenhum evento cadastrado ainda</p>
+      <p *ngIf="filtroTipo">Nenhum evento do tipo {{ filtroTipo }} cadastrado ainda</p>
+    </div>
+  </ng-template>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" *ngIf="modalAberto" (click)="fecharModal()">
+  <div class="modal-card" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>{{ modoEdicao ? 'Editar Evento' : 'Cadastrar Novo Evento' }}</h3>
+      <button class="btn-fechar" (click)="fecharModal()">&times;</button>
+    </div>
+
+    <form [formGroup]="formEvento" (ngSubmit)="salvar()" class="form-membro">
+      <div class="form-scroll">
+
+        <div class="form-group">
+          <label for="titulo">Título do Evento</label>
+          <input id="titulo" type="text" formControlName="titulo" (blur)="verificarErros()" maxlength="100">
+          <span class="error-text" *ngIf="erros['titulo']">{{ erros['titulo'] }}</span>
+        </div>
+
+        <div class="form-group">
+          <label for="descricao">Descrição</label>
+          <textarea id="descricao" rows="3" formControlName="descricao" (blur)="verificarErros()"
+            maxlength="500"></textarea>
+          <span class="error-text" *ngIf="erros['descricao']">{{ erros['descricao'] }}</span>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="dataEvento">Data e Hora</label>
+            <input id="dataEvento" type="datetime-local" formControlName="dataEvento" (blur)="verificarErros()">
+            <span class="error-text" *ngIf="erros['dataEvento']">{{ erros['dataEvento'] }}</span>
+          </div>
+
+          <div class="form-group">
+            <label for="tipoEvento">Tipo de Evento</label>
+            <select id="tipoEvento" formControlName="tipoEvento" (blur)="verificarErros()">
+              <option value="">Selecione...</option>
+              <option value="PALESTRA">Palestra</option>
+              <option value="WORKSHOP">Workshop</option>
+              <option value="CONFERENCIA">Conferência</option>
+              <option value="SEMINARIO">Seminário</option>
+            </select>
+            <span class="error-text" *ngIf="erros['tipoEvento']">{{ erros['tipoEvento'] }}</span>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="endereco">Endereço</label>
+            <input id="endereco" type="text" formControlName="endereco" (blur)="verificarErros()" maxlength="150">
+            <span class="error-text" *ngIf="erros['endereco']">{{ erros['endereco'] }}</span>
+          </div>
+          <div class="form-group">
+            <label for="valor">Valor (opcional)</label>
+            <input id="valor" type="number" formControlName="valor" (blur)="verificarErros()" min="0" step="0.01">
+            <span class="error-text" *ngIf="erros['valor']">{{ erros['valor'] }}</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="parceirosIds">Parceiros</label>
+          <select id="parceirosIds" formControlName="parceirosIds" multiple class="select-multiplo">
+            <option *ngFor="let p of parceiros" [value]="p.id">{{ p.nome }}</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="imagem">Capa do Evento (Imagem)</label>
+          <input id="imagem" type="file" (change)="onImagemSelecionada($event)" accept="image/*">
+          <span class="error-text" *ngIf="erros['imagem']">{{ erros['imagem'] }}</span>
+          <img *ngIf="imagemPreview" [src]="imagemPreview" class="imagem-preview" alt="Preview da imagem">
+        </div>
+
+        <div class="form-group" *ngIf="modoEdicao">
+          <label for="comentarioPosEvento">Comentário Pós-Evento</label>
+          <textarea id="comentarioPosEvento" rows="2" formControlName="comentarioPosEvento" maxlength="500"></textarea>
+        </div>
+
+      </div>
+
+      <div class="modal-acoes">
+        <button type="button" class="btn-cancelar" [disabled]="isLoading" (click)="fecharModal()">Cancelar</button>
+        <button type="submit" [disabled]="formEvento.invalid || isLoading" class="btn-salvar">
+          <span *ngIf="isLoading" class="spinner" aria-hidden="true"></span>
+          <span>{{ isLoading ? 'Salvando...' : (modoEdicao ? 'Atualizar' : 'Salvar') }}</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal de Visualização (Preview) -->
+<div class="modal-overlay" *ngIf="modalVisualizacaoAberto" (click)="fecharVisualizacao()">
+  <div class="modal-card modal-preview" (click)="$event.stopPropagation()">
+
+    <div class="modal-header">
+      <h3>Detalhes do Evento</h3>
+      <button class="btn-fechar" (click)="fecharVisualizacao()">&times;</button>
+    </div>
+
+    <div class="modal-body-preview form-scroll" *ngIf="eventoVisualizacao">
+      <!-- Capa bonitona no topo -->
+      <div class="preview-capa" *ngIf="eventoVisualizacao.imagem">
+        <img [src]="eventoVisualizacao.imagem" alt="Capa do Evento">
+      </div>
+
+      <div class="preview-info">
+        <div class="tag-tipo">{{ eventoVisualizacao.tipoEvento }}</div>
+        <h2>{{ eventoVisualizacao.titulo }}</h2>
+
+        <p class="preview-data-local">
+          <span class="material-symbols-outlined">calendar_today</span>
+          {{ eventoVisualizacao.dataEvento | date:'dd/MM/yyyy HH:mm' }}<br>
+          <span class="material-symbols-outlined">location_on</span>
+          {{ eventoVisualizacao.endereco }}
+        </p>
+
+        <div class="preview-desc">
+          <h4>Sobre o evento</h4>
+          <p>{{ eventoVisualizacao.descricao }}</p>
+        </div>
+
+        <div class="preview-extra">
+          <p><strong>Valor:</strong> {{ eventoVisualizacao.valor ? (eventoVisualizacao.valor | currency:'BRL') : 'Gratuito' }}</p>
+
+          <div *ngIf="eventoVisualizacao.comentarioPosEvento">
+            <h4>Comentário Pós-Evento</h4>
+            <p>{{ eventoVisualizacao.comentarioPosEvento }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-acoes">
+      <button type="button" class="btn-cancelar" (click)="fecharVisualizacao()">Fechar</button>
+    </div>
+  </div>
+</div>
