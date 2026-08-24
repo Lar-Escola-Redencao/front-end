@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MembroService } from '../../services/membro.service';
@@ -6,6 +6,7 @@ import { PapelService } from '../../services/papel.service';
 import { Membro, CriarMembroDTO, AtualizarMembroDTO } from '../../models/membro.model';
 import { ToastrService } from 'ngx-toastr';
 import Swal from 'sweetalert2';
+import { ComponentComAlteracoesNaoSalvas } from '../../guards/can-deactivate.guard';
 
 @Component({
   selector: 'app-membro',
@@ -14,7 +15,7 @@ import Swal from 'sweetalert2';
   templateUrl: './membro.component.html',
   styleUrls: ['./membro.component.css']
 })
-export class MembroComponent implements OnInit {
+export class MembroComponent implements OnInit, ComponentComAlteracoesNaoSalvas {
 
   membros: Membro[] = [];
   membrosFiltrados: Membro[] = [];
@@ -203,6 +204,20 @@ export class MembroComponent implements OnInit {
 
   fecharModal(): void {
     this.modalAberto = false;
+  }
+
+  // proteção contra perda de dados
+
+  formularioTemAlteracoesNaoSalvas(): boolean {
+    return this.modalAberto && this.formMembro.dirty;
+  }
+
+  @HostListener('window:beforeunload', ['$event'])
+  avisarAntesDeFechar(event: BeforeUnloadEvent): void {
+    if (this.formularioTemAlteracoesNaoSalvas()) {
+      event.preventDefault();
+      event.returnValue = '';
+    }
   }
 
   // validações e máscaras
