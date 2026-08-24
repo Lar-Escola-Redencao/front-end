@@ -1,0 +1,33 @@
+<nav class="navbar">
+  <!-- Lado Esquerdo: Logo -->
+  <div class="logo-container">
+    <img src="/images/logo_colorida_texto.png" alt="Logo Lar Escola Redenção">
+  </div>
+
+  <!-- Botão Hambúrguer (Visível apenas no mobile) -->
+  <button class="menu-toggle" (click)="alternarMenu()" aria-label="Abrir menu">
+    <span class="material-symbols-outlined">
+      {{ menuAberto() ? 'close' : 'menu' }}
+    </span>
+  </button>
+
+  <!-- Centro/Direita: Links e Botão (Agrupados para responsividade) -->
+  <div class="nav-content" [class.ativo]="menuAberto()">
+    <ul class="nav-links">
+      <li><a href="#" (click)="alternarMenu()">Início</a></li>
+      <li><a href="#" (click)="alternarMenu()">Conheça a OSC</a></li>
+      <li><a href="#" (click)="alternarMenu()">Como ajudar?</a></li>
+      <li><a href="#" (click)="alternarMenu()">Unidades</a></li>
+      <li><a href="#" (click)="alternarMenu()">Eventos</a></li>
+      <li><a href="#" (click)="alternarMenu()">Parceiros</a></li>
+      <li><a href="#" (click)="alternarMenu()">Transparência</a></li>
+    </ul>
+
+    <div class="nav-action">
+      <button class="btn-entrar" (click)="alternarMenu()">
+        <span class="material-symbols-outlined">account_circle</span>
+        Entrar
+      </button>
+    </div>
+  </div>
+</nav>

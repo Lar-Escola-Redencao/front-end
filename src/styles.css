@@ -1,1 +1,37 @@
-/* You can add global styles to this file, and also import other style files */
+@font-face {
+  font-family: 'Inter';
+  src: url('/fonts/inter-regular.ttf') format('truetype');
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Bricolage Grotesque';
+  src: url('/fonts/bricolagegrotesque-extrabold.ttf') format('truetype');
+  font-weight: 800;
+  font-display: swap;
+}
+
+:root {
+    --azul: #3682DC;
+    --azul-hover: #1661bd;
+    --azul-active: #5386c5;
+    --preto: #1e1e1e;
+    --branco: #FFFFFF;
+
+    --fonte-texto: 'Inter', sans-serif;
+    --fonte-titulo: 'Bricolage Grotesque', sans-serif;
+    --sombra-padrao: 0px 0px 4px 4px rgba(0, 0, 0, 0.05);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: var(--fonte-texto);
+    color: var(--preto);
+    background-color: var(--branco);
+}
