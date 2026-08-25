@@ -25,10 +25,10 @@ export class MembroService {
   }
 
   atualizar(id: number, membro: AtualizarMembroDTO): Observable<Membro> {
-    return this.http.put<Membro>(`${this.apiUrl}/atualizar/${id}`, membro);
+    return this.http.put<Membro>(`${this.apiUrl}/${id}`, membro);
   }
 
   deletar(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/deletar/${id}`);
+    return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
 }
