@@ -32,6 +32,7 @@ export class MembroComponent implements OnInit, ComponentComAlteracoesNaoSalvas 
   mostrarConfirmarSenha = false;
   isLoading = false;
   modalTremendo = false;
+  valoresOriginaisDoFormulario: any = null; 
 
   private readonly senhaRegex = /^(?=.*[A-Z])(?=.*[0-9]).{6,}$/;
 
@@ -174,6 +175,7 @@ export class MembroComponent implements OnInit, ComponentComAlteracoesNaoSalvas 
     this.mostrarSenha = false;
     this.mostrarConfirmarSenha = false;
     this.isLoading = false;
+    this.valoresOriginaisDoFormulario = null;
 
     this.formMembro.get('senha')?.setValidators([
       Validators.required,
@@ -206,11 +208,18 @@ export class MembroComponent implements OnInit, ComponentComAlteracoesNaoSalvas 
       telefone: this.formatarTelefone(membro.telefone)
     });
 
+    this.valoresOriginaisDoFormulario = this.formMembro.getRawValue();
+
     this.modalAberto = true;
   }
 
+  get temAlteracoes(): boolean {
+    if (!this.modoEdicao) return true; 
+    return JSON.stringify(this.formMembro.getRawValue()) !== JSON.stringify(this.valoresOriginaisDoFormulario);
+  }
+
   fecharModal(): void {
-    if (!this.formMembro.dirty) {
+    if (!this.formularioTemAlteracoesNaoSalvas()) {
       this.modalAberto = false;
       return;
     }
@@ -229,8 +238,8 @@ export class MembroComponent implements OnInit, ComponentComAlteracoesNaoSalvas 
       this.ngZone.run(() => {
         if (resultado.isConfirmed) {
           this.modalAberto = false;
-          this.formMembro.reset(); // Limpa os dados não salvos e tira o "dirty"
-          this.cdr.detectChanges(); // <--- Adicione esta linha para forçar a atualização visual!
+          this.formMembro.reset(); 
+          this.cdr.detectChanges(); 
         } else {
           this.dispararTremorModal();
         }
@@ -254,7 +263,8 @@ export class MembroComponent implements OnInit, ComponentComAlteracoesNaoSalvas 
   // proteção contra perda de dados
 
   formularioTemAlteracoesNaoSalvas(): boolean {
-    return this.modalAberto && this.formMembro.dirty;
+    if (!this.modalAberto) return false;
+    return this.modoEdicao ? this.temAlteracoes : this.formMembro.dirty;
   }
 
   @HostListener('window:beforeunload', ['$event'])
@@ -348,7 +358,7 @@ export class MembroComponent implements OnInit, ComponentComAlteracoesNaoSalvas 
 
     if (this.formMembro.invalid) return;
 
-    if (this.modoEdicao && !this.formMembro.dirty) {
+    if (this.modoEdicao && !this.temAlteracoes) {
       this.toastr.info('Nenhum dado foi alterado.', 'Aviso');
       return;
     }
