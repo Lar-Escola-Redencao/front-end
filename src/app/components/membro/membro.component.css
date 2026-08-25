@@ -69,11 +69,14 @@
   background: #fff;
   border-radius: 12px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
 }
 
 .tabela-membros {
   width: 100%;
+  min-width: 640px;
   border-collapse: collapse;
 }
 
@@ -83,8 +86,9 @@
   font-family: 'Poppins', sans-serif;
   font-size: 0.95rem;
   font-weight: 600;
-  color: #757575;
-  border-bottom: 1px solid #f0f0f0;
+  color: #616161;
+  background-color: #f3f5f8;
+  border-bottom: 1px solid #ebebeb;
 }
 
 .tabela-membros td {
@@ -365,4 +369,44 @@
   background: #a9c2e8;
   box-shadow: none;
   cursor: not-allowed;
+}
+
+/* aviso visual ao tentar fechar modal com dados não salvos */
+@keyframes tremer {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-8px); }
+  40% { transform: translateX(8px); }
+  60% { transform: translateX(-6px); }
+  80% { transform: translateX(6px); }
+}
+
+.modal-card.tremer {
+  animation: tremer 0.4s ease-in-out;
+}
+
+/* responsividade */
+@media (max-width: 768px) {
+  .container {
+    padding: 20px 16px;
+  }
+
+  .header-acoes {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .header-direita {
+    width: 100%;
+  }
+
+  .filtro-papel,
+  .btn-novo {
+    width: 100%;
+  }
+
+  .form-row {
+    flex-direction: column;
+    gap: 0;
+  }
 }

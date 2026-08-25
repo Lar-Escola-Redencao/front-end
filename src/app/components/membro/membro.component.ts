@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef, HostListener } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, HostListener, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MembroService } from '../../services/membro.service';
@@ -31,6 +31,7 @@ export class MembroComponent implements OnInit, ComponentComAlteracoesNaoSalvas 
   mostrarSenha = false;
   mostrarConfirmarSenha = false;
   isLoading = false;
+  modalTremendo = false;
 
   private readonly senhaRegex = /^(?=.*[A-Z])(?=.*[0-9]).{6,}$/;
 
@@ -82,7 +83,8 @@ export class MembroComponent implements OnInit, ComponentComAlteracoesNaoSalvas 
     private papelService: PapelService,
     private fb: FormBuilder,
     private cdr: ChangeDetectorRef,
-    private toastr: ToastrService
+    private toastr: ToastrService,
+    private ngZone: NgZone
   ) {
     this.formMembro = this.fb.group({
       nomeCompleto: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(60)]],
@@ -198,11 +200,54 @@ export class MembroComponent implements OnInit, ComponentComAlteracoesNaoSalvas 
     this.formMembro.get('senha')?.updateValueAndValidity();
     this.formMembro.get('confirmarSenha')?.updateValueAndValidity();
 
-    this.formMembro.patchValue(membro);
+    this.formMembro.patchValue({
+      ...membro,
+      cpf: this.formatarCpf(membro.cpf),
+      telefone: this.formatarTelefone(membro.telefone)
+    });
+
     this.modalAberto = true;
   }
 
   fecharModal(): void {
+    if (!this.formMembro.dirty) {
+      this.modalAberto = false;
+      return;
+    }
+
+    Swal.fire({
+      title: 'Descartar alterações?',
+      text: 'Existem dados preenchidos que ainda não foram salvos. Deseja realmente sair?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sim, descartar',
+      cancelButtonText: 'Continuar editando',
+      confirmButtonColor: '#e04b3a',
+      cancelButtonColor: '#757575',
+      reverseButtons: true
+    }).then((resultado) => {
+      this.ngZone.run(() => {
+        if (resultado.isConfirmed) {
+          this.modalAberto = false;
+          this.formMembro.reset(); // Limpa os dados não salvos e tira o "dirty"
+          this.cdr.detectChanges(); // <--- Adicione esta linha para forçar a atualização visual!
+        } else {
+          this.dispararTremorModal();
+        }
+      });
+    });
+  }
+
+  private dispararTremorModal(): void {
+    this.modalTremendo = true;
+    setTimeout(() => {
+      this.modalTremendo = false;
+      this.cdr.detectChanges();
+    }, 400);
+  }
+
+  // usado internamente após salvar com sucesso, sem pedir confirmação
+  private fecharModalSemConfirmacao(): void {
     this.modalAberto = false;
   }
 
@@ -271,12 +316,42 @@ export class MembroComponent implements OnInit, ComponentComAlteracoesNaoSalvas 
     this.formMembro.get('telefone')?.setValue(valor, { emitEvent: false });
   }
 
+  private formatarCpf(valor: string): string {
+    if (!valor) return '';
+    let v = valor.replace(/\D/g, '');
+    if (v.length > 11) v = v.substring(0, 11);
+    return v
+      .replace(/(\d{3})(\d)/, '$1.$2')
+      .replace(/(\d{3})(\d)/, '$1.$2')
+      .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+  }
+
+  private formatarTelefone(valor: string): string {
+    if (!valor) return '';
+    let v = valor.replace(/\D/g, '');
+    if (v.length > 11) v = v.substring(0, 11);
+
+    if (v.length > 10) {
+      return v.replace(/^(\d{2})(\d{5})(\d{4}).*/, '($1) $2-$3');
+    } else if (v.length > 5) {
+      return v.replace(/^(\d{2})(\d{4})(\d{0,4}).*/, '($1) $2-$3');
+    } else if (v.length > 2) {
+      return v.replace(/^(\d{2})(\d{0,5})/, '($1) $2');
+    }
+    return v;
+  }
+
   // interações com backend
   salvar(): void {
     this.formMembro.markAllAsTouched();
     this.verificarErros();
 
     if (this.formMembro.invalid) return;
+
+    if (this.modoEdicao && !this.formMembro.dirty) {
+      this.toastr.info('Nenhum dado foi alterado.', 'Aviso');
+      return;
+    }
 
     this.isLoading = true;
 
@@ -286,7 +361,7 @@ export class MembroComponent implements OnInit, ComponentComAlteracoesNaoSalvas 
       this.membroService.atualizar(this.membroSelecionadoId!, dto).subscribe({
         next: () => {
           this.isLoading = false;
-          this.fecharModal();
+          this.fecharModalSemConfirmacao();
           this.carregarMembros();
           this.toastr.success('Usuário atualizado com sucesso.', 'Sucesso');
         },
@@ -302,7 +377,7 @@ export class MembroComponent implements OnInit, ComponentComAlteracoesNaoSalvas 
       this.membroService.criar(dto).subscribe({
         next: () => {
           this.isLoading = false;
-          this.fecharModal();
+          this.fecharModalSemConfirmacao();
           this.carregarMembros();
           this.toastr.success('Usuário cadastrado com sucesso.', 'Sucesso');
         },

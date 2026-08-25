@@ -58,7 +58,7 @@
 
 <!-- modal de cadastro e edição -->
 <div class="modal-overlay" *ngIf="modalAberto" (click)="fecharModal()">
-  <div class="modal-card" (click)="$event.stopPropagation()">
+  <div class="modal-card" [class.tremer]="modalTremendo" (click)="$event.stopPropagation()">
 
     <!-- cabeçalho fixo -->
     <div class="modal-header">
@@ -149,7 +149,7 @@
       <!-- rodapé fixo -->
       <div class="modal-acoes">
         <button type="button" class="btn-cancelar" [disabled]="isLoading" (click)="fecharModal()">Cancelar</button>
-        <button type="submit" [disabled]="formMembro.invalid || isLoading" class="btn-salvar">
+        <button type="submit" [disabled]="formMembro.invalid || isLoading || (modoEdicao && !formMembro.dirty)" class="btn-salvar">
           <span *ngIf="isLoading" class="spinner" aria-hidden="true"></span>
           <span>{{ isLoading ? 'Salvando...' : (modoEdicao ? 'Atualizar' : 'Salvar') }}</span>
         </button>
