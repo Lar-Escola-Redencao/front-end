@@ -2,7 +2,7 @@
   <div class="header-acoes">
     <h2>Gerenciamento de Eventos</h2>
     <div class="header-direita">
-      <select class="filtro-papel" [(ngModel)]="filtroTipo" (ngModelChange)="aplicarFiltro()">
+      <select class="filtro-tipo" [(ngModel)]="filtroTipo" (change)="aplicarFiltro()">
         <option value="">Todos os tipos</option>
         <option *ngFor="let tipo of tiposDisponiveis" [value]="tipo">{{ tipo }}</option>
       </select>
@@ -11,14 +11,13 @@
   </div>
 
   <div class="tabela-card" *ngIf="eventosFiltrados.length > 0; else estadoVazio">
-    <table class="tabela-membros">
+    <table class="tabela-eventos">
       <thead>
         <tr>
           <th>Título</th>
           <th>Data</th>
           <th>Tipo</th>
           <th>Valor</th>
-          <!-- Coluna nova pro preview -->
           <th>Ver</th>
           <th>Editar</th>
           <th>Excluir</th>
@@ -58,9 +57,9 @@
   </ng-template>
 </div>
 
-<!-- Modal -->
+<!-- Modal Formulário -->
 <div class="modal-overlay" *ngIf="modalAberto" (click)="fecharModal()">
-  <div class="modal-card" (click)="$event.stopPropagation()">
+  <div class="modal-card" [class.tremer]="modalTremendo" (click)="$event.stopPropagation()">
     <div class="modal-header">
       <h3>{{ modoEdicao ? 'Editar Evento' : 'Cadastrar Novo Evento' }}</h3>
       <button class="btn-fechar" (click)="fecharModal()">&times;</button>
@@ -71,14 +70,13 @@
 
         <div class="form-group">
           <label for="titulo">Título do Evento</label>
-          <input id="titulo" type="text" formControlName="titulo" (blur)="verificarErros()" maxlength="100">
+          <input id="titulo" type="text" formControlName="titulo" (blur)="verificarErros()" maxlength="150">
           <span class="error-text" *ngIf="erros['titulo']">{{ erros['titulo'] }}</span>
         </div>
 
         <div class="form-group">
           <label for="descricao">Descrição</label>
-          <textarea id="descricao" rows="3" formControlName="descricao" (blur)="verificarErros()"
-            maxlength="500"></textarea>
+          <textarea id="descricao" rows="3" formControlName="descricao" (blur)="verificarErros()" maxlength="500"></textarea>
           <span class="error-text" *ngIf="erros['descricao']">{{ erros['descricao'] }}</span>
         </div>
 
@@ -93,40 +91,73 @@
             <label for="tipoEvento">Tipo de Evento</label>
             <select id="tipoEvento" formControlName="tipoEvento" (blur)="verificarErros()">
               <option value="">Selecione...</option>
-              <option value="PALESTRA">Palestra</option>
-              <option value="WORKSHOP">Workshop</option>
-              <option value="CONFERENCIA">Conferência</option>
-              <option value="SEMINARIO">Seminário</option>
+              <option value="ARRECADACAO">Arrecadação</option>
+              <option value="CULTURAL">Cultural</option>
+              <option value="COMEMORATIVO">Comemorativo</option>
             </select>
             <span class="error-text" *ngIf="erros['tipoEvento']">{{ erros['tipoEvento'] }}</span>
           </div>
         </div>
 
-        <div class="form-row">
-          <div class="form-group">
+        <!-- endereço e valor na mesma linha (endereço com mais espaço) -->
+        <div class="form-row form-row-endereco-valor">
+          <div class="form-group form-group-endereco">
             <label for="endereco">Endereço</label>
             <input id="endereco" type="text" formControlName="endereco" (blur)="verificarErros()" maxlength="150">
             <span class="error-text" *ngIf="erros['endereco']">{{ erros['endereco'] }}</span>
           </div>
-          <div class="form-group">
+          <div class="form-group form-group-valor">
             <label for="valor">Valor (opcional)</label>
-            <input id="valor" type="number" formControlName="valor" (blur)="verificarErros()" min="0" step="0.01">
+            <input id="valor" type="text" inputmode="decimal" formControlName="valor"
+              (input)="aplicarMascaraValor($event)" (blur)="verificarErros()" placeholder="R$ 0,00">
             <span class="error-text" *ngIf="erros['valor']">{{ erros['valor'] }}</span>
           </div>
         </div>
 
+        <!-- Seletor Moderno de Parceiros -->
         <div class="form-group">
-          <label for="parceirosIds">Parceiros</label>
-          <select id="parceirosIds" formControlName="parceirosIds" multiple class="select-multiplo">
-            <option *ngFor="let p of parceiros" [value]="p.id">{{ p.nome }}</option>
-          </select>
+          <label>Parceiros Vinculados</label>
+          <div class="parceiros-box">
+            <div *ngIf="parceiros.length === 0" class="sem-parceiros">Nenhum parceiro disponível</div>
+            <label *ngFor="let p of parceiros" class="parceiro-item">
+              <input type="checkbox" [checked]="isParceiroSelecionado(p.id)" (change)="onParceiroToggle(p.id, $event)">
+              <span>{{ p.nome }}</span>
+            </label>
+          </div>
         </div>
 
         <div class="form-group">
-          <label for="imagem">Capa do Evento (Imagem)</label>
-          <input id="imagem" type="file" (change)="onImagemSelecionada($event)" accept="image/*">
+          <label for="imagem">Capa do Evento</label>
+          <input #inputImagem id="imagem" type="file" class="input-arquivo-oculto" (change)="onImagemSelecionada($event)" accept="image/*">
+          <div class="upload-arquivo" [class.upload-arquivo-erro]="erros['imagem']" (click)="inputImagem.click()">
+            <span class="material-symbols-outlined upload-arquivo-icone">upload_file</span>
+            <div class="upload-arquivo-texto">
+              <strong>{{ nomeArquivoSelecionado ? nomeArquivoSelecionado : 'Clique para escolher uma imagem' }}</strong>
+              <span>PNG, JPG ou WEBP</span>
+            </div>
+            <span class="upload-arquivo-botao">Procurar</span>
+          </div>
+
           <span class="error-text" *ngIf="erros['imagem']">{{ erros['imagem'] }}</span>
-          <img *ngIf="imagemPreview" [src]="imagemPreview" class="imagem-preview" alt="Preview da imagem">
+
+          <div class="imagem-preview-wrapper" *ngIf="imagemPreview || carregandoImagem">
+            <div class="imagem-preview-loading" *ngIf="carregandoImagem">
+              <span class="spinner spinner-escuro" aria-hidden="true"></span>
+              <span>Carregando imagem...</span>
+            </div>
+            <img *ngIf="imagemPreview"
+              [src]="imagemPreview"
+              class="imagem-preview"
+              [class.imagem-preview-oculta]="carregandoImagem"
+              alt="Preview da imagem"
+              (load)="onPreviewImagemCarregada()"
+              (error)="onPreviewImagemErro()">
+              <p class="imagem-preview-info" *ngIf="modoEdicao && imagemPreview && !carregandoImagem">
+                <span class="material-symbols-outlined">info</span>
+                <span *ngIf="!imagemAlterada">Esta é a imagem atual do evento. Se você não selecionar uma nova imagem, esta será mantida ao salvar.</span>
+                <span *ngIf="imagemAlterada">Nova imagem selecionada — ela substituirá a imagem atual ao salvar.</span>
+              </p>
+          </div>
         </div>
 
         <div class="form-group" *ngIf="modoEdicao">
@@ -147,40 +178,40 @@
   </div>
 </div>
 
-<!-- Modal de Visualização (Preview) -->
+<!-- Modal Visualização -->
 <div class="modal-overlay" *ngIf="modalVisualizacaoAberto" (click)="fecharVisualizacao()">
   <div class="modal-card modal-preview" (click)="$event.stopPropagation()">
-
     <div class="modal-header">
       <h3>Detalhes do Evento</h3>
       <button class="btn-fechar" (click)="fecharVisualizacao()">&times;</button>
     </div>
-
     <div class="modal-body-preview form-scroll" *ngIf="eventoVisualizacao">
-      <!-- Capa bonitona no topo -->
       <div class="preview-capa" *ngIf="eventoVisualizacao.imagem">
-        <img [src]="eventoVisualizacao.imagem" alt="Capa do Evento">
+        <img [src]="tratarImagem(eventoVisualizacao.imagem)" alt="Capa do Evento">
       </div>
-
       <div class="preview-info">
         <div class="tag-tipo">{{ eventoVisualizacao.tipoEvento }}</div>
         <h2>{{ eventoVisualizacao.titulo }}</h2>
-
         <p class="preview-data-local">
           <span class="material-symbols-outlined">calendar_today</span>
           {{ eventoVisualizacao.dataEvento | date:'dd/MM/yyyy HH:mm' }}<br>
           <span class="material-symbols-outlined">location_on</span>
           {{ eventoVisualizacao.endereco }}
         </p>
-
         <div class="preview-desc">
           <h4>Sobre o evento</h4>
           <p>{{ eventoVisualizacao.descricao }}</p>
         </div>
-
         <div class="preview-extra">
           <p><strong>Valor:</strong> {{ eventoVisualizacao.valor ? (eventoVisualizacao.valor | currency:'BRL') : 'Gratuito' }}</p>
-
+          <div *ngIf="eventoVisualizacao.parceiros && eventoVisualizacao.parceiros.length > 0">
+            <h4>Parceiros</h4>
+            <div class="preview-parceiros-logos">
+              <div class="parceiro-logo-item" *ngFor="let p of eventoVisualizacao.parceiros" [title]="p.nome">
+                <img [src]="tratarImagem(p.logo)" [alt]="p.nome">
+              </div>
+            </div>
+          </div>
           <div *ngIf="eventoVisualizacao.comentarioPosEvento">
             <h4>Comentário Pós-Evento</h4>
             <p>{{ eventoVisualizacao.comentarioPosEvento }}</p>
@@ -188,7 +219,6 @@
         </div>
       </div>
     </div>
-
     <div class="modal-acoes">
       <button type="button" class="btn-cancelar" (click)="fecharVisualizacao()">Fechar</button>
     </div>
