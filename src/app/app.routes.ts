@@ -3,8 +3,8 @@ import { Home } from './pages/public/home/home';
 import { Dashboard } from './pages/private/dashboard/dashboard'; 
 import { DashboardHome } from './pages/private/dashboard/dashboard-home/dashboard-home';
 import { ContentManagement } from './pages/private/content-management/content-management';
-import { MembroComponent } from './components/membro/membro.component';
 import { canDeactivateGuard } from './guards/can-deactivate.guard';
+import { ColaboradorComponent } from '@pages/private/colaborador/colaborador.component';
 
 export const routes: Routes = [
     { path: '', component: Home },
@@ -14,9 +14,8 @@ export const routes: Routes = [
         children: [
             { path: '', component: DashboardHome },
             { path: 'conteudo-publico', component: ContentManagement },
-            { path: 'conteudo-publico/:secao', component: ContentManagement }
+            { path: 'conteudo-publico/:secao', component: ContentManagement },
+            { path: 'colaboradores', component: ColaboradorComponent}
         ]
     },
-    { path: 'membros', component: MembroComponent, canDeactivate: [canDeactivateGuard] },
-    { path: '', redirectTo: '/membros', pathMatch: 'full' }
 ];

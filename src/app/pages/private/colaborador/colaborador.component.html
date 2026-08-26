@@ -1,7 +1,7 @@
 <!-- cabecalho e acoes principais -->
 <div class="container">
   <div class="header-acoes">
-    <h2>Gerenciamento de Usuários</h2>
+    <h2>Gerenciamento de Colaboradores</h2>
     <div class="header-direita">
       <select class="filtro-papel" [(ngModel)]="filtroPapel" (ngModelChange)="aplicarFiltro()">
         <option value="">Todos os papéis</option>
@@ -12,8 +12,8 @@
   </div>
 
   <!-- tabela de listagem -->
-  <div class="tabela-card" *ngIf="membrosFiltrados.length > 0; else estadoVazio">
-    <table class="tabela-membros">
+  <div class="tabela-card" *ngIf="colaboradoresFiltrados.length > 0; else estadoVazio">
+    <table class="tabela-colaboradores">
       <thead>
         <tr>
           <th>ID</th>
@@ -26,19 +26,19 @@
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let membro of membrosFiltrados">
-          <td>{{ membro.id }}</td>
-          <td>{{ membro.nomeCompleto }}</td>
-          <td>{{ membro.email }}</td>
-          <td>{{ membro.cpf }}</td>
-          <td>{{ membro.nomePapel }}</td>
+        <tr *ngFor="let colaborador of colaboradoresFiltrados">
+          <td>{{ colaborador.id }}</td>
+          <td>{{ colaborador.nomeCompleto }}</td>
+          <td>{{ colaborador.email }}</td>
+          <td>{{ colaborador.cpf }}</td>
+          <td>{{ colaborador.nomePapel }}</td>
           <td class="acoes-icone">
-            <button (click)="abrirEdicao(membro)" class="btn-icone btn-icone-editar" title="Editar">
+            <button (click)="abrirEdicao(colaborador)" class="btn-icone btn-icone-editar" title="Editar">
               <span class="material-symbols-outlined">edit</span>
             </button>
           </td>
           <td class="acoes-icone">
-            <button (click)="deletarMembro(membro.id)" class="btn-icone btn-icone-excluir" title="Excluir">
+            <button (click)="deletarColaborador(colaborador.id)" class="btn-icone btn-icone-excluir" title="Excluir">
               <span class="material-symbols-outlined">delete</span>
             </button>
           </td>
@@ -50,7 +50,7 @@
   <!-- estado vazio -->
   <ng-template #estadoVazio>
     <div class="estado-vazio">
-      <p *ngIf="!filtroPapel">Nenhum usuário cadastrado ainda</p>
+      <p *ngIf="!filtroPapel">Nenhum colaborador cadastrado ainda</p>
       <p *ngIf="filtroPapel">Nenhum {{ filtroPapel }} cadastrado ainda</p>
     </div>
   </ng-template>
@@ -67,7 +67,7 @@
     </div>
 
     <!-- formulário -->
-    <form [formGroup]="formMembro" (ngSubmit)="salvar()" class="form-membro">
+    <form [formGroup]="formColaborador" (ngSubmit)="salvar()" class="form-colaborador">
 
       <div class="form-scroll">
         <div class="form-group">
@@ -149,7 +149,7 @@
       <!-- rodapé fixo -->
       <div class="modal-acoes">
         <button type="button" class="btn-cancelar" [disabled]="isLoading" (click)="fecharModal()">Cancelar</button>
-        <button type="submit" [disabled]="formMembro.invalid || isLoading || (modoEdicao && !temAlteracoes)" class="btn-salvar">
+        <button type="submit" [disabled]="formColaborador.invalid || isLoading || (modoEdicao && !temAlteracoes)" class="btn-salvar">
           <span *ngIf="isLoading" class="spinner" aria-hidden="true"></span>
           <span>{{ isLoading ? 'Salvando...' : (modoEdicao ? 'Atualizar' : 'Salvar') }}</span>
         </button>

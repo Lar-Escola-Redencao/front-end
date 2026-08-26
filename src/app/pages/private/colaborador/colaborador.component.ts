@@ -1,32 +1,32 @@
 import { Component, OnInit, ChangeDetectorRef, HostListener, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MembroService } from '../../services/membro.service';
-import { PapelService } from '../../services/papel.service';
-import { Membro, CriarMembroDTO, AtualizarMembroDTO } from '../../models/membro.model';
 import { ToastrService } from 'ngx-toastr';
 import Swal from 'sweetalert2';
-import { ComponentComAlteracoesNaoSalvas } from '../../guards/can-deactivate.guard';
+import { ComponentComAlteracoesNaoSalvas } from 'src/app/guards/can-deactivate.guard';
+import { ColaboradorService } from 'src/app/services/colaborador/colaborador.service';
+import { PapelService } from 'src/app/services/colaborador/papel.service';
+import { AtualizarColaboradorDTO, Colaborador, CriarColaboradorDTO } from 'src/app/models/membro.model';
 
 @Component({
-  selector: 'app-membro',
+  selector: 'app-colaborador',
   standalone: true,
   imports: [CommonModule, FormsModule, ReactiveFormsModule],
-  templateUrl: './membro.component.html',
-  styleUrls: ['./membro.component.css']
+  templateUrl: './colaborador.component.html',
+  styleUrls: ['./colaborador.component.css']
 })
-export class MembroComponent implements OnInit, ComponentComAlteracoesNaoSalvas {
+export class ColaboradorComponent implements OnInit, ComponentComAlteracoesNaoSalvas {
 
-  membros: Membro[] = [];
-  membrosFiltrados: Membro[] = [];
+  colaboradores: Colaborador[] = [];
+  colaboradoresFiltrados: Colaborador[] = [];
   papeisDisponiveis: string[] = [];
   filtroPapel = '';
   papeis: { id: number, nome?: string, nomePapel?: string }[] = [];
 
   modalAberto = false;
   modoEdicao = false;
-  membroSelecionadoId: number | null = null;
-  formMembro: FormGroup;
+  colaboradorSelecionadoId: number | null = null;
+  formColaborador: FormGroup;
   erros: { [key: string]: string } = {};
   mostrarSenha = false;
   mostrarConfirmarSenha = false;
@@ -80,14 +80,14 @@ export class MembroComponent implements OnInit, ComponentComAlteracoesNaoSalvas 
     };
 
   constructor(
-    private membroService: MembroService,
+    private colaboradorService: ColaboradorService,
     private papelService: PapelService,
     private fb: FormBuilder,
     private cdr: ChangeDetectorRef,
     private toastr: ToastrService,
     private ngZone: NgZone
   ) {
-    this.formMembro = this.fb.group({
+    this.formColaborador = this.fb.group({
       nomeCompleto: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(60)]],
       email: ['', [Validators.required, Validators.email, Validators.minLength(5), Validators.maxLength(100)]],
       senha: [''],
@@ -101,18 +101,18 @@ export class MembroComponent implements OnInit, ComponentComAlteracoesNaoSalvas 
 
   ngOnInit(): void {
     this.carregarPapeis();
-    this.carregarMembros();
+    this.carregarColaboradors();
 
     // reavalia a confirmação de senha sempre que um dos dois campos mudar
-    this.formMembro.get('senha')?.valueChanges.subscribe(() => this.checarSenhasIguais());
-    this.formMembro.get('confirmarSenha')?.valueChanges.subscribe(() => this.checarSenhasIguais());
+    this.formColaborador.get('senha')?.valueChanges.subscribe(() => this.checarSenhasIguais());
+    this.formColaborador.get('confirmarSenha')?.valueChanges.subscribe(() => this.checarSenhasIguais());
   }
 
   // senha: comparação e visibilidade
 
   private checarSenhasIguais(): void {
-    const senha = this.formMembro.get('senha');
-    const confirmarSenha = this.formMembro.get('confirmarSenha');
+    const senha = this.formColaborador.get('senha');
+    const confirmarSenha = this.formColaborador.get('confirmarSenha');
     if (!senha || !confirmarSenha) return;
 
     if (senha.value && confirmarSenha.value && senha.value !== confirmarSenha.value) {
@@ -142,10 +142,10 @@ export class MembroComponent implements OnInit, ComponentComAlteracoesNaoSalvas 
     });
   }
 
-  carregarMembros(): void {
-    this.membroService.listarTodos().subscribe({
+  carregarColaboradors(): void {
+    this.colaboradorService.listarTodos().subscribe({
       next: (dados) => {
-        this.membros = dados;
+        this.colaboradores = dados;
         this.papeisDisponiveis = [...new Set(dados.map(m => m.nomePapel))];
         this.aplicarFiltro();
 
@@ -161,61 +161,61 @@ export class MembroComponent implements OnInit, ComponentComAlteracoesNaoSalvas 
   }
 
   aplicarFiltro(): void {
-    this.membrosFiltrados = this.filtroPapel
-      ? this.membros.filter(m => m.nomePapel === this.filtroPapel)
-      : this.membros;
+    this.colaboradoresFiltrados = this.filtroPapel
+      ? this.colaboradores.filter(m => m.nomePapel === this.filtroPapel)
+      : this.colaboradores;
   }
 
   // controle do modal (cadastro e edição)
   abrirCadastro(): void {
     this.modoEdicao = false;
-    this.membroSelecionadoId = null;
-    this.formMembro.reset();
+    this.colaboradorSelecionadoId = null;
+    this.formColaborador.reset();
     this.erros = {};
     this.mostrarSenha = false;
     this.mostrarConfirmarSenha = false;
     this.isLoading = false;
     this.valoresOriginaisDoFormulario = null;
 
-    this.formMembro.get('senha')?.setValidators([
+    this.formColaborador.get('senha')?.setValidators([
       Validators.required,
       Validators.pattern(this.senhaRegex),
       Validators.maxLength(50)
     ]);
-    this.formMembro.get('confirmarSenha')?.setValidators([Validators.required]);
+    this.formColaborador.get('confirmarSenha')?.setValidators([Validators.required]);
 
-    this.formMembro.get('senha')?.updateValueAndValidity();
-    this.formMembro.get('confirmarSenha')?.updateValueAndValidity();
+    this.formColaborador.get('senha')?.updateValueAndValidity();
+    this.formColaborador.get('confirmarSenha')?.updateValueAndValidity();
     this.modalAberto = true;
   }
 
-  abrirEdicao(membro: Membro): void {
+  abrirEdicao(colaborador: Colaborador): void {
     this.modoEdicao = true;
-    this.membroSelecionadoId = membro.id;
+    this.colaboradorSelecionadoId = colaborador.id;
     this.erros = {};
     this.mostrarSenha = false;
     this.mostrarConfirmarSenha = false;
     this.isLoading = false;
 
-    this.formMembro.get('senha')?.clearValidators();
-    this.formMembro.get('confirmarSenha')?.clearValidators();
-    this.formMembro.get('senha')?.updateValueAndValidity();
-    this.formMembro.get('confirmarSenha')?.updateValueAndValidity();
+    this.formColaborador.get('senha')?.clearValidators();
+    this.formColaborador.get('confirmarSenha')?.clearValidators();
+    this.formColaborador.get('senha')?.updateValueAndValidity();
+    this.formColaborador.get('confirmarSenha')?.updateValueAndValidity();
 
-    this.formMembro.patchValue({
-      ...membro,
-      cpf: this.formatarCpf(membro.cpf),
-      telefone: this.formatarTelefone(membro.telefone)
+    this.formColaborador.patchValue({
+      ...colaborador,
+      cpf: this.formatarCpf(colaborador.cpf),
+      telefone: this.formatarTelefone(colaborador.telefone)
     });
 
-    this.valoresOriginaisDoFormulario = this.formMembro.getRawValue();
+    this.valoresOriginaisDoFormulario = this.formColaborador.getRawValue();
 
     this.modalAberto = true;
   }
 
   get temAlteracoes(): boolean {
     if (!this.modoEdicao) return true; 
-    return JSON.stringify(this.formMembro.getRawValue()) !== JSON.stringify(this.valoresOriginaisDoFormulario);
+    return JSON.stringify(this.formColaborador.getRawValue()) !== JSON.stringify(this.valoresOriginaisDoFormulario);
   }
 
   fecharModal(): void {
@@ -238,7 +238,7 @@ export class MembroComponent implements OnInit, ComponentComAlteracoesNaoSalvas 
       this.ngZone.run(() => {
         if (resultado.isConfirmed) {
           this.modalAberto = false;
-          this.formMembro.reset(); 
+          this.formColaborador.reset(); 
           this.cdr.detectChanges(); 
         } else {
           this.dispararTremorModal();
@@ -264,7 +264,7 @@ export class MembroComponent implements OnInit, ComponentComAlteracoesNaoSalvas 
 
   formularioTemAlteracoesNaoSalvas(): boolean {
     if (!this.modalAberto) return false;
-    return this.modoEdicao ? this.temAlteracoes : this.formMembro.dirty;
+    return this.modoEdicao ? this.temAlteracoes : this.formColaborador.dirty;
   }
 
   @HostListener('window:beforeunload', ['$event'])
@@ -277,7 +277,7 @@ export class MembroComponent implements OnInit, ComponentComAlteracoesNaoSalvas 
 
   // validações e máscaras
   verificarErros(): void {
-    const controles = this.formMembro.controls;
+    const controles = this.formColaborador.controls;
     this.erros = {};
 
     for (const campo in controles) {
@@ -305,7 +305,7 @@ export class MembroComponent implements OnInit, ComponentComAlteracoesNaoSalvas 
     valor = valor.replace(/(\d{3})(\d)/, '$1.$2');
     valor = valor.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
 
-    this.formMembro.get('cpf')?.setValue(valor, { emitEvent: false });
+    this.formColaborador.get('cpf')?.setValue(valor, { emitEvent: false });
     this.verificarErros();
   }
 
@@ -323,7 +323,7 @@ export class MembroComponent implements OnInit, ComponentComAlteracoesNaoSalvas 
       valor = valor.replace(/^(\d*)/, '($1');
     }
 
-    this.formMembro.get('telefone')?.setValue(valor, { emitEvent: false });
+    this.formColaborador.get('telefone')?.setValue(valor, { emitEvent: false });
   }
 
   private formatarCpf(valor: string): string {
@@ -353,10 +353,10 @@ export class MembroComponent implements OnInit, ComponentComAlteracoesNaoSalvas 
 
   // interações com backend
   salvar(): void {
-    this.formMembro.markAllAsTouched();
+    this.formColaborador.markAllAsTouched();
     this.verificarErros();
 
-    if (this.formMembro.invalid) return;
+    if (this.formColaborador.invalid) return;
 
     if (this.modoEdicao && !this.temAlteracoes) {
       this.toastr.info('Nenhum dado foi alterado.', 'Aviso');
@@ -366,41 +366,41 @@ export class MembroComponent implements OnInit, ComponentComAlteracoesNaoSalvas 
     this.isLoading = true;
 
     if (this.modoEdicao) {
-      const { senha, confirmarSenha, ...dadosEdicao } = this.formMembro.value;
-      const dto: AtualizarMembroDTO = dadosEdicao;
-      this.membroService.atualizar(this.membroSelecionadoId!, dto).subscribe({
+      const { senha, confirmarSenha, ...dadosEdicao } = this.formColaborador.value;
+      const dto: AtualizarColaboradorDTO = dadosEdicao;
+      this.colaboradorService.atualizar(this.colaboradorSelecionadoId!, dto).subscribe({
         next: () => {
           this.isLoading = false;
           this.fecharModalSemConfirmacao();
-          this.carregarMembros();
+          this.carregarColaboradors();
           this.toastr.success('Usuário atualizado com sucesso.', 'Sucesso');
         },
         error: (err) => {
           this.isLoading = false;
-          this.toastr.error(err.error?.message || 'Erro ao atualizar membro', 'Erro');
+          this.toastr.error(err.error?.message || 'Erro ao atualizar colaborador', 'Erro');
           setTimeout(() => this.cdr.detectChanges());
         }
       });
     } else {
-      const { confirmarSenha, ...dadosCadastro } = this.formMembro.value;
-      const dto: CriarMembroDTO = dadosCadastro;
-      this.membroService.criar(dto).subscribe({
+      const { confirmarSenha, ...dadosCadastro } = this.formColaborador.value;
+      const dto: CriarColaboradorDTO = dadosCadastro;
+      this.colaboradorService.criar(dto).subscribe({
         next: () => {
           this.isLoading = false;
           this.fecharModalSemConfirmacao();
-          this.carregarMembros();
+          this.carregarColaboradors();
           this.toastr.success('Usuário cadastrado com sucesso.', 'Sucesso');
         },
         error: (err) => {
           this.isLoading = false;
-          this.toastr.error(err.error?.message || 'Erro ao cadastrar membro', 'Erro');
+          this.toastr.error(err.error?.message || 'Erro ao cadastrar colaborador', 'Erro');
           setTimeout(() => this.cdr.detectChanges());
         }
       });
     }
   }
 
-  deletarMembro(id: number): void {
+  deletarColaborador(id: number): void {
     Swal.fire({
       title: 'Tem certeza?',
       text: 'Essa ação não poderá ser desfeita.',
@@ -413,12 +413,12 @@ export class MembroComponent implements OnInit, ComponentComAlteracoesNaoSalvas 
       reverseButtons: true
     }).then((resultado) => {
       if (resultado.isConfirmed) {
-        this.membroService.deletar(id).subscribe({
+        this.colaboradorService.deletar(id).subscribe({
           next: () => {
-            this.carregarMembros();
+            this.carregarColaboradors();
             this.toastr.success('Usuário excluído com sucesso.', 'Sucesso');
           },
-          error: () => this.toastr.error('Erro ao excluir membro.', 'Erro')
+          error: () => this.toastr.error('Erro ao excluir colaborador.', 'Erro')
         });
       }
     });

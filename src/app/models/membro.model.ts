@@ -1,4 +1,4 @@
-export interface Membro {
+export interface Colaborador {
   id: number;
   nomeCompleto: string;
   email: string;
@@ -9,7 +9,7 @@ export interface Membro {
   nomePapel: string;
 }
 
-export interface CriarMembroDTO {
+export interface CriarColaboradorDTO {
   nomeCompleto: string;
   email: string;
   senha?: string;
@@ -19,7 +19,7 @@ export interface CriarMembroDTO {
   idPapel: number;
 }
 
-export interface AtualizarMembroDTO {
+export interface AtualizarColaboradorDTO {
   nomeCompleto: string;
   email: string;
   cpf: string;

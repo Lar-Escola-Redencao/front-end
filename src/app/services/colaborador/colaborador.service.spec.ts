@@ -1,15 +1,15 @@
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
-import { MembroService } from './membro.service';
+import { ColaboradorService } from './colaborador.service';
 
-describe('MembroService', () => {
-  let service: MembroService;
+describe('ColaboradorService', () => {
+  let service: ColaboradorService;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [MembroService, provideHttpClient()]
+      providers: [ColaboradorService, provideHttpClient()]
     });
-    service = TestBed.inject(MembroService);
+    service = TestBed.inject(ColaboradorService);
   });
 
   it('should be created', () => {

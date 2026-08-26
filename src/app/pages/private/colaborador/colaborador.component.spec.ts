@@ -1,18 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
-import { MembroComponent } from './membro.component';
+import { ColaboradorComponent } from './colaborador.component';
 
-describe('MembroComponent', () => {
-  let component: MembroComponent;
-  let fixture: ComponentFixture<MembroComponent>;
+describe('ColaboradorComponent', () => {
+  let component: ColaboradorComponent;
+  let fixture: ComponentFixture<ColaboradorComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [MembroComponent],
+      imports: [ColaboradorComponent],
       providers: [provideHttpClient()]
     }).compileComponents();
 
-    fixture = TestBed.createComponent(MembroComponent);
+    fixture = TestBed.createComponent(ColaboradorComponent);
     component = fixture.componentInstance;
     await fixture.whenStable();
   });
