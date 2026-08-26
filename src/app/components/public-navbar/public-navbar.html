@@ -1,7 +1,9 @@
 <nav class="navbar">
   <!-- Lado Esquerdo: Logo -->
   <div class="logo-container">
-    <img src="/images/logo_colorida_texto.png" alt="Logo Lar Escola Redenção">
+    <a style="cursor: pointer;" routerLink="/">
+      <img src="/images/logo_colorida_texto.png" alt="Logo Lar Escola Redenção">
+    </a>
   </div>
 
   <!-- Botão Hambúrguer (Visível apenas no mobile) -->
@@ -11,22 +13,22 @@
     </span>
   </button>
 
-  <!-- Centro/Direita: Links e Botão (Agrupados para responsividade) -->
+  <!-- Centro/Direita: Links e Botão -->
   <div class="nav-content" [class.ativo]="menuAberto()">
     <ul class="nav-links">
-      <li><a href="#" (click)="alternarMenu()">Início</a></li>
-      <li><a href="#" (click)="alternarMenu()">Conheça a OSC</a></li>
-      <li><a href="#" (click)="alternarMenu()">Como ajudar?</a></li>
-      <li><a href="#" (click)="alternarMenu()">Unidades</a></li>
-      <li><a href="#" (click)="alternarMenu()">Eventos</a></li>
-      <li><a href="#" (click)="alternarMenu()">Parceiros</a></li>
-      <li><a href="#" (click)="alternarMenu()">Transparência</a></li>
+      <li><a style="cursor: pointer;" (click)="alternarMenu()">Início</a></li>
+      <li><a style="cursor: pointer;" (click)="alternarMenu()">Conheça a OSC</a></li>
+      <li><a style="cursor: pointer;" (click)="alternarMenu()">Como ajudar?</a></li>
+      <li><a style="cursor: pointer;" (click)="alternarMenu()">Unidades</a></li>
+      <li><a style="cursor: pointer;" (click)="alternarMenu()">Eventos</a></li>
+      <li><a style="cursor: pointer;" (click)="alternarMenu()">Parceiros</a></li>
+      <li><a style="cursor: pointer;" (click)="alternarMenu()">Transparência</a></li>
     </ul>
 
     <div class="nav-action">
-      <button class="btn-entrar" (click)="alternarMenu()">
-        <span class="material-symbols-outlined">account_circle</span>
-        Entrar
+      <button mat-flat-button class="btn-custom" (click)="entrarNoSistema()">
+        <span class="material-icons">person</span>
+        <span>Entrar</span>
       </button>
     </div>
   </div>

@@ -13,9 +13,11 @@
 }
 
 :root {
-    --azul: #3682DC;
-    --azul-hover: #1661bd;
-    --azul-active: #5386c5;
+    --primary-color: #3682DC;
+    --primary-hover-color: #1661bd;
+    --primary-active-color: #5386c5;
+    --primary-color-text: #ffffff;
+    
     --preto: #1e1e1e;
     --branco: #FFFFFF;
 

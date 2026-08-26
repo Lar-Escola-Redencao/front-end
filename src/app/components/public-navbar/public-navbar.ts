@@ -1,16 +1,25 @@
 import { Component, signal } from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
+import { MatButtonModule } from '@angular/material/button';
 
 @Component({
-  selector: 'app-public-navbar',
+  selector: 'public-navbar',
   standalone: true, 
-  imports: [],
+  imports: [RouterLink, MatButtonModule], 
   templateUrl: './public-navbar.html',
   styleUrl: './public-navbar.css',
 })
 export class PublicNavbar {
   menuAberto = signal(false);
 
+  constructor(private router: Router) {}
+
   alternarMenu() {
     this.menuAberto.update(valor => !valor);
+  }
+
+  entrarNoSistema() {
+    this.menuAberto.set(false);
+    this.router.navigate(['/dashboard']);
   }
 }
