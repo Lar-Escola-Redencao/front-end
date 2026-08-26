@@ -4,18 +4,20 @@ import { Eventos } from './components/eventos/eventos';
 import { Parceiros } from './components/parceiros/parceiros';
 import { RedesSociais } from './components/redes-sociais/redes-sociais';
 import { Transparencia } from './components/transparencia/transparencia';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatOption, MatSelect } from '@angular/material/select';
 
 @Component({
   selector: 'app-content-management',
   standalone: true,
-  imports: [Diretoria,Eventos,Parceiros,RedesSociais,Transparencia], // Declare os filhos aqui
+  imports: [MatFormFieldModule, MatSelect, MatOption, Diretoria,Eventos,Parceiros,RedesSociais,Transparencia],
   templateUrl: './content-management.html',
   styleUrl: './content-management.css'
 })
 export class ContentManagement {
   secaoSelecionada: string = '';
 
-  mudarSecao(event: any) {
-    this.secaoSelecionada = event.target.value;
+  mudarSecao(secao: string) {
+    this.secaoSelecionada = secao;
   }
 }

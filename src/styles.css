@@ -24,6 +24,10 @@
     --fonte-texto: 'Inter', sans-serif;
     --fonte-titulo: 'Bricolage Grotesque', sans-serif;
     --sombra-padrao: 0px 0px 4px 4px rgba(0, 0, 0, 0.05);
+
+    --input-color: rgba(30, 30, 30, 0.5);
+    --input-border: rgba(30, 30, 30, 0.2);
+    --input-radius: 6px;
 }
 
 * {
@@ -36,4 +40,123 @@ body {
     font-family: var(--fonte-texto);
     color: var(--preto);
     background-color: var(--branco);
+}
+
+.mat-mdc-form-field {
+    font-family: var(--fonte-texto) !important;
+    --mdc-outlined-text-field-container-shape: var(--input-radius);
+}
+
+.mat-mdc-form-field .mat-mdc-text-field-wrapper {
+    height: 58px;
+    background-color: var(--branco) !important;
+    border: 1px solid var(--input-border);
+    border-radius: var(--input-radius) !important;
+}
+
+.mat-mdc-form-field .mat-mdc-form-field-flex {
+    height: 100%;
+    align-items: center;
+    padding: 0 20px 0 8px;
+}
+
+.mat-mdc-form-field .mat-mdc-form-field-infix {
+    min-height: 0;
+    padding: 4px 0 0;
+}
+
+.mat-mdc-form-field .mdc-notched-outline__leading,
+.mat-mdc-form-field .mdc-notched-outline__notch,
+.mat-mdc-form-field .mdc-notched-outline__trailing {
+    border: 0 !important;
+}
+
+.mat-mdc-form-field .mat-mdc-select-placeholder,
+.mat-mdc-form-field input::placeholder,
+.mat-mdc-form-field textarea::placeholder {
+    color: var(--input-color) !important;
+    opacity: 1;
+}
+
+.mat-mdc-form-field .mat-mdc-select-value,
+.mat-mdc-form-field .mat-mdc-input-element {
+    color: var(--preto) !important;
+    font-family: var(--fonte-texto) !important;
+    font-size: 1rem;
+}
+
+.mat-mdc-form-field .mat-mdc-input-element,
+.mat-mdc-form-field .mat-mdc-select-value {
+    padding-left: 0 !important;
+}
+.mat-mdc-form-field .mdc-text-field__input {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    margin: 0 !important;
+    margin-top: 10px !important;
+    position: relative;
+    top: 1px;
+    text-indent: 0 !important;
+}
+
+.mat-mdc-form-field .mat-mdc-select-value-text {
+    margin-left: 0 !important;
+}
+
+.mat-mdc-form-field .mat-mdc-select-arrow {
+    color: var(--input-color) !important;
+}
+
+.mat-mdc-form-field .mat-mdc-floating-label,
+.mat-mdc-form-field .mdc-floating-label--float-above {
+    color: var(--input-color) !important;
+    font-family: var(--fonte-texto) !important;
+}
+
+.mat-mdc-form-field .mdc-floating-label--float-above {
+    background-color: var(--branco);
+    padding: 0 4px;
+    transform: translateY(-24px) scale(0.75) !important;
+}
+
+.mat-mdc-form-field .mat-mdc-floating-label:not(.mdc-floating-label--float-above) {
+    margin-left: 12px;
+}
+
+.mat-mdc-form-field .mat-mdc-form-field-subscript-wrapper {
+    display: none;
+}
+
+.mat-mdc-select-panel {
+    background-color: var(--branco) !important;
+}
+
+.mat-mdc-select-panel .mat-mdc-option {
+    background-color: var(--branco) !important;
+    color: var(--preto) !important;
+    font-family: var(--fonte-texto) !important;
+}
+
+.btn-primary {
+    min-height: 45px;
+    padding: 0 28px;
+    border: 0;
+    border-radius: 6px;
+    background-color: var(--primary-color);
+    box-shadow: var(--sombra-padrao);
+    color: var(--branco);
+    cursor: pointer;
+    font-family: var(--fonte-texto);
+    font-size: 1rem;
+    font-weight: 700;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.btn-primary:hover {
+    background-color: var(--primary-hover-color);
+}
+
+.btn-primary:active {
+    background-color: var(--primary-active-color);
+    transform: translateY(1px);
 }

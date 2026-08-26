@@ -1,16 +1,24 @@
-<div class="header-gerenciamento">
-  <h1>Conteúdo público</h1>
-  <select (change)="mudarSecao($event)">
-    <option value="" disabled selected>Escolha uma seção</option>
-    <option value="diretoria">Diretoria</option>
-    <option value="eventos">Eventos</option>
-    <option value="parceiros">Parceiros</option>
-    <option value="redes-sociais">Redes Sociais</option>
-    <option value="transparencia">Transparência</option>
-  </select>
-</div>
+<div class="content-management-page">
+  <div class="header-gerenciamento">
+    <h1>Conteúdo público</h1>
 
-<div class="conteudo-mutavel">
+    <mat-form-field appearance="outline" class="seletor-secao">
+      <mat-select
+        [value]="secaoSelecionada"
+        placeholder="Escolha uma seção"
+        (selectionChange)="mudarSecao($event.value)"
+      >
+        <mat-option value="" disabled>Escolha uma seção</mat-option>
+        <mat-option value="diretoria">Diretoria</mat-option>
+        <mat-option value="eventos">Eventos</mat-option>
+        <mat-option value="parceiros">Parceiros</mat-option>
+        <mat-option value="redes-sociais">Redes Sociais</mat-option>
+        <mat-option value="transparencia">Transparência</mat-option>
+      </mat-select>
+    </mat-form-field>
+  </div>
+
+  <div class="conteudo-mutavel">
   @switch (secaoSelecionada) {
     @case ('diretoria'){
         <app-diretoria></app-diretoria>
@@ -31,4 +39,5 @@
         <p class="mensagem-vazia">Nenhuma seção selecionada</p> 
     }
   }
+  </div>
 </div>
