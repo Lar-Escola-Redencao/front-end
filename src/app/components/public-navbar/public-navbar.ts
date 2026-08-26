@@ -3,7 +3,7 @@ import { Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 
 @Component({
-  selector: 'public-navbar',
+  selector: 'app-public-navbar',
   standalone: true, 
   imports: [RouterLink, MatButtonModule], 
   templateUrl: './public-navbar.html',

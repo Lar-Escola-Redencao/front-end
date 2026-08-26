@@ -4,7 +4,7 @@ import { NgClass, NgIf } from '@angular/common';
 import { RouterLink } from '@angular/router';
 
 @Component({
-  selector: 'private-navbar',
+  selector: 'app-private-navbar',
   standalone: true,
   imports: [MatButtonModule, NgClass, NgIf, RouterLink],
   templateUrl: './private-navbar.html',

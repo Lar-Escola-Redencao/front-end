@@ -1,0 +1,34 @@
+<div class="header-gerenciamento">
+  <h1>Conteúdo público</h1>
+  <select (change)="mudarSecao($event)">
+    <option value="" disabled selected>Escolha uma seção</option>
+    <option value="diretoria">Diretoria</option>
+    <option value="eventos">Eventos</option>
+    <option value="parceiros">Parceiros</option>
+    <option value="redes-sociais">Redes Sociais</option>
+    <option value="transparencia">Transparência</option>
+  </select>
+</div>
+
+<div class="conteudo-mutavel">
+  @switch (secaoSelecionada) {
+    @case ('diretoria'){
+        <app-diretoria></app-diretoria>
+    }
+    @case ('eventos'){ 
+        <app-eventos></app-eventos> 
+    }
+    @case ('parceiros'){ 
+        <app-parceiros></app-parceiros> 
+    }
+    @case ('redes-sociais'){
+        <app-redes-sociais></app-redes-sociais>
+    }
+     @case ('transparencia'){
+        <app-transparencia></app-transparencia>
+    }
+    @default{ 
+        <p class="mensagem-vazia">Nenhuma seção selecionada</p> 
+    }
+  }
+</div>

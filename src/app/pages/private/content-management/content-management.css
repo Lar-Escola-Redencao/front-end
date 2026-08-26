@@ -1,0 +1,82 @@
+/* Container geral da página para dar espaçamento e não colar na Navbar */
+:host {
+  display: block;
+  padding: 40px 24px; /* O padding-top compensa o espaço da barra de navegação */
+  max-width: 1000px; /* Mantém o conteúdo centralizado e não muito largo */
+  margin: 0 auto; 
+}
+
+/* --- CABEÇALHO (Título e Select) --- */
+.header-gerenciamento {
+  display: flex;
+  align-items: center;
+  justify-content: center; /* Centraliza o título e o select no topo */
+  gap: 24px; /* Espaço entre o título e o select */
+  margin-bottom: 48px; /* Dá um respiro antes de carregar o componente filho */
+}
+
+/* Estilo do Título */
+.header-gerenciamento h1 {
+  font-family: var(--fonte-titulo, 'Bricolage Grotesque', sans-serif);
+  font-size: 32px;
+  font-weight: 800; /* Deixa o texto bem grosso como na imagem */
+  color: var(--preto, #1c1c1c); /* Cor escura do título */
+  margin: 0;
+  letter-spacing: -0.5px;
+}
+
+/* Estilo do Select (Caixa de Seleção) */
+.header-gerenciamento select {
+  padding: 10px 16px;
+  font-size: 14px;
+  font-family: var(--fonte-texto, sans-serif);
+  color: #495057;
+  border: 1px solid #d1d5db; /* Borda cinza clara */
+  border-radius: 6px;
+  outline: none;
+  min-width: 240px; /* Garante que a caixa tenha um bom tamanho */
+  background-color: #ffffff;
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.header-gerenciamento select:focus {
+  border-color: var(--primary-color, #3b82f6);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15); /* Efeito de foco azulzinho */
+}
+
+/* --- ESTADO VAZIO --- */
+.mensagem-vazia {
+  text-align: center;
+  color: #868e96; /* Cinza médio igual ao print */
+  font-family: var(--fonte-texto, sans-serif);
+  font-size: 16px;
+  font-weight: 600;
+  margin-top: 40px;
+}
+
+/* --- ÁREA DO CONTEÚDO (Componentes Filhos) --- */
+.conteudo-mutavel {
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* Garante que as tabelas carreguem centralizadas */
+  width: 100%;
+}
+
+/* --- RESPONSIVIDADE MOBILE --- */
+@media (max-width: 1000px) {
+  .header-gerenciamento {
+    flex-direction: column; /* No celular, empilha o título em cima do select */
+    gap: 16px;
+    text-align: center;
+    margin-bottom: 32px;
+  }
+  
+  .header-gerenciamento h1 {
+    font-size: 28px;
+  }
+  
+  .header-gerenciamento select {
+    width: 100%; /* No mobile o select ocupa a tela toda */
+  }
+}
