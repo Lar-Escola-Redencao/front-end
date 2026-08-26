@@ -27,9 +27,13 @@ export function decodeJwtPayload(token: string): JwtPayload | null {
   }
 }
 
-export function isJwtExpired(token: string): boolean {
+
+export function isJwtInvalid(token: string): boolean {
   const payload = decodeJwtPayload(token);
-  if (!payload?.exp) {
+  if (!payload) {
+    return true;
+  }
+  if (!payload.exp) {
     return false;
   }
   return Date.now() >= payload.exp * 1000;

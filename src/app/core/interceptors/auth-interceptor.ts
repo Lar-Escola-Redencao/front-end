@@ -19,9 +19,11 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
   return next(authorizedReq).pipe(
     catchError((error: unknown) => {
-      if (error instanceof HttpErrorResponse && error.status === 401 && isApiRequest) {
+      // Only treat this as a session expiry when the rejected request actually carried a
+      // token — otherwise a plain wrong-password 401 on /auth/login would also trigger it.
+      if (error instanceof HttpErrorResponse && error.status === 401 && isApiRequest && token) {
         auth.logout();
-        router.navigate(['/login']);
+        router.navigate(['/login'], { queryParams: { reason: 'expired' } });
       }
       return throwError(() => error);
     }),

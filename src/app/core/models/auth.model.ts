@@ -7,6 +7,7 @@ export interface LoginRequest {
 export interface LoginRequestDto {
   email: string;
   senha: string;
+  lembrarMe: boolean;
 }
 
 export interface LoginResponse {

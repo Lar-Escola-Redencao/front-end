@@ -1,9 +1,12 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { Auth } from '../../core/services/auth';
+
+const SESSION_EXPIRED_TOAST_MS = 6000;
 
 @Component({
   selector: 'app-login',
@@ -19,6 +22,29 @@ export class Login {
   protected readonly loading = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly showForgotHint = signal(false);
+
+  private readonly queryParams = toSignal(this.route.queryParamMap);
+  private readonly sessionExpiredParam = computed(
+    () => this.queryParams()?.get('reason') === 'expired',
+  );
+  private readonly toastDismissed = signal(false);
+  protected readonly showSessionExpiredToast = computed(
+    () => this.sessionExpiredParam() && !this.toastDismissed(),
+  );
+
+  constructor() {
+    effect((onCleanup) => {
+      if (!this.sessionExpiredParam()) {
+        return;
+      }
+      const timer = setTimeout(() => this.toastDismissed.set(true), SESSION_EXPIRED_TOAST_MS);
+      onCleanup(() => clearTimeout(timer));
+    });
+  }
+
+  protected dismissSessionExpiredToast(): void {
+    this.toastDismissed.set(true);
+  }
 
   protected readonly form = new FormGroup({
     email: new FormControl('', {
