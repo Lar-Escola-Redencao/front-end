@@ -14,7 +14,7 @@ export interface Evento {
 export interface CriarEventoDTO {
   titulo: string;
   descricao: string;
-  dataEvento: Date;
+  dataEvento: string | Date;
   endereco: string;
   imagem?: File;
   valor?: number;
@@ -25,7 +25,7 @@ export interface CriarEventoDTO {
 export interface AtualizarEventoDTO {
   titulo?: string;
   descricao?: string;
-  dataEvento?: Date;
+  dataEvento?: string | Date;
   endereco?: string;
   imagem?: File;
   valor?: number;
