@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideAnimations } from '@angular/platform-browser/animations';
-import { provideRouter } from '@angular/router';
 import { provideToastr } from 'ngx-toastr';
 import { DiretoriaComponent } from './diretoria.component';
 
@@ -12,7 +11,7 @@ describe('DiretoriaComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [DiretoriaComponent],
-      providers: [provideHttpClient(), provideAnimations(), provideToastr(), provideRouter([])]
+      providers: [provideHttpClient(), provideAnimations(), provideToastr()]
     }).compileComponents();
 
     fixture = TestBed.createComponent(DiretoriaComponent);

@@ -1,13 +1,11 @@
 import { Component, ChangeDetectorRef, HostListener, NgZone, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import Swal from 'sweetalert2';
 import { DiretoriaService } from '../../services/diretoria.service';
 import { AtualizarDiretoriaDTO, CriarDiretoriaDTO, Diretoria } from '../../models/diretoria.model';
 import { ComponentComAlteracoesNaoSalvas } from '../../guards/can-deactivate.guard';
-import { Auth } from '../../core/services/auth';
 
 const TIPOS_PERMITIDOS = ['image/jpeg', 'image/png', 'image/webp'];
 const TAMANHO_MAXIMO_BYTES = 5 * 1024 * 1024;
@@ -54,9 +52,7 @@ export class DiretoriaComponent implements OnInit, OnDestroy, ComponentComAltera
     private fb: FormBuilder,
     private cdr: ChangeDetectorRef,
     private toastr: ToastrService,
-    private ngZone: NgZone,
-    private auth: Auth,
-    private router: Router
+    private ngZone: NgZone
   ) {
     this.formDiretoria = this.fb.group({
       nome: ['', [Validators.required, Validators.maxLength(150)]],
@@ -67,11 +63,6 @@ export class DiretoriaComponent implements OnInit, OnDestroy, ComponentComAltera
 
   ngOnInit(): void {
     this.carregarDiretores();
-  }
-
-  sair(): void {
-    this.auth.logout();
-    this.router.navigate(['/login']);
   }
 
   ngOnDestroy(): void {
