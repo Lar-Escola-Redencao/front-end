@@ -1,4 +1,4 @@
-import { Component, input, output } from '@angular/core';
+import { Component } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { NAV_ITEMS } from './nav-items';
 
@@ -9,8 +9,5 @@ import { NAV_ITEMS } from './nav-items';
   styleUrl: './sidebar.css',
 })
 export class Sidebar {
-  readonly open = input(false);
-  readonly navigated = output<void>();
-
   protected readonly navItems = NAV_ITEMS;
 }

@@ -11,29 +11,16 @@
     }
 
     <div class="form-field">
-      <label for="social-platform">Plataforma</label>
-      <select
-        id="social-platform"
-        formControlName="platform"
-        [class.invalid]="form.controls.platform.invalid && form.controls.platform.touched"
-      >
-        @for (option of platformOptions; track option.value) {
-          <option [value]="option.value">{{ option.label }}</option>
-        }
-      </select>
-    </div>
-
-    <div class="form-field">
-      <label for="social-label">Nome de exibição</label>
+      <label for="social-nome">Nome</label>
       <input
-        id="social-label"
+        id="social-nome"
         type="text"
-        formControlName="label"
-        placeholder="Ex: Instagram oficial"
-        [class.invalid]="form.controls.label.invalid && form.controls.label.touched"
+        formControlName="nome"
+        placeholder="Ex: Instagram"
+        [class.invalid]="form.controls.nome.invalid && form.controls.nome.touched"
       />
-      @if (form.controls.label.invalid && form.controls.label.touched) {
-        <span class="field-error">Informe um nome de exibição.</span>
+      @if (form.controls.nome.invalid && form.controls.nome.touched) {
+        <span class="field-error">Informe um nome (até 50 caracteres).</span>
       }
     </div>
 
@@ -48,6 +35,18 @@
       />
       @if (form.controls.url.invalid && form.controls.url.touched) {
         <span class="field-error">Informe um link válido (iniciando com http:// ou https://).</span>
+      }
+    </div>
+
+    <div class="form-field">
+      <label>Ícone</label>
+      <app-image-dropzone
+        [imageUrl]="iconPreviewUrl()"
+        [invalid]="!isEditMode() && iconTouched() && !iconPreviewUrl()"
+        (fileSelected)="onIconSelected($event)"
+      />
+      @if (!isEditMode() && iconTouched() && !iconPreviewUrl()) {
+        <span class="field-error">Selecione um ícone para a rede social.</span>
       }
     </div>
   </form>

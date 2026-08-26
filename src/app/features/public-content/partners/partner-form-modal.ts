@@ -1,5 +1,6 @@
-import { Component, computed, inject, input, output, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { environment } from '../../../../environments/environment';
 import { Modal } from '../../../shared/ui/modal/modal';
 import { ToggleSwitch } from '../../../shared/ui/toggle-switch/toggle-switch';
 import { ImageDropzone } from '../../../shared/ui/image-dropzone/image-dropzone';
@@ -22,41 +23,50 @@ export class PartnerFormModal {
 
   protected readonly isEditMode = computed(() => this.partner() !== null);
   protected readonly saving = signal(false);
-  protected readonly imageTouched = signal(false);
-  protected readonly active = signal(this.partner()?.active ?? true);
+  protected readonly logoFile = signal<File | null>(null);
+  protected readonly logoTouched = signal(false);
+  protected readonly active = signal(true);
 
-  protected readonly form = new FormGroup<{
-    name: FormControl<string>;
-    logoUrl: FormControl<string>;
-  }>({
-    name: new FormControl('', {
+  protected readonly logoPreviewUrl = computed(() => {
+    const file = this.logoFile();
+    if (file) {
+      return URL.createObjectURL(file);
+    }
+    const current = this.partner()?.logo;
+    return current ? `${environment.apiUrl}${current}` : null;
+  });
+
+  protected readonly form = new FormGroup({
+    nome: new FormControl('', {
       nonNullable: true,
-      validators: [Validators.required, Validators.minLength(2)],
+      validators: [Validators.required, Validators.minLength(3), Validators.maxLength(50)],
     }),
-    logoUrl: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
   });
 
   constructor() {
-    const current = this.partner();
-    if (current) {
-      this.form.setValue({ name: current.name, logoUrl: current.logoUrl });
-    }
+    effect(() => {
+      const current = this.partner();
+      if (current) {
+        this.form.setValue({ nome: current.nome });
+        this.active.set(current.ativo);
+      }
+    });
   }
 
-  protected onImageSelected(dataUrl: string): void {
-    this.imageTouched.set(true);
-    this.form.controls.logoUrl.setValue(dataUrl);
+  protected onLogoSelected(file: File): void {
+    this.logoTouched.set(true);
+    this.logoFile.set(file);
   }
 
   protected async onSubmit(): Promise<void> {
-    this.imageTouched.set(true);
+    this.logoTouched.set(true);
     this.form.markAllAsTouched();
-    if (this.form.invalid || this.saving()) {
+    if (this.form.invalid || (!this.isEditMode() && !this.logoFile()) || this.saving()) {
       return;
     }
 
     this.saving.set(true);
-    const value = { ...this.form.getRawValue(), active: this.active() };
+    const value = { nome: this.form.getRawValue().nome, logo: this.logoFile(), ativo: this.active() };
 
     try {
       const current = this.partner();

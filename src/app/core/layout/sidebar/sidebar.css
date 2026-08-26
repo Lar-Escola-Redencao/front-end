@@ -5,6 +5,7 @@
   border-right: 1px solid var(--color-gray-100);
   padding: 1.1rem 0.75rem;
   overflow-y: auto;
+  min-height: 100dvh;
 }
 
 .sidebar__title {
@@ -60,21 +61,4 @@
 .sidebar__icon svg {
   width: 100%;
   height: 100%;
-}
-
-@media (max-width: 900px) {
-  .sidebar {
-    position: fixed;
-    top: 3.75rem;
-    left: 0;
-    bottom: 0;
-    z-index: 190;
-    transform: translateX(-100%);
-    box-shadow: var(--shadow-lg);
-    transition: transform 0.2s ease;
-  }
-
-  .sidebar--open {
-    transform: translateX(0);
-  }
 }

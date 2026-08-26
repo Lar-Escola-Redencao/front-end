@@ -1,4 +1,4 @@
-<nav class="sidebar" [class.sidebar--open]="open()">
+<nav class="sidebar">
   <p class="sidebar__title">Central de gestão</p>
 
   <ul class="sidebar__list">
@@ -8,7 +8,6 @@
           class="sidebar__link"
           [routerLink]="item.route"
           routerLinkActive="sidebar__link--active"
-          (click)="navigated.emit()"
         >
           <span class="sidebar__icon">
             @switch (item.icon) {

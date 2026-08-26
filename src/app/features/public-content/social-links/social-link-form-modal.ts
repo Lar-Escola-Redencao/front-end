@@ -1,12 +1,10 @@
-import { Component, computed, inject, input, output, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { environment } from '../../../../environments/environment';
 import { Modal } from '../../../shared/ui/modal/modal';
 import { ToggleSwitch } from '../../../shared/ui/toggle-switch/toggle-switch';
-import {
-  SOCIAL_PLATFORM_OPTIONS,
-  SocialLink,
-  SocialPlatform,
-} from '../../../shared/models/social-link.model';
+import { ImageDropzone } from '../../../shared/ui/image-dropzone/image-dropzone';
+import { SocialLink } from '../../../shared/models/social-link.model';
 import { SocialLinksService } from './social-links.service';
 import { ToastService } from '../../../shared/ui/toast/toast.service';
 
@@ -14,7 +12,7 @@ const URL_PATTERN = /^https?:\/\/.+/i;
 
 @Component({
   selector: 'app-social-link-form-modal',
-  imports: [Modal, ToggleSwitch, ReactiveFormsModule],
+  imports: [Modal, ToggleSwitch, ImageDropzone, ReactiveFormsModule],
   templateUrl: './social-link-form-modal.html',
 })
 export class SocialLinkFormModal {
@@ -25,45 +23,56 @@ export class SocialLinkFormModal {
   readonly saved = output<void>();
   readonly closed = output<void>();
 
-  protected readonly platformOptions = SOCIAL_PLATFORM_OPTIONS;
   protected readonly isEditMode = computed(() => this.socialLink() !== null);
   protected readonly saving = signal(false);
-  protected readonly active = signal(this.socialLink()?.active ?? true);
+  protected readonly iconFile = signal<File | null>(null);
+  protected readonly iconTouched = signal(false);
+  protected readonly active = signal(true);
 
-  protected readonly form = new FormGroup<{
-    platform: FormControl<SocialPlatform>;
-    label: FormControl<string>;
-    url: FormControl<string>;
-  }>({
-    platform: new FormControl<SocialPlatform>('instagram', {
+  protected readonly iconPreviewUrl = computed(() => {
+    const file = this.iconFile();
+    if (file) {
+      return URL.createObjectURL(file);
+    }
+    const current = this.socialLink()?.icone;
+    return current ? `${environment.apiUrl}${current}` : null;
+  });
+
+  protected readonly form = new FormGroup({
+    nome: new FormControl('', {
       nonNullable: true,
-      validators: [Validators.required],
-    }),
-    label: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.minLength(2)],
+      validators: [Validators.required, Validators.maxLength(50)],
     }),
     url: new FormControl('', {
       nonNullable: true,
-      validators: [Validators.required, Validators.pattern(URL_PATTERN)],
+      validators: [Validators.required, Validators.pattern(URL_PATTERN), Validators.maxLength(255)],
     }),
   });
 
   constructor() {
-    const current = this.socialLink();
-    if (current) {
-      this.form.setValue({ platform: current.platform, label: current.label, url: current.url });
-    }
+    effect(() => {
+      const current = this.socialLink();
+      if (current) {
+        this.form.setValue({ nome: current.nome, url: current.url });
+        this.active.set(current.ativo);
+      }
+    });
+  }
+
+  protected onIconSelected(file: File): void {
+    this.iconTouched.set(true);
+    this.iconFile.set(file);
   }
 
   protected async onSubmit(): Promise<void> {
+    this.iconTouched.set(true);
     this.form.markAllAsTouched();
-    if (this.form.invalid || this.saving()) {
+    if (this.form.invalid || (!this.isEditMode() && !this.iconFile()) || this.saving()) {
       return;
     }
 
     this.saving.set(true);
-    const value = { ...this.form.getRawValue(), active: this.active() };
+    const value = { ...this.form.getRawValue(), icone: this.iconFile(), ativo: this.active() };
 
     try {
       const current = this.socialLink();

@@ -1,4 +1,4 @@
-import { Component, ElementRef, input, output, signal, viewChild } from '@angular/core';
+import { Component, ElementRef, input, output, viewChild } from '@angular/core';
 
 @Component({
   selector: 'app-image-dropzone',
@@ -8,9 +8,8 @@ import { Component, ElementRef, input, output, signal, viewChild } from '@angula
 export class ImageDropzone {
   readonly imageUrl = input<string | null>(null);
   readonly invalid = input(false);
-  readonly imageSelected = output<string>();
+  readonly fileSelected = output<File>();
 
-  protected readonly isDraggingOver = signal(false);
   private readonly fileInput = viewChild.required<ElementRef<HTMLInputElement>>('fileInput');
 
   openFilePicker(): void {
@@ -21,32 +20,8 @@ export class ImageDropzone {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
     if (file) {
-      this.readFile(file);
+      this.fileSelected.emit(file);
     }
     input.value = '';
-  }
-
-  onDragOver(event: DragEvent): void {
-    event.preventDefault();
-    this.isDraggingOver.set(true);
-  }
-
-  onDragLeave(): void {
-    this.isDraggingOver.set(false);
-  }
-
-  onDrop(event: DragEvent): void {
-    event.preventDefault();
-    this.isDraggingOver.set(false);
-    const file = event.dataTransfer?.files?.[0];
-    if (file && file.type.startsWith('image/')) {
-      this.readFile(file);
-    }
-  }
-
-  private readFile(file: File): void {
-    const reader = new FileReader();
-    reader.onload = () => this.imageSelected.emit(reader.result as string);
-    reader.readAsDataURL(file);
   }
 }

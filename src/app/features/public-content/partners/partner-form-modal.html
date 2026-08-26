@@ -12,22 +12,23 @@
       <input
         id="partner-name"
         type="text"
-        formControlName="name"
+        formControlName="nome"
         placeholder="Nome"
-        [class.invalid]="form.controls.name.invalid && form.controls.name.touched"
+        [class.invalid]="form.controls.nome.invalid && form.controls.nome.touched"
       />
-      @if (form.controls.name.invalid && form.controls.name.touched) {
-        <span class="field-error">Informe o nome do parceiro.</span>
+      @if (form.controls.nome.invalid && form.controls.nome.touched) {
+        <span class="field-error">Informe o nome do parceiro (3 a 50 caracteres).</span>
       }
     </div>
 
     <div class="form-field">
+      <label>Logo</label>
       <app-image-dropzone
-        [imageUrl]="form.controls.logoUrl.value || null"
-        [invalid]="form.controls.logoUrl.invalid && imageTouched()"
-        (imageSelected)="onImageSelected($event)"
+        [imageUrl]="logoPreviewUrl()"
+        [invalid]="!isEditMode() && logoTouched() && !logoPreviewUrl()"
+        (fileSelected)="onLogoSelected($event)"
       />
-      @if (form.controls.logoUrl.invalid && imageTouched()) {
+      @if (!isEditMode() && logoTouched() && !logoPreviewUrl()) {
         <span class="field-error">Selecione uma imagem para o parceiro.</span>
       }
     </div>

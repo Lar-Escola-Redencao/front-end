@@ -3,7 +3,11 @@
     <button type="button" class="btn btn-primary" (click)="openCreateModal()">Novo parceiro</button>
   </div>
 
-  @if (partners().length === 0) {
+  @if (loading()) {
+    <p class="manager__empty">Carregando parceiros...</p>
+  } @else if (loadError()) {
+    <p class="manager__empty">Não foi possível carregar os parceiros.</p>
+  } @else if (partners().length === 0) {
     <p class="manager__empty">Nenhum parceiro cadastrado ainda.</p>
   } @else {
     <div class="manager__table-wrap">
@@ -14,40 +18,29 @@
             <th>Nome</th>
             <th>Logo</th>
             <th class="col-active">Ativo</th>
-            <th class="col-action">Excluir</th>
             <th class="col-action">Editar</th>
           </tr>
         </thead>
         <tbody>
-          @for (partner of pagedPartners(); track partner.id) {
+          @for (partner of partners(); track partner.id) {
             <tr>
               <td class="col-id" data-label="#">{{ partner.id }}</td>
-              <td data-label="Nome">{{ partner.name }}</td>
+              <td data-label="Nome">{{ partner.nome }}</td>
               <td data-label="Logo">
-                @if (partner.logoUrl) {
-                  <img [src]="partner.logoUrl" [alt]="partner.name" class="manager__logo" />
+                @if (partner.logo) {
+                  <img [src]="apiUrl + partner.logo" [alt]="partner.nome" class="manager__logo" />
                 } @else {
                   <span class="manager__logo manager__logo--fallback">{{
-                    initials(partner.name)
+                    initials(partner.nome)
                   }}</span>
                 }
               </td>
               <td class="col-active" data-label="Ativo">
                 <app-toggle-switch
-                  [checked]="partner.active"
+                  [checked]="partner.ativo"
                   (checkedChange)="onToggleActive(partner, $event)"
-                  [ariaLabel]="'Ativar ' + partner.name"
+                  [ariaLabel]="'Ativar ' + partner.nome"
                 />
-              </td>
-              <td class="col-action" data-label="Excluir">
-                <button
-                  type="button"
-                  class="icon-btn icon-btn--danger"
-                  aria-label="Excluir parceiro"
-                  (click)="askDelete(partner)"
-                >
-                  🗑
-                </button>
               </td>
               <td class="col-action" data-label="Editar">
                 <button
@@ -64,8 +57,6 @@
         </tbody>
       </table>
     </div>
-
-    <app-pagination [total]="partners().length" [(page)]="page" [(pageSize)]="pageSize" />
   }
 </div>
 
@@ -74,19 +65,5 @@
     [partner]="editingPartner()"
     (saved)="onSaved()"
     (closed)="closeFormModal()"
-  />
-}
-
-@if (pendingDelete(); as partner) {
-  <app-confirm-dialog
-    title="Excluir parceiro"
-    [message]="
-      'Tem certeza que deseja excluir o parceiro \'' +
-      partner.name +
-      '\'? Essa ação não pode ser desfeita.'
-    "
-    [busy]="deleting()"
-    (confirmed)="confirmDelete()"
-    (cancelled)="cancelDelete()"
   />
 }

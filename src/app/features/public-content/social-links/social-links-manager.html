@@ -5,7 +5,11 @@
     </button>
   </div>
 
-  @if (socialLinks().length === 0) {
+  @if (loading()) {
+    <p class="manager__empty">Carregando redes sociais...</p>
+  } @else if (loadError()) {
+    <p class="manager__empty">Não foi possível carregar as redes sociais.</p>
+  } @else if (socialLinks().length === 0) {
     <p class="manager__empty">Nenhuma rede social cadastrada ainda.</p>
   } @else {
     <div class="manager__table-wrap">
@@ -13,21 +17,27 @@
         <thead>
           <tr>
             <th class="col-id">#</th>
-            <th>Plataforma</th>
+            <th>Ícone</th>
+            <th>Nome</th>
             <th>Link</th>
             <th class="col-active">Ativo</th>
-            <th class="col-action">Excluir</th>
             <th class="col-action">Editar</th>
           </tr>
         </thead>
         <tbody>
-          @for (socialLink of pagedSocialLinks(); track socialLink.id) {
+          @for (socialLink of socialLinks(); track socialLink.id) {
             <tr>
               <td class="col-id" data-label="#">{{ socialLink.id }}</td>
-              <td data-label="Plataforma">
-                <span class="manager__platform">{{ socialLink.label }}</span>
-                <span class="manager__platform-tag">{{ platformLabel(socialLink.platform) }}</span>
+              <td data-label="Ícone">
+                @if (socialLink.icone) {
+                  <img
+                    [src]="apiUrl + socialLink.icone"
+                    [alt]="socialLink.nome"
+                    class="manager__logo"
+                  />
+                }
               </td>
+              <td data-label="Nome">{{ socialLink.nome }}</td>
               <td data-label="Link">
                 <a [href]="socialLink.url" target="_blank" rel="noopener" class="manager__link">{{
                   socialLink.url
@@ -35,20 +45,10 @@
               </td>
               <td class="col-active" data-label="Ativo">
                 <app-toggle-switch
-                  [checked]="socialLink.active"
+                  [checked]="socialLink.ativo"
                   (checkedChange)="onToggleActive(socialLink, $event)"
-                  [ariaLabel]="'Ativar ' + socialLink.label"
+                  [ariaLabel]="'Ativar ' + socialLink.nome"
                 />
-              </td>
-              <td class="col-action" data-label="Excluir">
-                <button
-                  type="button"
-                  class="icon-btn icon-btn--danger"
-                  aria-label="Excluir rede social"
-                  (click)="askDelete(socialLink)"
-                >
-                  🗑
-                </button>
               </td>
               <td class="col-action" data-label="Editar">
                 <button
@@ -65,8 +65,6 @@
         </tbody>
       </table>
     </div>
-
-    <app-pagination [total]="socialLinks().length" [(page)]="page" [(pageSize)]="pageSize" />
   }
 </div>
 
@@ -75,19 +73,5 @@
     [socialLink]="editingSocialLink()"
     (saved)="onSaved()"
     (closed)="closeFormModal()"
-  />
-}
-
-@if (pendingDelete(); as socialLink) {
-  <app-confirm-dialog
-    title="Excluir rede social"
-    [message]="
-      'Tem certeza que deseja excluir \'' +
-      socialLink.label +
-      '\'? Essa ação não pode ser desfeita.'
-    "
-    [busy]="deleting()"
-    (confirmed)="confirmDelete()"
-    (cancelled)="cancelDelete()"
   />
 }

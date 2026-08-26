@@ -1,8 +1,12 @@
 export interface Partner {
   id: number;
-  name: string;
-  logoUrl: string;
-  active: boolean;
+  nome: string;
+  logo: string;
+  ativo: boolean;
 }
 
-export type PartnerInput = Omit<Partner, 'id'>;
+export interface PartnerInput {
+  nome: string;
+  logo: File | null;
+  ativo?: boolean;
+}
