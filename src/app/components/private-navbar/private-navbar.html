@@ -10,7 +10,7 @@
 
     <!-- Centro: Logo -->
     <div class="logo-container">
-      <a routerLink="/">
+      <a routerLink="/dashboard">
         <img src="/images/logo_branca_texto.png" alt="Logo Lar Escola Redenção">
       </a>
     </div>
@@ -50,7 +50,7 @@
           <span class="texto-link">Gerenciar unidades e turmas</span>
         </a>
         
-        <a class="card-opcao" routerLink="/conteudo" (click)="alternarMenu()">
+        <a class="card-opcao" routerLink="/dashboard/conteudo-publico" routerLinkActive="ativo" (click)="alternarMenu()">
           <span class="material-symbols-outlined">captive_portal</span>
           <span class="texto-link">Gerenciar conteúdo público</span>
         </a>

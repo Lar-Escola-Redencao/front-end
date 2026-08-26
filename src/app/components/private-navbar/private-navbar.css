@@ -142,6 +142,11 @@
   background-color: var(--branco);
 }
 
+.card-opcao.ativo {
+  background-color: var(--branco);
+  box-shadow: var(--sombra-padrao);
+}
+
 .card-opcao .material-symbols-outlined {
   font-size: 60px;
   line-height: 1;
