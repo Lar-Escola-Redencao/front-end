@@ -28,7 +28,12 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/public/login/login').then((m) => m.Login),
     },
     { path: '**', redirectTo: 'login' }
-    
+];
+
+
+
+
+
     /*import { EventoComponent } from './components/evento/evento.component';
     import { canDeactivateGuard } from './guards/can-deactivate.guard';
 
@@ -38,4 +43,3 @@ export const routes: Routes = [
         component: EventoComponent,
         canDeactivate: [canDeactivateGuard]
     }*/
-];

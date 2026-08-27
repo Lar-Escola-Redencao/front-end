@@ -1,13 +1,13 @@
 import { Component, OnInit, HostListener, ChangeDetectorRef, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { EventoService } from '../../services/evento.service';
-import { ParceiroService } from '../../services/parceiro.service';
-import { Evento, CriarEventoDTO, AtualizarEventoDTO, TipoEvento } from '../../models/evento.model';
 import { ToastrService } from 'ngx-toastr';
 import Swal from 'sweetalert2';
-import { ComponentComAlteracoesNaoSalvas } from '../../guards/can-deactivate.guard';
-import { environment } from '../../environments/environment';
+import { ComponentComAlteracoesNaoSalvas } from 'src/app/shared/guards/can-deactivate.guard';
+import { AtualizarEventoDTO, CriarEventoDTO, Evento, TipoEvento } from 'src/app/models/evento.model';
+import { EventoService } from 'src/app/shared/services/evento/evento.service';
+import { ParceiroService } from 'src/app/shared/services/evento/parceiro.service';
+import { environment } from 'src/environments/environment';
 
 @Component({
   selector: 'app-evento',
