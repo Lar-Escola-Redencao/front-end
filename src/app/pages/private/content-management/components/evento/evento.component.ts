@@ -4,7 +4,7 @@ import { FormsModule, FormBuilder, FormGroup, ReactiveFormsModule, Validators } 
 import { ToastrService } from 'ngx-toastr';
 import Swal from 'sweetalert2';
 import { ComponentComAlteracoesNaoSalvas } from 'src/app/shared/guards/can-deactivate.guard';
-import { AtualizarEventoDTO, CriarEventoDTO, Evento, TipoEvento } from 'src/app/models/evento.model';
+import { AtualizarEventoDTO, CriarEventoDTO, Evento, TipoEvento } from 'src/app/shared/models/evento.model';
 import { EventoService } from 'src/app/shared/services/evento/evento.service';
 import { ParceiroService } from 'src/app/shared/services/evento/parceiro.service';
 import { environment } from 'src/environments/environment';

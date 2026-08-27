@@ -3,9 +3,9 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ToastrService } from 'ngx-toastr';
 import Swal from 'sweetalert2';
-import { DiretoriaService } from '../../services/diretoria.service';
-import { AtualizarDiretoriaDTO, CriarDiretoriaDTO, Diretoria } from '../../models/diretoria.model';
-import { ComponentComAlteracoesNaoSalvas } from '../../guards/can-deactivate.guard';
+import { ComponentComAlteracoesNaoSalvas } from 'src/app/shared/guards/can-deactivate.guard';
+import { AtualizarDiretoriaDTO, CriarDiretoriaDTO, Diretoria } from 'src/app/shared/models/diretoria.model';
+import { DiretoriaService } from 'src/app/services/diretoria.service';
 
 const TIPOS_PERMITIDOS = ['image/jpeg', 'image/png', 'image/webp'];
 const TAMANHO_MAXIMO_BYTES = 5 * 1024 * 1024;
