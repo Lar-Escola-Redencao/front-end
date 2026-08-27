@@ -1,41 +1,4 @@
-<header class="topbar">
-  <a class="brand" routerLink="/login">
-    <img class="brand-logo" src="images/logo.png" alt="Lar Escola Redenção" />
-  </a>
-
-  <nav class="nav" aria-label="Navegação principal">
-    <button type="button" class="nav-link" disabled>Início</button>
-    <button type="button" class="nav-link" disabled>Conheça a OSC</button>
-    <button type="button" class="nav-link" disabled>Unidades</button>
-    <button type="button" class="nav-link" disabled>Eventos</button>
-    <button type="button" class="nav-link" disabled>Parceiros</button>
-    <button type="button" class="nav-link" disabled>Transparência</button>
-  </nav>
-
-  <div class="topbar-actions">
-    <button
-      type="button"
-      class="menu-toggle"
-      disabled
-      aria-label="Abrir menu"
-      aria-expanded="false"
-    >
-      <span class="menu-toggle-bar"></span>
-      <span class="menu-toggle-bar"></span>
-      <span class="menu-toggle-bar"></span>
-    </button>
-
-    <a class="enter-pill" routerLink="/login">
-      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <path
-          d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm0 2c-4.42 0-8 2.24-8 5v1h16v-1c0-2.76-3.58-5-8-5Z"
-          fill="currentColor"
-        />
-      </svg>
-      Entrar
-    </a>
-  </div>
-</header>
+<app-public-navbar></app-public-navbar>
 
 @if (showSessionExpiredToast()) {
   <div class="toast toast-warning" role="alert">

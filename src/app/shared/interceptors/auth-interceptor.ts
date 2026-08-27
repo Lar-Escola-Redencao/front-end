@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import { catchError, throwError } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
-import { Auth } from '../services/auth';
+import { Auth } from '../services/auth/auth';
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const auth = inject(Auth);

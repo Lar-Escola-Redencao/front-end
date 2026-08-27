@@ -1,14 +1,14 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { environment } from '../../environments/environment';
-import { AtualizarColaboradorDTO, Colaborador, CriarColaboradorDTO } from 'src/app/models/membro.model';
+import { environment } from 'src/environments/environment';
+import { AtualizarColaboradorDTO, Colaborador, CriarColaboradorDTO } from '../../models/colaborador.model';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ColaboradorService {
-  private apiUrl = `${environment.apiUrl}/colaborador`;
+  private apiUrl = `${environment.apiUrl}/membro`;
 
   constructor(private http: HttpClient) {}
 

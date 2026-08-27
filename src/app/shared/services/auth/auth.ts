@@ -3,10 +3,10 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { Observable, tap } from 'rxjs';
 
-import { environment } from '../../../environments/environment';
-import { LoginRequest, LoginRequestDto, LoginResponse } from '../models/auth.model';
+import { environment } from '../../../../environments/environment';
+import { LoginRequest, LoginRequestDto, LoginResponse } from '../../models/auth.model';
+import { JwtPayload, decodeJwtPayload, isJwtInvalid } from '../../utils/jwt.util';
 import { TokenStorage } from './token-storage';
-import { JwtPayload, decodeJwtPayload, isJwtInvalid } from '../utils/jwt.util';
 
 @Injectable({
   providedIn: 'root',
@@ -92,11 +92,11 @@ export class Auth {
       return;
     }
 
-    const msUntilExpiry = exp * 1000 - Date.now();
+    /*const msUntilExpiry = exp * 1000 - Date.now();
     if (msUntilExpiry <= 0) {
       return;
     }
-    this.expiryTimer = setTimeout(() => this.handleExpiry(), msUntilExpiry);
+    this.expiryTimer = setTimeout(() => this.handleExpiry(), msUntilExpiry);*/
   }
 
   private clearExpiryTimer(): void {

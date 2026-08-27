@@ -18,8 +18,8 @@ export class PublicNavbar {
     this.menuAberto.update(valor => !valor);
   }
 
-  entrarNoSistema() {
+  realizarLogin() {
     this.menuAberto.set(false);
-    this.router.navigate(['/dashboard']);
+    this.router.navigate(['/entrar']);
   }
 }

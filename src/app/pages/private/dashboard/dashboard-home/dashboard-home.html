@@ -1,4 +1,5 @@
 <section class="dashboard-home">
-  <h1>Dashboard</h1>
-  <p>Selecione uma opção na central de gestão para começar.</p>
+  <h1>Acesso interno</h1>
+  <p>Autenticado{{ user()?.sub ? ' como ' + user()?.sub : '' }}.</p>
+  <button type="button" (click)="logout()">Sair</button>
 </section>

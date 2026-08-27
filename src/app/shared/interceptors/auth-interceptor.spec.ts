@@ -4,7 +4,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 
 import { environment } from '../../../environments/environment';
-import { Auth } from '../services/auth';
+import { Auth } from '../services/auth/auth';
 import { authInterceptor } from './auth-interceptor';
 
 describe('authInterceptor', () => {

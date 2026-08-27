@@ -8,8 +8,7 @@
     "baseUrl": "./",
     "paths": {
       "@components/*": ["src/app/components/*"],
-      "@pages/*": ["src/app/pages/*"],
-      "@layouts/*": ["src/app/layouts/*"]
+      "@pages/*": ["src/app/pages/*"]
     }
   },
   "include": [

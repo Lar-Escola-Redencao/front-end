@@ -1,7 +1,7 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 
-import { Auth } from '../services/auth';
+import { Auth } from '../services/auth/auth';
 
 /** Keeps an already-authenticated visitor (e.g. a remembered session) off the login form. */
 export const guestGuard: CanActivateFn = () => {

@@ -4,13 +4,15 @@ import { Dashboard } from './pages/private/dashboard/dashboard';
 import { DashboardHome } from './pages/private/dashboard/dashboard-home/dashboard-home';
 import { ContentManagement } from './pages/private/content-management/content-management';
 import { ColaboradorComponent } from '@pages/private/colaborador/colaborador.component';
-import { authGuard } from './core/guards/auth-guard';
-import { guestGuard } from './core/guards/guest-guard';
+import { authGuard } from './shared/guards/auth-guard';
+import { guestGuard } from './shared/guards/guest-guard';
 
 export const routes: Routes = [
-    { path: '', component: Home, redirectTo: 'login' },
+    { path: '', component: Home},
     {
         path: 'dashboard',
+        //loadComponent: () =>
+        //import('./features/backoffice-home/backoffice-home').then((m) => m.BackofficeHome),
         canActivate: [authGuard],
         component: Dashboard,
         children: [
@@ -21,14 +23,9 @@ export const routes: Routes = [
         ]
     },
     {
-        path: 'backoffice',
-        loadComponent: () =>
-        import('./features/backoffice-home/backoffice-home').then((m) => m.BackofficeHome),
-    },
-    {
-        path: 'login',
+        path: 'entrar',
         canActivate: [guestGuard],
-        loadComponent: () => import('./features/login/login').then((m) => m.Login),
+        loadComponent: () => import('./pages/public/login/login').then((m) => m.Login),
     },
     { path: '**', redirectTo: 'login' }
 ];

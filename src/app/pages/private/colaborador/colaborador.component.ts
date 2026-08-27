@@ -3,10 +3,10 @@ import { CommonModule } from '@angular/common';
 import { FormsModule, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ToastrService } from 'ngx-toastr';
 import Swal from 'sweetalert2';
-import { ComponentComAlteracoesNaoSalvas } from 'src/app/guards/can-deactivate.guard';
-import { ColaboradorService } from 'src/app/services/colaborador/colaborador.service';
-import { PapelService } from 'src/app/services/colaborador/papel.service';
-import { AtualizarColaboradorDTO, Colaborador, CriarColaboradorDTO } from 'src/app/models/membro.model';
+import { ComponentComAlteracoesNaoSalvas } from 'src/app/shared/guards/can-deactivate.guard';
+import { ColaboradorService } from 'src/app/shared/services/colaborador/colaborador.service';
+import { PapelService } from 'src/app/shared/services/colaborador/papel.service';
+import { AtualizarColaboradorDTO, Colaborador, CriarColaboradorDTO } from 'src/app/shared/models/colaborador.model';
 
 @Component({
   selector: 'app-colaborador',
