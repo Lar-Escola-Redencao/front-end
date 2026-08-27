@@ -40,8 +40,7 @@
     </mat-form-field>
 
     <mat-form-field appearance="outline">
-      <mat-label>Seção</mat-label>
-      <mat-select formControlName="secaoId" (blur)="verificarErrosDocumento()">
+      <mat-select formControlName="secaoId" placeholder="Seção" (blur)="verificarErrosDocumento()">
         @for (secao of secoes; track secao.id) {
         <mat-option [value]="secao.id">{{ secao.titulo }}</mat-option>
         }
@@ -50,28 +49,34 @@
     </mat-form-field>
 
     <!-- Container do Upload -->
-    <div style="margin-bottom: 24px;">
-      <label class="upload-campo" [class.tem-arquivo]="nomeDocumentoSelecionado">
+    <div class="upload-container">
+      <label
+        class="upload-campo"
+        [class.tem-arquivo]="nomeDocumentoSelecionado"
+        [class.com-erro]="errosDocumento['arquivo']"
+      >
         <input type="file" accept=".pdf" (change)="selecionarDocumento($event)" />
 
         @if (nomeDocumentoSelecionado) {
-        <span class="arquivo-nome">{{ nomeDocumentoSelecionado }}</span>
-        <small>Documento selecionado</small>
+          <span class="arquivo-nome">{{ nomeDocumentoSelecionado }}</span>
+          <small>Documento selecionado</small>
         } @else {
-        <span>Selecione ou arraste um documento (.pdf)</span>
+          <span>Selecione ou arraste um documento (.pdf)</span>
         }
       </label>
-      <!-- Erro customizado para o input de arquivo (já que não é um mat-form-field) -->
-      <span class="error-text" *ngIf="errosDocumento['arquivo']">
-        {{ errosDocumento['arquivo'] }}
-      </span>
+
+      @if (errosDocumento['arquivo']) {
+        <span class="error-text">
+          {{ errosDocumento['arquivo'] }}
+        </span>
+      }
     </div>
 
     <div class="acoes-modal">
       <button type="button" class="btn-cancelar" [disabled]="isLoading" (click)="fecharModal()">
         Cancelar
       </button>
-      <button type="submit" class="btn-primary" [disabled]="formDocumento.invalid || isLoading">
+      <button type="submit" class="btn-primary" [disabled]="isLoading">
         <span *ngIf="isLoading" class="spinner" aria-hidden="true"></span>
         <span>{{ isLoading ? 'Salvando...' : 'Salvar' }}</span>
       </button>
@@ -85,9 +90,7 @@
 @if (modalAberto === 'secao') {
 <app-modal-layout [titulo]="modoEdicao ? 'Editar seção' : 'Nova seção'" (closed)="fecharModal()">
   <form class="form-modal" [formGroup]="formSecao" (ngSubmit)="salvarSecao()">
-
-    <!-- Usamos o style="width: 100%" direto e a tag nativa <mat-error> -->
-    <mat-form-field appearance="outline" style="width: 100%; margin-bottom: 8px;">
+    <mat-form-field appearance="outline">
       <mat-label>Nome da seção</mat-label>
       <input matInput formControlName="titulo" (blur)="verificarErrosSecao()" maxlength="100" />
 
@@ -100,7 +103,7 @@
       <button type="button" class="btn-cancelar" [disabled]="isLoading" (click)="fecharModal()">
         Cancelar
       </button>
-      <button type="submit" class="btn-primary" [disabled]="formSecao.invalid || isLoading">
+      <button type="submit" class="btn-primary" [disabled]="isLoading">
         <span *ngIf="isLoading" class="spinner" aria-hidden="true"></span>
         <span>{{ isLoading ? 'Salvando...' : 'Salvar' }}</span>
       </button>

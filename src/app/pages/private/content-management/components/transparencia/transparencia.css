@@ -22,6 +22,10 @@
   gap: 8px;
 }
 
+.form-modal .mat-mdc-form-field {
+  width: 100%;
+}
+
 .campo-textarea {
   min-height: 116px;
 }
@@ -32,6 +36,46 @@
 
 .campo-textarea textarea {
   resize: none;
+}
+
+.upload-container {
+  width: 100%;
+}
+
+.upload-campo {
+  width: 100%;
+  min-height: 58px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  padding: 12px 16px;
+
+  border: 1px solid var(--input-border);
+  border-radius: var(--input-radius);
+
+  background-color: var(--branco);
+  cursor: pointer;
+
+  font-family: var(--fonte-texto);
+  color: var(--input-color);
+
+  transition: border-color 0.2s ease;
+}
+
+.upload-campo.com-erro {
+  border-color: var(--error-color);
+}
+
+.error-text {
+  display: block;
+  margin-top: 8px;
+
+  color: var(--error-color);
+  font-family: var(--fonte-texto);
+  font-size: 0.85rem;
+  line-height: 1.3;
 }
 
 .upload-campo {
@@ -110,18 +154,18 @@
   border-bottom: 2px solid transparent;
   font-size: 1rem;
   font-weight: 500;
-  color: #777;
+  color: var(--input-border);
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .aba-btn:hover {
-  color: #3478f6;
+  color: var(--primary-color);
 }
 
 .aba-btn.ativa {
-  color: #3478f6;
-  border-bottom-color: #3478f6;
+  color: var(--primary-color);
+  border-bottom-color: var(--primary-color);
 }
 
 
