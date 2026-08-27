@@ -1,0 +1,104 @@
+<div class="tabela-container">
+
+  @if (dados.length > 0) {
+
+    <div class="tabela-wrapper">
+
+      <table class="tabela">
+
+        <thead>
+          <tr>
+            @for (coluna of colunas; track coluna.chave) {
+              <th>
+                {{ coluna.titulo }}
+              </th>
+            }
+
+            @if (acoes.length > 0) {
+              <th class="coluna-acoes"></th>
+            }
+          </tr>
+        </thead>
+
+        <tbody>
+            @for (linha of dadosPaginados; track $index) {
+
+                <tr
+                class="linha"
+                [class.expandida]="linhaExpandida === $index"
+                >
+
+                <!-- 1. CABEÇALHO EXCLUSIVO PARA O MOBILE (Fica no topo e clica pra abrir) -->
+                <td class="header-mobile" (click)="toggleLinha($index)">
+                    <span class="titulo-mobile">
+                        {{ obterValorPrincipal(linha) }}
+                    </span>
+                    <mat-icon>
+                        {{ linhaExpandida === $index ? 'expand_less' : 'expand_more' }}
+                    </mat-icon>
+                </td>
+
+                <!-- 2. TODAS AS COLUNAS NORMAIS (Aparecem só quando o card expande) -->
+                @for (coluna of colunas; track coluna.chave) {
+                    <td
+                    class="celula-dado"
+                    [attr.data-label]="coluna.titulo"
+                    >
+                    <span class="valor-celula">
+                        {{ obterValor(linha, coluna) }}
+                    </span>
+                    </td>
+                }
+
+                <!-- 3. AÇÕES -->
+                @if (acoes.length > 0) {
+                    <td
+                    class="coluna-acoes"
+                    data-label="Ações"
+                    >
+                    <div class="acoes">
+                        @for (acao of acoes; track acao.acao) {
+                        <button
+                            type="button"
+                            class="botao-acao"
+                            [title]="acao.tooltip"
+                            (click)="executarAcao(acao, linha)"
+                        >
+                            <mat-icon>{{ acao.icone }}</mat-icon>
+                        </button>
+                        }
+                    </div>
+                    </td>
+                }
+                
+                <!-- OBS: Removemos aquele controle-expansao que ficava aqui embaixo -->
+                </tr>
+
+            }
+        </tbody>
+
+      </table>
+
+    </div>
+
+    @if (exibirPaginacao) {
+
+      <mat-paginator
+        [length]="dados.length"
+        [pageSize]="tamanhoPagina"
+        [pageSizeOptions]="tamanhosPagina"
+        (page)="alterarPagina($event)"
+        showFirstLastButtons>
+      </mat-paginator>
+
+    }
+
+  } @else {
+
+    <div class="tabela-vazia">
+      {{ mensagemVazia }}
+    </div>
+
+  }
+
+</div>
