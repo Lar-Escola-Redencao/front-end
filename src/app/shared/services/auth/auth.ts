@@ -92,11 +92,11 @@ export class Auth {
       return;
     }
 
-    /*const msUntilExpiry = exp * 1000 - Date.now();
+    const msUntilExpiry = exp * 1000 - Date.now();
     if (msUntilExpiry <= 0) {
       return;
     }
-    this.expiryTimer = setTimeout(() => this.handleExpiry(), msUntilExpiry);*/
+    this.expiryTimer = setTimeout(() => this.handleExpiry(), msUntilExpiry);
   }
 
   private clearExpiryTimer(): void {
