@@ -12,7 +12,7 @@
 .tabela {
   width: 100%;
   border-collapse: collapse;
-  font-family: var(--fonte-corpo);
+  font-family: var(--fonte-texto);
 }
 
 .tabela th {
