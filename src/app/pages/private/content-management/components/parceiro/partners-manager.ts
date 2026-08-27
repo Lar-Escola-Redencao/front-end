@@ -1,16 +1,16 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { environment } from '../../../../environments/environment';
-import { PartnersService } from './partners.service';
+import { environment } from '../../../../../../environments/environment';
+import { PartnersService } from '../../../../../shared/services/partners/partners.service';
+import { ToggleSwitch } from '../../../../../shared/ui/toggle-switch/toggle-switch';
+import { ToastService } from '../../../../../shared/ui/toast/toast.service';
+import { Partner } from '../../../../../shared/models/partner.model';
 import { PartnerFormModal } from './partner-form-modal';
-import { ToggleSwitch } from '../../../shared/ui/toggle-switch/toggle-switch';
-import { ToastService } from '../../../shared/ui/toast/toast.service';
-import { Partner } from '../../../shared/models/partner.model';
 
 @Component({
   selector: 'app-partners-manager',
   imports: [PartnerFormModal, ToggleSwitch],
   templateUrl: './partners-manager.html',
-  styleUrls: ['../../../shared/styles/manager-table.css', './partners-manager.css'],
+  styleUrls: ['./partners-manager.css'],
 })
 export class PartnersManager implements OnInit {
   private readonly partnersService = inject(PartnersService);

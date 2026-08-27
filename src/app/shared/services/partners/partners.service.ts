@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../../environments/environment';
-import { Partner, PartnerInput } from '../../../shared/models/partner.model';
+import { Partner, PartnerInput } from '../../models/partner.model';
 
 @Injectable({ providedIn: 'root' })
 export class PartnersService {

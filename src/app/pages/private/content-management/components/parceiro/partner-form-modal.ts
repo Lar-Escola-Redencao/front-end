@@ -1,12 +1,12 @@
 import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { environment } from '../../../../environments/environment';
-import { Modal } from '../../../shared/ui/modal/modal';
-import { ToggleSwitch } from '../../../shared/ui/toggle-switch/toggle-switch';
-import { ImageDropzone } from '../../../shared/ui/image-dropzone/image-dropzone';
-import { Partner } from '../../../shared/models/partner.model';
-import { PartnersService } from './partners.service';
-import { ToastService } from '../../../shared/ui/toast/toast.service';
+import { environment } from '../../../../../../environments/environment';
+import { Modal } from '../../../../../shared/ui/modal/modal';
+import { ToggleSwitch } from '../../../../../shared/ui/toggle-switch/toggle-switch';
+import { ImageDropzone } from '../../../../../shared/ui/image-dropzone/image-dropzone';
+import { Partner } from '../../../../../shared/models/partner.model';
+import { PartnersService } from '../../../../../shared/services/partners/partners.service';
+import { ToastService } from '../../../../../shared/ui/toast/toast.service';
 
 @Component({
   selector: 'app-partner-form-modal',

@@ -1,6 +1,6 @@
 import { Component, signal } from '@angular/core';
-import { PartnersManager } from './partners/partners-manager';
 import { SocialLinksManager } from './social-links/social-links-manager';
+import { PartnersManager } from '@pages/private/content-management/components/parceiro/partners-manager';
 
 type PublicContentSection = 'partners' | 'social-links';
 
