@@ -1,0 +1,122 @@
+.manager {
+  background: var(--color-white);
+  border: 1px solid var(--color-gray-100);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.manager__toolbar {
+  display: flex;
+  justify-content: flex-start;
+  padding: 1rem;
+}
+
+.manager__empty {
+  padding: 2rem 1rem;
+  text-align: center;
+  color: var(--color-gray-400);
+}
+
+.manager__table-wrap {
+  overflow-x: auto;
+}
+
+.manager__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.manager__table th {
+  text-align: left;
+  padding: 0.7rem 1rem;
+  color: var(--color-gray-500);
+  font-weight: 600;
+  font-size: 0.78rem;
+  border-bottom: 1px solid var(--color-gray-100);
+}
+
+.manager__table td {
+  padding: 0.6rem 1rem;
+  border-bottom: 1px solid var(--color-gray-100);
+  color: var(--color-gray-700);
+  vertical-align: middle;
+}
+
+.manager__table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.col-id {
+  width: 3rem;
+  color: var(--color-gray-400);
+}
+
+.col-active,
+.col-action {
+  width: 5.5rem;
+  text-align: center;
+}
+
+.icon-btn {
+  border: none;
+  background: transparent;
+  font-size: 1rem;
+  color: var(--color-gray-500);
+  padding: 0.35rem;
+  border-radius: var(--radius-sm);
+}
+
+.icon-btn:hover {
+  background: var(--color-gray-100);
+  color: var(--color-gray-900);
+}
+
+.icon-btn--danger {
+  color: var(--color-danger);
+}
+
+.icon-btn--danger:hover {
+  background: var(--color-danger-light);
+  color: var(--color-danger);
+}
+
+@media (max-width: 640px) {
+  .manager__table thead {
+    display: none;
+  }
+
+  .manager__table,
+  .manager__table tbody,
+  .manager__table tr,
+  .manager__table td {
+    display: block;
+    width: 100%;
+  }
+
+  .manager__table tr {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--color-gray-100);
+  }
+
+  .manager__table td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: none;
+    padding: 0.3rem 0;
+  }
+
+  .manager__table td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: var(--color-gray-500);
+    font-size: 0.75rem;
+  }
+
+  .col-id,
+  .col-active,
+  .col-action {
+    width: 100%;
+  }
+}

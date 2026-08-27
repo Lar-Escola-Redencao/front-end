@@ -1,0 +1,121 @@
+<!-- cabecalho e acoes principais -->
+<div class="container">
+  <div class="header-acoes">
+    <h2>Diretoria</h2>
+    <div class="header-direita">
+      <button (click)="abrirCadastro()" class="btn-novo">Novo Membro</button>
+    </div>
+  </div>
+
+  <!-- tabela de listagem -->
+  <div class="tabela-card" *ngIf="diretores.length > 0; else estadoVazio">
+    <table class="tabela-diretoria">
+      <thead>
+        <tr>
+          <th>Foto</th>
+          <th>Nome</th>
+          <th>Cargo</th>
+          <th>Status</th>
+          <th>Editar</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let membro of diretores">
+          <td>
+            <img class="foto-miniatura" [src]="fotoUrl(membro.foto)" [alt]="membro.nome">
+          </td>
+          <td>{{ membro.nome }}</td>
+          <td>{{ membro.cargo }}</td>
+          <td>
+            <span class="badge" [class.badge-ativo]="membro.ativo" [class.badge-inativo]="!membro.ativo">
+              {{ membro.ativo ? 'Ativo' : 'Inativo' }}
+            </span>
+          </td>
+          <td class="acoes-icone">
+            <button (click)="abrirEdicao(membro)" class="btn-icone btn-icone-editar" title="Editar">
+              <span class="material-symbols-outlined">edit</span>
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- estado vazio -->
+  <ng-template #estadoVazio>
+    <div class="estado-vazio">
+      <p>Nenhum membro da diretoria cadastrado ainda</p>
+    </div>
+  </ng-template>
+</div>
+
+<!-- modal de cadastro e edição -->
+<div class="modal-overlay" *ngIf="modalAberto" (click)="fecharModal()">
+  <div class="modal-card" [class.tremer]="modalTremendo" (click)="$event.stopPropagation()">
+
+    <!-- cabeçalho fixo -->
+    <div class="modal-header">
+      <h3>{{ modoEdicao ? 'Editar Membro da Diretoria' : 'Cadastrar Membro da Diretoria' }}</h3>
+      <button class="btn-fechar" (click)="fecharModal()">&times;</button>
+    </div>
+
+    <!-- formulário -->
+    <form [formGroup]="formDiretoria" (ngSubmit)="salvar()" class="form-diretoria">
+
+      <div class="form-scroll" *ngIf="!isCarregandoEdicao; else carregandoEdicao">
+
+        <div class="form-group">
+          <label>Foto</label>
+          <div class="upload-foto">
+            <div class="preview-foto">
+              <img *ngIf="previewUrl" [src]="previewUrl" alt="Pré-visualização da foto">
+              <span *ngIf="!previewUrl" class="material-symbols-outlined preview-icone">person</span>
+            </div>
+            <div class="upload-foto-controles">
+              <label class="btn-selecionar-arquivo" for="foto">Selecionar imagem</label>
+              <input id="foto" type="file" accept="image/jpeg,image/png,image/webp" (change)="aoSelecionarArquivo($event)">
+              <span class="hint-text">JPEG, PNG ou WEBP, até 5MB.</span>
+            </div>
+          </div>
+          <span class="error-text" *ngIf="erroArquivo">{{ erroArquivo }}</span>
+        </div>
+
+        <div class="form-group">
+          <label for="nome">Nome</label>
+          <input id="nome" type="text" formControlName="nome" (blur)="verificarErros()" maxlength="150">
+          <span class="error-text" *ngIf="erros['nome']">{{ erros['nome'] }}</span>
+        </div>
+
+        <div class="form-group">
+          <label for="cargo">Cargo</label>
+          <input id="cargo" type="text" formControlName="cargo" (blur)="verificarErros()" maxlength="100">
+          <span class="error-text" *ngIf="erros['cargo']">{{ erros['cargo'] }}</span>
+        </div>
+
+        <div class="form-group form-group-checkbox" *ngIf="modoEdicao">
+          <label class="checkbox-label">
+            <input type="checkbox" formControlName="ativo">
+            Exibir na área institucional (ativo)
+          </label>
+        </div>
+
+      </div>
+
+      <ng-template #carregandoEdicao>
+        <div class="form-scroll form-carregando">
+          <span class="spinner spinner-escuro" aria-hidden="true"></span>
+          <p>Carregando dados...</p>
+        </div>
+      </ng-template>
+
+      <!-- rodapé fixo -->
+      <div class="modal-acoes">
+        <button type="button" class="btn-cancelar" [disabled]="isLoading" (click)="fecharModal()">Cancelar</button>
+        <button type="submit" [disabled]="formDiretoria.invalid || isLoading || isCarregandoEdicao || !!erroArquivo || (!modoEdicao && !arquivoSelecionado) || (modoEdicao && !temAlteracoes)" class="btn-salvar">
+          <span *ngIf="isLoading" class="spinner" aria-hidden="true"></span>
+          <span>{{ isLoading ? 'Salvando...' : (modoEdicao ? 'Atualizar' : 'Salvar') }}</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

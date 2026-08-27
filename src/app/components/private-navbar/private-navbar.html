@@ -1,0 +1,63 @@
+<nav class="navbar" [ngClass]="{'expandido': menuVisivel}">
+  <!-- Barra Superior -->
+  <div class="navbar-header">
+    <!-- Esquerda: Botão Menu -->
+    <button class="btn-menu" (click)="alternarMenu()" aria-label="Menu">
+      <span class="material-symbols-outlined">
+        {{ menuVisivel ? 'close' : 'menu' }}
+      </span>
+    </button>
+
+    <!-- Centro: Logo -->
+    <div class="logo-container">
+      <a routerLink="/dashboard">
+        <img src="/images/logo_branca_texto.png" alt="Logo Lar Escola Redenção">
+      </a>
+    </div>
+
+    <!-- Direita: Botão Usuário -->
+    <div class="nav-action">
+      <button mat-flat-button class="btn-custom" (click)="entrarNoPerfil()">
+        <span class="material-icons">person</span>
+        <span>Admin</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Painel de Gestão (Visível ao clicar no menu) -->
+  <div class="dropdown-panel" *ngIf="menuVisivel">
+    <div class="painel-content">
+      <h3 class="painel-titulo">CENTRAL DE GESTÃO</h3>
+      
+      <div class="grid-opcoes">
+        <a class="card-opcao" routerLink="/dashboard/diario" (click)="alternarMenu()">
+          <span class="material-symbols-outlined">assignment</span>
+          <span class="texto-link">Diário de turma</span>
+        </a>
+        
+        <a class="card-opcao" routerLink="/dashboard/usuarios" (click)="alternarMenu()">
+          <span class="material-symbols-outlined">sentiment_excited</span>
+          <span class="texto-link">Gerenciar usuários</span>
+        </a>
+        
+        <a class="card-opcao" routerLink="/dashboard/colaboradores" (click)="alternarMenu()">
+          <span class="material-symbols-outlined">support_agent</span>
+          <span class="texto-link">Gerenciar colaboradores</span>
+        </a>
+        
+        <a class="card-opcao" routerLink="/dashboard/turmas" (click)="alternarMenu()">
+          <span class="material-symbols-outlined">family_group</span>
+          <span class="texto-link">Gerenciar unidades e turmas</span>
+        </a>
+        
+        <a class="card-opcao" routerLink="/dashboard/conteudo-publico" routerLinkActive="ativo" (click)="alternarMenu()">
+          <span class="material-symbols-outlined">captive_portal</span>
+          <span class="texto-link">Gerenciar conteúdo público</span>
+        </a>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- Espaçador para compensar a navbar fixa -->
+<div class="navbar-spacer"></div>

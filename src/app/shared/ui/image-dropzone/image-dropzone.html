@@ -1,0 +1,19 @@
+<div class="dropzone" [class.dropzone--invalid]="invalid()">
+  @if (imageUrl()) {
+    <img [src]="imageUrl()" alt="Pré-visualização da imagem" class="dropzone__preview" />
+  } @else {
+    <span class="dropzone__label">Nenhuma imagem selecionada</span>
+  }
+
+  <button type="button" class="btn btn-secondary" (click)="openFilePicker()">
+    Escolher arquivo
+  </button>
+
+  <input
+    #fileInput
+    type="file"
+    accept="image/jpeg,image/png,image/webp"
+    class="dropzone__input"
+    (change)="onFileInputChange($event)"
+  />
+</div>

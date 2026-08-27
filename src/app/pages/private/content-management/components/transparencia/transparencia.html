@@ -1,0 +1,55 @@
+<section class="transparencia-admin">
+  <div class="acoes-transparencia">
+    <button type="button" class="btn-primary" (click)="abrirModal('documento')">Adicionar documento</button>
+    <button type="button" class="btn-primary" (click)="abrirModal('secao')">Nova seção</button>
+  </div>
+</section>
+
+@if (modalAberto === 'documento') {
+  <app-modal-layout titulo="Adicionar documento" (closed)="fecharModal()">
+    <form class="form-modal" (submit)="$event.preventDefault()">
+      <mat-form-field appearance="outline">
+        <mat-label>Título do documento</mat-label>
+        <input matInput />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Seção</mat-label>
+        <mat-select>
+          <mat-option value=""></mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <label class="upload-campo" [class.tem-arquivo]="nomeDocumentoSelecionado">
+        <input type="file" accept=".pdf" (change)="selecionarDocumento($event)" />
+        @if (nomeDocumentoSelecionado) {
+          <span class="arquivo-nome">{{ nomeDocumentoSelecionado }}</span>
+          <small>Documento selecionado</small>
+        } @else {
+          <span>Selecione ou arraste um documento</span>
+        }
+      </label>
+
+      <div class="acoes-modal">
+        <button type="button" class="btn-cancelar" (click)="fecharModal()">Cancelar</button>
+        <button type="submit" class="btn-primary">Salvar</button>
+      </div>
+    </form>
+  </app-modal-layout>
+}
+
+@if (modalAberto === 'secao') {
+  <app-modal-layout titulo="Nova seção" (closed)="fecharModal()">
+    <form class="form-modal" (submit)="$event.preventDefault()">
+      <mat-form-field appearance="outline">
+        <mat-label>Nome da seção</mat-label>
+        <input matInput />
+      </mat-form-field>
+
+      <div class="acoes-modal">
+        <button type="button" class="btn-cancelar" (click)="fecharModal()">Cancelar</button>
+        <button type="submit" class="btn-primary">Salvar</button>
+      </div>
+    </form>
+  </app-modal-layout>
+}
