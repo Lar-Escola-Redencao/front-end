@@ -1,16 +1,17 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { environment } from '../../../../environments/environment';
-import { SocialLinksService } from './social-links.service';
+import { SocialLinksService } from '../../../../../shared/services/redes-sociais/social-links.service';
 import { SocialLinkFormModal } from './social-link-form-modal';
-import { ToggleSwitch } from '../../../shared/ui/toggle-switch/toggle-switch';
-import { ToastService } from '../../../shared/ui/toast/toast.service';
-import { SocialLink } from '../../../shared/models/social-link.model';
+import { ToggleSwitch } from 'src/app/shared/ui/toggle-switch/toggle-switch';
+import { ToastService } from 'src/app/shared/ui/toast/toast.service';
+import { environment } from 'src/environments/environment';
+import { SocialLink } from 'src/app/shared/models/social-link.model';
+
 
 @Component({
   selector: 'app-social-links-manager',
   imports: [SocialLinkFormModal, ToggleSwitch],
   templateUrl: './social-links-manager.html',
-  styleUrls: ['../../../shared/styles/manager-table.css', './social-links-manager.css'],
+  styleUrls: ['./social-links-manager.css'],
 })
 export class SocialLinksManager implements OnInit {
   private readonly socialLinksService = inject(SocialLinksService);

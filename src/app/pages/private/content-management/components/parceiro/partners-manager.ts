@@ -1,6 +1,6 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { environment } from '../../../../../../environments/environment';
-import { PartnersService } from '../../../../../shared/services/partners/partners.service';
+import { PartnersService } from '../../../../../shared/services/parceiro/partners.service';
 import { ToggleSwitch } from '../../../../../shared/ui/toggle-switch/toggle-switch';
 import { ToastService } from '../../../../../shared/ui/toast/toast.service';
 import { Partner } from '../../../../../shared/models/partner.model';

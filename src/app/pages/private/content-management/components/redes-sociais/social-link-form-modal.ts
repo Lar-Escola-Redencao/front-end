@@ -1,12 +1,13 @@
 import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { environment } from '../../../../environments/environment';
-import { Modal } from '../../../shared/ui/modal/modal';
-import { ToggleSwitch } from '../../../shared/ui/toggle-switch/toggle-switch';
-import { ImageDropzone } from '../../../shared/ui/image-dropzone/image-dropzone';
-import { SocialLink } from '../../../shared/models/social-link.model';
-import { SocialLinksService } from './social-links.service';
-import { ToastService } from '../../../shared/ui/toast/toast.service';
+
+import { SocialLinksService } from '../../../../../shared/services/redes-sociais/social-links.service';
+import { Modal } from 'src/app/shared/ui/modal/modal';
+import { ToggleSwitch } from 'src/app/shared/ui/toggle-switch/toggle-switch';
+import { ImageDropzone } from 'src/app/shared/ui/image-dropzone/image-dropzone';
+import { ToastService } from 'src/app/shared/ui/toast/toast.service';
+import { SocialLink } from 'src/app/shared/models/social-link.model';
+import { environment } from 'src/environments/environment';
 
 const URL_PATTERN = /^https?:\/\/.+/i;
 

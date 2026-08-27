@@ -11,7 +11,7 @@
         <mat-option value="" disabled>Escolha uma seção</mat-option>
         <mat-option value="diretoria">Diretoria</mat-option>
         <mat-option value="evento">Eventos</mat-option>
-        <mat-option value="partners">Parceiros</mat-option>
+        <mat-option value="parceiro">Parceiros</mat-option>
         <mat-option value="redes-sociais">Redes Sociais</mat-option>
         <mat-option value="transparencia">Transparência</mat-option>
       </mat-select>
@@ -26,11 +26,11 @@
     @case ('evento'){ 
         <app-evento></app-evento> 
     }
-    @case ('partners'){ 
+    @case ('parceiro'){ 
         <app-partners-manager></app-partners-manager> 
     }
     @case ('redes-sociais'){
-        <app-redes-sociais></app-redes-sociais>
+        <app-social-links-manager></app-social-links-manager>
     }
      @case ('transparencia'){
         <app-transparencia></app-transparencia>
