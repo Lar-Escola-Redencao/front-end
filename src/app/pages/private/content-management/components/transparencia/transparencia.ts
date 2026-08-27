@@ -2,7 +2,8 @@ import { Component, OnInit, ChangeDetectorRef, HostListener, NgZone } from '@ang
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ToastrService } from 'ngx-toastr';
-import Swal from 'sweetalert2';
+import { mapearErrosFormulario } from 'src/app/shared/utils/form-validations';
+import { Alertas } from 'src/app/shared/utils/alerts';
 
 import { ComponentComAlteracoesNaoSalvas } from 'src/app/shared/guards/can-deactivate.guard';
 import { ModalLayout } from '@components/modal-layout/modal-layout';
@@ -15,7 +16,7 @@ import {
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatOption, MatSelect } from '@angular/material/select';
-import { Secao, TransparenciaService } from './transparencia.service';
+import { TransparenciaService } from './transparencia.service';
 
 interface DocumentoTransparencia {
   id?: number;
@@ -80,12 +81,6 @@ export class Transparencia implements OnInit, ComponentComAlteracoesNaoSalvas {
   valoresOriginaisDocumento: any = null;
   errosDocumento: { [key: string]: string } = {};
 
-  private readonly mensagensErroDocumento: { [campo: string]: { [tipoErro: string]: string | ((err: any) => string) } } = {
-    titulo: { required: '⚠ O título do documento é obrigatório.' },
-    secaoId: { required: '⚠ Selecione uma seção para o documento.' },
-    arquivo: { required: '⚠ Anexe um arquivo PDF.' }
-  };
-
   // --- LÓGICA DE SEÇÃO ---
   secoes: any[] = [];
   secaoSelecionadaId: number | null = null;
@@ -93,12 +88,6 @@ export class Transparencia implements OnInit, ComponentComAlteracoesNaoSalvas {
   valoresOriginaisSecao: any = null;
   errosSecao: { [key: string]: string } = {};
 
-  private readonly mensagensErroSecao: { [campo: string]: { [tipoErro: string]: string | ((err: any) => string) } } = {
-    titulo: {
-      required: '⚠ O nome da seção é obrigatório.',
-      minlength: (e) => `⚠ Mínimo de ${e.requiredLength} caracteres.`
-    }
-  };
 
   constructor(
     private fb: FormBuilder,
@@ -234,25 +223,16 @@ export class Transparencia implements OnInit, ComponentComAlteracoesNaoSalvas {
       return;
     }
 
-    Swal.fire({
-      title: 'Descartar alterações?',
-      text: 'Existem dados preenchidos que ainda não foram salvos. Deseja realmente sair?',
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonText: 'Sim, descartar',
-      cancelButtonText: 'Continuar editando',
-      confirmButtonColor: '#e04b3a',
-      cancelButtonColor: '#757575',
-      reverseButtons: true
-    }).then((resultado) => {
+    Alertas.confirmarDescarte().then((confirmado) => {
       this.ngZone.run(() => {
-        if (resultado.isConfirmed) {
+        if (confirmado) {
           this.modalAberto = null;
-          if (this.formSecao) this.formSecao.reset();
-          if (this.formDocumento) this.formDocumento.reset();
+          this.formSecao.reset();
+          this.formDocumento.reset();
         } else {
           this.dispararTremorModal();
         }
+
         this.cdr.detectChanges();
       });
     });
@@ -281,15 +261,7 @@ export class Transparencia implements OnInit, ComponentComAlteracoesNaoSalvas {
 
   // --- MÉTODOS DE SALVAMENTO DE SEÇÃO ---
   verificarErrosSecao(): void {
-    const controles = this.formSecao.controls;
-    this.errosSecao = {};
-    for (const campo in controles) {
-      if (controles[campo].invalid && (controles[campo].dirty || controles[campo].touched)) {
-        const erroAtivo = Object.keys(controles[campo].errors!)[0];
-        const configErro = this.mensagensErroSecao[campo][erroAtivo];
-        this.errosSecao[campo] = typeof configErro === 'function' ? configErro(controles[campo].getError(erroAtivo)) : configErro;
-      }
-    }
+    this.errosSecao = mapearErrosFormulario(this.formSecao);
   }
 
   salvarSecao(): void {
@@ -324,15 +296,7 @@ export class Transparencia implements OnInit, ComponentComAlteracoesNaoSalvas {
 
   // --- MÉTODOS DE SALVAMENTO DE DOCUMENTO ---
   verificarErrosDocumento(): void {
-    const controles = this.formDocumento.controls;
-    this.errosDocumento = {};
-    for (const campo in controles) {
-      if (controles[campo].invalid && (controles[campo].dirty || controles[campo].touched)) {
-        const erroAtivo = Object.keys(controles[campo].errors!)[0];
-        const configErro = this.mensagensErroDocumento[campo][erroAtivo];
-        this.errosDocumento[campo] = typeof configErro === 'function' ? configErro(controles[campo].getError(erroAtivo)) : configErro;
-      }
-    }
+    this.errosDocumento = mapearErrosFormulario(this.formDocumento);
   }
 
   selecionarDocumento(event: Event) {
@@ -387,30 +351,22 @@ export class Transparencia implements OnInit, ComponentComAlteracoesNaoSalvas {
     }
 
     if (evento.tipo === 'excluir') {
-      Swal.fire({
-        title: 'Tem certeza?',
-        text: 'Esta ação não poderá ser desfeita.',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#e04b3a',
-        cancelButtonColor: '#757575',
-        confirmButtonText: 'Sim, excluir',
-        cancelButtonText: 'Cancelar',
-        reverseButtons: true
-      }).then((resultado) => {
-        if (resultado.isConfirmed) {
-          const request = isSecao
-            ? this.transparenciaService.deletarSecao(evento.linha.id)
-            : this.transparenciaService.deletarDocumento(evento.linha.id);
+      Alertas.confirmarExclusao().then((confirmado) => {
+        if (!confirmado) return;
 
-          request.subscribe({
-            next: () => {
-              this.toastr.success('Item excluído com sucesso!', 'Sucesso');
-              this.carregarSecoes();
-            },
-            error: () => this.toastr.error('Erro ao excluir item.', 'Erro')
-          });
-        }
+        const request = isSecao
+          ? this.transparenciaService.deletarSecao(evento.linha.id)
+          : this.transparenciaService.deletarDocumento(evento.linha.id);
+
+        request.subscribe({
+          next: () => {
+            this.toastr.success('Item excluído com sucesso!', 'Sucesso');
+            this.carregarSecoes();
+          },
+          error: () => {
+            this.toastr.error('Erro ao excluir item.', 'Erro');
+          }
+        });
       });
     }
   }
