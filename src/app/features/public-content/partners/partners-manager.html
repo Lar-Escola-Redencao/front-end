@@ -1,0 +1,69 @@
+<div class="manager">
+  <div class="manager__toolbar">
+    <button type="button" class="btn btn-primary" (click)="openCreateModal()">Novo parceiro</button>
+  </div>
+
+  @if (loading()) {
+    <p class="manager__empty">Carregando parceiros...</p>
+  } @else if (loadError()) {
+    <p class="manager__empty">Não foi possível carregar os parceiros.</p>
+  } @else if (partners().length === 0) {
+    <p class="manager__empty">Nenhum parceiro cadastrado ainda.</p>
+  } @else {
+    <div class="manager__table-wrap">
+      <table class="manager__table">
+        <thead>
+          <tr>
+            <th class="col-id">#</th>
+            <th>Nome</th>
+            <th>Logo</th>
+            <th class="col-active">Ativo</th>
+            <th class="col-action">Editar</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (partner of partners(); track partner.id) {
+            <tr>
+              <td class="col-id" data-label="#">{{ partner.id }}</td>
+              <td data-label="Nome">{{ partner.nome }}</td>
+              <td data-label="Logo">
+                @if (partner.logo) {
+                  <img [src]="apiUrl + partner.logo" [alt]="partner.nome" class="manager__logo" />
+                } @else {
+                  <span class="manager__logo manager__logo--fallback">{{
+                    initials(partner.nome)
+                  }}</span>
+                }
+              </td>
+              <td class="col-active" data-label="Ativo">
+                <app-toggle-switch
+                  [checked]="partner.ativo"
+                  (checkedChange)="onToggleActive(partner, $event)"
+                  [ariaLabel]="'Ativar ' + partner.nome"
+                />
+              </td>
+              <td class="col-action" data-label="Editar">
+                <button
+                  type="button"
+                  class="icon-btn"
+                  aria-label="Editar parceiro"
+                  (click)="openEditModal(partner)"
+                >
+                  ✎
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>
+
+@if (formModalOpen()) {
+  <app-partner-form-modal
+    [partner]="editingPartner()"
+    (saved)="onSaved()"
+    (closed)="closeFormModal()"
+  />
+}

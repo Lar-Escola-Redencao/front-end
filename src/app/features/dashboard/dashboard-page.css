@@ -1,0 +1,38 @@
+.dashboard__title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--color-gray-900);
+}
+
+.dashboard__subtitle {
+  color: var(--color-gray-500);
+  margin-top: 0.35rem;
+}
+
+.dashboard__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.dashboard__card {
+  background: var(--color-white);
+  border: 1px solid var(--color-gray-100);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem 1rem;
+  text-align: center;
+  text-decoration: none;
+  color: var(--color-gray-700);
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition:
+    box-shadow 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.dashboard__card:hover {
+  box-shadow: var(--shadow-md);
+  border-color: var(--color-primary);
+  color: var(--color-primary-dark);
+}

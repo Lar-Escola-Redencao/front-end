@@ -1,0 +1,9 @@
+.manager__link {
+  color: var(--color-primary);
+  text-decoration: none;
+  word-break: break-all;
+}
+
+.manager__link:hover {
+  text-decoration: underline;
+}
