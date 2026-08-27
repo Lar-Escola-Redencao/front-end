@@ -5,7 +5,7 @@ import { Modal } from '../../../../../shared/ui/modal/modal';
 import { ToggleSwitch } from '../../../../../shared/ui/toggle-switch/toggle-switch';
 import { ImageDropzone } from '../../../../../shared/ui/image-dropzone/image-dropzone';
 import { Partner } from '../../../../../shared/models/partner.model';
-import { PartnersService } from '../../../../../shared/services/parceiro/partners.service';
+import { PartnersService } from '../../../../../shared/services/content-management/parceiro/partners.service';
 import { ToastService } from '../../../../../shared/ui/toast/toast.service';
 
 @Component({

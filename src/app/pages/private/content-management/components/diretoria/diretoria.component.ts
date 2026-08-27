@@ -5,7 +5,7 @@ import { ToastrService } from 'ngx-toastr';
 import Swal from 'sweetalert2';
 import { ComponentComAlteracoesNaoSalvas } from 'src/app/shared/guards/can-deactivate.guard';
 import { AtualizarDiretoriaDTO, CriarDiretoriaDTO, Diretoria } from 'src/app/shared/models/diretoria.model';
-import { DiretoriaService } from 'src/app/services/diretoria.service';
+import { DiretoriaService } from 'src/app/shared/services/content-management/diretoria/diretoria.service';
 
 const TIPOS_PERMITIDOS = ['image/jpeg', 'image/png', 'image/webp'];
 const TAMANHO_MAXIMO_BYTES = 5 * 1024 * 1024;

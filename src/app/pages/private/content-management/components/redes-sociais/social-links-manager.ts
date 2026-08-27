@@ -1,5 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { SocialLinksService } from '../../../../../shared/services/redes-sociais/social-links.service';
+import { SocialLinksService } from '../../../../../shared/services/content-management/redes-sociais/social-links.service';
 import { SocialLinkFormModal } from './social-link-form-modal';
 import { ToggleSwitch } from 'src/app/shared/ui/toggle-switch/toggle-switch';
 import { ToastService } from 'src/app/shared/ui/toast/toast.service';

@@ -1,7 +1,7 @@
 import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 
-import { SocialLinksService } from '../../../../../shared/services/redes-sociais/social-links.service';
+import { SocialLinksService } from '../../../../../shared/services/content-management/redes-sociais/social-links.service';
 import { Modal } from 'src/app/shared/ui/modal/modal';
 import { ToggleSwitch } from 'src/app/shared/ui/toggle-switch/toggle-switch';
 import { ImageDropzone } from 'src/app/shared/ui/image-dropzone/image-dropzone';
