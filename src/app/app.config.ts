@@ -10,15 +10,6 @@ import { authInterceptor } from './shared/interceptors/auth-interceptor';
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
-    provideRouter(routes),
-    provideHttpClient(withInterceptors([authInterceptor])),
-    provideAnimations(),
-    provideToastr({
-      timeOut: 4000,
-      positionClass: 'toast-top-right',
-      preventDuplicates: true,
-      closeButton: true,
-      progressBar: true
-    })
+    provideRouter(routes)
   ]
 };
