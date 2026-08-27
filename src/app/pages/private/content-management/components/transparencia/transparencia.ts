@@ -94,9 +94,9 @@ export class Transparencia implements OnInit, ComponentComAlteracoesNaoSalvas {
   errosSecao: { [key: string]: string } = {};
 
   private readonly mensagensErroSecao: { [campo: string]: { [tipoErro: string]: string | ((err: any) => string) } } = {
-    titulo: { 
-      required: '⚠ O nome da seção é obrigatório.', 
-      minlength: (e) => `⚠ Mínimo de ${e.requiredLength} caracteres.` 
+    titulo: {
+      required: '⚠ O nome da seção é obrigatório.',
+      minlength: (e) => `⚠ Mínimo de ${e.requiredLength} caracteres.`
     }
   };
 
@@ -139,7 +139,7 @@ export class Transparencia implements OnInit, ComponentComAlteracoesNaoSalvas {
 
   atualizarTabelaDocumentos(): void {
     const novosDocumentos: DocumentoTransparencia[] = [];
-    
+
     this.secoes.forEach(secao => {
       if (secao.documentos && Array.isArray(secao.documentos)) {
         secao.documentos.forEach((doc: any) => {
@@ -148,8 +148,8 @@ export class Transparencia implements OnInit, ComponentComAlteracoesNaoSalvas {
             titulo: doc.titulo,
             secao: secao.titulo,
             secaoId: secao.id,
-            tipo: doc.arquivo ? doc.arquivo.split('.').pop().toUpperCase() : 'N/A', 
-            dataAtualizacao: '-' 
+            tipo: doc.arquivo ? doc.arquivo.split('.').pop().toUpperCase() : 'N/A',
+            dataAtualizacao: '-'
           });
         });
       }
@@ -180,25 +180,25 @@ export class Transparencia implements OnInit, ComponentComAlteracoesNaoSalvas {
     if (tipo === 'documento') {
       this.errosDocumento = {};
       this.nomeDocumentoSelecionado = '';
-      
+
       if (itemEdicao) {
         this.modoEdicao = true;
         this.documentoSelecionadoId = itemEdicao.id;
-        
+
         this.formDocumento.get('arquivo')?.clearValidators();
         this.formDocumento.get('arquivo')?.updateValueAndValidity();
-        
-        this.formDocumento.patchValue({ 
+
+        this.formDocumento.patchValue({
           titulo: itemEdicao.titulo,
           secaoId: itemEdicao.secaoId
         });
       } else {
         this.modoEdicao = false;
         this.documentoSelecionadoId = null;
-        
+
         this.formDocumento.get('arquivo')?.setValidators([Validators.required]);
         this.formDocumento.get('arquivo')?.updateValueAndValidity();
-        
+
         this.formDocumento.reset();
       }
       this.valoresOriginaisDocumento = this.formDocumento.getRawValue();
@@ -212,10 +212,10 @@ export class Transparencia implements OnInit, ComponentComAlteracoesNaoSalvas {
 
   get temAlteracoesDocumento(): boolean {
     if (!this.modoEdicao) return this.formDocumento.dirty;
-    
+
     // Como File object quebra no JSON.stringify, comparamos manualmente no caso de arquivo alterado
     if (this.formDocumento.get('arquivo')?.dirty) return true;
-    
+
     const valorAtual = { ...this.formDocumento.getRawValue(), arquivo: null };
     const valorOriginal = { ...this.valoresOriginaisDocumento, arquivo: null };
     return JSON.stringify(valorAtual) !== JSON.stringify(valorOriginal);
@@ -303,7 +303,7 @@ export class Transparencia implements OnInit, ComponentComAlteracoesNaoSalvas {
     }
 
     this.isLoading = true;
-    const request = this.modoEdicao 
+    const request = this.modoEdicao
       ? this.transparenciaService.atualizarSecao(this.secaoSelecionadaId!, this.formSecao.value)
       : this.transparenciaService.criarSecao(this.formSecao.value);
 
@@ -370,7 +370,7 @@ export class Transparencia implements OnInit, ComponentComAlteracoesNaoSalvas {
         this.carregarSecoes();
         this.cdr.detectChanges();
       },
-      error: (err : any) => {
+      error: (err: any) => {
         this.isLoading = false;
         this.toastr.error(err.error?.message || 'Erro ao salvar documento.', 'Erro');
         this.cdr.detectChanges();
@@ -399,7 +399,7 @@ export class Transparencia implements OnInit, ComponentComAlteracoesNaoSalvas {
         reverseButtons: true
       }).then((resultado) => {
         if (resultado.isConfirmed) {
-          const request = isSecao 
+          const request = isSecao
             ? this.transparenciaService.deletarSecao(evento.linha.id)
             : this.transparenciaService.deletarDocumento(evento.linha.id);
 

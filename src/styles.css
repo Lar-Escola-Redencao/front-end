@@ -127,6 +127,15 @@ body {
 }
 
 /* =========================
+   ERROS
+   ========================= */
+
+.mat-mdc-form-field-error-wrapper{
+    padding: 5px 0 0 0 !important;
+    color: red;
+}
+
+/* =========================
    INPUT
    ========================= */
 
@@ -145,17 +154,9 @@ body {
    SELECT
    ========================= */
 
-.mat-mdc-form-field .mat-mdc-select-value {
-  display: flex !important;
-  align-items: center !important;
-  margin-top: 10px !important;
-  padding-left: 0 !important;
-}
 
 .mat-mdc-form-field .mat-mdc-select-value-text {
   position: relative;
-  top: 1px;
-
   width: 100%;
 }
 

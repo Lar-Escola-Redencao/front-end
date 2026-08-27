@@ -20,7 +20,7 @@ export interface AtualizarSecaoDTO {
 export class TransparenciaService {
   private apiUrl = `${environment.apiUrl}/transparencia`;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   listarSecoes(): Observable<Secao[]> {
     return this.http.get<Secao[]>(`${this.apiUrl}/secoes`);
@@ -53,11 +53,11 @@ export class TransparenciaService {
     const formData = new FormData();
     formData.append('secaoId', secaoId.toString());
     formData.append('titulo', titulo);
-    
+
     if (arquivo) {
       formData.append('arquivo', arquivo);
     }
-    
+
     return this.http.put<any>(`${this.apiUrl}/documento/${id}`, formData);
   }
 

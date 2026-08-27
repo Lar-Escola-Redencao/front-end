@@ -19,7 +19,7 @@
 .form-modal {
   display: flex;
   flex-direction: column;
-  gap: 22px;
+  gap: 8px;
 }
 
 .campo-textarea {
