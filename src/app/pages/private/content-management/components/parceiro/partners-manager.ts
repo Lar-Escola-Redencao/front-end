@@ -452,84 +452,95 @@ export class PartnersManager
   // =========================================================
 
   selecionarLogo(event: Event): void {
+
     const input =
       event.target as HTMLInputElement;
+
     const arquivo =
       input.files?.[0];
+
+
     if (!arquivo) {
       return;
     }
 
 
-    /*
-     * O validator validarImagem() é quem define
-     * os formatos aceitos:
-     *
-     * JPG
-     * JPEG
-     * PNG
-     * WEBP
-     */
+    // =======================================================
+    // COLOCA O ARQUIVO NO FORMULÁRIO
+    // =======================================================
 
-    this.form.patchValue({
-      logo: arquivo
-    });
+    const logoControl =
+      this.form.get('logo');
 
+    logoControl?.setValue(arquivo);
+    logoControl?.markAsDirty();
+    logoControl?.updateValueAndValidity();
 
-    this.form
-      .get('logo')
-      ?.markAsDirty();
     this.form.markAsDirty();
 
 
-    /*
-     * Executa a validação imediatamente.
-     */
-    this.form
-      .get('logo')
-      ?.updateValueAndValidity();
-
+    // =======================================================
+    // ATUALIZA AS MENSAGENS DE ERRO
+    // =======================================================
 
     this.verificarErros();
 
 
-    /*
-     * Se o arquivo for inválido,
-     * não mantém o arquivo selecionado.
-     */
-    if (
-      this.form.get('logo')?.hasError(
-        'formatoArquivoInvalido'
-      )
-    ) {
+    // =======================================================
+    // ARQUIVO INVÁLIDO
+    // =======================================================
 
+    if (logoControl?.invalid) {
+
+      /*
+      * Remove qualquer seleção anterior.
+      */
       this.logoSelecionada = null;
 
       this.nomeLogoSelecionada = '';
 
+      /*
+      * Remove o preview da logo.
+      */
       this.logoPreviewUrl = null;
 
+      /*
+      * Limpa o valor do input type=file.
+      */
       input.value = '';
+
+      /*
+      * Garante que o erro seja exibido.
+      */
+      logoControl.markAsTouched();
+      logoControl.markAsDirty();
+
+      this.verificarErros();
 
       this.cdr.detectChanges();
 
       return;
-
     }
 
 
-    /*
-     * Arquivo válido.
-     */
-    this.logoSelecionada = arquivo;
+    // =======================================================
+    // ARQUIVO VÁLIDO
+    // =======================================================
+
+    this.logoSelecionada =
+      arquivo;
 
     this.nomeLogoSelecionada =
       arquivo.name;
 
 
-    /*
-     * Gera preview da imagem.
-     */
+    // =======================================================
+    // PREVIEW
+    // =======================================================
+
+    this.logoPreviewUrl = null;
+
+
     const reader =
       new FileReader();
 
@@ -547,7 +558,6 @@ export class PartnersManager
     reader.readAsDataURL(arquivo);
 
   }
-
 
   // =========================================================
   // SALVAR PARCEIRO

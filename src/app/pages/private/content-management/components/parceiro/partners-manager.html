@@ -79,7 +79,11 @@
       </div>
     </div>
 
-
+    @if (erros['logo']) {
+    <span class="error-text">
+      {{ erros['logo'] }}
+    </span>
+    }
 
     <!-- ================================================= -->
     <!-- PREVIEW DA LOGO -->
@@ -89,12 +93,6 @@
     <div class="image-preview">
       <img [src]="logoPreviewUrl" [alt]="form.get('nome')?.value || 'Logo do parceiro'" />
     </div>
-    }
-
-    @if (erros['logo']) {
-    <span class="error-text">
-      {{ erros['logo'] }}
-    </span>
     }
 
 
