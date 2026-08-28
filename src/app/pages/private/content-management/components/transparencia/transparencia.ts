@@ -2,7 +2,10 @@ import { Component, OnInit, ChangeDetectorRef, HostListener, NgZone } from '@ang
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ToastrService } from 'ngx-toastr';
-import { mapearErrosFormulario } from 'src/app/shared/utils/form-validations';
+import {
+  mapearErrosFormulario,
+  validarDocumento
+} from 'src/app/shared/utils/form-validations';
 import { Alertas } from 'src/app/shared/utils/alerts';
 
 import { ComponentComAlteracoesNaoSalvas } from 'src/app/shared/guards/can-deactivate.guard';
@@ -105,9 +108,26 @@ export class Transparencia implements OnInit, ComponentComAlteracoesNaoSalvas {
     });
 
     this.formDocumento = this.fb.group({
-      titulo: ['', [Validators.required, Validators.maxLength(150)]],
-      secaoId: ['', Validators.required],
-      arquivo: [null, Validators.required]
+      titulo: [
+        '',
+        [
+          Validators.required,
+          Validators.maxLength(150)
+        ]
+      ],
+
+      secaoId: [
+        '',
+        Validators.required
+      ],
+
+      arquivo: [
+        null,
+        [
+          Validators.required,
+          validarDocumento()
+        ]
+      ]
     });
   }
 
@@ -183,27 +203,75 @@ export class Transparencia implements OnInit, ComponentComAlteracoesNaoSalvas {
       this.errosDocumento = {};
       this.nomeDocumentoSelecionado = '';
 
+      // Limpa estado anterior do formulário
+      this.formDocumento.reset({
+        titulo: '',
+        secaoId: '',
+        arquivo: null
+      });
+
+      this.formDocumento.markAsPristine();
+      this.formDocumento.markAsUntouched();
+
       if (itemEdicao) {
+        // ============================================
+        // EDIÇÃO
+        // ============================================
+
         this.modoEdicao = true;
         this.documentoSelecionadoId = itemEdicao.id;
 
-        this.formDocumento.get('arquivo')?.clearValidators();
+        // Arquivo NÃO é obrigatório na edição.
+        // Porém, se o usuário selecionar um novo,
+        // ele será validado pelo validarDocumento().
+        this.formDocumento.get('arquivo')?.setValidators([
+          validarDocumento()
+        ]);
+
         this.formDocumento.get('arquivo')?.updateValueAndValidity();
 
         this.formDocumento.patchValue({
           titulo: itemEdicao.titulo,
-          secaoId: itemEdicao.secaoId
+          secaoId: itemEdicao.secaoId,
+          arquivo: null
         });
+
+        this.nomeDocumentoSelecionado =
+          itemEdicao.arquivo
+            ? itemEdicao.arquivo.split('/').pop() ?? ''
+            : '';
+
       } else {
+        // ============================================
+        // NOVO
+        // ============================================
+
         this.modoEdicao = false;
         this.documentoSelecionadoId = null;
 
-        this.formDocumento.get('arquivo')?.setValidators([Validators.required]);
+        this.formDocumento.get('arquivo')?.setValidators([
+          Validators.required,
+          validarDocumento()
+        ]);
+
         this.formDocumento.get('arquivo')?.updateValueAndValidity();
 
-        this.formDocumento.reset();
+        this.formDocumento.reset({
+          titulo: '',
+          secaoId: '',
+          arquivo: null
+        });
+
+        this.nomeDocumentoSelecionado = '';
       }
-      this.valoresOriginaisDocumento = this.formDocumento.getRawValue();
+
+      // Muito importante:
+      // define o estado atual como o estado original.
+      this.formDocumento.markAsPristine();
+      this.formDocumento.markAsUntouched();
+
+      this.valoresOriginaisDocumento =
+        this.formDocumento.getRawValue();
     }
   }
 
@@ -316,14 +384,25 @@ export class Transparencia implements OnInit, ComponentComAlteracoesNaoSalvas {
     this.errosDocumento = mapearErrosFormulario(this.formDocumento);
   }
 
-  selecionarDocumento(event: Event) {
-    const arquivo = (event.target as HTMLInputElement).files?.[0];
-    if (arquivo) {
-      this.nomeDocumentoSelecionado = arquivo.name;
-      this.formDocumento.patchValue({ arquivo: arquivo });
-      this.formDocumento.get('arquivo')?.markAsDirty();
-      this.verificarErrosDocumento();
+  selecionarDocumento(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const arquivo = input.files?.[0];
+
+    if (!arquivo) {
+      return;
     }
+
+    const controleArquivo = this.formDocumento.get('arquivo');
+
+    controleArquivo?.setValue(arquivo);
+    controleArquivo?.markAsDirty();
+
+    this.formDocumento.markAsDirty();
+
+    this.nomeDocumentoSelecionado = arquivo.name;
+
+    this.verificarErrosDocumento();
+
     this.cdr.detectChanges();
   }
 

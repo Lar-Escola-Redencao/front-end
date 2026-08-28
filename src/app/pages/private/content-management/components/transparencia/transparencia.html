@@ -51,20 +51,41 @@
 
     <!-- Container do Upload -->
     <div class="form-group">
-      <input #inputDocumento id="arquivo" type="file" class="input-arquivo-oculto"
-        accept=".pdf,application/pdf,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" 
-        (change)="selecionarDocumento($event)">
-      
-      <div class="upload-arquivo" [class.upload-arquivo-erro]="errosDocumento['arquivo']" (click)="inputDocumento.click()">
-        <span class="material-symbols-outlined upload-arquivo-icone"> upload_file </span>
-        
-        <div class="upload-arquivo-texto"> 
-          <strong> {{ nomeDocumentoSelecionado ? nomeDocumentoSelecionado : 'Clique para escolher um documento' }} </strong> 
-          <span>PDF, DOCX ou XLSX</span> 
-        </div> 
-        
-        <span class="upload-arquivo-botao"> Procurar </span>
+
+      <input #inputDocumento id="arquivo" type="file" class="input-arquivo-oculto" accept=".pdf,.docx,.xlsx,
+            application/pdf,
+            application/vnd.openxmlformats-officedocument.wordprocessingml.document,
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" (change)="selecionarDocumento($event)">
+
+      <div class="upload-arquivo" [class.upload-arquivo-erro]="errosDocumento['arquivo']"
+        (click)="inputDocumento.click()">
+
+        <span class="material-symbols-outlined upload-arquivo-icone">
+          upload_file
+        </span>
+
+        <div class="upload-arquivo-texto">
+
+          <strong>
+            {{
+            nomeDocumentoSelecionado
+            ? nomeDocumentoSelecionado
+            : 'Selecione um documento'
+            }}
+          </strong>
+
+          <span>
+            PDF, DOCX ou XLSX
+          </span>
+
+        </div>
+
+        <span class="upload-arquivo-botao">
+          Procurar
+        </span>
+
       </div>
+
     </div>
 
     @if (errosDocumento['arquivo']) {
@@ -104,7 +125,7 @@
       </label>
     </div>
     }
-    
+
     <mat-form-field appearance="outline">
       <mat-label>Nome da seção</mat-label>
       <input matInput formControlName="titulo" (blur)="verificarErrosSecao()" maxlength="100" />

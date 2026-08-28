@@ -51,27 +51,28 @@
     <!-- ================================================= -->
     <!-- LOGO -->
     <!-- ================================================= -->
-
-
+    
     <div class="form-group">
-      <input #inputLogo id="logo" type="file" class="input-arquivo-oculto" accept="image/*"
+      <input #inputLogo id="logo" type="file" class="input-arquivo-oculto" accept=".jpg,.jpeg,.png,.webp"
         (change)="selecionarLogo($event)">
-
+    
       <div class="upload-arquivo" [class.upload-arquivo-erro]="erros['logo']" (click)="inputLogo.click()">
         <span class="material-symbols-outlined upload-arquivo-icone">
           upload_file
         </span>
-
+    
         <div class="upload-arquivo-texto">
           <strong>
-            {{ nomeLogoSelecionada
+            {{
+            nomeLogoSelecionada
             ? nomeLogoSelecionada
-            : 'Clique para escolher a logo do parceiro' }}
+            : 'Selecione a logo do parceiro'
+            }}
           </strong>
-
-          <span>PNG, JPG ou WEBP</span>
+    
+          <span>PNG, JPEG, JPG ou WEBP</span>
         </div>
-
+    
         <span class="upload-arquivo-botao">
           Procurar
         </span>
