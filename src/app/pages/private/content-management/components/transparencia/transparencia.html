@@ -50,18 +50,21 @@
 
 
     <!-- Container do Upload -->
-    <div class="upload-container">
-      <label class="upload-campo" [class.tem-arquivo]="nomeDocumentoSelecionado"
-        [class.com-erro]="errosDocumento['arquivo']">
-        <input type="file" accept=".pdf" (change)="selecionarDocumento($event)" />
-
-        @if (nomeDocumentoSelecionado) {
-        <span class="arquivo-nome">{{ nomeDocumentoSelecionado }}</span>
-        <small>Documento selecionado</small>
-        } @else {
-        <span>Selecione ou arraste um documento (.pdf)</span>
-        }
-      </label>
+    <div class="form-group">
+      <input #inputDocumento id="arquivo" type="file" class="input-arquivo-oculto"
+        accept=".pdf,application/pdf,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" 
+        (change)="selecionarDocumento($event)">
+      
+      <div class="upload-arquivo" [class.upload-arquivo-erro]="errosDocumento['arquivo']" (click)="inputDocumento.click()">
+        <span class="material-symbols-outlined upload-arquivo-icone"> upload_file </span>
+        
+        <div class="upload-arquivo-texto"> 
+          <strong> {{ nomeDocumentoSelecionado ? nomeDocumentoSelecionado : 'Clique para escolher um documento' }} </strong> 
+          <span>PDF, DOCX ou XLSX</span> 
+        </div> 
+        
+        <span class="upload-arquivo-botao"> Procurar </span>
+      </div>
     </div>
 
     @if (errosDocumento['arquivo']) {

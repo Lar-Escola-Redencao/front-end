@@ -109,6 +109,56 @@
   background-color: #fee2e2;
 }
 
+.tabela-imagem {
+  display: block;
+
+  width: 50px;
+  height: 50px;
+
+  object-fit: contain;
+
+  border-radius: 6px;
+}
+
+.tabela-imagem-vazia {
+  color: #999;
+}
+
+.tabela-documento {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+
+  color: var(--primary-color);
+
+  font-size: 0.8rem;
+  font-weight: 500;
+
+  text-decoration: none;
+
+  cursor: pointer;
+
+  transition:
+    color 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.tabela-documento mat-icon {
+  width: 20px;
+  height: 20px;
+
+  font-size: 20px;
+}
+
+.tabela-documento:hover {
+  color: var(--primary-color);
+  text-decoration: underline;
+}
+
+.tabela-documento-vazio {
+  color: #999;
+}
+
 .tabela-vazia {
   padding: 40px 24px;
   text-align: center;

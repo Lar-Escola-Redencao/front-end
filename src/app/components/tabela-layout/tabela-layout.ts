@@ -9,14 +9,20 @@ import {
 } from '@angular/core';
 
 import { MatIconModule } from '@angular/material/icon';
-import { MatPaginatorIntl, MatPaginatorModule, PageEvent } from '@angular/material/paginator';
+import {
+  MatPaginatorIntl,
+  MatPaginatorModule,
+  PageEvent
+} from '@angular/material/paginator';
+
+import { environment } from 'src/environments/environment';
 
 export interface TabelaColuna<T = any> {
   chave: keyof T & string;
   titulo: string;
   formatar?: (valor: any, linha: T) => string;
   principalMobile?: boolean;
-  tipo?: 'texto' | 'status';
+  tipo?: 'texto' | 'status' | 'imagem' | 'documento';
 }
 
 export interface TabelaAcao<T = any> {
@@ -26,7 +32,6 @@ export interface TabelaAcao<T = any> {
   executar?: (linha: T) => void;
 }
 
-
 @Injectable()
 export class PaginatorIntlPtBr extends MatPaginatorIntl {
   override itemsPerPageLabel = 'Itens por página:';
@@ -35,19 +40,24 @@ export class PaginatorIntlPtBr extends MatPaginatorIntl {
   override firstPageLabel = 'Primeira página';
   override lastPageLabel = 'Última página';
 
-  override getRangeLabel = (page: number, pageSize: number, length: number) => {
+  override getRangeLabel = (
+    page: number,
+    pageSize: number,
+    length: number
+  ) => {
     if (length === 0 || pageSize === 0) {
       return `0 de ${length}`;
     }
-    
+
     length = Math.max(length, 0);
+
     const startIndex = page * pageSize;
-    
-    // Calcula o índice final
-    const endIndex = startIndex < length ?
-      Math.min(startIndex + pageSize, length) :
-      startIndex + pageSize;
-      
+
+    const endIndex =
+      startIndex < length
+        ? Math.min(startIndex + pageSize, length)
+        : startIndex + pageSize;
+
     return `${startIndex + 1} - ${endIndex} de ${length}`;
   };
 }
@@ -55,14 +65,20 @@ export class PaginatorIntlPtBr extends MatPaginatorIntl {
 @Component({
   selector: 'app-tabela-layout',
   standalone: true,
+
   imports: [
     MatIconModule,
     MatPaginatorModule
   ],
+
   templateUrl: './tabela-layout.html',
   styleUrl: './tabela-layout.css',
+
   providers: [
-    { provide: MatPaginatorIntl, useClass: PaginatorIntlPtBr }
+    {
+      provide: MatPaginatorIntl,
+      useClass: PaginatorIntlPtBr
+    }
   ]
 })
 export class TabelaLayout<T = any> {
@@ -85,7 +101,9 @@ export class TabelaLayout<T = any> {
     tipo: string;
     linha: T;
   }>();
-  
+
+  apiUrl = environment.apiUrl;
+
 
   dadosPaginados: T[] = [];
 
@@ -101,37 +119,93 @@ export class TabelaLayout<T = any> {
   }
 
   obterValorPrincipal(linha: T): string {
-    const colunaPrincipal = this.colunas.find(c => c.principalMobile) || this.colunas[0];
+    const colunaPrincipal =
+      this.colunas.find(c => c.principalMobile) ||
+      this.colunas[0];
+
     return this.obterValor(linha, colunaPrincipal);
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['dados'] || changes['tamanhoPagina']) {
+    if (
+      changes['dados'] ||
+      changes['tamanhoPagina']
+    ) {
       this.atualizarPagina();
     }
   }
 
   get valorTotalColunas(): number {
-    return this.colunas.length + (this.acoes.length > 0 ? 1 : 0);
+    return (
+      this.colunas.length +
+      (this.acoes.length > 0 ? 1 : 0)
+    );
   }
 
-  obterValor(linha: T, coluna: TabelaColuna<T>): string {
+  obterValor(
+    linha: T,
+    coluna: TabelaColuna<T>
+  ): string {
+
     const valor = linha[coluna.chave];
 
     if (coluna.formatar) {
       return coluna.formatar(valor, linha);
     }
 
-    return valor !== null && valor !== undefined
+    return valor !== null &&
+      valor !== undefined
       ? String(valor)
       : '-';
   }
 
-  obterStatus(valor: any): string {
-    return valor === true ? 'Ativo' : 'Inativo';
-  } 
+  obterUrlImagem(valor: any): string | null {
+    if (!valor) {
+      return null;
+    }
 
-  executarAcao(acao: TabelaAcao<T>, linha: T): void {
+    const valorString = String(valor);
+
+    if (
+      valorString.startsWith('http://') ||
+      valorString.startsWith('https://')
+    ) {
+      return valorString;
+    }
+
+    // Caso o backend retorne /uploads/...
+    return `${this.apiUrl}${valorString}`;
+  }
+
+  obterUrlDocumento(valor: any): string | null {
+    if (!valor) {
+      return null;
+    }
+
+    const valorString = String(valor);
+
+    if (
+      valorString.startsWith('http://') ||
+      valorString.startsWith('https://')
+    ) {
+      return valorString;
+    }
+
+    return `${this.apiUrl}${valorString}`;
+  }
+
+  obterStatus(valor: any): string {
+    return valor === true
+      ? 'Ativo'
+      : 'Inativo';
+  }
+
+
+  executarAcao(
+    acao: TabelaAcao<T>,
+    linha: T
+  ): void {
+
     if (acao.executar) {
       acao.executar(linha);
       return;
@@ -146,19 +220,30 @@ export class TabelaLayout<T = any> {
   alterarPagina(evento: PageEvent): void {
     this.paginaAtual = evento.pageIndex;
     this.tamanhoPagina = evento.pageSize;
-
     this.atualizarPagina();
   }
 
   private atualizarPagina(): void {
     if (!this.exibirPaginacao) {
-      this.dadosPaginados = [...this.dados];
+      this.dadosPaginados = [
+        ...this.dados
+      ];
+
       return;
     }
 
-    const inicio = this.paginaAtual * this.tamanhoPagina;
-    const fim = inicio + this.tamanhoPagina;
+    const inicio =
+      this.paginaAtual *
+      this.tamanhoPagina;
 
-    this.dadosPaginados = this.dados.slice(inicio, fim);
+    const fim =
+      inicio +
+      this.tamanhoPagina;
+
+    this.dadosPaginados =
+      this.dados.slice(
+        inicio,
+        fim
+      );
   }
 }

@@ -31,4 +31,8 @@ export class PartnersService {
     }
     return firstValueFrom(this.http.put<Partner>(`${this.baseUrl}/${id}`, formData));
   }
+
+  delete(id: number): Promise<void>{
+    return firstValueFrom(this.http.delete<void>(`${this.baseUrl}/${id}`));
+  }
 }

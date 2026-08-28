@@ -24,6 +24,7 @@ interface DocumentoTransparencia {
   titulo: string;
   secao: string;
   secaoId?: number;
+  arquivo?: string;
   tipo: string;
   dataAtualizacao: string;
 }
@@ -62,6 +63,7 @@ export class Transparencia implements OnInit, ComponentComAlteracoesNaoSalvas {
   colunasDocumentos: TabelaColuna<DocumentoTransparencia>[] = [
     { chave: 'titulo', titulo: 'Documento', principalMobile: true },
     { chave: 'secao', titulo: 'Seção' },
+    { chave: 'arquivo', titulo: 'Documento', tipo: 'documento'},
     { chave: 'tipo', titulo: 'Tipo' }
   ];
 
@@ -139,7 +141,10 @@ export class Transparencia implements OnInit, ComponentComAlteracoesNaoSalvas {
             titulo: doc.titulo,
             secao: secao.titulo,
             secaoId: secao.id,
-            tipo: doc.arquivo ? doc.arquivo.split('.').pop().toUpperCase() : 'N/A',
+            arquivo: doc.arquivo,
+            tipo: doc.arquivo
+              ? doc.arquivo.split('.').pop()?.toUpperCase() ?? 'N/A'
+              : 'N/A',
             dataAtualizacao: '-'
           });
         });

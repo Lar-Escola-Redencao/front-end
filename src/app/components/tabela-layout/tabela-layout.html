@@ -2,115 +2,187 @@
 
   @if (dados.length > 0) {
 
-    <div class="tabela-wrapper">
+  <div class="tabela-wrapper">
 
-      <table class="tabela">
+    <table class="tabela">
 
-        <thead>
-          <tr>
-            @for (coluna of colunas; track coluna.chave) {
-              <th>
-                {{ coluna.titulo }}
-              </th>
-            }
+      <thead>
+        <tr>
+          @for (coluna of colunas; track coluna.chave) {
+          <th>
+            {{ coluna.titulo }}
+          </th>
+          }
+          @if (acoes.length > 0) {
+          <th class="coluna-acoes"></th>
+          }
+        </tr>
+      </thead>
 
-            @if (acoes.length > 0) {
-              <th class="coluna-acoes"></th>
-            }
-          </tr>
-        </thead>
+      <tbody>
 
-        <tbody>
-            @for (linha of dadosPaginados; track $index) {
+        @for (linha of dadosPaginados; track $index) {
+        <tr class="linha" [class.expandida]="linhaExpandida === $index">
 
-                <tr
-                class="linha"
-                [class.expandida]="linhaExpandida === $index"
-                >
+          <!-- ================================================= -->
+          <!-- CABEÇALHO EXCLUSIVO PARA O MOBILE -->
+          <!-- ================================================= -->
 
-                <!-- 1. CABEÇALHO EXCLUSIVO PARA O MOBILE (Fica no topo e clica pra abrir) -->
-                <td class="header-mobile" (click)="toggleLinha($index)">
-                    <span class="titulo-mobile">
-                        {{ obterValorPrincipal(linha) }}
-                    </span>
-                    <mat-icon>
-                        {{ linhaExpandida === $index ? 'expand_less' : 'expand_more' }}
-                    </mat-icon>
-                </td>
+          <td class="header-mobile" (click)="toggleLinha($index)">
+            <span class="titulo-mobile">
+              {{ obterValorPrincipal(linha) }}
+            </span>
+            <mat-icon>
+              {{
+              linhaExpandida === $index
+              ? 'expand_less'
+              : 'expand_more'
+              }}
+            </mat-icon>
+          </td>
 
-                <!-- 2. TODAS AS COLUNAS NORMAIS (Aparecem só quando o card expande) -->
-                @for (coluna of colunas; track coluna.chave) {
-                    <td
-                        class="celula-dado"
-                        [attr.data-label]="coluna.titulo"
-                    >
-                        <span class="valor-celula">
 
-                            @if (coluna.tipo === 'status') {
-                                <span
-                                    class="badge-status"
-                                    [class.ativo]="linha[coluna.chave] === true"
-                                    [class.inativo]="linha[coluna.chave] === false"
-                                >
-                                    {{ obterStatus(linha[coluna.chave]) }}
-                                </span>
-                            } @else {
-                                {{ obterValor(linha, coluna) }}
-                            }
+          <!-- ================================================= -->
+          <!-- COLUNAS -->
+          <!-- ================================================= -->
 
-                        </span>
-                    </td>
-                }
+          @for (coluna of colunas; track coluna.chave) {
 
-                <!-- 3. AÇÕES -->
-                @if (acoes.length > 0) {
-                    <td
-                    class="coluna-acoes"
-                    data-label="Ações"
-                    >
-                    <div class="acoes">
-                        @for (acao of acoes; track acao.acao) {
-                          <button
-                            type="button"
-                            class="botao-acao"
-                            [class.botao-excluir]="acao.acao === 'excluir'"
-                            [title]="acao.tooltip"
-                            (click)="executarAcao(acao, linha)"
-                          >
-                            <mat-icon>{{ acao.icone }}</mat-icon>
-                          </button>
-                        }
-                    </div>
-                    </td>
-                }
-                
-                </tr>
+  <td
+    class="celula-dado"
+    [attr.data-label]="coluna.titulo"
+  >
 
-            }
-        </tbody>
+    <span class="valor-celula">
 
-      </table>
+      <!-- ============================= -->
+      <!-- IMAGEM -->
+      <!-- ============================= -->
 
-    </div>
+      @if (coluna.tipo === 'imagem') {
 
-    @if (exibirPaginacao) {
+        @if (obterUrlImagem(linha[coluna.chave])) {
 
-      <mat-paginator
-        [length]="dados.length"
-        [pageSize]="tamanhoPagina"
-        [pageSizeOptions]="tamanhosPagina"
-        (page)="alterarPagina($event)"
-        showFirstLastButtons>
-      </mat-paginator>
+          <img
+            class="tabela-imagem"
+            [src]="obterUrlImagem(linha[coluna.chave])"
+            [alt]="coluna.titulo"
+          />
 
-    }
+        } @else {
 
-  } @else {
+          <span class="tabela-imagem-vazia">
+            -
+          </span>
 
-    <div class="tabela-vazia">
-      {{ mensagemVazia }}
-    </div>
+        }
 
+      }
+
+      <!-- ============================= -->
+      <!-- DOCUMENTO -->
+      <!-- ============================= -->
+
+      @else if (coluna.tipo === 'documento') {
+
+        @if (obterUrlDocumento(linha[coluna.chave])) {
+
+          <a
+            class="tabela-documento"
+            [href]="obterUrlDocumento(linha[coluna.chave])"
+            target="_blank"
+            rel="noopener noreferrer"
+            download
+            title="Baixar documento"
+          >
+            <span>Baixar</span>
+          </a>
+
+        } @else {
+
+          <span class="tabela-documento-vazio">
+            -
+          </span>
+
+        }
+
+      }
+
+      <!-- ============================= -->
+      <!-- STATUS -->
+      <!-- ============================= -->
+
+      @else if (coluna.tipo === 'status') {
+
+        <span
+          class="badge-status"
+          [class.ativo]="linha[coluna.chave] === true"
+          [class.inativo]="linha[coluna.chave] === false"
+        >
+          {{ obterStatus(linha[coluna.chave]) }}
+        </span>
+
+      }
+
+      <!-- ============================= -->
+      <!-- TEXTO -->
+      <!-- ============================= -->
+
+      @else {
+
+        {{ obterValor(linha, coluna) }}
+
+      }
+
+    </span>
+
+  </td>
+
+}
+
+
+          <!-- ================================================= -->
+          <!-- AÇÕES -->
+          <!-- ================================================= -->
+
+          @if (acoes.length > 0) {
+          <td class="coluna-acoes" data-label="Ações">
+            <div class="acoes">
+              @for (acao of acoes; track acao.acao) {
+              <button type="button" class="botao-acao" [class.botao-excluir]="acao.acao === 'excluir'"
+                [title]="acao.tooltip" (click)="executarAcao(acao, linha)">
+                <mat-icon>
+                  {{ acao.icone }}
+                </mat-icon>
+              </button>
+              }
+
+            </div>
+          </td>
+          }
+        </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ===================================================== -->
+  <!-- PAGINAÇÃO -->
+  <!-- ===================================================== -->
+
+  @if (exibirPaginacao) {
+  <mat-paginator [length]="dados.length" [pageSize]="tamanhoPagina" [pageSizeOptions]="tamanhosPagina"
+    (page)="alterarPagina($event)" showFirstLastButtons>
+  </mat-paginator>
+  }
   }
 
+  <!-- ======================================================= -->
+  <!-- TABELA VAZIA -->
+  <!-- ======================================================= -->
+  @else {
+  <div class="tabela-vazia">
+    {{ mensagemVazia }}
+  </div>
+  }
 </div>

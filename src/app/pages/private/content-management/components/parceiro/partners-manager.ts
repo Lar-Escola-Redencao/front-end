@@ -1,76 +1,651 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
-import { environment } from '../../../../../../environments/environment';
+import {
+  Component,
+  OnInit,
+  ChangeDetectorRef,
+  HostListener,
+  NgZone
+} from '@angular/core';
+
+import { CommonModule } from '@angular/common';
+
+import {
+  FormBuilder,
+  FormGroup,
+  ReactiveFormsModule,
+  Validators
+} from '@angular/forms';
+
+import { ToastrService } from 'ngx-toastr';
+
+import { mapearErrosFormulario } from 'src/app/shared/utils/form-validations';
+import { Alertas } from 'src/app/shared/utils/alerts';
+
+import {
+  ComponentComAlteracoesNaoSalvas
+} from 'src/app/shared/guards/can-deactivate.guard';
+
+import {
+  TabelaLayout,
+  TabelaColuna,
+  TabelaAcao
+} from '@components/tabela-layout/tabela-layout';
+
+import { ModalLayout } from '@components/modal-layout/modal-layout';
+
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+
 import { PartnersService } from '../../../../../shared/services/content-management/parceiro/partners.service';
-import { ToggleSwitch } from '../../../../../shared/ui/toggle-switch/toggle-switch';
-import { ToastService } from '../../../../../shared/ui/toast/toast.service';
-import { Partner } from '../../../../../shared/models/partner.model';
-import { PartnerFormModal } from './partner-form-modal';
+import {
+  Partner,
+  PartnerInput
+} from '../../../../../shared/models/partner.model';
+
+import { environment } from '../../../../../../environments/environment';
 
 @Component({
   selector: 'app-partners-manager',
-  imports: [PartnerFormModal, ToggleSwitch],
+  standalone: true,
+
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    ModalLayout,
+    TabelaLayout,
+    MatFormFieldModule,
+    MatInputModule,
+    MatSlideToggleModule
+  ],
+
   templateUrl: './partners-manager.html',
-  styleUrls: ['./partners-manager.css'],
+  styleUrl: './partners-manager.css'
 })
-export class PartnersManager implements OnInit {
-  private readonly partnersService = inject(PartnersService);
-  private readonly toastService = inject(ToastService);
+export class PartnersManager
+  implements OnInit, ComponentComAlteracoesNaoSalvas {
 
-  protected readonly apiUrl = environment.apiUrl;
-  protected readonly partners = signal<Partner[]>([]);
-  protected readonly loading = signal(false);
-  protected readonly loadError = signal(false);
+  // =========================================================
+  // CONSTRUTOR
+  // =========================================================
 
-  protected readonly formModalOpen = signal(false);
-  protected readonly editingPartner = signal<Partner | null>(null);
+  constructor(
+    private fb: FormBuilder,
+    private partnersService: PartnersService,
+    private toastr: ToastrService,
+    private cdr: ChangeDetectorRef,
+    private ngZone: NgZone
+  ) {
+    this.form = this.fb.group({
+      nome: [
+        '',
+        [
+          Validators.required,
+          Validators.minLength(3),
+          Validators.maxLength(50)
+        ]
+      ],
+
+      logo: [
+        null,
+        Validators.required
+      ],
+
+      ativo: [true]
+    });
+  }
+
+
+  // =========================================================
+  // CONTROLE GERAL
+  // =========================================================
+
+  partners: Partner[] = [];
+
+  apiUrl = environment.apiUrl;
+
+  isLoading = false;
+
+  loadError = false;
+
+  modalAberto = false;
+
+  modoEdicao = false;
+
+  modalTremendo = false;
+
+
+  // =========================================================
+  // TABELA
+  // =========================================================
+
+  colunas: TabelaColuna<Partner>[] = [
+    {
+      chave: 'nome',
+      titulo: 'Nome',
+      principalMobile: true
+    },
+
+    {
+      chave: 'logo',
+      titulo: 'Logo',
+      tipo: 'imagem'
+    },
+
+    {
+      chave: 'ativo',
+      titulo: 'Exibição',
+      tipo: 'status'
+    }
+  ];
+
+
+  acoesTabela: TabelaAcao<Partner>[] = [
+    {
+      icone: 'edit',
+      tooltip: 'Editar',
+      acao: 'editar'
+    },
+
+    {
+      icone: 'delete',
+      tooltip: 'Excluir',
+      acao: 'excluir'
+    }
+  ];
+
+
+  // =========================================================
+  // FORMULÁRIO
+  // =========================================================
+
+  form: FormGroup;
+
+  erros: { [key: string]: string } = {};
+
+  valoresOriginais: any = null;
+
+  partnerSelecionadoId: number | null = null;
+
+
+  // =========================================================
+  // LOGO
+  // =========================================================
+
+  logoSelecionada: File | null = null;
+
+  nomeLogoSelecionada = '';
+
+  logoPreviewUrl: string | null = null;
+
+
+  // =========================================================
+  // CICLO DE VIDA
+  // =========================================================
 
   ngOnInit(): void {
-    this.load();
+    this.carregarPartners();
   }
 
-  async load(): Promise<void> {
-    this.loading.set(true);
-    this.loadError.set(false);
-    try {
-      const partners = await this.partnersService.listarTodos();
-      this.partners.set(partners);
-    } catch {
-      this.loadError.set(true);
-    } finally {
-      this.loading.set(false);
+
+  // =========================================================
+  // CARREGAR PARCEIROS
+  // =========================================================
+
+  carregarPartners(): void {
+    this.isLoading = true;
+    this.loadError = false;
+
+    this.partnersService
+      .listarTodos()
+      .then((dados: Partner[]) => {
+        this.partners = dados;
+
+        this.isLoading = false;
+
+        this.cdr.detectChanges();
+      })
+      .catch(() => {
+        this.isLoading = false;
+        this.loadError = true;
+
+        this.toastr.error(
+          'Erro ao carregar parceiros.',
+          'Erro'
+        );
+
+        this.cdr.detectChanges();
+      });
+  }
+
+
+  // =========================================================
+  // ABRIR MODAL
+  // =========================================================
+
+  abrirModal(partner?: Partner): void {
+    this.modalAberto = true;
+
+    this.isLoading = false;
+
+    this.erros = {};
+
+    this.logoSelecionada = null;
+
+    this.nomeLogoSelecionada = '';
+
+    this.logoPreviewUrl = null;
+
+
+    // =======================================================
+    // EDITAR
+    // =======================================================
+
+    if (partner) {
+      this.modoEdicao = true;
+
+      this.partnerSelecionadoId = partner.id;
+
+      this.form.reset({
+        nome: partner.nome,
+        logo: null,
+        ativo: partner.ativo ?? true
+      });
+
+      this.form.get('logo')?.clearValidators();
+      this.form.get('logo')?.updateValueAndValidity();
+
+      if (partner.logo) {
+        this.logoPreviewUrl = `${this.apiUrl}${partner.logo}`;
+      }
+    }
+
+
+    // =======================================================
+    // NOVO
+    // =======================================================
+
+    else {
+      this.modoEdicao = false;
+
+      this.partnerSelecionadoId = null;
+
+      this.form.reset({
+        nome: '',
+        logo: null,
+        ativo: true
+      });
+
+      this.form.get('logo')?.setValidators(Validators.required);
+      this.form.get('logo')?.updateValueAndValidity();
+    }
+
+
+    this.form.markAsPristine();
+
+    this.valoresOriginais =
+      this.form.getRawValue();
+  }
+
+
+  // =========================================================
+  // FECHAR MODAL
+  // =========================================================
+
+  fecharModal(): void {
+    if (!this.formularioTemAlteracoesNaoSalvas()) {
+      this.fecharModalSemConfirmacao();
+      return;
+    }
+
+
+    Alertas.confirmarDescarte()
+      .then((confirmado) => {
+        this.ngZone.run(() => {
+
+          if (confirmado) {
+            this.fecharModalSemConfirmacao();
+          } else {
+            this.dispararTremorModal();
+          }
+
+          this.cdr.detectChanges();
+        });
+      });
+  }
+
+
+  private fecharModalSemConfirmacao(): void {
+    this.isLoading = false;
+
+    this.modalAberto = false;
+
+    this.modalTremendo = false;
+
+    this.partnerSelecionadoId = null;
+
+    this.logoSelecionada = null;
+
+    this.nomeLogoSelecionada = '';
+
+    this.logoPreviewUrl = null;
+
+    this.erros = {};
+
+
+    this.form.reset({
+      nome: '',
+      logo: null,
+      ativo: true
+    });
+
+
+    this.form.markAsPristine();
+  }
+
+
+  private dispararTremorModal(): void {
+    this.modalTremendo = true;
+
+    setTimeout(() => {
+      this.modalTremendo = false;
+
+      this.cdr.detectChanges();
+    }, 400);
+  }
+
+
+  // =========================================================
+  // ALTERAÇÕES NÃO SALVAS
+  // =========================================================
+
+  get temAlteracoes(): boolean {
+
+    // -------------------------------------------------------
+    // NOVO PARCEIRO
+    // -------------------------------------------------------
+
+    if (!this.modoEdicao) {
+      return (
+        this.form.dirty ||
+        this.logoSelecionada !== null
+      );
+    }
+
+
+    // -------------------------------------------------------
+    // EDIÇÃO
+    // -------------------------------------------------------
+
+    if (this.logoSelecionada !== null) {
+      return true;
+    }
+
+
+    const valorAtual = {
+      nome: this.form.get('nome')?.value,
+      ativo: this.form.get('ativo')?.value
+    };
+
+
+    const valorOriginal = {
+      nome: this.valoresOriginais?.nome,
+      ativo: this.valoresOriginais?.ativo
+    };
+
+
+    return (
+      JSON.stringify(valorAtual) !==
+      JSON.stringify(valorOriginal)
+    );
+  }
+
+
+  formularioTemAlteracoesNaoSalvas(): boolean {
+    if (!this.modalAberto) {
+      return false;
+    }
+
+    return this.temAlteracoes;
+  }
+
+
+  @HostListener(
+    'window:beforeunload',
+    ['$event']
+  )
+  avisarAntesDeFechar(
+    event: BeforeUnloadEvent
+  ): void {
+    if (this.formularioTemAlteracoesNaoSalvas()) {
+      event.preventDefault();
+      event.returnValue = '';
     }
   }
 
-  openCreateModal(): void {
-    this.editingPartner.set(null);
-    this.formModalOpen.set(true);
+
+  // =========================================================
+  // VALIDAÇÃO
+  // =========================================================
+
+  verificarErros(): void {
+    this.erros =
+      mapearErrosFormulario(this.form);
   }
 
-  openEditModal(partner: Partner): void {
-    this.editingPartner.set(partner);
-    this.formModalOpen.set(true);
+
+  // =========================================================
+  // SELECIONAR LOGO
+  // =========================================================
+
+  selecionarLogo(event: Event): void {
+    const input =
+      event.target as HTMLInputElement;
+
+    const arquivo =
+      input.files?.[0];
+
+
+    if (!arquivo) {
+      return;
+    }
+
+
+    this.logoSelecionada = arquivo;
+
+    this.nomeLogoSelecionada = arquivo.name;
+
+
+    this.form.patchValue({
+      logo: arquivo
+    });
+
+
+    this.form
+      .get('logo')
+      ?.markAsDirty();
+
+    this.form.markAsDirty();
+
+
+    const reader = new FileReader();
+
+
+    reader.onload = () => {
+      this.logoPreviewUrl =
+        reader.result as string;
+
+      this.cdr.detectChanges();
+    };
+
+
+    reader.readAsDataURL(arquivo);
+
+    this.verificarErros();
   }
 
-  closeFormModal(): void {
-    this.formModalOpen.set(false);
-    this.editingPartner.set(null);
+
+  // =========================================================
+  // SALVAR PARCEIRO
+  // =========================================================
+
+  salvarParceiro(): void {
+    this.form.markAllAsTouched();
+
+    this.verificarErros();
+
+
+    if (this.form.invalid) {
+      return;
+    }
+
+
+    // -------------------------------------------------------
+    // VERIFICA SE HOUVE ALTERAÇÃO
+    // -------------------------------------------------------
+
+    if (
+      this.modoEdicao &&
+      !this.temAlteracoes
+    ) {
+      this.toastr.info(
+        'Nenhum dado foi alterado.',
+        'Aviso'
+      );
+
+      return;
+    }
+
+
+    this.isLoading = true;
+
+
+    const input: PartnerInput = {
+      nome: this.form.get('nome')?.value,
+      logo: this.logoSelecionada,
+      ativo: this.form.get('ativo')?.value
+    };
+
+
+    // =======================================================
+    // ATUALIZAR
+    // =======================================================
+
+    if (this.modoEdicao) {
+
+      this.partnersService
+        .update(
+          this.partnerSelecionadoId!,
+          input
+        )
+        .then(() => {
+
+          this.toastr.success(
+            'Parceiro atualizado com sucesso.',
+            'Sucesso'
+          );
+
+
+          this.fecharModalSemConfirmacao();
+
+          this.carregarPartners();
+
+        })
+        .catch((err: any) => {
+
+          this.isLoading = false;
+
+          this.toastr.error(
+            err?.error?.message ||
+            'Erro ao atualizar parceiro.',
+            'Erro'
+          );
+
+          this.cdr.detectChanges();
+
+        });
+
+
+      return;
+    }
+
+
+    // =======================================================
+    // CRIAR
+    // =======================================================
+
+    this.partnersService
+      .create(input)
+      .then(() => {
+
+        this.toastr.success(
+          'Parceiro cadastrado com sucesso.',
+          'Sucesso'
+        );
+
+
+        this.fecharModalSemConfirmacao();
+
+        this.carregarPartners();
+
+      })
+      .catch((err: any) => {
+
+        this.isLoading = false;
+
+        this.toastr.error(
+          err?.error?.message ||
+          'Erro ao cadastrar parceiro.',
+          'Erro'
+        );
+
+        this.cdr.detectChanges();
+
+      });
   }
 
-  onSaved(): void {
-    this.closeFormModal();
-    this.load();
-  }
 
-  async onToggleActive(partner: Partner, ativo: boolean): Promise<void> {
-    try {
-      await this.partnersService.update(partner.id, { nome: partner.nome, logo: null, ativo });
-      this.load();
-    } catch {
-      this.toastService.error('Não foi possível atualizar o status do parceiro.');
+  // =========================================================
+  // AÇÕES DA TABELA
+  // =========================================================
+
+  executarAcao(
+    evento: {
+      tipo: string;
+      linha: Partner;
+    }
+  ): void {
+
+    if (evento.tipo === 'editar') {
+      this.abrirModal(evento.linha);
+      return;
+    }
+
+
+    if (evento.tipo === 'excluir') {
+      this.excluirParceiro(evento.linha);
     }
   }
 
-  initials(nome: string): string {
-    return nome.trim().slice(0, 1).toUpperCase();
+
+  // =========================================================
+  // EXCLUIR
+  // =========================================================
+
+  excluirParceiro(partner: Partner): void {
+    Alertas.confirmarExclusao().then((confirmado) => {
+      if (!confirmado) {
+        return;
+      }
+      this.isLoading = true;
+      this.partnersService.delete(partner.id).then(() => {
+        this.toastr.success('Parceiro excluído com sucesso.', 'Sucesso');
+        this.isLoading = false; this.carregarPartners();
+        this.cdr.detectChanges();
+      }).catch((err: any) => {
+        this.isLoading = false;
+        this.toastr.error(err?.error?.message || 'Erro ao excluir parceiro.', 'Erro');
+        this.cdr.detectChanges();
+      });
+    });
   }
 }
