@@ -16,6 +16,7 @@ export interface TabelaColuna<T = any> {
   titulo: string;
   formatar?: (valor: any, linha: T) => string;
   principalMobile?: boolean;
+  tipo?: 'texto' | 'status';
 }
 
 export interface TabelaAcao<T = any> {
@@ -125,6 +126,10 @@ export class TabelaLayout<T = any> {
       ? String(valor)
       : '-';
   }
+
+  obterStatus(valor: any): string {
+    return valor === true ? 'Ativo' : 'Inativo';
+  } 
 
   executarAcao(acao: TabelaAcao<T>, linha: T): void {
     if (acao.executar) {

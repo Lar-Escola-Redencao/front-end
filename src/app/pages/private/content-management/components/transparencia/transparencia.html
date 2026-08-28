@@ -30,47 +30,45 @@
 </section>
 
 @if (modalAberto === 'documento') {
-<app-modal-layout titulo="Adicionar documento" (closed)="fecharModal()">
+<app-modal-layout [titulo]="modoEdicao ? 'Editar documento' : 'Adicionar documento'" (closed)="fecharModal()">
   <form class="form-modal" [formGroup]="formDocumento" (ngSubmit)="salvarDocumento()">
 
     <mat-form-field appearance="outline">
       <mat-label>Título do documento</mat-label>
       <input matInput formControlName="titulo" (blur)="verificarErrosDocumento()" maxlength="150" />
-      <mat-error *ngIf="errosDocumento['titulo']">{{ errosDocumento['titulo'] }}</mat-error>
     </mat-form-field>
+    <span class="error-text" *ngIf="errosDocumento['titulo']">{{ errosDocumento['titulo'] }}</span>
 
     <mat-form-field appearance="outline">
-      <mat-select formControlName="secaoId" placeholder="Seção" (blur)="verificarErrosDocumento()">
+      <mat-select formControlName="secaoId" placeholder="Seção*" (blur)="verificarErrosDocumento()">
         @for (secao of secoes; track secao.id) {
         <mat-option [value]="secao.id">{{ secao.titulo }}</mat-option>
         }
       </mat-select>
-      <mat-error *ngIf="errosDocumento['secaoId']">{{ errosDocumento['secaoId'] }}</mat-error>
     </mat-form-field>
+    <span class="error-text" *ngIf="errosDocumento['secaoId']">{{ errosDocumento['secaoId'] }}</span>
+
 
     <!-- Container do Upload -->
     <div class="upload-container">
-      <label
-        class="upload-campo"
-        [class.tem-arquivo]="nomeDocumentoSelecionado"
-        [class.com-erro]="errosDocumento['arquivo']"
-      >
+      <label class="upload-campo" [class.tem-arquivo]="nomeDocumentoSelecionado"
+        [class.com-erro]="errosDocumento['arquivo']">
         <input type="file" accept=".pdf" (change)="selecionarDocumento($event)" />
 
         @if (nomeDocumentoSelecionado) {
-          <span class="arquivo-nome">{{ nomeDocumentoSelecionado }}</span>
-          <small>Documento selecionado</small>
+        <span class="arquivo-nome">{{ nomeDocumentoSelecionado }}</span>
+        <small>Documento selecionado</small>
         } @else {
-          <span>Selecione ou arraste um documento (.pdf)</span>
+        <span>Selecione ou arraste um documento (.pdf)</span>
         }
       </label>
-
-      @if (errosDocumento['arquivo']) {
-        <span class="error-text">
-          {{ errosDocumento['arquivo'] }}
-        </span>
-      }
     </div>
+
+    @if (errosDocumento['arquivo']) {
+    <span class="error-text">
+      {{ errosDocumento['arquivo'] }}
+    </span>
+    }
 
     <div class="acoes-modal">
       <button type="button" class="btn-cancelar" [disabled]="isLoading" (click)="fecharModal()">
@@ -89,20 +87,35 @@
 
 @if (modalAberto === 'secao') {
 <app-modal-layout [titulo]="modoEdicao ? 'Editar seção' : 'Nova seção'" (closed)="fecharModal()">
+
   <form class="form-modal" [formGroup]="formSecao" (ngSubmit)="salvarSecao()">
+
+    @if (modoEdicao) {
+    <div class="campo-status toggle-wrapper">
+      <span class="status-label">
+        {{ formSecao.get('ativo')?.value ? 'Ativo' : 'Inativo' }}
+      </span>
+      <label class="custom-switch">
+        <input type="checkbox" formControlName="ativo">
+        <span class="slider"></span>
+      </label>
+    </div>
+    }
+    
     <mat-form-field appearance="outline">
       <mat-label>Nome da seção</mat-label>
       <input matInput formControlName="titulo" (blur)="verificarErrosSecao()" maxlength="100" />
-
-      <mat-error *ngIf="errosSecao['titulo']">
-        {{ errosSecao['titulo'] }}
-      </mat-error>
     </mat-form-field>
+
+    <span class="error-text" *ngIf="errosSecao['titulo']">
+      {{ errosSecao['titulo'] }}
+    </span>
 
     <div class="acoes-modal">
       <button type="button" class="btn-cancelar" [disabled]="isLoading" (click)="fecharModal()">
         Cancelar
       </button>
+
       <button type="submit" class="btn-primary" [disabled]="isLoading">
         <span *ngIf="isLoading" class="spinner" aria-hidden="true"></span>
         <span>{{ isLoading ? 'Salvando...' : 'Salvar' }}</span>
@@ -110,5 +123,6 @@
     </div>
 
   </form>
+
 </app-modal-layout>
 }

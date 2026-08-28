@@ -41,12 +41,24 @@
                 <!-- 2. TODAS AS COLUNAS NORMAIS (Aparecem só quando o card expande) -->
                 @for (coluna of colunas; track coluna.chave) {
                     <td
-                    class="celula-dado"
-                    [attr.data-label]="coluna.titulo"
+                        class="celula-dado"
+                        [attr.data-label]="coluna.titulo"
                     >
-                    <span class="valor-celula">
-                        {{ obterValor(linha, coluna) }}
-                    </span>
+                        <span class="valor-celula">
+
+                            @if (coluna.tipo === 'status') {
+                                <span
+                                    class="badge-status"
+                                    [class.ativo]="linha[coluna.chave] === true"
+                                    [class.inativo]="linha[coluna.chave] === false"
+                                >
+                                    {{ obterStatus(linha[coluna.chave]) }}
+                                </span>
+                            } @else {
+                                {{ obterValor(linha, coluna) }}
+                            }
+
+                        </span>
                     </td>
                 }
 
@@ -58,20 +70,20 @@
                     >
                     <div class="acoes">
                         @for (acao of acoes; track acao.acao) {
-                        <button
+                          <button
                             type="button"
                             class="botao-acao"
+                            [class.botao-excluir]="acao.acao === 'excluir'"
                             [title]="acao.tooltip"
                             (click)="executarAcao(acao, linha)"
-                        >
+                          >
                             <mat-icon>{{ acao.icone }}</mat-icon>
-                        </button>
+                          </button>
                         }
                     </div>
                     </td>
                 }
                 
-                <!-- OBS: Removemos aquele controle-expansao que ficava aqui embaixo -->
                 </tr>
 
             }

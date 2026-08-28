@@ -163,7 +163,7 @@
 
 /* Espaçador para o conteúdo da página não ficar embaixo da navbar fixa */
 .navbar-spacer {
-  height: 130px;
+  height: 110px;
 }
 
 @keyframes fadeInDown {

@@ -16,6 +16,7 @@ import {
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatOption, MatSelect } from '@angular/material/select';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { TransparenciaService } from './transparencia.service';
 
 interface DocumentoTransparencia {
@@ -38,7 +39,8 @@ interface DocumentoTransparencia {
     MatFormFieldModule,
     MatInputModule,
     MatSelect,
-    MatOption
+    MatOption,
+    MatSlideToggleModule
   ],
   templateUrl: './transparencia.html',
   styleUrl: './transparencia.css',
@@ -58,15 +60,14 @@ export class Transparencia implements OnInit, ComponentComAlteracoesNaoSalvas {
   documentos: DocumentoTransparencia[] = [];
 
   colunasDocumentos: TabelaColuna<DocumentoTransparencia>[] = [
-    { chave: 'titulo', titulo: 'Documento' },
+    { chave: 'titulo', titulo: 'Documento', principalMobile: true },
     { chave: 'secao', titulo: 'Seção' },
-    { chave: 'tipo', titulo: 'Tipo', principalMobile: true },
-    { chave: 'dataAtualizacao', titulo: 'Última atualização' }
+    { chave: 'tipo', titulo: 'Tipo' }
   ];
 
   colunasSecoes: TabelaColuna<any>[] = [
-    { chave: 'id', titulo: 'ID' },
-    { chave: 'titulo', titulo: 'Nome da Seção', principalMobile: true }
+    { chave: 'titulo', titulo: 'Nome da Seção', principalMobile: true },
+    { chave: 'ativo', titulo: 'Exibição', tipo: 'status' }
   ];
 
   acoesTabela: TabelaAcao<any>[] = [
@@ -97,7 +98,8 @@ export class Transparencia implements OnInit, ComponentComAlteracoesNaoSalvas {
     private ngZone: NgZone
   ) {
     this.formSecao = this.fb.group({
-      titulo: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(100)]]
+      titulo: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(100)]],
+      ativo: [true]
     });
 
     this.formDocumento = this.fb.group({
@@ -157,11 +159,17 @@ export class Transparencia implements OnInit, ComponentComAlteracoesNaoSalvas {
       if (itemEdicao) {
         this.modoEdicao = true;
         this.secaoSelecionadaId = itemEdicao.id;
-        this.formSecao.patchValue({ titulo: itemEdicao.titulo });
+        this.formSecao.patchValue({
+          titulo: itemEdicao.titulo,
+          ativo: itemEdicao.ativo ?? true
+        });
       } else {
         this.modoEdicao = false;
         this.secaoSelecionadaId = null;
-        this.formSecao.reset();
+        this.formSecao.reset({
+          titulo: '',
+          ativo: true
+        });
       }
       this.valoresOriginaisSecao = this.formSecao.getRawValue();
     }
@@ -227,7 +235,10 @@ export class Transparencia implements OnInit, ComponentComAlteracoesNaoSalvas {
       this.ngZone.run(() => {
         if (confirmado) {
           this.modalAberto = null;
-          this.formSecao.reset();
+          this.formSecao.reset({
+            titulo: '',
+            ativo: true
+          });
           this.formDocumento.reset();
         } else {
           this.dispararTremorModal();
@@ -241,6 +252,7 @@ export class Transparencia implements OnInit, ComponentComAlteracoesNaoSalvas {
   private fecharModalSemConfirmacao(): void {
     this.isLoading = false;
     this.modalAberto = null;
+    this.modalTremendo = false;
   }
 
   private dispararTremorModal(): void {
@@ -283,8 +295,8 @@ export class Transparencia implements OnInit, ComponentComAlteracoesNaoSalvas {
       next: () => {
         this.toastr.success(this.modoEdicao ? 'Seção atualizada!' : 'Seção criada!', 'Sucesso');
         this.fecharModalSemConfirmacao();
-        this.carregarSecoes();
         this.cdr.detectChanges();
+        this.carregarSecoes();
       },
       error: (err) => {
         this.isLoading = false;
@@ -331,8 +343,8 @@ export class Transparencia implements OnInit, ComponentComAlteracoesNaoSalvas {
       next: () => {
         this.toastr.success(this.modoEdicao ? 'Documento atualizado!' : 'Documento salvo!', 'Sucesso');
         this.fecharModalSemConfirmacao();
-        this.carregarSecoes();
         this.cdr.detectChanges();
+        this.carregarSecoes();
       },
       error: (err: any) => {
         this.isLoading = false;

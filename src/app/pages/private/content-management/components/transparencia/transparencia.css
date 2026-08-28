@@ -14,12 +14,12 @@
   border-radius: 6px;
   background: var(--branco);
   box-shadow: var(--sombra-padrao);
-}
+}/* --- CONTAINER DO TOGGLE E TEXTO --- */
 
 .form-modal {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 14px;
 }
 
 .form-modal .mat-mdc-form-field {
@@ -68,18 +68,8 @@
   border-color: var(--error-color);
 }
 
-.error-text {
-  display: block;
-  margin-top: 8px;
-
-  color: var(--error-color);
-  font-family: var(--fonte-texto);
-  font-size: 0.85rem;
-  line-height: 1.3;
-}
-
 .upload-campo {
-  min-height: 220px;
+  min-height: 100px;
   display: flex;
   flex-direction: column;
   align-items: center;

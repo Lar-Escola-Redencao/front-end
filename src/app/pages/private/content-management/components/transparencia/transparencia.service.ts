@@ -6,6 +6,7 @@ import { environment } from 'src/environments/environment';
 export interface Secao {
   id: number;
   titulo: string;
+  ativo: boolean;
 }
 
 export interface CriarSecaoDTO {
@@ -14,6 +15,7 @@ export interface CriarSecaoDTO {
 
 export interface AtualizarSecaoDTO {
   titulo: string;
+  ativo: boolean;
 }
 
 export interface Documento {
@@ -53,8 +55,14 @@ export class TransparenciaService {
 
   atualizarSecao(id: number, dto: AtualizarSecaoDTO): Observable<Secao> {
     const formData = new FormData();
+
     formData.append('titulo', dto.titulo);
-    return this.http.put<Secao>(`${this.apiUrl}/secao/${id}`, formData);
+    formData.append('ativo', dto.ativo.toString());
+
+    return this.http.put<Secao>(
+      `${this.apiUrl}/secao/${id}`,
+      formData
+    );
   }
 
   deletarSecao(id: number): Observable<void> {

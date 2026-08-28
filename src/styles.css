@@ -24,10 +24,10 @@
   --fonte-texto: 'Inter', sans-serif;
   --fonte-titulo: 'Bricolage Grotesque', sans-serif;
 
-  --sombra-padrao: 0px 0px 4px 4px rgba(0, 0, 0, 0.05);
+  --sombra-padrao: 0px 0px 2px 2px rgba(0, 0, 0, 0.05);
 
-  --input-color: rgba(30, 30, 30, 0.5);
-  --input-border: rgba(30, 30, 30, 0.2);
+  --input-color: rgba(30, 30, 30, 0.6);
+  --input-border: rgba(30, 30, 30, 0.4);
   --input-radius: 6px;
 
   --error-color: #f44336;
@@ -78,23 +78,18 @@ body {
    ========================= */
 
 .mat-mdc-form-field .mat-mdc-text-field-wrapper {
-  min-height: 58px;
   height: auto;
-
+  /*min-height: 58px*/
   background-color: var(--branco) !important;
-
   border: 1px solid var(--input-border);
   border-radius: var(--input-radius) !important;
-
   transition: border-color 0.2s ease;
 }
 
 .mat-mdc-form-field .mat-mdc-form-field-flex {
-  min-height: 58px;
   height: 100%;
-
+  /*min-height: 58px*/
   align-items: center;
-
   padding: 0 20px 0 8px;
 }
 
@@ -200,18 +195,17 @@ body {
    ERROS
    ========================= */
 
-.mat-mdc-form-field-error-wrapper {
-  padding: 3px 0 0 0 !important;
-}
-
-.mat-mdc-form-field .mat-mdc-form-field-error {
+.error-text {
   display: block;
-
-  color: var(--error-color) !important;
-
-  font-family: var(--fonte-texto) !important;
+  text-align: start;
+  color: var(--error-color);
+  font-family: var(--fonte-texto);
   font-size: 0.85rem;
   line-height: 1.3;
+}
+
+.mat-mdc-form-field-subscript-wrapper{
+  display: none !important;
 }
 
 /* =========================
@@ -247,19 +241,6 @@ body {
   .mat-mdc-select-arrow {
   color: var(--error-color) !important;
 }
-
-/*
- * IMPORTANTE:
- * O valor selecionado do select continua preto.
- *
- * Portanto:
- *
- * Vazio + erro:
- * "Seção" -> vermelho
- *
- * Com opção selecionada:
- * "Financeiro" -> preto
- */
 
 /* =========================
    SELECT PANEL
@@ -313,4 +294,62 @@ body {
 .btn-primary:active {
   background-color: var(--primary-active-color);
   transform: translateY(1px);
+}
+
+/* =========================
+   SWITCH (ESTILO APPLE)
+   ========================= */
+   
+.toggle-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.custom-switch {
+  position: relative;
+  display: inline-block;
+  width: 52px;
+  height: 30px;
+}
+
+.custom-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.custom-switch .slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #e5e5ea; 
+  transition: 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+  border-radius: 34px;
+}
+
+.custom-switch .slider:before {
+  position: absolute;
+  content: "";
+  height: 26px;
+  width: 26px;
+  left: 2px;
+  bottom: 2px;
+  background-color: white;
+  transition: 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+  border-radius: 50%;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.custom-switch input:checked + .slider {
+  background-color: #34c759;
+}
+
+.custom-switch input:checked + .slider:before {
+  transform: translateX(22px);
 }
