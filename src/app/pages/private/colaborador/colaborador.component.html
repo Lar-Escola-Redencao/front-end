@@ -1,159 +1,230 @@
-<!-- cabecalho e acoes principais -->
-<div class="container">
-  <div class="header-acoes">
-    <h2>Gerenciamento de Colaboradores</h2>
-    <div class="header-direita">
-      <select class="filtro-papel" [(ngModel)]="filtroPapel" (ngModelChange)="aplicarFiltro()">
-        <option value="">Todos os papéis</option>
-        <option *ngFor="let papel of papeisDisponiveis" [value]="papel">{{ papel }}</option>
-      </select>
-      <button (click)="abrirCadastro()" class="btn-novo">Novo Usuário</button>
-    </div>
-  </div>
+<section class="colaboradores-admin">
+  <div class="conteudo">
+    <div class="acoes-colaboradores">
+      <button type="button" class="btn-primary" (click)="abrirCadastro()">
+        Novo colaborador
+      </button>
 
-  <!-- tabela de listagem -->
-  <div class="tabela-card" *ngIf="colaboradoresFiltrados.length > 0; else estadoVazio">
-    <table class="tabela-colaboradores">
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Nome</th>
-          <th>Email</th>
-          <th>CPF</th>
-          <th>Papel</th>
-          <th>Editar</th>
-          <th>Excluir</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let colaborador of colaboradoresFiltrados">
-          <td>{{ colaborador.id }}</td>
-          <td>{{ colaborador.nomeCompleto }}</td>
-          <td>{{ colaborador.email }}</td>
-          <td>{{ colaborador.cpf }}</td>
-          <td>{{ colaborador.nomePapel }}</td>
-          <td class="acoes-icone">
-            <button (click)="abrirEdicao(colaborador)" class="btn-icone btn-icone-editar" title="Editar">
-              <span class="material-symbols-outlined">edit</span>
-            </button>
-          </td>
-          <td class="acoes-icone">
-            <button (click)="deletarColaborador(colaborador.id)" class="btn-icone btn-icone-excluir" title="Excluir">
-              <span class="material-symbols-outlined">delete</span>
-            </button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-
-  <!-- estado vazio -->
-  <ng-template #estadoVazio>
-    <div class="estado-vazio">
-      <p *ngIf="!filtroPapel">Nenhum colaborador cadastrado ainda</p>
-      <p *ngIf="filtroPapel">Nenhum {{ filtroPapel }} cadastrado ainda</p>
-    </div>
-  </ng-template>
-</div>
-
-<!-- modal de cadastro e edição -->
-<div class="modal-overlay" *ngIf="modalAberto" (click)="fecharModal()">
-  <div class="modal-card" [class.tremer]="modalTremendo" (click)="$event.stopPropagation()">
-
-    <!-- cabeçalho fixo -->
-    <div class="modal-header">
-      <h3>{{ modoEdicao ? 'Editar Usuário' : 'Cadastrar Novo Usuário' }}</h3>
-      <button class="btn-fechar" (click)="fecharModal()">&times;</button>
+      <mat-form-field appearance="outline" class="filtro-papel">
+        <mat-label>Papel de acesso</mat-label>
+        <mat-select
+          [(ngModel)]="filtroPapel"
+          (selectionChange)="aplicarFiltro()">
+          <mat-option value="">Todos os papéis</mat-option>
+          <mat-option
+            *ngFor="let papel of papeisDisponiveis"
+            [value]="papel">
+            {{ papel }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
     </div>
 
-    <!-- formulário -->
-    <form [formGroup]="formColaborador" (ngSubmit)="salvar()" class="form-colaborador">
+    <app-tabela-layout
+      [colunas]="colunas"
+      [dados]="colaboradoresFiltrados"
+      [acoes]="acoesTabela"
+      [tamanhoPagina]="10"
+      [tamanhosPagina]="[5, 10, 25]"
+      [mensagemVazia]="mensagemVazia"
+      (acao)="executarAcao($event)" />
+    </div>
+</section>
 
-      <div class="form-scroll">
-        <div class="form-group">
-          <label for="nomeCompleto">Nome Completo</label>
-          <input id="nomeCompleto" type="text" formControlName="nomeCompleto" (blur)="verificarErros()" minlength="3" maxlength="60">
-          <span class="error-text" *ngIf="erros['nomeCompleto']">{{ erros['nomeCompleto'] }}</span>
-        </div>
+@if (modalAberto) {
+<app-modal-layout
+  [class.tremer]="modalTremendo"
+  [titulo]="modoEdicao ? 'Editar colaborador' : 'Cadastrar novo colaborador'"
+  (closed)="fecharModal()">
 
-        <div class="form-row">
-          <div class="form-group">
-            <label for="email">E-mail</label>
-            <input id="email" type="email" formControlName="email" (blur)="verificarErros()" minlength="5" maxlength="100">
-            <span class="error-text" *ngIf="erros['email']">{{ erros['email'] }}</span>
-          </div>
+  <form
+    class="form-modal"
+    [formGroup]="formColaborador"
+    (ngSubmit)="salvar()">
 
-          <div class="form-group">
-            <label for="cpf">CPF</label>
-            <input id="cpf" type="text" formControlName="cpf" (input)="aplicarMascaraCpf($event)" (blur)="verificarErros()" minlength="14" maxlength="14">
-            <span class="error-text" *ngIf="erros['cpf']">{{ erros['cpf'] }}</span>
-          </div>
-        </div>
+    <mat-form-field appearance="outline">
+      <mat-label>Nome completo</mat-label>
+      <input
+        matInput
+        formControlName="nomeCompleto"
+        (blur)="verificarErros()"
+        minlength="3"
+        maxlength="60" />
+    </mat-form-field>
+    <span class="error-text" *ngIf="erros['nomeCompleto']">
+      {{ erros['nomeCompleto'] }}
+    </span>
 
-        <div class="form-row">
-          <div class="form-group">
-            <label for="telefone">Telefone</label>
-            <input id="telefone" type="text" formControlName="telefone" (input)="aplicarMascaraTelefone($event)" (blur)="verificarErros()" minlength="14" maxlength="15">
-            <span class="error-text" *ngIf="erros['telefone']">{{ erros['telefone'] }}</span>
-          </div>
-
-          <div class="form-group">
-            <label for="endereco">Endereço</label>
-            <input id="endereco" type="text" formControlName="endereco" placeholder="Rua, Número, Bairro, Cidade - UF"
-              (blur)="verificarErros()" minlength="5" maxlength="150">
-            <span class="error-text" *ngIf="erros['endereco']">{{ erros['endereco'] }}</span>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label for="idPapel">Papel de Acesso</label>
-          <select id="idPapel" formControlName="idPapel" (change)="verificarErros()" (blur)="verificarErros()">
-            <option value="">Selecione...</option>
-            <option *ngFor="let papel of papeis" [value]="papel.id">{{ papel.nomePapel }}</option>
-          </select>
-          <span class="error-text" *ngIf="erros['idPapel']">{{ erros['idPapel'] }}</span>
-        </div>
-
-        <div class="form-row" *ngIf="!modoEdicao">
-          <div class="form-group">
-            <label for="senha">Senha</label>
-            <div class="input-com-icone">
-              <input
-                id="senha"
-                [type]="mostrarSenha ? 'text' : 'password'"
-                formControlName="senha"
-                (input)="verificarErros()"
-                (blur)="verificarErros()">
-              <button type="button" class="btn-icone-senha" (click)="alternarVisibilidadeSenha('senha')" tabindex="-1">
-                <span class="material-symbols-outlined">{{ mostrarSenha ? 'visibility_off' : 'visibility' }}</span>
-              </button>
-            </div>
-            <span class="hint-text">Mín. 6 caracteres, 1 maiúscula e 1 número.</span>
-            <span class="error-text" *ngIf="erros['senha']">{{ erros['senha'] }}</span>
-          </div>
-
-          <div class="form-group">
-            <label for="confirmarSenha">Confirmar Senha</label>
-              <input
-                id="confirmarSenha"
-                [type]="mostrarConfirmarSenha ? 'text' : 'password'"
-                formControlName="confirmarSenha"
-                (input)="verificarErros()"
-                (blur)="verificarErros()">
-            <span class="error-text" *ngIf="erros['confirmarSenha']">{{ erros['confirmarSenha'] }}</span>
-          </div>
-        </div>
-
+    <div class="form-row">
+      <div>
+        <mat-form-field appearance="outline">
+          <mat-label>E-mail</mat-label>
+          <input
+            matInput
+            type="email"
+            formControlName="email"
+            (blur)="verificarErros()"
+            minlength="5"
+            maxlength="100" />
+        </mat-form-field>
+        <span class="error-text" *ngIf="erros['email']">
+          {{ erros['email'] }}
+        </span>
       </div>
 
-      <!-- rodapé fixo -->
-      <div class="modal-acoes">
-        <button type="button" class="btn-cancelar" [disabled]="isLoading" (click)="fecharModal()">Cancelar</button>
-        <button type="submit" [disabled]="formColaborador.invalid || isLoading || (modoEdicao && !temAlteracoes)" class="btn-salvar">
-          <span *ngIf="isLoading" class="spinner" aria-hidden="true"></span>
-          <span>{{ isLoading ? 'Salvando...' : (modoEdicao ? 'Atualizar' : 'Salvar') }}</span>
-        </button>
+      <div>
+        <mat-form-field appearance="outline">
+          <mat-label>CPF</mat-label>
+          <input
+            matInput
+            type="text"
+            inputmode="numeric"
+            formControlName="cpf"
+            (input)="aplicarMascaraCpf($event)"
+            (blur)="verificarErros()"
+            minlength="14"
+            maxlength="14" />
+        </mat-form-field>
+        <span class="error-text" *ngIf="erros['cpf']">
+          {{ erros['cpf'] }}
+        </span>
       </div>
-    </form>
-  </div>
-</div>
+    </div>
+
+    <div class="form-row">
+      <div>
+        <mat-form-field appearance="outline">
+          <mat-label>Telefone</mat-label>
+          <input
+            matInput
+            type="text"
+            inputmode="numeric"
+            formControlName="telefone"
+            (input)="aplicarMascaraTelefone($event)"
+            (blur)="verificarErros()"
+            minlength="14"
+            maxlength="15" />
+        </mat-form-field>
+        <span class="error-text" *ngIf="erros['telefone']">
+          {{ erros['telefone'] }}
+        </span>
+      </div>
+
+      <div>
+        <mat-form-field appearance="outline">
+          <mat-label>Endereco</mat-label>
+          <input
+            matInput
+            type="text"
+            formControlName="endereco"
+            (blur)="verificarErros()"
+            minlength="5"
+            maxlength="150" />
+        </mat-form-field>
+        <span class="error-text" *ngIf="erros['endereco']">
+          {{ erros['endereco'] }}
+        </span>
+      </div>
+    </div>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Papel de acesso</mat-label>
+      <mat-select
+        formControlName="idPapel"
+        (selectionChange)="verificarErros()"
+        (blur)="verificarErros()">
+        <mat-option
+          *ngFor="let papel of papeis"
+          [value]="papel.id">
+          {{ obterNomePapel(papel) }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+    <span class="error-text" *ngIf="erros['idPapel']">
+      {{ erros['idPapel'] }}
+    </span>
+
+    @if (!modoEdicao) {
+    <div class="form-row">
+      <div>
+        <mat-form-field appearance="outline">
+          <mat-label>Senha</mat-label>
+          <input
+            matInput
+            [type]="mostrarSenha ? 'text' : 'password'"
+            formControlName="senha"
+            (input)="verificarErros()"
+            (blur)="verificarErros()"
+            maxlength="50" />
+          <button
+            matSuffix
+            type="button"
+            class="btn-icone-senha"
+            tabindex="-1"
+            (click)="alternarVisibilidadeSenha('senha')">
+            <span class="material-symbols-outlined">
+              {{ mostrarSenha ? 'visibility_off' : 'visibility' }}
+            </span>
+          </button>
+        </mat-form-field>
+        <span class="hint-text">
+          Min. 6 caracteres, 1 maiuscula e 1 numero.
+        </span>
+        <span class="error-text" *ngIf="erros['senha']">
+          {{ erros['senha'] }}
+        </span>
+      </div>
+
+      <div>
+        <mat-form-field appearance="outline">
+          <mat-label>Confirmar senha</mat-label>
+          <input
+            matInput
+            [type]="mostrarConfirmarSenha ? 'text' : 'password'"
+            formControlName="confirmarSenha"
+            (input)="verificarErros()"
+            (blur)="verificarErros()" />
+          <button
+            matSuffix
+            type="button"
+            class="btn-icone-senha"
+            tabindex="-1"
+            (click)="alternarVisibilidadeSenha('confirmarSenha')">
+            <span class="material-symbols-outlined">
+              {{ mostrarConfirmarSenha ? 'visibility_off' : 'visibility' }}
+            </span>
+          </button>
+        </mat-form-field>
+        <span class="error-text" *ngIf="erros['confirmarSenha']">
+          {{ erros['confirmarSenha'] }}
+        </span>
+      </div>
+    </div>
+    }
+
+    <div class="acoes-modal">
+      <button
+        type="button"
+        class="btn-cancelar"
+        [disabled]="isLoading"
+        (click)="fecharModal()">
+        Cancelar
+      </button>
+
+      <button
+        type="submit"
+        class="btn-primary"
+        [disabled]="isLoading || (modoEdicao && !temAlteracoes)">
+        <span
+          *ngIf="isLoading"
+          class="spinner"
+          aria-hidden="true">
+        </span>
+        <span>
+          {{ isLoading ? 'Salvando...' : 'Salvar' }}
+        </span>
+      </button>
+    </div>
+  </form>
+</app-modal-layout>
+}

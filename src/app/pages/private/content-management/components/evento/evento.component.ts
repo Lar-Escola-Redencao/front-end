@@ -142,7 +142,7 @@ export class EventoComponent implements OnInit, ComponentComAlteracoesNaoSalvas 
       error: () => {
         this.ngZone.run(() => {
           this.toastr.error(
-            'Nao foi possivel carregar a lista de eventos.',
+            'Não foi possivel carregar a lista de eventos.',
             'Erro'
           );
 

@@ -86,7 +86,7 @@ export class DiretoriaComponent implements OnInit, OnDestroy, ComponentComAltera
         this.cdr.detectChanges();
       },
       error: () => {
-        this.toastr.error('Nao foi possivel carregar a lista da diretoria.', 'Erro');
+        this.toastr.error('Não foi possivel carregar a lista da diretoria.', 'Erro');
       }
     });
   }
@@ -137,7 +137,7 @@ export class DiretoriaComponent implements OnInit, OnDestroy, ComponentComAltera
         this.cdr.detectChanges();
       },
       error: () => {
-        this.toastr.error('Nao foi possivel carregar os dados deste membro.', 'Erro');
+        this.toastr.error('Não foi possivel carregar os dados deste membro.', 'Erro');
         this.fecharModalSemConfirmacao();
         this.isCarregandoEdicao = false;
         this.cdr.detectChanges();

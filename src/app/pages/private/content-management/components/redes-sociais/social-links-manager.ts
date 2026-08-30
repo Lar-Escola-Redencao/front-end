@@ -198,7 +198,7 @@ export class SocialLinksManager
           this.loadError = true;
 
           this.toastr.error(
-            'Nao foi possivel carregar as redes sociais.',
+            'Não foi possivel carregar as redes sociais.',
             'Erro'
           );
 
@@ -583,7 +583,7 @@ export class SocialLinksManager
 
       this.toastr.error(
         err?.error?.message ||
-        'Nao foi possivel salvar a rede social. Tente novamente.',
+        'Não foi possivel salvar a rede social. Tente novamente.',
         'Erro'
       );
 
