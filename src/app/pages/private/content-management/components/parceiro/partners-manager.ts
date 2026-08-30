@@ -126,14 +126,14 @@ export class PartnersManager
 
   colunas: TabelaColuna<Partner>[] = [
     {
-      chave: 'nome',
-      titulo: 'Nome',
-      principalMobile: true
-    },
-    {
       chave: 'logo',
       titulo: 'Logo',
       tipo: 'imagem'
+    },
+    {
+      chave: 'nome',
+      titulo: 'Nome',
+      principalMobile: true
     },
     {
       chave: 'ativo',

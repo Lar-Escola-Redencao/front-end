@@ -308,4 +308,9 @@ mat-paginator .mat-mdc-form-field-flex{
   .acoes {
     justify-content: flex-end;
   }
+  .valor-celula{
+    display: flex;
+    justify-content: end;
+    align-items: end;
+  }
 }

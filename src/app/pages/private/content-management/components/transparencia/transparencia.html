@@ -3,11 +3,11 @@
   <div class="acoes-transparencia">
 
     <button type="button" class="btn-primary" (click)="abrirModal('documento')">
-      Adicionar documento
+      Publicar novo documento
     </button>
 
     <button type="button" class="btn-primary" (click)="abrirModal('secao')">
-      Nova seção
+      Criar nova seção
     </button>
 
   </div>
@@ -30,7 +30,7 @@
 </section>
 
 @if (modalAberto === 'documento') {
-<app-modal-layout [titulo]="modoEdicao ? 'Editar documento' : 'Adicionar documento'" (closed)="fecharModal()">
+<app-modal-layout [titulo]="modoEdicao ? 'Editar documento' : 'Publicar novo documento'" (closed)="fecharModal()">
   <form class="form-modal" [formGroup]="formDocumento" (ngSubmit)="salvarDocumento()">
 
     <mat-form-field appearance="outline">
@@ -110,7 +110,7 @@
 
 
 @if (modalAberto === 'secao') {
-<app-modal-layout [titulo]="modoEdicao ? 'Editar seção' : 'Nova seção'" (closed)="fecharModal()">
+<app-modal-layout [titulo]="modoEdicao ? 'Editar seção' : 'Criar nova seção'" (closed)="fecharModal()">
 
   <form class="form-modal" [formGroup]="formSecao" (ngSubmit)="salvarSecao()">
 

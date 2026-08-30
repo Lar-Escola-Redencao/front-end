@@ -124,12 +124,30 @@ export class EventoComponent implements OnInit, ComponentComAlteracoesNaoSalvas 
   carregarEventos(): void {
     this.eventoService.listarTodos().subscribe({
       next: (dados) => {
-        this.eventos = dados || [];
-        this.aplicarFiltro();
-        this.cdr.detectChanges();
+        this.ngZone.run(() => {
+          this.eventos = [...(dados || [])];
+
+          this.eventosFiltrados = this.filtroTipo
+            ? this.eventos.filter(e =>
+                e.tipoEvento &&
+                String(e.tipoEvento).toUpperCase() ===
+                String(this.filtroTipo).toUpperCase()
+              )
+            : [...this.eventos];
+
+          this.cdr.detectChanges();
+        });
       },
+
       error: () => {
-        this.toastr.error('Nao foi possivel carregar a lista de eventos.', 'Erro');
+        this.ngZone.run(() => {
+          this.toastr.error(
+            'Nao foi possivel carregar a lista de eventos.',
+            'Erro'
+          );
+
+          this.cdr.detectChanges();
+        });
       }
     });
   }

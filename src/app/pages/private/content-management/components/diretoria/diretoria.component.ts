@@ -36,7 +36,7 @@ export class DiretoriaComponent implements OnInit, OnDestroy, ComponentComAltera
     { chave: 'foto', titulo: 'Foto', tipo: 'imagem' },
     { chave: 'nome', titulo: 'Nome', principalMobile: true },
     { chave: 'cargo', titulo: 'Cargo' },
-    { chave: 'ativo', titulo: 'Exibicao', tipo: 'status' }
+    { chave: 'ativo', titulo: 'Exibição', tipo: 'status' }
   ];
 
   acoesTabela: TabelaAcao<Diretoria>[] = [

@@ -5,8 +5,11 @@
     </button>
 
     <mat-form-field appearance="outline" class="filtro-tipo">
-      <mat-select placeholder="Tipo de evento" [(ngModel)]="filtroTipo" (selectionChange)="aplicarFiltro()">
-        <mat-option value="">Todos os tipos</mat-option>
+      <mat-label>
+        Categoria de evento
+      </mat-label>
+      <mat-select placeholder="Todas as categorias" [(ngModel)]="filtroTipo" (selectionChange)="aplicarFiltro()">
+        <mat-option value="">Todas as categorias</mat-option>
         <mat-option *ngFor="let tipo of tiposDisponiveis" [value]="tipo">
           {{ tipo }}
         </mat-option>
@@ -55,11 +58,10 @@
       <div>
       <mat-form-field appearance="outline">
         <mat-label>
-          Tipo de evento
+          Categoria de evento
         </mat-label>
         <mat-select formControlName="tipoEvento"(blur)="verificarErros()">
-          <mat-option value="">Selecione...</mat-option>
-          <mat-option [value]="TipoEvento.ARRECADACAO">Arrecadacao</mat-option>
+          <mat-option [value]="TipoEvento.ARRECADACAO">Arrecadação</mat-option>
           <mat-option [value]="TipoEvento.CULTURAL">Cultural</mat-option>
           <mat-option [value]="TipoEvento.COMEMORATIVO">Comemorativo</mat-option>
         </mat-select>
@@ -198,12 +200,6 @@
           </div>
         </div>
       </div>
-    </div>
-
-    <div class="acoes-modal">
-      <button type="button" class="btn-cancelar" (click)="fecharVisualizacao()">
-        Fechar
-      </button>
     </div>
   </div>
 </app-modal-layout>

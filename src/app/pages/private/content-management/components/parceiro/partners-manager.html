@@ -10,7 +10,7 @@
 
 
 @if (modalAberto) {
-<app-modal-layout [titulo]="modoEdicao ? 'Editar parceiro' : 'Novo parceiro'" (closed)="fecharModal()">
+<app-modal-layout [titulo]="modoEdicao ? 'Editar parceiro' : 'Cadastrar novo parceiro'" (closed)="fecharModal()">
   <form class="form-modal" [formGroup]="form" (ngSubmit)="salvarParceiro()">
 
     <!-- ================================================= -->

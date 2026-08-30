@@ -1,77 +1,115 @@
-<div class="manager">
-  <div class="manager__toolbar">
-    <button type="button" class="btn btn-primary" (click)="openCreateModal()">
-      Nova rede social
-    </button>
-  </div>
+<section class="social-links-manager">
 
-  @if (loading()) {
-    <p class="manager__empty">Carregando redes sociais...</p>
-  } @else if (loadError()) {
-    <p class="manager__empty">Não foi possível carregar as redes sociais.</p>
-  } @else if (socialLinks().length === 0) {
-    <p class="manager__empty">Nenhuma rede social cadastrada ainda.</p>
+  @if (isLoadingLista && !modalAberto) {
+
+    <p class="estado-lista">
+      Carregando redes sociais...
+    </p>
+
+  } @else if (loadError) {
+
+    <p class="estado-lista">
+      Nao foi possivel carregar as redes sociais.
+    </p>
+
   } @else {
-    <div class="manager__table-wrap">
-      <table class="manager__table">
-        <thead>
-          <tr>
-            <th class="col-id">#</th>
-            <th>Ícone</th>
-            <th>Nome</th>
-            <th>Link</th>
-            <th class="col-active">Ativo</th>
-            <th class="col-action">Editar</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (socialLink of socialLinks(); track socialLink.id) {
-            <tr>
-              <td class="col-id" data-label="#">{{ socialLink.id }}</td>
-              <td data-label="Ícone">
-                @if (socialLink.icone) {
-                  <img
-                    [src]="apiUrl + socialLink.icone"
-                    [alt]="socialLink.nome"
-                    class="manager__logo"
-                  />
-                }
-              </td>
-              <td data-label="Nome">{{ socialLink.nome }}</td>
-              <td data-label="Link">
-                <a [href]="socialLink.url" target="_blank" rel="noopener" class="manager__link">{{
-                  socialLink.url
-                }}</a>
-              </td>
-              <td class="col-active" data-label="Ativo">
-                <app-toggle-switch
-                  [checked]="socialLink.ativo"
-                  (checkedChange)="onToggleActive(socialLink, $event)"
-                  [ariaLabel]="'Ativar ' + socialLink.nome"
-                />
-              </td>
-              <td class="col-action" data-label="Editar">
-                <button
-                  type="button"
-                  class="icon-btn"
-                  aria-label="Editar rede social"
-                  (click)="openEditModal(socialLink)"
-                >
-                  ✎
-                </button>
-              </td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    </div>
-  }
-</div>
 
-@if (formModalOpen()) {
-  <app-social-link-form-modal
-    [socialLink]="editingSocialLink()"
-    (saved)="onSaved()"
-    (closed)="closeFormModal()"
-  />
+    <app-tabela-layout
+      [colunas]="colunas"
+      [dados]="socialLinks"
+      [acoes]="acoesTabela"
+      [tamanhoPagina]="10"
+      [tamanhosPagina]="[5, 10, 25]"
+      mensagemVazia="Nenhuma rede social cadastrada ainda."
+      (acao)="executarAcao($event)"
+    />
+
+  }
+</section>
+
+@if (modalAberto) {
+<app-modal-layout
+  [titulo]="modoEdicao ? 'Editar rede social' : 'Nova rede social'"
+  [class.tremer-modal]="modalTremendo"
+  (closed)="fecharModal()"
+>
+  <form class="form-modal" [formGroup]="form" (ngSubmit)="salvarRedeSocial()">
+
+    @if (modoEdicao) {
+    <div class="campo-status toggle-wrapper">
+      <span class="status-label">
+        {{ form.get('ativo')?.value ? 'Ativo' : 'Inativo' }}
+      </span>
+
+      <label class="custom-switch">
+        <input type="checkbox" formControlName="ativo" />
+        <span class="slider"></span>
+      </label>
+    </div>
+    }
+
+    <mat-form-field appearance="outline">
+      <mat-label>Nome da rede social</mat-label>
+      <input
+        matInput
+        formControlName="nome"
+        maxlength="50"
+        (blur)="verificarErros()"
+      />
+    </mat-form-field>
+
+    @if (erros['nome']) {
+    <span class="error-text">
+      {{ erros['nome'] }}
+    </span>
+    }
+
+    <mat-form-field appearance="outline">
+      <mat-label>Link da rede social</mat-label>
+      <input
+        matInput
+        type="url"
+        formControlName="url"
+        maxlength="255"
+        placeholder="https://..."
+        (blur)="verificarErros()"
+      />
+    </mat-form-field>
+
+    @if (erros['url']) {
+    <span class="error-text">
+      {{ erros['url'] }}
+    </span>
+    }
+
+    <div class="acoes-modal">
+
+      <button
+        type="button"
+        class="btn-cancelar"
+        [disabled]="isSalvando"
+        (click)="fecharModal()"
+      >
+        Cancelar
+      </button>
+
+      <button
+        type="submit"
+        class="btn-primary"
+        [disabled]="isSalvando"
+      >
+        <span
+          *ngIf="isSalvando"
+          class="spinner"
+          aria-hidden="true"
+        ></span>
+
+        <span>
+          {{ isSalvando ? 'Salvando...' : 'Salvar' }}
+        </span>
+      </button>
+
+    </div>
+  </form>
+</app-modal-layout>
 }
