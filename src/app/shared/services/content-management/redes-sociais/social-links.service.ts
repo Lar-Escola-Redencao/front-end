@@ -1,8 +1,8 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
-import { environment } from '../../../../environments/environment';
-import { SocialLink, SocialLinkInput } from '../../../shared/models/social-link.model';
+import { environment } from '../../../../../environments/environment';
+import { SocialLink, SocialLinkInput } from '../../../models/social-link.model';
 
 @Injectable({ providedIn: 'root' })
 export class SocialLinksService {

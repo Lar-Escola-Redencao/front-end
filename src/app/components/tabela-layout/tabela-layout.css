@@ -1,0 +1,317 @@
+.tabela-container {
+  width: 100%;
+}
+
+.tabela-wrapper {
+  width: 100%;
+  border-radius: 12px;
+  overflow-x: auto;
+  background: var(--branco);
+  box-shadow: var(--sombra-padrao);
+}
+
+.tabela {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--fonte-texto);
+}
+
+.tabela th {
+  padding: 18px 24px;
+  text-align: left;
+  font-weight: bold;
+  font-size: 0.85rem;
+  color: rgba(0, 0, 0, 0.6);
+  border-bottom: 1px solid #ddd;
+  white-space: nowrap;
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.tabela td {
+  font-size: 0.95rem;
+  padding: 18px 24px;
+  color: var(--preto);
+  text-align: start;
+}
+
+.tabela tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.tabela tbody tr:hover {
+  background: #fafafa;
+}
+
+.coluna-acoes {
+  width: 70px;
+  text-align: center !important;
+}
+
+.acoes {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+}
+
+.botao-acao {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 36px;
+  height: 36px;
+
+  border: 0;
+  border-radius: 50%;
+
+  background: transparent;
+  color: var(--primary-color);
+
+  cursor: pointer;
+}
+
+.botao-acao:hover {
+  color: var(--primary-hover-color);
+}
+
+.botao-acao mat-icon {
+  font-size: 21px;
+}
+
+.botao-excluir {
+  color: rgb(182, 43, 43);
+}
+
+.botao-excluir:hover {
+  color: rgb(104, 5, 5);
+}
+
+.badge-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.badge-status.ativo {
+  color: #139445;
+  background-color: #dcfce7;
+}
+
+.badge-status.inativo {
+  color: rgb(182, 43, 43);
+  background-color: #fee2e2;
+}
+
+.tabela-imagem {
+  display: block;
+
+  width: 50px;
+  height: 50px;
+
+  object-fit: contain;
+
+  border-radius: 6px;
+}
+
+.tabela-imagem-vazia {
+  color: #999;
+}
+
+.tabela-documento {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+
+  color: var(--primary-color);
+
+  font-size: 0.8rem;
+  font-weight: 500;
+
+  text-decoration: none;
+
+  cursor: pointer;
+
+  transition:
+    color 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.tabela-documento mat-icon {
+  width: 20px;
+  height: 20px;
+
+  font-size: 20px;
+}
+
+.tabela-documento:hover {
+  color: var(--primary-color);
+  text-decoration: underline;
+}
+
+.tabela-documento-vazio {
+  color: #999;
+}
+
+.tabela-vazia {
+  padding: 40px 24px;
+  text-align: center;
+  color: rgba(0, 0, 0, 0.6);
+  background: var(--branco);
+  box-shadow: var(--sombra-padrao);
+}
+
+mat-paginator {
+  background: var(--branco);
+  margin-top: 20px;
+}
+
+mat-paginator{
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+mat-paginator .mat-mdc-form-field-flex{
+  height: 20px;
+}
+
+
+.controle-expansao {
+  display: none;
+}
+
+.header-mobile {
+  display: none !important;
+}
+
+@media (max-width: 1000px) {
+  
+  .tabela-wrapper {
+    overflow: visible !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  .tabela,
+  .tabela tbody,
+  .tabela tr {
+    display: block;
+    width: 100%;
+  }
+
+  .tabela thead {
+    display: none !important;
+  }
+
+  .tabela tbody {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .tabela .linha {
+    display: flex;
+    flex-direction: column;
+    background: var(--branco);
+    border-radius: 12px;
+    box-shadow: var(--sombra-padrao);
+    overflow: hidden;
+  }
+
+  /* Esconde as células de dados e ações quando o card está fechado */
+  .tabela .linha td.celula-dado,
+  .tabela .linha td.coluna-acoes {
+    display: none;
+  }
+
+  /* CABEÇALHO DO CARD (Sempre visível no mobile) */
+  .tabela .linha td.header-mobile {
+    display: flex !important;
+    align-items: center;
+    justify-content: space-between;
+    
+    width: 100%;
+    min-height: 60px;
+    padding: 14px 16px;
+    box-sizing: border-box;
+    cursor: pointer;
+    border: none;
+  }
+
+  .titulo-mobile {
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--preto);
+    flex: 1;
+    text-align: start;
+    
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    
+  }
+
+  /* Ícone da seta */
+  .header-mobile mat-icon {
+    color: var(--primary-color);
+    flex-shrink: 0;
+  }
+
+  /* CONTEÚDO EXPANDIDO (Mostra todos os dados na ordem normal) */
+  .tabela .linha.expandida td.celula-dado {
+    display: grid;
+    grid-template-columns: 42% 58%;
+    align-items: start;
+    width: 100%;
+    padding: 11px 16px;
+  }
+
+  .tabela .linha.expandida td.celula-dado::before {
+    content: attr(data-label);
+    font-size: 12px;
+    font-weight: 500;
+    color: rgba(0, 0, 0, 0.6);
+    text-align: start;
+  }
+
+  .tabela .linha.expandida td.celula-dado .valor-celula {
+    text-align: right;
+    word-break: break-word;
+    font-size: 0.95rem;
+    color: var(--preto);
+  }
+
+  /* CONTEÚDO EXPANDIDO (Ações no rodapé do card) */
+  .tabela .linha.expandida td.coluna-acoes {
+    display: flex !important;
+    align-items: center;
+    justify-content: flex-end;
+    width: 100%;
+    min-height: 52px;
+    padding: 8px 12px;
+    border-top: 1px solid var(--branco);
+    box-sizing: border-box;
+  }
+
+  .tabela .linha.expandida td.coluna-acoes::before {
+    content: "Ações";
+    margin-right: auto;
+  }
+
+  .acoes {
+    justify-content: flex-end;
+  }
+  .valor-celula{
+    display: flex;
+    justify-content: end;
+    align-items: end;
+  }
+}

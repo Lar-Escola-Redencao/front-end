@@ -16,6 +16,6 @@ export class DashboardHome {
 
   protected logout(): void {
     this.auth.logout();
-    this.router.navigateByUrl('/login');
+    this.router.navigateByUrl('/');
   }
 }

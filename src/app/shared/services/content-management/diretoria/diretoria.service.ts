@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { AtualizarDiretoriaDTO, CriarDiretoriaDTO, Diretoria } from '../shared/models/diretoria.model';
-import { environment } from '../environments/environment';
+import { AtualizarDiretoriaDTO, CriarDiretoriaDTO, Diretoria } from '../../../models/diretoria.model';
+import { environment } from 'src/environments/environment';
 
 @Injectable({
   providedIn: 'root'
@@ -37,6 +37,10 @@ export class DiretoriaService {
       formData.append('foto', dto.foto);
     }
     return this.http.put<Diretoria>(`${this.apiUrl}/${id}`, formData);
+  }
+
+  delete(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
 
   fotoUrl(caminho: string | null | undefined): string {

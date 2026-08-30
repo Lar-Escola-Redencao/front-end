@@ -6,6 +6,9 @@ import { ContentManagement } from './pages/private/content-management/content-ma
 import { ColaboradorComponent } from '@pages/private/colaborador/colaborador.component';
 import { authGuard } from './shared/guards/auth-guard';
 import { guestGuard } from './shared/guards/guest-guard';
+import { Usuario } from '@pages/private/usuario/usuario';
+import { Diario } from '@pages/private/diario/diario';
+import { UnidadesTurmas } from '@pages/private/unidades-turmas/unidades-turmas';
 
 export const routes: Routes = [
     { path: '', component: Home},
@@ -19,7 +22,10 @@ export const routes: Routes = [
             { path: '', component: DashboardHome },
             { path: 'conteudo-publico', component: ContentManagement },
             { path: 'conteudo-publico/:secao', component: ContentManagement },
-            { path: 'colaboradores', component: ColaboradorComponent}
+            { path: 'colaboradores', component: ColaboradorComponent},
+            { path: 'usuarios', component: Usuario},
+            { path: 'diario', component: Diario},
+            { path: 'unidades-turmas', component: UnidadesTurmas}
         ]
     },
     {

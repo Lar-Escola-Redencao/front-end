@@ -1,8 +1,8 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
-import { environment } from '../../../../environments/environment';
-import { Partner, PartnerInput } from '../../models/partner.model';
+import { environment } from '../../../../../environments/environment';
+import { Partner, PartnerInput } from '../../../models/partner.model';
 
 @Injectable({ providedIn: 'root' })
 export class PartnersService {
@@ -30,5 +30,9 @@ export class PartnersService {
       formData.append('logo', input.logo);
     }
     return firstValueFrom(this.http.put<Partner>(`${this.baseUrl}/${id}`, formData));
+  }
+
+  delete(id: number): Promise<void>{
+    return firstValueFrom(this.http.delete<void>(`${this.baseUrl}/${id}`));
   }
 }

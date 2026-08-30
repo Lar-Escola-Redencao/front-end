@@ -19,7 +19,11 @@
 .form-modal {
   display: flex;
   flex-direction: column;
-  gap: 22px;
+  gap: 14px;
+}
+
+.form-modal .mat-mdc-form-field {
+  width: 100%;
 }
 
 .campo-textarea {
@@ -34,8 +38,38 @@
   resize: none;
 }
 
+.upload-container {
+  width: 100%;
+}
+
 .upload-campo {
-  min-height: 220px;
+  width: 100%;
+  min-height: 58px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  padding: 12px 16px;
+
+  border: 1px solid var(--input-border);
+  border-radius: var(--input-radius);
+
+  background-color: var(--branco);
+  cursor: pointer;
+
+  font-family: var(--fonte-texto);
+  color: var(--input-color);
+
+  transition: border-color 0.2s ease;
+}
+
+.upload-campo.com-erro {
+  border-color: var(--error-color);
+}
+
+.upload-campo {
+  min-height: 100px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -92,6 +126,36 @@
   font-family: var(--fonte-texto);
   font-size: 1rem;
   font-weight: 700;
+}
+
+.abas-container {
+  display: flex;
+  gap: 8px;
+  margin-top: 24px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid #ddd;
+}
+
+.aba-btn {
+  font-family: var(--fonte-texto);
+  padding: 12px 24px;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--input-border);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.aba-btn:hover {
+  color: var(--primary-color);
+}
+
+.aba-btn.ativa {
+  color: var(--primary-color);
+  border-bottom-color: var(--primary-color);
 }
 
 @media (max-width: 600px) {
