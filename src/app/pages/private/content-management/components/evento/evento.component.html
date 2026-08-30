@@ -1,226 +1,210 @@
-<div class="container">
-  <div class="header-acoes">
-    <h2>Gerenciamento de Eventos</h2>
-    <div class="header-direita">
-      <select class="filtro-tipo" [(ngModel)]="filtroTipo" (change)="aplicarFiltro()">
-        <option value="">Todos os tipos</option>
-        <option *ngFor="let tipo of tiposDisponiveis" [value]="tipo">{{ tipo }}</option>
-      </select>
-      <button (click)="abrirCadastro()" class="btn-novo">Novo Evento</button>
-    </div>
+<section class="eventos-admin">
+  <div class="acoes-eventos">
+    <button type="button" class="btn-primary" (click)="abrirCadastro()">
+      Novo evento
+    </button>
+
+    <mat-form-field appearance="outline" class="filtro-tipo">
+      <mat-select placeholder="Tipo de evento" [(ngModel)]="filtroTipo" (selectionChange)="aplicarFiltro()">
+        <mat-option value="">Todos os tipos</mat-option>
+        <mat-option *ngFor="let tipo of tiposDisponiveis" [value]="tipo">
+          {{ tipo }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
   </div>
 
-  <div class="tabela-card" *ngIf="eventosFiltrados.length > 0; else estadoVazio">
-    <table class="tabela-eventos">
-      <thead>
-        <tr>
-          <th>Título</th>
-          <th>Data</th>
-          <th>Tipo</th>
-          <th>Valor</th>
-          <th>Ver</th>
-          <th>Editar</th>
-          <th>Excluir</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let evento of eventosFiltrados">
-          <td>{{ evento.titulo }}</td>
-          <td>{{ evento.dataEvento | date:'dd/MM/yyyy HH:mm' }}</td>
-          <td>{{ evento.tipoEvento }}</td>
-          <td>{{ evento.valor ? (evento.valor | currency:'BRL') : 'Gratuito' }}</td>
-          <td class="acoes-icone">
-            <button (click)="abrirVisualizacao(evento)" class="btn-icone btn-icone-visualizar" title="Visualizar">
-              <span class="material-symbols-outlined">visibility</span>
-            </button>
-          </td>
-          <td class="acoes-icone">
-            <button (click)="abrirEdicao(evento)" class="btn-icone btn-icone-editar" title="Editar">
-              <span class="material-symbols-outlined">edit</span>
-            </button>
-          </td>
-          <td class="acoes-icone">
-            <button (click)="deletarEvento(evento.id)" class="btn-icone btn-icone-excluir" title="Excluir">
-              <span class="material-symbols-outlined">delete</span>
-            </button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
+  <app-tabela-layout
+    [colunas]="colunas"
+    [dados]="eventosFiltrados"
+    [acoes]="acoesTabela"
+    [tamanhoPagina]="10"
+    [tamanhosPagina]="[5, 10, 25]"
+    [mensagemVazia]="mensagemVazia"
+    (acao)="executarAcao($event)" />
+</section>
 
-  <ng-template #estadoVazio>
-    <div class="estado-vazio">
-      <p *ngIf="!filtroTipo">Nenhum evento cadastrado ainda</p>
-      <p *ngIf="filtroTipo">Nenhum evento do tipo {{ filtroTipo }} cadastrado ainda</p>
-    </div>
-  </ng-template>
-</div>
+@if (modalAberto) {
+<app-modal-layout
+  [class.tremer]="modalTremendo"
+  [titulo]="modoEdicao ? 'Editar evento' : 'Cadastrar novo evento'"
+  (closed)="fecharModal()">
 
-<!-- Modal Formulário -->
-<div class="modal-overlay" *ngIf="modalAberto" (click)="fecharModal()">
-  <div class="modal-card" [class.tremer]="modalTremendo" (click)="$event.stopPropagation()">
-    <div class="modal-header">
-      <h3>{{ modoEdicao ? 'Editar Evento' : 'Cadastrar Novo Evento' }}</h3>
-      <button class="btn-fechar" (click)="fecharModal()">&times;</button>
-    </div>
+  <form class="form-modal" [formGroup]="formEvento" (ngSubmit)="salvar()">
+    <mat-form-field appearance="outline">
+      <mat-label>Título do evento</mat-label>
+      <input matInput formControlName="titulo" (blur)="verificarErros()" maxlength="150" />
+    </mat-form-field>
+    <span class="error-text" *ngIf="erros['titulo']">{{ erros['titulo'] }}</span>
 
-    <form [formGroup]="formEvento" (ngSubmit)="salvar()" class="form-membro">
-      <div class="form-scroll">
+    <mat-form-field appearance="outline" class="campo-textarea">
+      <mat-label>Descrição</mat-label>
+      <textarea matInput rows="3" formControlName="descricao" (blur)="verificarErros()" maxlength="500"></textarea>
+    </mat-form-field>
+    <span class="error-text" *ngIf="erros['descricao']">{{ erros['descricao'] }}</span>
 
-        <div class="form-group">
-          <label for="titulo">Título do Evento</label>
-          <input id="titulo" type="text" formControlName="titulo" (blur)="verificarErros()" maxlength="150">
-          <span class="error-text" *ngIf="erros['titulo']">{{ erros['titulo'] }}</span>
-        </div>
-
-        <div class="form-group">
-          <label for="descricao">Descrição</label>
-          <textarea id="descricao" rows="3" formControlName="descricao" (blur)="verificarErros()" maxlength="500"></textarea>
-          <span class="error-text" *ngIf="erros['descricao']">{{ erros['descricao'] }}</span>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label for="dataEvento">Data e Hora</label>
-            <input id="dataEvento" type="datetime-local" formControlName="dataEvento" (blur)="verificarErros()">
-            <span class="error-text" *ngIf="erros['dataEvento']">{{ erros['dataEvento'] }}</span>
-          </div>
-
-          <div class="form-group">
-            <label for="tipoEvento">Tipo de Evento</label>
-            <select id="tipoEvento" formControlName="tipoEvento" (blur)="verificarErros()">
-              <option value="">Selecione...</option>
-              <option value="ARRECADACAO">Arrecadação</option>
-              <option value="CULTURAL">Cultural</option>
-              <option value="COMEMORATIVO">Comemorativo</option>
-            </select>
-            <span class="error-text" *ngIf="erros['tipoEvento']">{{ erros['tipoEvento'] }}</span>
-          </div>
-        </div>
-
-        <!-- endereço e valor na mesma linha (endereço com mais espaço) -->
-        <div class="form-row form-row-endereco-valor">
-          <div class="form-group form-group-endereco">
-            <label for="endereco">Endereço</label>
-            <input id="endereco" type="text" formControlName="endereco" (blur)="verificarErros()" maxlength="150">
-            <span class="error-text" *ngIf="erros['endereco']">{{ erros['endereco'] }}</span>
-          </div>
-          <div class="form-group form-group-valor">
-            <label for="valor">Valor (opcional)</label>
-            <input id="valor" type="text" inputmode="decimal" formControlName="valor"
-              (input)="aplicarMascaraValor($event)" (blur)="verificarErros()" placeholder="R$ 0,00">
-            <span class="error-text" *ngIf="erros['valor']">{{ erros['valor'] }}</span>
-          </div>
-        </div>
-
-        <!-- Seletor Moderno de Parceiros -->
-        <div class="form-group">
-          <label>Parceiros Vinculados</label>
-          <div class="parceiros-box">
-            <div *ngIf="parceiros.length === 0" class="sem-parceiros">Nenhum parceiro disponível</div>
-            <label *ngFor="let p of parceiros" class="parceiro-item">
-              <input type="checkbox" [checked]="isParceiroSelecionado(p.id)" (change)="onParceiroToggle(p.id, $event)">
-              <span>{{ p.nome }}</span>
-            </label>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label for="imagem">Capa do Evento</label>
-          <input #inputImagem id="imagem" type="file" class="input-arquivo-oculto" (change)="onImagemSelecionada($event)" accept="image/*">
-          <div class="upload-arquivo" [class.upload-arquivo-erro]="erros['imagem']" (click)="inputImagem.click()">
-            <span class="material-symbols-outlined upload-arquivo-icone">upload_file</span>
-            <div class="upload-arquivo-texto">
-              <strong>{{ nomeArquivoSelecionado ? nomeArquivoSelecionado : 'Clique para escolher uma imagem' }}</strong>
-              <span>PNG, JPG ou WEBP</span>
-            </div>
-            <span class="upload-arquivo-botao">Procurar</span>
-          </div>
-
-          <span class="error-text" *ngIf="erros['imagem']">{{ erros['imagem'] }}</span>
-
-          <div class="imagem-preview-wrapper" *ngIf="imagemPreview || carregandoImagem">
-            <div class="imagem-preview-loading" *ngIf="carregandoImagem">
-              <span class="spinner spinner-escuro" aria-hidden="true"></span>
-              <span>Carregando imagem...</span>
-            </div>
-            <img *ngIf="imagemPreview"
-              [src]="imagemPreview"
-              class="imagem-preview"
-              [class.imagem-preview-oculta]="carregandoImagem"
-              alt="Preview da imagem"
-              (load)="onPreviewImagemCarregada()"
-              (error)="onPreviewImagemErro()">
-              <p class="imagem-preview-info" *ngIf="modoEdicao && imagemPreview && !carregandoImagem">
-                <span class="material-symbols-outlined">info</span>
-                <span *ngIf="!imagemAlterada">Esta é a imagem atual do evento. Se você não selecionar uma nova imagem, esta será mantida ao salvar.</span>
-                <span *ngIf="imagemAlterada">Nova imagem selecionada — ela substituirá a imagem atual ao salvar.</span>
-              </p>
-          </div>
-        </div>
-
-        <div class="form-group" *ngIf="modoEdicao">
-          <label for="comentarioPosEvento">Comentário Pós-Evento</label>
-          <textarea id="comentarioPosEvento" rows="2" formControlName="comentarioPosEvento" maxlength="500"></textarea>
-        </div>
-
+    <div class="form-row">
+      <div>
+      <mat-form-field appearance="outline">
+        <mat-label>Data e hora</mat-label>
+        <input matInput type="datetime-local" formControlName="dataEvento" (blur)="verificarErros()" />
+      </mat-form-field>
+      <span class="error-text" *ngIf="erros['dataEvento']">{{ erros['dataEvento'] }}</span>
       </div>
 
-      <div class="modal-acoes">
-        <button type="button" class="btn-cancelar" [disabled]="isLoading" (click)="fecharModal()">Cancelar</button>
-        <button type="submit" [disabled]="formEvento.invalid || isLoading" class="btn-salvar">
-          <span *ngIf="isLoading" class="spinner" aria-hidden="true"></span>
-          <span>{{ isLoading ? 'Salvando...' : (modoEdicao ? 'Atualizar' : 'Salvar') }}</span>
-        </button>
+      <div>
+      <mat-form-field appearance="outline">
+        <mat-label>
+          Tipo de evento
+        </mat-label>
+        <mat-select formControlName="tipoEvento"(blur)="verificarErros()">
+          <mat-option value="">Selecione...</mat-option>
+          <mat-option [value]="TipoEvento.ARRECADACAO">Arrecadacao</mat-option>
+          <mat-option [value]="TipoEvento.CULTURAL">Cultural</mat-option>
+          <mat-option [value]="TipoEvento.COMEMORATIVO">Comemorativo</mat-option>
+        </mat-select>
+      </mat-form-field>
+      <span class="error-text" *ngIf="erros['tipoEvento']">{{ erros['tipoEvento'] }}</span>
       </div>
-    </form>
-  </div>
-</div>
-
-<!-- Modal Visualização -->
-<div class="modal-overlay" *ngIf="modalVisualizacaoAberto" (click)="fecharVisualizacao()">
-  <div class="modal-card modal-preview" (click)="$event.stopPropagation()">
-    <div class="modal-header">
-      <h3>Detalhes do Evento</h3>
-      <button class="btn-fechar" (click)="fecharVisualizacao()">&times;</button>
     </div>
-    <div class="modal-body-preview form-scroll" *ngIf="eventoVisualizacao">
-      <div class="preview-capa" *ngIf="eventoVisualizacao.imagem">
-        <img [src]="tratarImagem(eventoVisualizacao.imagem)" alt="Capa do Evento">
+    
+    <div class="form-row form-row-endereco-valor">
+      <div>
+        <mat-form-field appearance="outline" class="form-group-endereco">
+          <mat-label>Endereço</mat-label>
+          <input matInput formControlName="endereco" (blur)="verificarErros()" maxlength="150" />
+        </mat-form-field>
+        <span class="error-text" *ngIf="erros['endereco']">{{ erros['endereco'] }}</span>
       </div>
-      <div class="preview-info">
-        <div class="tag-tipo">{{ eventoVisualizacao.tipoEvento }}</div>
-        <h2>{{ eventoVisualizacao.titulo }}</h2>
-        <p class="preview-data-local">
-          <span class="material-symbols-outlined">calendar_today</span>
-          {{ eventoVisualizacao.dataEvento | date:'dd/MM/yyyy HH:mm' }}<br>
-          <span class="material-symbols-outlined">location_on</span>
-          {{ eventoVisualizacao.endereco }}
+      <div>
+        <mat-form-field appearance="outline" class="form-group-valor">
+          <mat-label>Valor (opcional)</mat-label>
+          <input
+            matInput
+            type="text"
+            inputmode="decimal"
+            formControlName="valor"
+            (input)="aplicarMascaraValor($event)"
+            (blur)="verificarErros()"/>
+        </mat-form-field>
+        <span class="error-text" *ngIf="erros['valor']">{{ erros['valor'] }}</span>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <div class="parceiros-box">
+        <label>Parceiros vinculados</label>
+        <div *ngIf="parceiros.length === 0" class="sem-parceiros">
+          Nenhum parceiro disponível
+        </div>
+
+        <label *ngFor="let p of parceiros" class="parceiro-item">
+          <input type="checkbox" [checked]="isParceiroSelecionado(p.id)" (change)="onParceiroToggle(p.id, $event)" />
+          <span>{{ p.nome }}</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <input
+        #inputImagem
+        id="imagem"
+        type="file"
+        class="input-arquivo-oculto"
+        accept=".jpg,.jpeg,.png,.webp"
+        (change)="onImagemSelecionada($event)" />
+
+      <div class="upload-arquivo" [class.upload-arquivo-erro]="erros['imagem']" (click)="inputImagem.click()">
+        <span class="material-symbols-outlined upload-arquivo-icone">
+          upload_file
+        </span>
+
+        <div class="upload-arquivo-texto">
+          <strong>
+            {{
+              nomeArquivoSelecionado
+                ? nomeArquivoSelecionado
+                : 'Selecione a capa do evento'
+            }}
+          </strong>
+          <span>PNG, JPEG, JPG ou WEBP</span>
+        </div>
+
+        <span class="upload-arquivo-botao">
+          Procurar
+        </span>
+      </div>
+    </div>
+
+    <span class="error-text" *ngIf="erros['imagem']">{{ erros['imagem'] }}</span>
+
+    @if (imagemPreview) {
+    <div class="image-preview">
+      <img
+        [src]="imagemPreview"
+        [alt]="formEvento.get('titulo')?.value || 'Capa do evento'">
+    </div>
+    }
+
+    <div class="acoes-modal">
+      <button type="button" class="btn-cancelar" [disabled]="isLoading" (click)="fecharModal()">
+        Cancelar
+      </button>
+
+      <button type="submit" class="btn-primary" [disabled]="isLoading">
+        <span *ngIf="isLoading" class="spinner" aria-hidden="true"></span>
+        <span>{{ isLoading ? 'Salvando...' : 'Salvar' }}</span>
+      </button>
+    </div>
+  </form>
+</app-modal-layout>
+}
+
+@if (modalVisualizacaoAberto) {
+<app-modal-layout titulo="Detalhes do evento" (closed)="fecharVisualizacao()">
+  <div class="modal-body-preview" *ngIf="eventoVisualizacao">
+    <div class="preview-capa" *ngIf="eventoVisualizacao.imagem">
+      <img [src]="tratarImagem(eventoVisualizacao.imagem)" alt="Capa do evento" />
+    </div>
+
+    <div class="preview-info">
+      <div class="tag-tipo">{{ eventoVisualizacao.tipoEvento }}</div>
+      <h2>{{ eventoVisualizacao.titulo }}</h2>
+
+      <p class="preview-data-local">
+        <span class="material-symbols-outlined">calendar_today</span>
+        {{ eventoVisualizacao.dataEvento | date:'dd/MM/yyyy HH:mm' }}<br />
+        <span class="material-symbols-outlined">location_on</span>
+        {{ eventoVisualizacao.endereco }}
+      </p>
+
+      <div class="preview-desc">
+        <h4>Sobre o evento</h4>
+        <p>{{ eventoVisualizacao.descricao }}</p>
+      </div>
+
+      <div class="preview-extra">
+        <p>
+          <strong>Valor:</strong>
+          {{ eventoVisualizacao.valor ? (eventoVisualizacao.valor | currency:'BRL') : 'Gratuito' }}
         </p>
-        <div class="preview-desc">
-          <h4>Sobre o evento</h4>
-          <p>{{ eventoVisualizacao.descricao }}</p>
-        </div>
-        <div class="preview-extra">
-          <p><strong>Valor:</strong> {{ eventoVisualizacao.valor ? (eventoVisualizacao.valor | currency:'BRL') : 'Gratuito' }}</p>
-          <div *ngIf="eventoVisualizacao.parceiros && eventoVisualizacao.parceiros.length > 0">
-            <h4>Parceiros</h4>
-            <div class="preview-parceiros-logos">
-              <div class="parceiro-logo-item" *ngFor="let p of eventoVisualizacao.parceiros" [title]="p.nome">
-                <img [src]="tratarImagem(p.logo)" [alt]="p.nome">
-              </div>
+
+        <div *ngIf="eventoVisualizacao.parceiros && eventoVisualizacao.parceiros.length > 0">
+          <h4>Parceiros</h4>
+          <div class="preview-parceiros-logos">
+            <div class="parceiro-logo-item" *ngFor="let p of eventoVisualizacao.parceiros" [title]="p.nome">
+              <img [src]="tratarImagem(p.logo)" [alt]="p.nome" />
             </div>
-          </div>
-          <div *ngIf="eventoVisualizacao.comentarioPosEvento">
-            <h4>Comentário Pós-Evento</h4>
-            <p>{{ eventoVisualizacao.comentarioPosEvento }}</p>
           </div>
         </div>
       </div>
     </div>
-    <div class="modal-acoes">
-      <button type="button" class="btn-cancelar" (click)="fecharVisualizacao()">Fechar</button>
+
+    <div class="acoes-modal">
+      <button type="button" class="btn-cancelar" (click)="fecharVisualizacao()">
+        Fechar
+      </button>
     </div>
   </div>
-</div>
+</app-modal-layout>
+}

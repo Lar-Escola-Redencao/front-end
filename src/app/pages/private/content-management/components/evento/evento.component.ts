@@ -1,10 +1,16 @@
 import { Component, OnInit, HostListener, ChangeDetectorRef, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatOption, MatSelect } from '@angular/material/select';
 import { ToastrService } from 'ngx-toastr';
-import Swal from 'sweetalert2';
+import { ModalLayout } from '@components/modal-layout/modal-layout';
+import { TabelaAcao, TabelaColuna, TabelaLayout } from '@components/tabela-layout/tabela-layout';
 import { ComponentComAlteracoesNaoSalvas } from 'src/app/shared/guards/can-deactivate.guard';
 import { AtualizarEventoDTO, CriarEventoDTO, Evento, TipoEvento } from 'src/app/shared/models/evento.model';
+import { Alertas } from 'src/app/shared/utils/alerts';
+import { mapearErrosFormulario, validarImagem } from 'src/app/shared/utils/form-validations';
 import { EventoService } from 'src/app/shared/services/content-management/evento/evento.service';
 import { ParceiroService } from 'src/app/shared/services/content-management/evento/parceiro.service';
 import { environment } from 'src/environments/environment';
@@ -12,17 +18,28 @@ import { environment } from 'src/environments/environment';
 @Component({
   selector: 'app-evento',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    ReactiveFormsModule,
+    ModalLayout,
+    TabelaLayout,
+    MatFormFieldModule,
+    MatInputModule,
+    MatSelect,
+    MatOption
+  ],
   templateUrl: './evento.component.html',
   styleUrls: ['./evento.component.css']
 })
 export class EventoComponent implements OnInit, ComponentComAlteracoesNaoSalvas {
+  readonly TipoEvento = TipoEvento;
 
   eventos: Evento[] = [];
   eventosFiltrados: Evento[] = [];
   filtroTipo = '';
   tiposDisponiveis = Object.values(TipoEvento);
-  parceiros: { id: number; nome: string }[] = [];
+  parceiros: { id: number; nome: string; logo?: string }[] = [];
 
   modalAberto = false;
   modoEdicao = false;
@@ -32,24 +49,34 @@ export class EventoComponent implements OnInit, ComponentComAlteracoesNaoSalvas 
   erros: { [key: string]: string } = {};
   isLoading = false;
   imagemPreview: string | null = null;
-  carregandoImagem = false;
-  nomeArquivoSelecionado: string | null = null;
-  imagemAlterada = false;
+  nomeArquivoSelecionado = '';
+  imagemSelecionada: File | null = null;
   valorNumerico: number | null = null;
   valoresOriginaisDoFormulario: any = null;
 
   modalVisualizacaoAberto = false;
   eventoVisualizacao: Evento | null = null;
 
-  private readonly mensagensErro: { [campo: string]: { [tipoErro: string]: string | ((err: any) => string) } } = {
-    titulo: { required: '⚠ Campo obrigatório.', minlength: (e) => `⚠ Mínimo de ${e.requiredLength} caracteres.`, maxlength: (e) => `⚠ Máximo de ${e.requiredLength} caracteres.` },
-    descricao: { required: '⚠ Campo obrigatório.', minlength: (e) => `⚠ Mínimo de ${e.requiredLength} caracteres.`, maxlength: (e) => `⚠ Máximo de ${e.requiredLength} caracteres.` },
-    dataEvento: { required: '⚠ Campo obrigatório.' },
-    endereco: { required: '⚠ Campo obrigatório.', minlength: (e) => `⚠ Mínimo de ${e.requiredLength} caracteres.`, maxlength: (e) => `⚠ Máximo de ${e.requiredLength} caracteres.` },
-    tipoEvento: { required: '⚠ Campo obrigatório.' },
-    valor: { min: () => '⚠ Valor deve ser maior ou igual a 0.' },
-    imagem: { required: '⚠ Imagem obrigatória no cadastro.' }
-  };
+  colunas: TabelaColuna<Evento>[] = [
+    { chave: 'titulo', titulo: 'Titulo', principalMobile: true },
+    {
+      chave: 'dataEvento',
+      titulo: 'Data',
+      formatar: (valor) => this.formatarDataTabela(valor)
+    },
+    { chave: 'tipoEvento', titulo: 'Tipo' },
+    {
+      chave: 'valor',
+      titulo: 'Valor',
+      formatar: (valor) => valor ? this.formatarMoeda(valor) : 'Gratuito'
+    }
+  ];
+
+  acoesTabela: TabelaAcao<Evento>[] = [
+    { icone: 'visibility', tooltip: 'Visualizar', acao: 'visualizar' },
+    { icone: 'edit', tooltip: 'Editar', acao: 'editar' },
+    { icone: 'delete', tooltip: 'Excluir', acao: 'excluir' }
+  ];
 
   constructor(
     private eventoService: EventoService,
@@ -65,10 +92,9 @@ export class EventoComponent implements OnInit, ComponentComAlteracoesNaoSalvas 
       dataEvento: ['', Validators.required],
       endereco: ['', [Validators.required, Validators.minLength(5), Validators.maxLength(150)]],
       tipoEvento: ['', Validators.required],
-      valor: [null, [Validators.min(0)]],
-      comentarioPosEvento: ['', Validators.maxLength(500)],
+      valor: ['', [Validators.min(0)]],
       parceirosIds: [[]],
-      imagem: [null]
+      imagem: [null, [Validators.required, validarImagem()]]
     });
   }
 
@@ -77,15 +103,19 @@ export class EventoComponent implements OnInit, ComponentComAlteracoesNaoSalvas 
     this.carregarEventos();
   }
 
-  // listagem e filtros
+  get mensagemVazia(): string {
+    return this.filtroTipo
+      ? `Nenhum evento do tipo ${this.filtroTipo} cadastrado ainda`
+      : 'Nenhum evento cadastrado ainda';
+  }
 
   carregarParceiros(): void {
     this.parceiroService.listarTodos().subscribe({
       next: (dados) => {
         this.parceiros = dados;
-
+        this.cdr.detectChanges();
       },
-       error: () => {
+      error: () => {
         this.toastr.error('Erro ao carregar lista de parceiros.', 'Erro');
       }
     });
@@ -96,80 +126,72 @@ export class EventoComponent implements OnInit, ComponentComAlteracoesNaoSalvas 
       next: (dados) => {
         this.eventos = dados || [];
         this.aplicarFiltro();
-
-        setTimeout(() => {
-          this.cdr.detectChanges();
-        });
+        this.cdr.detectChanges();
       },
-     error: (err) => {
-        console.error('Erro ao buscar eventos:', err);
-        this.toastr.error('Não foi possível carregar a lista de eventos.', 'Erro');
+      error: () => {
+        this.toastr.error('Nao foi possivel carregar a lista de eventos.', 'Erro');
       }
     });
   }
 
   aplicarFiltro(): void {
-    if (!this.filtroTipo || this.filtroTipo === '') {
-      this.eventosFiltrados = [...this.eventos];
-    } else {
-      this.eventosFiltrados = this.eventos.filter(e =>
-        e.tipoEvento && String(e.tipoEvento).toUpperCase() === String(this.filtroTipo).toUpperCase()
-      );
-    }
+    this.eventosFiltrados = this.filtroTipo
+      ? this.eventos.filter(e =>
+          e.tipoEvento &&
+          String(e.tipoEvento).toUpperCase() === String(this.filtroTipo).toUpperCase()
+        )
+      : [...this.eventos];
   }
-
-  // imagens
 
   tratarImagem(caminho: string | null | undefined): string {
     if (!caminho) return '';
-    if (caminho.startsWith('http://') || caminho.startsWith('https://') || caminho.startsWith('data:')) {
+    if (
+      caminho.startsWith('http://') ||
+      caminho.startsWith('https://') ||
+      caminho.startsWith('data:')
+    ) {
       return caminho;
     }
+
     return `${environment.apiUrl}${caminho.startsWith('/') ? '' : '/'}${caminho}`;
   }
-
-  // controle do modal (cadastro e edição)
 
   abrirCadastro(): void {
     this.modoEdicao = false;
     this.eventoSelecionadoId = null;
-    this.formEvento.reset({ parceirosIds: [] });
-    this.erros = {};
-    this.imagemPreview = null;
-    this.nomeArquivoSelecionado = null;
-    this.imagemAlterada = false;
-    this.valorNumerico = null;
-    this.isLoading = false;
-    this.valoresOriginaisDoFormulario = null;
-    this.formEvento.get('imagem')?.setValidators([Validators.required]);
+    this.prepararEstadoFormulario();
+    this.formEvento.get('imagem')?.setValidators([Validators.required, validarImagem()]);
     this.formEvento.get('imagem')?.updateValueAndValidity();
+    this.formEvento.reset({ valor: '', parceirosIds: [], imagem: null });
+    this.formEvento.markAsPristine();
+    this.formEvento.markAsUntouched();
+    this.valoresOriginaisDoFormulario = this.obterValorComparavelFormulario();
     this.modalAberto = true;
   }
 
   abrirEdicao(evento: Evento): void {
     this.modoEdicao = true;
     this.eventoSelecionadoId = evento.id;
-    this.erros = {};
+    this.prepararEstadoFormulario();
     this.imagemPreview = this.tratarImagem(evento.imagem);
-    this.nomeArquivoSelecionado = null;
-    this.imagemAlterada = false;
     this.valorNumerico = evento.valor ?? null;
-    this.isLoading = false;
-    this.formEvento.get('imagem')?.clearValidators();
+    this.formEvento.get('imagem')?.setValidators([validarImagem()]);
     this.formEvento.get('imagem')?.updateValueAndValidity();
 
-    this.formEvento.patchValue({
+    this.formEvento.reset({
       titulo: evento.titulo,
       descricao: evento.descricao,
       dataEvento: this.formatarDataParaInput(evento.dataEvento),
       endereco: evento.endereco,
       tipoEvento: evento.tipoEvento,
       valor: evento.valor ? this.formatarMoeda(evento.valor) : '',
-      comentarioPosEvento: evento.comentarioPosEvento,
-      parceirosIds: evento.parceiros ? evento.parceiros.map(p => p.id) : []
+      parceirosIds: evento.parceiros ? evento.parceiros.map(p => p.id) : [],
+      imagem: null
     });
 
-    this.valoresOriginaisDoFormulario = this.formEvento.getRawValue();
+    this.formEvento.markAsPristine();
+    this.formEvento.markAsUntouched();
+    this.valoresOriginaisDoFormulario = this.obterValorComparavelFormulario();
     this.modalAberto = true;
   }
 
@@ -184,8 +206,16 @@ export class EventoComponent implements OnInit, ComponentComAlteracoesNaoSalvas 
   }
 
   get temAlteracoes(): boolean {
-    if (!this.modoEdicao) return this.formEvento.dirty;
-    return JSON.stringify(this.formEvento.getRawValue()) !== JSON.stringify(this.valoresOriginaisDoFormulario);
+    if (!this.modoEdicao) {
+      return this.formEvento.dirty || this.imagemSelecionada !== null;
+    }
+
+    if (this.imagemSelecionada !== null) {
+      return true;
+    }
+
+    return JSON.stringify(this.obterValorComparavelFormulario()) !==
+      JSON.stringify(this.valoresOriginaisDoFormulario);
   }
 
   formularioTemAlteracoesNaoSalvas(): boolean {
@@ -194,36 +224,42 @@ export class EventoComponent implements OnInit, ComponentComAlteracoesNaoSalvas 
 
   fecharModal(): void {
     if (!this.formularioTemAlteracoesNaoSalvas()) {
-      this.modalAberto = false;
+      this.fecharModalSemConfirmacao();
       return;
     }
 
-    Swal.fire({
-      title: 'Descartar alterações?',
-      text: 'Existem dados preenchidos que ainda não foram salvos. Deseja realmente sair?',
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonText: 'Sim, descartar',
-      cancelButtonText: 'Continuar editando',
-      confirmButtonColor: '#e04b3a',
-      cancelButtonColor: '#757575',
-      reverseButtons: true
-    }).then((resultado) => {
+    Alertas.confirmarDescarte().then((confirmado) => {
       this.ngZone.run(() => {
-        if (resultado.isConfirmed) {
-          this.modalAberto = false;
-          this.formEvento.reset();
+        if (confirmado) {
+          this.fecharModalSemConfirmacao();
         } else {
           this.dispararTremorModal();
         }
+
         this.cdr.detectChanges();
       });
     });
   }
 
-  /** Usado internamente após salvar com sucesso, sem pedir confirmação. */
   private fecharModalSemConfirmacao(): void {
     this.modalAberto = false;
+    this.modalTremendo = false;
+    this.isLoading = false;
+    this.eventoSelecionadoId = null;
+    this.prepararEstadoFormulario();
+    this.formEvento.get('imagem')?.setValidators([Validators.required, validarImagem()]);
+    this.formEvento.get('imagem')?.updateValueAndValidity();
+    this.formEvento.reset({ valor: '', parceirosIds: [], imagem: null });
+    this.formEvento.markAsPristine();
+  }
+
+  private prepararEstadoFormulario(): void {
+    this.erros = {};
+    this.isLoading = false;
+    this.imagemPreview = null;
+    this.nomeArquivoSelecionado = '';
+    this.imagemSelecionada = null;
+    this.valorNumerico = null;
   }
 
   private dispararTremorModal(): void {
@@ -242,69 +278,86 @@ export class EventoComponent implements OnInit, ComponentComAlteracoesNaoSalvas 
     }
   }
 
-  // validações e máscaras
-
   verificarErros(): void {
-    const controles = this.formEvento.controls;
-    this.erros = {};
-    for (const campo in controles) {
-      const controle = controles[campo];
-      if (controle.invalid && (controle.dirty || controle.touched)) {
-        const mensagensCampo = this.mensagensErro[campo] || {};
-        for (const tipoErro in controle.errors) {
-          const mensagem = mensagensCampo[tipoErro];
-          if (mensagem) {
-            this.erros[campo] = typeof mensagem === 'function' ? mensagem(controle.getError(tipoErro)) : mensagem;
-            break;
-          }
-        }
+    this.erros = mapearErrosFormulario(this.formEvento, {
+      imagem: {
+        required: 'Imagem obrigatoria no cadastro.'
       }
+    });
+  }
+
+  onImagemSelecionada(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const arquivo = input.files?.[0];
+
+    if (!arquivo) {
+      return;
     }
-  }
 
-  onImagemSelecionada(event: any): void {
-    const arquivo = event.target.files[0];
-    if (arquivo) {
-      this.formEvento.patchValue({ imagem: arquivo });
-      this.formEvento.get('imagem')?.markAsDirty();
-      this.nomeArquivoSelecionado = arquivo.name;
-      this.imagemAlterada = true;
-      this.carregandoImagem = true;
+    const imagemControl = this.formEvento.get('imagem');
+    imagemControl?.setValue(arquivo);
+    imagemControl?.markAsDirty();
+    imagemControl?.markAsTouched();
+    imagemControl?.updateValueAndValidity();
+    this.formEvento.markAsDirty();
+    this.verificarErros();
 
-      const reader = new FileReader();
-      reader.onload = (e: any) => {
-        this.imagemPreview = e.target.result;
-        this.carregandoImagem = false;
-        this.cdr.detectChanges();
-      };
-      reader.readAsDataURL(arquivo);
+    if (imagemControl?.invalid) {
+      this.imagemSelecionada = null;
+      this.nomeArquivoSelecionado = '';
+      this.imagemPreview = null;
+      input.value = '';
+      this.verificarErros();
+      this.cdr.detectChanges();
+      return;
     }
+
+    this.imagemSelecionada = arquivo;
+    this.nomeArquivoSelecionado = arquivo.name;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      this.imagemPreview = reader.result as string;
+      this.cdr.detectChanges();
+    };
+    reader.readAsDataURL(arquivo);
   }
 
-  onPreviewImagemCarregada(): void {
-    this.carregandoImagem = false;
-  }
 
-  onPreviewImagemErro(): void {
-    this.carregandoImagem = false;
-  }
-
-  aplicarMascaraValor(event: any): void {
-    let digitos = String(event.target.value).replace(/\D/g, '');
+  aplicarMascaraValor(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const digitos = String(input.value).replace(/\D/g, '');
 
     if (!digitos) {
       this.valorNumerico = null;
       this.formEvento.get('valor')?.setValue('', { emitEvent: false });
+      this.formEvento.get('valor')?.markAsDirty();
       return;
     }
 
     const numero = Number(digitos) / 100;
     this.valorNumerico = numero;
     this.formEvento.get('valor')?.setValue(this.formatarMoeda(numero), { emitEvent: false });
+    this.formEvento.get('valor')?.markAsDirty();
   }
 
   private formatarMoeda(valor: number): string {
-    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor);
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(valor);
+  }
+
+  private formatarDataTabela(data: Date | string): string {
+    if (!data) return '-';
+
+    return new Intl.DateTimeFormat('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    }).format(new Date(data));
   }
 
   formatarDataParaInput(data: Date | string): string {
@@ -313,8 +366,6 @@ export class EventoComponent implements OnInit, ComponentComAlteracoesNaoSalvas 
     const pad = (n: number) => n < 10 ? '0' + n : n;
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
   }
-
-  // interações com backend
 
   salvar(): void {
     this.formEvento.markAllAsTouched();
@@ -331,14 +382,18 @@ export class EventoComponent implements OnInit, ComponentComAlteracoesNaoSalvas 
 
     if (this.modoEdicao) {
       const dto: AtualizarEventoDTO = {
-        ...formValues,
+        titulo: formValues.titulo,
+        descricao: formValues.descricao,
+        dataEvento: formValues.dataEvento,
+        endereco: formValues.endereco,
+        tipoEvento: formValues.tipoEvento,
+        parceirosIds: formValues.parceirosIds,
         valor: this.valorNumerico ?? undefined,
-        imagem: formValues.imagem instanceof File ? formValues.imagem : undefined
+        imagem: this.imagemSelecionada ?? undefined
       };
 
       this.eventoService.atualizar(this.eventoSelecionadoId!, dto).subscribe({
         next: () => {
-          this.isLoading = false;
           this.fecharModalSemConfirmacao();
           this.carregarEventos();
           this.toastr.success('Evento atualizado com sucesso!', 'Sucesso');
@@ -346,50 +401,65 @@ export class EventoComponent implements OnInit, ComponentComAlteracoesNaoSalvas 
         error: (err) => {
           this.isLoading = false;
           this.toastr.error(err.error?.message || 'Erro ao atualizar evento.', 'Erro');
-          setTimeout(() => this.cdr.detectChanges());
+          this.cdr.detectChanges();
         }
       });
-    } else {
-      const dto: CriarEventoDTO = { ...formValues, valor: this.valorNumerico ?? undefined };
-      this.eventoService.criar(dto).subscribe({
-        next: () => {
-          this.isLoading = false;
-          this.fecharModalSemConfirmacao();
-          this.carregarEventos();
-          this.toastr.success('Evento criado com sucesso!', 'Sucesso');
-        },
-        error: (err) => {
-          this.isLoading = false;
-          this.toastr.error(err.error?.message || 'Erro ao criar evento.', 'Erro');
-          setTimeout(() => this.cdr.detectChanges());
-        }
-      });
+
+      return;
+    }
+
+    const dto: CriarEventoDTO = {
+      titulo: formValues.titulo,
+      descricao: formValues.descricao,
+      dataEvento: formValues.dataEvento,
+      endereco: formValues.endereco,
+      tipoEvento: formValues.tipoEvento,
+      parceirosIds: formValues.parceirosIds,
+      valor: this.valorNumerico ?? undefined,
+      imagem: this.imagemSelecionada ?? formValues.imagem
+    };
+
+    this.eventoService.criar(dto).subscribe({
+      next: () => {
+        this.fecharModalSemConfirmacao();
+        this.carregarEventos();
+        this.toastr.success('Evento criado com sucesso!', 'Sucesso');
+      },
+      error: (err) => {
+        this.isLoading = false;
+        this.toastr.error(err.error?.message || 'Erro ao criar evento.', 'Erro');
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  executarAcao(evento: { tipo: string; linha: Evento }): void {
+    if (evento.tipo === 'visualizar') {
+      this.abrirVisualizacao(evento.linha);
+      return;
+    }
+
+    if (evento.tipo === 'editar') {
+      this.abrirEdicao(evento.linha);
+      return;
+    }
+
+    if (evento.tipo === 'excluir') {
+      this.deletarEvento(evento.linha);
     }
   }
 
-  deletarEvento(id: number): void {
-    Swal.fire({
-      title: 'Tem certeza?',
-      text: 'Essa ação não poderá ser desfeita.',
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonText: 'Sim, excluir',
-      cancelButtonText: 'Cancelar',
-      confirmButtonColor: '#e04b3a',
-      cancelButtonColor: '#757575',
-      reverseButtons: true
-    }).then((resultado) => {
-      this.ngZone.run(() => {
-        if (resultado.isConfirmed) {
-          this.eventoService.deletar(id).subscribe({
-            next: () => {
-              this.carregarEventos();
-              this.toastr.success('Evento excluído com sucesso!', 'Sucesso');
-            },
-            error: () => {
-              this.toastr.error('Erro ao excluir evento.', 'Erro');
-            }
-          });
+  deletarEvento(evento: Evento): void {
+    Alertas.confirmarExclusao().then((confirmado) => {
+      if (!confirmado) return;
+
+      this.eventoService.deletar(evento.id).subscribe({
+        next: () => {
+          this.carregarEventos();
+          this.toastr.success('Evento excluido com sucesso!', 'Sucesso');
+        },
+        error: () => {
+          this.toastr.error('Erro ao excluir evento.', 'Erro');
         }
       });
     });
@@ -404,18 +474,30 @@ export class EventoComponent implements OnInit, ComponentComAlteracoesNaoSalvas 
     const checkbox = event.target as HTMLInputElement;
     const selecionados: number[] = [...(this.formEvento.get('parceirosIds')?.value || [])];
 
-    if (checkbox.checked) {
-      if (!selecionados.includes(id)) {
-        selecionados.push(id);
-      }
-    } else {
+    if (checkbox.checked && !selecionados.includes(id)) {
+      selecionados.push(id);
+    }
+
+    if (!checkbox.checked) {
       const index = selecionados.indexOf(id);
-      if (index !== -1) {
-        selecionados.splice(index, 1);
-      }
+      if (index !== -1) selecionados.splice(index, 1);
     }
 
     this.formEvento.patchValue({ parceirosIds: selecionados });
     this.formEvento.get('parceirosIds')?.markAsDirty();
+    this.formEvento.markAsDirty();
+  }
+
+  private obterValorComparavelFormulario(): any {
+    const valor = this.formEvento.getRawValue();
+    return {
+      titulo: valor.titulo,
+      descricao: valor.descricao,
+      dataEvento: valor.dataEvento,
+      endereco: valor.endereco,
+      tipoEvento: valor.tipoEvento,
+      valor: this.valorNumerico,
+      parceirosIds: valor.parceirosIds || []
+    };
   }
 }

@@ -1,121 +1,131 @@
-<!-- cabecalho e acoes principais -->
-<div class="container">
-  <div class="header-acoes">
-    <h2>Diretoria</h2>
-    <div class="header-direita">
-      <button (click)="abrirCadastro()" class="btn-novo">Novo Membro</button>
-    </div>
+<section class="diretoria-admin">
+  <div class="acoes-diretoria">
+    <button type="button" class="btn-primary" (click)="abrirCadastro()">
+      Novo membro
+    </button>
   </div>
 
-  <!-- tabela de listagem -->
-  <div class="tabela-card" *ngIf="diretores.length > 0; else estadoVazio">
-    <table class="tabela-diretoria">
-      <thead>
-        <tr>
-          <th>Foto</th>
-          <th>Nome</th>
-          <th>Cargo</th>
-          <th>Status</th>
-          <th>Editar</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let membro of diretores">
-          <td>
-            <img class="foto-miniatura" [src]="fotoUrl(membro.foto)" [alt]="membro.nome">
-          </td>
-          <td>{{ membro.nome }}</td>
-          <td>{{ membro.cargo }}</td>
-          <td>
-            <span class="badge" [class.badge-ativo]="membro.ativo" [class.badge-inativo]="!membro.ativo">
-              {{ membro.ativo ? 'Ativo' : 'Inativo' }}
-            </span>
-          </td>
-          <td class="acoes-icone">
-            <button (click)="abrirEdicao(membro)" class="btn-icone btn-icone-editar" title="Editar">
-              <span class="material-symbols-outlined">edit</span>
-            </button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
+  <app-tabela-layout
+    [colunas]="colunas"
+    [dados]="diretores"
+    [acoes]="acoesTabela"
+    [tamanhoPagina]="10"
+    [tamanhosPagina]="[5, 10, 25]"
+    mensagemVazia="Nenhum membro da diretoria cadastrado."
+    (acao)="executarAcao($event)"
+  />
+</section>
 
-  <!-- estado vazio -->
-  <ng-template #estadoVazio>
-    <div class="estado-vazio">
-      <p>Nenhum membro da diretoria cadastrado ainda</p>
+@if (modalAberto) {
+<app-modal-layout
+  [class.tremer]="modalTremendo"
+  [titulo]="modoEdicao ? 'Editar membro da diretoria' : 'Cadastrar membro da diretoria'"
+  (closed)="fecharModal()"
+>
+  <form class="form-modal" [formGroup]="formDiretoria" (ngSubmit)="salvar()">
+    @if (!isCarregandoEdicao) {
+
+    @if (modoEdicao) {
+    <div class="campo-status toggle-wrapper">
+      <span class="status-label">
+        {{ formDiretoria.get('ativo')?.value ? 'Ativo' : 'Inativo' }}
+      </span>
+
+      <label class="custom-switch">
+        <input type="checkbox" formControlName="ativo" />
+        <span class="slider"></span>
+      </label>
     </div>
-  </ng-template>
-</div>
+    }
 
-<!-- modal de cadastro e edição -->
-<div class="modal-overlay" *ngIf="modalAberto" (click)="fecharModal()">
-  <div class="modal-card" [class.tremer]="modalTremendo" (click)="$event.stopPropagation()">
+    <mat-form-field appearance="outline">
+      <mat-label>Nome</mat-label>
+      <input matInput formControlName="nome" (blur)="verificarErros()" maxlength="150" />
+    </mat-form-field>
 
-    <!-- cabeçalho fixo -->
-    <div class="modal-header">
-      <h3>{{ modoEdicao ? 'Editar Membro da Diretoria' : 'Cadastrar Membro da Diretoria' }}</h3>
-      <button class="btn-fechar" (click)="fecharModal()">&times;</button>
-    </div>
+    @if (erros['nome']) {
+    <span class="error-text">
+      {{ erros['nome'] }}
+    </span>
+    }
 
-    <!-- formulário -->
-    <form [formGroup]="formDiretoria" (ngSubmit)="salvar()" class="form-diretoria">
+    <mat-form-field appearance="outline">
+      <mat-label>Cargo</mat-label>
+      <input matInput formControlName="cargo" (blur)="verificarErros()" maxlength="100" />
+    </mat-form-field>
 
-      <div class="form-scroll" *ngIf="!isCarregandoEdicao; else carregandoEdicao">
+    @if (erros['cargo']) {
+    <span class="error-text">
+      {{ erros['cargo'] }}
+    </span>
+    }
 
-        <div class="form-group">
-          <label>Foto</label>
-          <div class="upload-foto">
-            <div class="preview-foto">
-              <img *ngIf="previewUrl" [src]="previewUrl" alt="Pré-visualização da foto">
-              <span *ngIf="!previewUrl" class="material-symbols-outlined preview-icone">person</span>
-            </div>
-            <div class="upload-foto-controles">
-              <label class="btn-selecionar-arquivo" for="foto">Selecionar imagem</label>
-              <input id="foto" type="file" accept="image/jpeg,image/png,image/webp" (change)="aoSelecionarArquivo($event)">
-              <span class="hint-text">JPEG, PNG ou WEBP, até 5MB.</span>
-            </div>
-          </div>
-          <span class="error-text" *ngIf="erroArquivo">{{ erroArquivo }}</span>
+    <div class="form-group">
+      <input
+        #inputFoto
+        id="foto"
+        type="file"
+        class="input-arquivo-oculto"
+        accept=".jpg,.jpeg,.png,.webp"
+        (change)="selecionarFoto($event)"
+      >
+
+      <div
+        class="upload-arquivo"
+        [class.upload-arquivo-erro]="erros['foto']"
+        (click)="inputFoto.click()"
+      >
+        <span class="material-symbols-outlined upload-arquivo-icone">
+          upload_file
+        </span>
+
+        <div class="upload-arquivo-texto">
+          <strong>
+            {{
+              nomeArquivoSelecionado
+                ? nomeArquivoSelecionado
+                : 'Selecione a foto do membro'
+            }}
+          </strong>
+
+          <span>PNG, JPEG, JPG ou WEBP</span>
         </div>
 
-        <div class="form-group">
-          <label for="nome">Nome</label>
-          <input id="nome" type="text" formControlName="nome" (blur)="verificarErros()" maxlength="150">
-          <span class="error-text" *ngIf="erros['nome']">{{ erros['nome'] }}</span>
-        </div>
-
-        <div class="form-group">
-          <label for="cargo">Cargo</label>
-          <input id="cargo" type="text" formControlName="cargo" (blur)="verificarErros()" maxlength="100">
-          <span class="error-text" *ngIf="erros['cargo']">{{ erros['cargo'] }}</span>
-        </div>
-
-        <div class="form-group form-group-checkbox" *ngIf="modoEdicao">
-          <label class="checkbox-label">
-            <input type="checkbox" formControlName="ativo">
-            Exibir na área institucional (ativo)
-          </label>
-        </div>
-
+        <span class="upload-arquivo-botao">
+          Procurar
+        </span>
       </div>
+    </div>
 
-      <ng-template #carregandoEdicao>
-        <div class="form-scroll form-carregando">
-          <span class="spinner spinner-escuro" aria-hidden="true"></span>
-          <p>Carregando dados...</p>
-        </div>
-      </ng-template>
+    @if (erros['foto']) {
+    <span class="error-text">
+      {{ erros['foto'] }}
+    </span>
+    }
 
-      <!-- rodapé fixo -->
-      <div class="modal-acoes">
-        <button type="button" class="btn-cancelar" [disabled]="isLoading" (click)="fecharModal()">Cancelar</button>
-        <button type="submit" [disabled]="formDiretoria.invalid || isLoading || isCarregandoEdicao || !!erroArquivo || (!modoEdicao && !arquivoSelecionado) || (modoEdicao && !temAlteracoes)" class="btn-salvar">
-          <span *ngIf="isLoading" class="spinner" aria-hidden="true"></span>
-          <span>{{ isLoading ? 'Salvando...' : (modoEdicao ? 'Atualizar' : 'Salvar') }}</span>
-        </button>
-      </div>
-    </form>
-  </div>
-</div>
+    @if (previewUrl) {
+    <div class="image-preview">
+      <img [src]="previewUrl" [alt]="formDiretoria.get('nome')?.value || 'Foto do membro da diretoria'" />
+    </div>
+    }
+
+    } @else {
+    <div class="form-carregando">
+      <span class="spinner spinner-escuro" aria-hidden="true"></span>
+      <p>Carregando dados...</p>
+    </div>
+    }
+
+    <div class="acoes-modal">
+      <button type="button" class="btn-cancelar" [disabled]="isLoading" (click)="fecharModal()">
+        Cancelar
+      </button>
+
+      <button type="submit" class="btn-primary" [disabled]="isLoading || isCarregandoEdicao">
+        <span *ngIf="isLoading" class="spinner" aria-hidden="true"></span>
+        <span>{{ isLoading ? 'Salvando...' : 'Salvar' }}</span>
+      </button>
+    </div>
+  </form>
+</app-modal-layout>
+}

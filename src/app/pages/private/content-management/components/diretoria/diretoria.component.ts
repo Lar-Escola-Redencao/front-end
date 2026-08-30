@@ -1,19 +1,30 @@
 import { Component, ChangeDetectorRef, HostListener, NgZone, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { ToastrService } from 'ngx-toastr';
-import Swal from 'sweetalert2';
-import { ComponentComAlteracoesNaoSalvas } from 'src/app/shared/guards/can-deactivate.guard';
-import { AtualizarDiretoriaDTO, CriarDiretoriaDTO, Diretoria } from 'src/app/shared/models/diretoria.model';
-import { DiretoriaService } from 'src/app/shared/services/content-management/diretoria/diretoria.service';
-
-const TIPOS_PERMITIDOS = ['image/jpeg', 'image/png', 'image/webp'];
-const TAMANHO_MAXIMO_BYTES = 5 * 1024 * 1024;
+import { ModalLayout } from '../../../../../components/modal-layout/modal-layout';
+import { TabelaAcao, TabelaColuna, TabelaLayout } from '../../../../../components/tabela-layout/tabela-layout';
+import { ComponentComAlteracoesNaoSalvas } from '../../../../../shared/guards/can-deactivate.guard';
+import { AtualizarDiretoriaDTO, CriarDiretoriaDTO, Diretoria } from '../../../../../shared/models/diretoria.model';
+import { DiretoriaService } from '../../../../../shared/services/content-management/diretoria/diretoria.service';
+import { Alertas } from '../../../../../shared/utils/alerts';
+import { mapearErrosFormulario, validarImagem } from '../../../../../shared/utils/form-validations';
 
 @Component({
   selector: 'app-diretoria',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    ModalLayout,
+    TabelaLayout,
+    MatFormFieldModule,
+    MatInputModule,
+    MatSlideToggleModule
+  ],
   templateUrl: './diretoria.component.html',
   styleUrls: ['./diretoria.component.css']
 })
@@ -21,31 +32,29 @@ export class DiretoriaComponent implements OnInit, OnDestroy, ComponentComAltera
 
   diretores: Diretoria[] = [];
 
+  colunas: TabelaColuna<Diretoria>[] = [
+    { chave: 'foto', titulo: 'Foto', tipo: 'imagem' },
+    { chave: 'nome', titulo: 'Nome', principalMobile: true },
+    { chave: 'cargo', titulo: 'Cargo' },
+    { chave: 'ativo', titulo: 'Exibicao', tipo: 'status' }
+  ];
+
+  acoesTabela: TabelaAcao<Diretoria>[] = [
+    { icone: 'edit', tooltip: 'Editar', acao: 'editar' }
+  ];
+
   modalAberto = false;
   modoEdicao = false;
   diretoriaSelecionadaId: number | null = null;
   formDiretoria: FormGroup;
   erros: { [key: string]: string } = {};
-  erroArquivo = '';
   arquivoSelecionado: File | null = null;
+  nomeArquivoSelecionado = '';
   previewUrl: string | null = null;
   isLoading = false;
   isCarregandoEdicao = false;
   modalTremendo = false;
   valoresOriginaisDoFormulario: any = null;
-
-  private readonly mensagensErro: {
-    [campo: string]: { [tipoErro: string]: string | ((err: any) => string) }
-  } = {
-      nome: {
-        required: '⚠ Campo obrigatório.',
-        maxlength: (e) => `⚠ Máximo de ${e.requiredLength} caracteres.`
-      },
-      cargo: {
-        required: '⚠ Campo obrigatório.',
-        maxlength: (e) => `⚠ Máximo de ${e.requiredLength} caracteres.`
-      }
-    };
 
   constructor(
     private diretoriaService: DiretoriaService,
@@ -57,6 +66,7 @@ export class DiretoriaComponent implements OnInit, OnDestroy, ComponentComAltera
     this.formDiretoria = this.fb.group({
       nome: ['', [Validators.required, Validators.maxLength(150)]],
       cargo: ['', [Validators.required, Validators.maxLength(100)]],
+      foto: [null, [Validators.required, validarImagem()]],
       ativo: [true]
     });
   }
@@ -69,121 +79,129 @@ export class DiretoriaComponent implements OnInit, OnDestroy, ComponentComAltera
     this.revogarPreviewSeNecessario();
   }
 
-  fotoUrl(caminho: string): string {
-    return this.diretoriaService.fotoUrl(caminho);
-  }
-
-  // listagem
-
   carregarDiretores(): void {
     this.diretoriaService.listarTodos().subscribe({
-      next: (dados) => {
+      next: (dados: Diretoria[]) => {
         this.diretores = dados;
-        setTimeout(() => this.cdr.detectChanges());
+        this.cdr.detectChanges();
       },
       error: () => {
-        this.toastr.error('Não foi possível carregar a lista da diretoria.', 'Erro');
+        this.toastr.error('Nao foi possivel carregar a lista da diretoria.', 'Erro');
       }
     });
   }
 
-  // controle do modal (cadastro e edição)
-
   abrirCadastro(): void {
+    this.modalAberto = true;
     this.modoEdicao = false;
     this.diretoriaSelecionadaId = null;
-    this.formDiretoria.reset({ nome: '', cargo: '', ativo: true });
-    this.erros = {};
-    this.erroArquivo = '';
     this.isLoading = false;
-    this.valoresOriginaisDoFormulario = null;
+    this.isCarregandoEdicao = false;
+    this.erros = {};
     this.definirArquivo(null);
-    this.modalAberto = true;
+    this.configurarValidadoresFoto(true);
+    this.formDiretoria.reset({
+      nome: '',
+      cargo: '',
+      foto: null,
+      ativo: true
+    });
+    this.formDiretoria.markAsPristine();
+    this.formDiretoria.markAsUntouched();
+    this.valoresOriginaisDoFormulario = this.formDiretoria.getRawValue();
   }
 
   abrirEdicao(diretoria: Diretoria): void {
+    this.modalAberto = true;
     this.modoEdicao = true;
     this.diretoriaSelecionadaId = diretoria.id;
-    this.erros = {};
-    this.erroArquivo = '';
     this.isLoading = false;
     this.isCarregandoEdicao = true;
+    this.erros = {};
     this.definirArquivo(null);
-    this.modalAberto = true;
+    this.configurarValidadoresFoto(false);
 
     this.diretoriaService.buscarPorId(diretoria.id).subscribe({
-      next: (dados) => {
-        this.formDiretoria.patchValue({
+      next: (dados: Diretoria) => {
+        this.formDiretoria.reset({
           nome: dados.nome,
           cargo: dados.cargo,
+          foto: null,
           ativo: dados.ativo
         });
-        this.previewUrl = this.fotoUrl(dados.foto);
+        this.previewUrl = this.diretoriaService.fotoUrl(dados.foto);
         this.valoresOriginaisDoFormulario = this.formDiretoria.getRawValue();
+        this.formDiretoria.markAsPristine();
+        this.formDiretoria.markAsUntouched();
         this.isCarregandoEdicao = false;
         this.cdr.detectChanges();
       },
       error: () => {
-        this.toastr.error('Não foi possível carregar os dados deste membro.', 'Erro');
-        this.modalAberto = false;
+        this.toastr.error('Nao foi possivel carregar os dados deste membro.', 'Erro');
+        this.fecharModalSemConfirmacao();
         this.isCarregandoEdicao = false;
+        this.cdr.detectChanges();
       }
     });
   }
 
+  executarAcao(evento: { tipo: string; linha: Diretoria }): void {
+    if (evento.tipo === 'editar') {
+      this.abrirEdicao(evento.linha);
+    }
+  }
+
   get temAlteracoes(): boolean {
-    if (!this.modoEdicao) return true;
-    if (this.arquivoSelecionado) return true;
-    return JSON.stringify(this.formDiretoria.getRawValue()) !== JSON.stringify(this.valoresOriginaisDoFormulario);
+    if (!this.modoEdicao) {
+      return this.formDiretoria.dirty || this.arquivoSelecionado !== null;
+    }
+
+    if (this.arquivoSelecionado !== null) {
+      return true;
+    }
+
+    const valorAtual = {
+      nome: this.formDiretoria.get('nome')?.value,
+      cargo: this.formDiretoria.get('cargo')?.value,
+      ativo: this.formDiretoria.get('ativo')?.value,
+      foto: null
+    };
+
+    const valorOriginal = {
+      nome: this.valoresOriginaisDoFormulario?.nome,
+      cargo: this.valoresOriginaisDoFormulario?.cargo,
+      ativo: this.valoresOriginaisDoFormulario?.ativo,
+      foto: null
+    };
+
+    return JSON.stringify(valorAtual) !== JSON.stringify(valorOriginal);
+  }
+
+  formularioTemAlteracoesNaoSalvas(): boolean {
+    if (!this.modalAberto || this.isCarregandoEdicao) {
+      return false;
+    }
+
+    return this.temAlteracoes;
   }
 
   fecharModal(): void {
     if (!this.formularioTemAlteracoesNaoSalvas()) {
-      this.modalAberto = false;
+      this.fecharModalSemConfirmacao();
       return;
     }
 
-    Swal.fire({
-      title: 'Descartar alterações?',
-      text: 'Existem dados preenchidos que ainda não foram salvos. Deseja realmente sair?',
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonText: 'Sim, descartar',
-      cancelButtonText: 'Continuar editando',
-      confirmButtonColor: '#e04b3a',
-      cancelButtonColor: '#757575',
-      reverseButtons: true
-    }).then((resultado) => {
+    Alertas.confirmarDescarte().then((confirmado: boolean) => {
       this.ngZone.run(() => {
-        if (resultado.isConfirmed) {
-          this.modalAberto = false;
-          this.definirArquivo(null);
-          this.cdr.detectChanges();
+        if (confirmado) {
+          this.fecharModalSemConfirmacao();
         } else {
           this.dispararTremorModal();
         }
+
+        this.cdr.detectChanges();
       });
     });
-  }
-
-  private dispararTremorModal(): void {
-    this.modalTremendo = true;
-    setTimeout(() => {
-      this.modalTremendo = false;
-      this.cdr.detectChanges();
-    }, 400);
-  }
-
-  private fecharModalSemConfirmacao(): void {
-    this.modalAberto = false;
-    this.definirArquivo(null);
-  }
-
-  // proteção contra perda de dados
-
-  formularioTemAlteracoesNaoSalvas(): boolean {
-    if (!this.modalAberto || this.isCarregandoEdicao) return false;
-    return this.modoEdicao ? this.temAlteracoes : (this.formDiretoria.dirty || this.arquivoSelecionado !== null);
   }
 
   @HostListener('window:beforeunload', ['$event'])
@@ -194,59 +212,112 @@ export class DiretoriaComponent implements OnInit, OnDestroy, ComponentComAltera
     }
   }
 
-  // validações
-
   verificarErros(): void {
-    const controles = this.formDiretoria.controls;
-    this.erros = {};
-
-    for (const campo in controles) {
-      const controle = controles[campo];
-      if (controle.invalid && (controle.dirty || controle.touched)) {
-        const mensagensCampo = this.mensagensErro[campo] || {};
-        for (const tipoErro in controle.errors) {
-          const mensagem = mensagensCampo[tipoErro];
-          if (mensagem) {
-            this.erros[campo] = typeof mensagem === 'function'
-              ? mensagem(controle.getError(tipoErro))
-              : mensagem;
-            break;
-          }
-        }
-      }
-    }
+    this.erros = mapearErrosFormulario(this.formDiretoria);
   }
 
-  // arquivo (foto)
-
-  aoSelecionarArquivo(event: Event): void {
+  selecionarFoto(event: Event): void {
     const input = event.target as HTMLInputElement;
-    const arquivo = input.files && input.files.length > 0 ? input.files[0] : null;
+    const arquivo = input.files?.[0];
 
     if (!arquivo) {
       return;
     }
 
-    if (!TIPOS_PERMITIDOS.includes(arquivo.type)) {
-      this.erroArquivo = '⚠ Formato inválido. Envie um arquivo JPEG, PNG ou WEBP.';
+    const fotoControl = this.formDiretoria.get('foto');
+    fotoControl?.setValue(arquivo);
+    fotoControl?.markAsDirty();
+    fotoControl?.updateValueAndValidity();
+    this.formDiretoria.markAsDirty();
+    this.verificarErros();
+
+    if (fotoControl?.invalid) {
+      this.revogarPreviewSeNecessario();
+      this.arquivoSelecionado = null;
+      this.nomeArquivoSelecionado = '';
+      this.previewUrl = null;
       input.value = '';
+      fotoControl.markAsTouched();
+      fotoControl.markAsDirty();
+      this.verificarErros();
+      this.cdr.detectChanges();
       return;
     }
 
-    if (arquivo.size > TAMANHO_MAXIMO_BYTES) {
-      this.erroArquivo = '⚠ A foto deve ter no máximo 5MB.';
-      input.value = '';
-      return;
-    }
-
-    this.erroArquivo = '';
     this.definirArquivo(arquivo);
+    this.cdr.detectChanges();
+  }
+
+  salvar(): void {
+    this.formDiretoria.markAllAsTouched();
+    this.verificarErros();
+
+    if (this.formDiretoria.invalid) {
+      return;
+    }
+
+    if (this.modoEdicao && !this.temAlteracoes) {
+      this.toastr.info('Nenhum dado foi alterado.', 'Aviso');
+      return;
+    }
+
+    this.isLoading = true;
+
+    const { nome, cargo, ativo } = this.formDiretoria.value;
+
+    if (this.modoEdicao) {
+      const dto: AtualizarDiretoriaDTO = {
+        nome,
+        cargo,
+        ativo,
+        foto: this.arquivoSelecionado
+      };
+
+      this.diretoriaService.atualizar(this.diretoriaSelecionadaId!, dto).subscribe({
+        next: () => {
+          this.isLoading = false;
+          this.fecharModalSemConfirmacao();
+          this.carregarDiretores();
+          this.toastr.success('Membro da diretoria atualizado com sucesso.', 'Sucesso');
+        },
+        error: (err: any) => this.tratarErro(err, 'Erro ao atualizar membro da diretoria.')
+      });
+
+      return;
+    }
+
+    const dto: CriarDiretoriaDTO = {
+      nome,
+      cargo,
+      foto: this.arquivoSelecionado!
+    };
+
+    this.diretoriaService.criar(dto).subscribe({
+      next: () => {
+        this.isLoading = false;
+        this.fecharModalSemConfirmacao();
+        this.carregarDiretores();
+        this.toastr.success('Membro da diretoria cadastrado com sucesso.', 'Sucesso');
+      },
+      error: (err: any) => this.tratarErro(err, 'Erro ao cadastrar membro da diretoria.')
+    });
+  }
+
+  private configurarValidadoresFoto(obrigatoria: boolean): void {
+    const validadores = obrigatoria
+      ? [Validators.required, validarImagem()]
+      : [validarImagem()];
+
+    this.formDiretoria.get('foto')?.setValidators(validadores);
+    this.formDiretoria.get('foto')?.updateValueAndValidity();
   }
 
   private definirArquivo(arquivo: File | null): void {
     this.revogarPreviewSeNecessario();
     this.arquivoSelecionado = arquivo;
+    this.nomeArquivoSelecionado = arquivo?.name ?? '';
     this.previewUrl = arquivo ? URL.createObjectURL(arquivo) : null;
+    this.formDiretoria?.get('foto')?.setValue(arquivo);
   }
 
   private revogarPreviewSeNecessario(): void {
@@ -255,55 +326,37 @@ export class DiretoriaComponent implements OnInit, OnDestroy, ComponentComAltera
     }
   }
 
-  // interações com backend
+  private fecharModalSemConfirmacao(): void {
+    this.isLoading = false;
+    this.modalAberto = false;
+    this.modalTremendo = false;
+    this.isCarregandoEdicao = false;
+    this.diretoriaSelecionadaId = null;
+    this.erros = {};
+    this.definirArquivo(null);
+    this.configurarValidadoresFoto(true);
+    this.formDiretoria.reset({
+      nome: '',
+      cargo: '',
+      foto: null,
+      ativo: true
+    });
+    this.formDiretoria.markAsPristine();
+    this.formDiretoria.markAsUntouched();
+  }
 
-  salvar(): void {
-    this.formDiretoria.markAllAsTouched();
-    this.verificarErros();
-
-    if (!this.modoEdicao && !this.arquivoSelecionado) {
-      this.erroArquivo = '⚠ A foto é obrigatória.';
-    }
-
-    if (this.formDiretoria.invalid || this.erroArquivo) return;
-
-    if (this.modoEdicao && !this.temAlteracoes) {
-      this.toastr.info('Nenhum dado foi alterado.', 'Aviso');
-      return;
-    }
-
-    this.isLoading = true;
-    const { nome, cargo, ativo } = this.formDiretoria.value;
-
-    if (this.modoEdicao) {
-      const dto: AtualizarDiretoriaDTO = { nome, cargo, ativo, foto: this.arquivoSelecionado };
-      this.diretoriaService.atualizar(this.diretoriaSelecionadaId!, dto).subscribe({
-        next: () => {
-          this.isLoading = false;
-          this.fecharModalSemConfirmacao();
-          this.carregarDiretores();
-          this.toastr.success('Membro da diretoria atualizado com sucesso.', 'Sucesso');
-        },
-        error: (err) => this.tratarErro(err, 'Erro ao atualizar membro da diretoria.')
-      });
-    } else {
-      const dto: CriarDiretoriaDTO = { nome, cargo, foto: this.arquivoSelecionado! };
-      this.diretoriaService.criar(dto).subscribe({
-        next: () => {
-          this.isLoading = false;
-          this.fecharModalSemConfirmacao();
-          this.carregarDiretores();
-          this.toastr.success('Membro da diretoria cadastrado com sucesso.', 'Sucesso');
-        },
-        error: (err) => this.tratarErro(err, 'Erro ao cadastrar membro da diretoria.')
-      });
-    }
+  private dispararTremorModal(): void {
+    this.modalTremendo = true;
+    setTimeout(() => {
+      this.modalTremendo = false;
+      this.cdr.detectChanges();
+    }, 400);
   }
 
   private tratarErro(err: any, mensagemPadrao: string): void {
     this.isLoading = false;
     const mensagem = err?.error?.detail || err?.error?.message || mensagemPadrao;
     this.toastr.error(mensagem, 'Erro');
-    setTimeout(() => this.cdr.detectChanges());
+    this.cdr.detectChanges();
   }
 }
