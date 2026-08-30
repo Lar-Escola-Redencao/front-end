@@ -39,6 +39,10 @@ export class DiretoriaService {
     return this.http.put<Diretoria>(`${this.apiUrl}/${id}`, formData);
   }
 
+  delete(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${id}`);
+  }
+
   fotoUrl(caminho: string | null | undefined): string {
     if (!caminho) return '';
     return `${environment.apiUrl}${caminho}`;

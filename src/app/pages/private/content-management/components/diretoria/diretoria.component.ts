@@ -40,7 +40,8 @@ export class DiretoriaComponent implements OnInit, OnDestroy, ComponentComAltera
   ];
 
   acoesTabela: TabelaAcao<Diretoria>[] = [
-    { icone: 'edit', tooltip: 'Editar', acao: 'editar' }
+    { icone: 'edit', tooltip: 'Editar', acao: 'editar' },
+    { icone: 'delete', tooltip: 'Excluir', acao: 'excluir' }
   ];
 
   modalAberto = false;
@@ -148,6 +149,11 @@ export class DiretoriaComponent implements OnInit, OnDestroy, ComponentComAltera
   executarAcao(evento: { tipo: string; linha: Diretoria }): void {
     if (evento.tipo === 'editar') {
       this.abrirEdicao(evento.linha);
+      return;
+    }
+
+    if (evento.tipo === 'excluir') {
+      this.excluirDiretoria(evento.linha);
     }
   }
 
@@ -300,6 +306,33 @@ export class DiretoriaComponent implements OnInit, OnDestroy, ComponentComAltera
         this.toastr.success('Membro da diretoria cadastrado com sucesso.', 'Sucesso');
       },
       error: (err: any) => this.tratarErro(err, 'Erro ao cadastrar membro da diretoria.')
+    });
+  }
+
+  excluirDiretoria(diretoria: Diretoria): void {
+    if (!diretoria.id) {
+      this.toastr.error('Erro ao excluir membro da diretoria.', 'Erro');
+      return;
+    }
+
+    Alertas.confirmarExclusao().then((confirmado: boolean) => {
+      this.ngZone.run(() => {
+        if (!confirmado) {
+          return;
+        }
+
+        this.isLoading = true;
+
+        this.diretoriaService.delete(diretoria.id).subscribe({
+          next: () => {
+            this.isLoading = false;
+            this.carregarDiretores();
+            this.toastr.success('Membro da diretoria excluido com sucesso.', 'Sucesso');
+            this.cdr.detectChanges();
+          },
+          error: (err: any) => this.tratarErro(err, 'Erro ao excluir membro da diretoria.')
+        });
+      });
     });
   }
 

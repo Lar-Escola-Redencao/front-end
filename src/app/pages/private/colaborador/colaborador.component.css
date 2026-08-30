@@ -1,3 +1,7 @@
+h1{
+  font-family: var(--fonte-titulo);
+}
+
 .form-modal {
   display: flex;
   flex-direction: column;
