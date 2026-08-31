@@ -1,0 +1,118 @@
+<section class="partners-manager">
+  <div class="acoes-partners">
+    <button type="button" class="btn-primary" (click)="abrirModal()">
+      Novo parceiro
+    </button>
+  </div>
+  <app-tabela-layout [colunas]="colunas" [dados]="partners" [acoes]="acoesTabela" [tamanhoPagina]="10"
+    [tamanhosPagina]="[5, 10, 25]" mensagemVazia="Nenhum parceiro cadastrado." (acao)="executarAcao($event)" />
+</section>
+
+
+@if (modalAberto) {
+<app-modal-layout [titulo]="modoEdicao ? 'Editar parceiro' : 'Cadastrar novo parceiro'" (closed)="fecharModal()">
+  <form class="form-modal" [formGroup]="form" (ngSubmit)="salvarParceiro()">
+
+    <!-- ================================================= -->
+    <!-- STATUS -->
+    <!-- ================================================= -->
+
+    @if (modoEdicao) {
+    <div class="campo-status toggle-wrapper">
+      <span class="status-label">
+        {{ form.get('ativo')?.value ? 'Ativo' : 'Inativo' }}
+      </span>
+
+      <label class="custom-switch">
+        <input type="checkbox" formControlName="ativo" />
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    }
+
+    <!-- ================================================= -->
+    <!-- NOME -->
+    <!-- ================================================= -->
+
+    <mat-form-field appearance="outline">
+      <mat-label>Nome do parceiro</mat-label>
+      <input matInput formControlName="nome" (blur)="verificarErros()" maxlength="50" />
+    </mat-form-field>
+
+
+    @if (erros['nome']) {
+    <span class="error-text">
+      {{ erros['nome'] }}
+    </span>
+    }
+
+
+    <!-- ================================================= -->
+    <!-- LOGO -->
+    <!-- ================================================= -->
+    
+    <div class="form-group">
+      <input #inputLogo id="logo" type="file" class="input-arquivo-oculto" accept=".jpg,.jpeg,.png,.webp"
+        (change)="selecionarLogo($event)">
+    
+      <div class="upload-arquivo" [class.upload-arquivo-erro]="erros['logo']" (click)="inputLogo.click()">
+        <span class="material-symbols-outlined upload-arquivo-icone">
+          upload_file
+        </span>
+    
+        <div class="upload-arquivo-texto">
+          <strong>
+            {{
+            nomeLogoSelecionada
+            ? nomeLogoSelecionada
+            : 'Selecione a logo do parceiro'
+            }}
+          </strong>
+    
+          <span>PNG, JPEG, JPG ou WEBP</span>
+        </div>
+    
+        <span class="upload-arquivo-botao">
+          Procurar
+        </span>
+      </div>
+    </div>
+
+    @if (erros['logo']) {
+    <span class="error-text">
+      {{ erros['logo'] }}
+    </span>
+    }
+
+    <!-- ================================================= -->
+    <!-- PREVIEW DA LOGO -->
+    <!-- ================================================= -->
+
+    @if (logoPreviewUrl) {
+    <div class="image-preview">
+      <img [src]="logoPreviewUrl" [alt]="form.get('nome')?.value || 'Logo do parceiro'" />
+    </div>
+    }
+
+
+    <!-- ================================================= -->
+    <!-- AÇÕES DO MODAL -->
+    <!-- ================================================= -->
+
+    <div class="acoes-modal">
+      <button type="button" class="btn-cancelar" [disabled]="isLoading" (click)="fecharModal()">
+        Cancelar
+      </button>
+
+      <button type="submit" class="btn-primary" [disabled]="isLoading">
+        <span *ngIf="isLoading" class="spinner" aria-hidden="true"></span>
+        <span>
+          {{ isLoading ? 'Salvando...' : 'Salvar' }}
+        </span>
+      </button>
+    </div>
+  </form>
+
+</app-modal-layout>
+}

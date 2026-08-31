@@ -1,0 +1,115 @@
+<section class="social-links-manager">
+
+  @if (isLoadingLista && !modalAberto) {
+
+    <p class="estado-lista">
+      Carregando redes sociais...
+    </p>
+
+  } @else if (loadError) {
+
+    <p class="estado-lista">
+    Não foi possivel carregar as redes sociais.
+    </p>
+
+  } @else {
+
+    <app-tabela-layout
+      [colunas]="colunas"
+      [dados]="socialLinks"
+      [acoes]="acoesTabela"
+      [tamanhoPagina]="10"
+      [tamanhosPagina]="[5, 10, 25]"
+      mensagemVazia="Nenhuma rede social cadastrada ainda."
+      (acao)="executarAcao($event)"
+    />
+
+  }
+</section>
+
+@if (modalAberto) {
+<app-modal-layout
+  [titulo]="modoEdicao ? 'Editar rede social' : 'Nova rede social'"
+  [class.tremer-modal]="modalTremendo"
+  (closed)="fecharModal()"
+>
+  <form class="form-modal" [formGroup]="form" (ngSubmit)="salvarRedeSocial()">
+
+    @if (modoEdicao) {
+    <div class="campo-status toggle-wrapper">
+      <span class="status-label">
+        {{ form.get('ativo')?.value ? 'Ativo' : 'Inativo' }}
+      </span>
+
+      <label class="custom-switch">
+        <input type="checkbox" formControlName="ativo" />
+        <span class="slider"></span>
+      </label>
+    </div>
+    }
+
+    <mat-form-field appearance="outline">
+      <mat-label>Nome da rede social</mat-label>
+      <input
+        matInput
+        formControlName="nome"
+        maxlength="50"
+        (blur)="verificarErros()"
+      />
+    </mat-form-field>
+
+    @if (erros['nome']) {
+    <span class="error-text">
+      {{ erros['nome'] }}
+    </span>
+    }
+
+    <mat-form-field appearance="outline">
+      <mat-label>Link da rede social</mat-label>
+      <input
+        matInput
+        type="url"
+        formControlName="url"
+        maxlength="255"
+        placeholder="https://..."
+        (blur)="verificarErros()"
+      />
+    </mat-form-field>
+
+    @if (erros['url']) {
+    <span class="error-text">
+      {{ erros['url'] }}
+    </span>
+    }
+
+    <div class="acoes-modal">
+
+      <button
+        type="button"
+        class="btn-cancelar"
+        [disabled]="isSalvando"
+        (click)="fecharModal()"
+      >
+        Cancelar
+      </button>
+
+      <button
+        type="submit"
+        class="btn-primary"
+        [disabled]="isSalvando"
+      >
+        <span
+          *ngIf="isSalvando"
+          class="spinner"
+          aria-hidden="true"
+        ></span>
+
+        <span>
+          {{ isSalvando ? 'Salvando...' : 'Salvar' }}
+        </span>
+      </button>
+
+    </div>
+  </form>
+</app-modal-layout>
+}

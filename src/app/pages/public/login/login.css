@@ -1,0 +1,332 @@
+:host {
+  --accent: #3f6fea;
+  --accent-dark: #2f56c2;
+  --ink: #1f2430;
+  --muted: #6b7280;
+  --border: #d9dde3;
+
+  display: block;
+  min-height: 100dvh;
+  font-family:
+    'Inter',
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    Helvetica,
+    Arial,
+    sans-serif;
+  color: var(--ink);
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+  height: 76px;
+  padding-inline: 2.5rem;
+  border-bottom: 1px solid var(--border);
+  background: #fff;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.brand-logo {
+  height: 40px;
+  width: auto;
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 1.75rem;
+  flex: 1;
+}
+
+.nav-link {
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-size: 0.95rem;
+  color: var(--ink);
+  cursor: default;
+}
+
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-shrink: 0;
+}
+
+.enter-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+  background: var(--accent);
+  color: #fff;
+  border: 0;
+  border-radius: 999px;
+  padding: 0.6rem 1.25rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.enter-pill svg {
+  width: 18px;
+  height: 18px;
+}
+
+/*
+ * Hidden on desktop, where the full nav is visible. Pre-positioned for
+ * mobile (see the media query below) so the collapsed nav has a home to
+ * expand from once it becomes functional — it stays disabled until then.
+ */
+.menu-toggle {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #fff;
+  flex-shrink: 0;
+}
+
+.menu-toggle:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.menu-toggle-bar {
+  display: block;
+  width: 18px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--ink);
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: calc(100dvh - 76px);
+}
+
+.illustration {
+  background: var(--accent) url('/images/login-illustration.jpg') center / cover no-repeat;
+}
+
+.form-panel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.form-card {
+  width: 100%;
+  max-width: 380px;
+}
+
+.form-card h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0 0 1.75rem;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+}
+
+.field {
+  position: relative;
+  margin-bottom: 1rem;
+}
+
+.field input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.85rem 2.75rem 0.85rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 1rem;
+  color: var(--ink);
+  outline-offset: 2px;
+}
+
+.field input::placeholder {
+  color: #9ca3af;
+}
+
+.field input:focus-visible {
+  outline: 2px solid var(--accent);
+}
+
+.field svg {
+  position: absolute;
+  right: 0.9rem;
+  top: 50%;
+  translate: 0 -50%;
+  width: 20px;
+  height: 20px;
+  color: #9ca3af;
+  pointer-events: none;
+}
+
+.field-error,
+.form-error {
+  margin: -0.5rem 0 1rem;
+  font-size: 0.85rem;
+  color: #dc2626;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+}
+
+.remember {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.remember input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
+}
+
+.link-button {
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-size: 0.9rem;
+  color: var(--accent);
+  cursor: pointer;
+}
+
+.hint {
+  margin: -1rem 0 1.5rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.submit {
+  border: 0;
+  border-radius: 10px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 0.9rem;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.submit:hover:not(:disabled) {
+  background: var(--accent-dark);
+}
+
+.submit:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.footer-note {
+  margin-top: 1.75rem;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--muted);
+  text-align: center;
+}
+
+@media (max-width: 900px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .illustration {
+    display: none;
+  }
+
+  .nav {
+    display: none;
+  }
+
+  .menu-toggle {
+    display: flex;
+  }
+
+  .topbar {
+    gap: 1rem;
+    padding-inline: 1.25rem;
+  }
+}
+
+.toast {
+  position: fixed;
+  top: 1.25rem;
+  left: 50%;
+  translate: -50% 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  max-width: min(90vw, 480px);
+  padding: 0.9rem 1rem;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  animation: toast-in 0.2s ease;
+}
+
+.toast-warning {
+  background: #fffbeb;
+  color: #92400e;
+  border: 1px solid #fcd34d;
+}
+
+.toast-close {
+  border: 0;
+  background: none;
+  padding: 0;
+  margin-left: auto;
+  font-size: 1.1rem;
+  line-height: 1;
+  color: inherit;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    translate: -50% -0.5rem;
+  }
+  to {
+    opacity: 1;
+    translate: -50% 0;
+  }
+}

@@ -1,0 +1,131 @@
+<section class="diretoria-admin">
+  <div class="acoes-diretoria">
+    <button type="button" class="btn-primary" (click)="abrirCadastro()">
+      Novo membro
+    </button>
+  </div>
+
+  <app-tabela-layout
+    [colunas]="colunas"
+    [dados]="diretores"
+    [acoes]="acoesTabela"
+    [tamanhoPagina]="10"
+    [tamanhosPagina]="[5, 10, 25]"
+    mensagemVazia="Nenhum membro da diretoria cadastrado."
+    (acao)="executarAcao($event)"
+  />
+</section>
+
+@if (modalAberto) {
+<app-modal-layout
+  [class.tremer]="modalTremendo"
+  [titulo]="modoEdicao ? 'Editar membro da diretoria' : 'Cadastrar membro da diretoria'"
+  (closed)="fecharModal()"
+>
+  <form class="form-modal" [formGroup]="formDiretoria" (ngSubmit)="salvar()">
+    @if (!isCarregandoEdicao) {
+
+    @if (modoEdicao) {
+    <div class="campo-status toggle-wrapper">
+      <span class="status-label">
+        {{ formDiretoria.get('ativo')?.value ? 'Ativo' : 'Inativo' }}
+      </span>
+
+      <label class="custom-switch">
+        <input type="checkbox" formControlName="ativo" />
+        <span class="slider"></span>
+      </label>
+    </div>
+    }
+
+    <mat-form-field appearance="outline">
+      <mat-label>Nome</mat-label>
+      <input matInput formControlName="nome" (blur)="verificarErros()" maxlength="150" />
+    </mat-form-field>
+
+    @if (erros['nome']) {
+    <span class="error-text">
+      {{ erros['nome'] }}
+    </span>
+    }
+
+    <mat-form-field appearance="outline">
+      <mat-label>Cargo</mat-label>
+      <input matInput formControlName="cargo" (blur)="verificarErros()" maxlength="100" />
+    </mat-form-field>
+
+    @if (erros['cargo']) {
+    <span class="error-text">
+      {{ erros['cargo'] }}
+    </span>
+    }
+
+    <div class="form-group">
+      <input
+        #inputFoto
+        id="foto"
+        type="file"
+        class="input-arquivo-oculto"
+        accept=".jpg,.jpeg,.png,.webp"
+        (change)="selecionarFoto($event)"
+      >
+
+      <div
+        class="upload-arquivo"
+        [class.upload-arquivo-erro]="erros['foto']"
+        (click)="inputFoto.click()"
+      >
+        <span class="material-symbols-outlined upload-arquivo-icone">
+          upload_file
+        </span>
+
+        <div class="upload-arquivo-texto">
+          <strong>
+            {{
+              nomeArquivoSelecionado
+                ? nomeArquivoSelecionado
+                : 'Selecione a foto do membro'
+            }}
+          </strong>
+
+          <span>PNG, JPEG, JPG ou WEBP</span>
+        </div>
+
+        <span class="upload-arquivo-botao">
+          Procurar
+        </span>
+      </div>
+    </div>
+
+    @if (erros['foto']) {
+    <span class="error-text">
+      {{ erros['foto'] }}
+    </span>
+    }
+
+    @if (previewUrl) {
+    <div class="image-preview">
+      <img [src]="previewUrl" [alt]="formDiretoria.get('nome')?.value || 'Foto do membro da diretoria'" />
+    </div>
+    }
+
+    } @else {
+    <div class="form-carregando">
+      <span class="spinner spinner-escuro" aria-hidden="true"></span>
+      <p>Carregando dados...</p>
+    </div>
+    }
+
+    <div class="acoes-modal">
+      <button type="button" class="btn-cancelar" [disabled]="isLoading" (click)="fecharModal()">
+        Cancelar
+      </button>
+
+      <button type="submit" class="btn-primary" [disabled]="isLoading || isCarregandoEdicao">
+        <span *ngIf="isLoading" class="spinner" aria-hidden="true"></span>
+        <span>{{ isLoading ? 'Salvando...' : 'Salvar' }}</span>
+      </button>
+    </div>
+  </form>
+</app-modal-layout>
+}

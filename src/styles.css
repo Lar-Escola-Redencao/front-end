@@ -1,1 +1,569 @@
-/* You can add global styles to this file, and also import other style files */
+@font-face {
+  font-family: 'Inter';
+  src: url('/fonts/inter-regular.ttf') format('truetype');
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Bricolage Grotesque';
+  src: url('/fonts/bricolagegrotesque-extrabold.ttf') format('truetype');
+  font-weight: 800;
+  font-display: swap;
+}
+
+:root {
+  --primary-color: #3682DC;
+  --primary-hover-color: #1661bd;
+  --primary-active-color: #5386c5;
+  --primary-color-text: #ffffff;
+
+  --preto: #1e1e1e;
+  --branco: #FFFFFF;
+
+  --fonte-texto: 'Inter', sans-serif;
+  --fonte-titulo: 'Bricolage Grotesque', sans-serif;
+
+  --sombra-padrao: 0px 0px 2px 2px rgba(0, 0, 0, 0.05);
+
+  --input-color: rgba(30, 30, 30, 0.6);
+  --input-border: rgba(30, 30, 30, 0.4);
+  --input-radius: 6px;
+
+  --error-color: #f44336;
+}
+
+a{
+  cursor: pointer;
+}
+
+/* =========================
+   RESET
+   ========================= */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--fonte-texto);
+  color: var(--preto);
+  background-color: var(--branco);
+}
+
+/* =========================
+   SWEETALERT
+   ========================= */
+
+.swal2-container {
+  z-index: 3000 !important;
+  font-family: var(--fonte-texto);
+}
+
+.swal2-container button {
+  font-family: var(--fonte-texto);
+}
+
+/* =========================
+   ANGULAR MATERIAL
+   ========================= */
+
+.mat-mdc-form-field {
+  width: 100%;
+  font-family: var(--fonte-texto) !important;
+
+  --mdc-outlined-text-field-container-shape: var(--input-radius);
+}
+
+
+/* =========================
+   CAMPO
+   ========================= */
+
+.mat-mdc-form-field .mat-mdc-text-field-wrapper {
+  height: auto;
+  /*min-height: 58px*/
+  background-color: var(--branco) !important;
+  border: 1px solid var(--input-border);
+  border-radius: var(--input-radius) !important;
+  transition: border-color 0.2s ease;
+}
+
+.mat-mdc-form-field .mat-mdc-form-field-flex {
+  height: 100%;
+  /*min-height: 58px*/
+  align-items: center;
+  padding: 0 20px 0 8px;
+}
+
+.mat-mdc-form-field .mat-mdc-form-field-infix {
+  min-height: 0;
+  padding: 4px 0 0;
+}
+
+/* =========================
+   BORDA DO MATERIAL
+   ========================= */
+
+.mat-mdc-form-field .mdc-notched-outline__leading,
+.mat-mdc-form-field .mdc-notched-outline__notch,
+.mat-mdc-form-field .mdc-notched-outline__trailing {
+  border: 0 !important;
+}
+
+/* =========================
+   PLACEHOLDER
+   ========================= */
+
+.mat-mdc-form-field .mat-mdc-select-placeholder,
+.mat-mdc-form-field input::placeholder,
+.mat-mdc-form-field textarea::placeholder {
+  color: var(--input-color) !important;
+  opacity: 1;
+}
+
+/* =========================
+   VALORES
+   ========================= */
+
+.mat-mdc-form-field .mat-mdc-select-value,
+.mat-mdc-form-field .mat-mdc-input-element {
+  color: var(--preto) !important;
+
+  font-family: var(--fonte-texto) !important;
+  font-size: 1rem;
+}
+
+.mat-mdc-form-field .mat-mdc-input-element,
+.mat-mdc-form-field .mat-mdc-select-value {
+  padding-left: 0 !important;
+}
+
+/* =========================
+   INPUT
+   ========================= */
+
+.mat-mdc-form-field .mdc-text-field__input {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+
+  margin: 0 !important;
+  margin-top: 10px !important;
+
+  position: relative;
+  top: 1px;
+
+  text-indent: 0 !important;
+}
+
+/* =========================
+   SELECT
+   ========================= */
+
+.mat-mdc-form-field .mat-mdc-select-value-text {
+  position: relative;
+  width: 100%;
+  margin-left: 0 !important;
+}
+
+.mat-mdc-form-field .mat-mdc-select-arrow {
+  color: var(--input-color) !important;
+}
+
+/* =========================
+   LABEL
+   ========================= */
+
+.mat-mdc-form-field .mat-mdc-floating-label,
+.mat-mdc-form-field .mdc-floating-label--float-above {
+  color: var(--input-color) !important;
+
+  font-family: var(--fonte-texto) !important;
+}
+
+.mat-mdc-form-field .mdc-floating-label--float-above {
+  background-color: var(--branco);
+
+  padding: 0 4px;
+
+  transform: translateY(-24px) scale(0.75) !important;
+}
+
+.mat-mdc-form-field
+  .mat-mdc-floating-label:not(.mdc-floating-label--float-above) {
+  margin-left: 12px;
+}
+
+/* =========================
+   ERROS
+   ========================= */
+
+.error-text {
+  display: block;
+  text-align: start;
+  color: var(--error-color);
+  font-family: var(--fonte-texto);
+  font-size: 0.85rem;
+  line-height: 1.3;
+}
+
+.mat-mdc-form-field-subscript-wrapper{
+  display: none !important;
+}
+
+/* =========================
+   CAMPO COM ERRO
+   ========================= */
+
+/* Borda do input/select */
+.mat-mdc-form-field.mat-form-field-invalid
+  .mat-mdc-text-field-wrapper {
+  border-color: var(--error-color) !important;
+}
+
+/* Input com erro */
+.mat-mdc-form-field.mat-form-field-invalid
+  .mat-mdc-input-element {
+  caret-color: var(--error-color);
+}
+
+/* Label flutuante com erro */
+.mat-mdc-form-field.mat-form-field-invalid
+  .mat-mdc-floating-label {
+  color: var(--error-color) !important;
+}
+
+/* Placeholder do select com erro */
+.mat-mdc-form-field.mat-form-field-invalid
+  .mat-mdc-select-placeholder {
+  color: var(--error-color) !important;
+}
+
+/* Seta do select com erro */
+.mat-mdc-form-field.mat-form-field-invalid
+  .mat-mdc-select-arrow {
+  color: var(--error-color) !important;
+}
+
+/* =========================
+   SELECT PANEL
+   ========================= */
+
+.mat-mdc-select-panel {
+  background-color: var(--branco) !important;
+}
+
+.mat-mdc-select-panel .mat-mdc-option {
+  background-color: var(--branco) !important;
+
+  color: var(--preto) !important;
+
+  font-family: var(--fonte-texto) !important;
+}
+
+/* =========================
+   BOTÃO PRINCIPAL
+   ========================= */
+
+.btn-primary {
+  min-height: 45px;
+
+  padding: 0 28px;
+
+  border: 0;
+  border-radius: 6px;
+
+  background-color: var(--primary-color);
+
+  box-shadow: var(--sombra-padrao);
+
+  color: var(--branco);
+
+  cursor: pointer;
+
+  font-family: var(--fonte-texto);
+  font-size: 1rem;
+  font-weight: 700;
+
+  transition:
+    background-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.btn-primary:hover {
+  background-color: var(--primary-hover-color);
+}
+
+.btn-primary:active {
+  background-color: var(--primary-active-color);
+  transform: translateY(1px);
+}
+
+/* =========================
+   SWITCH (ESTILO APPLE)
+   ========================= */
+   
+.toggle-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.custom-switch {
+  position: relative;
+  display: inline-block;
+  width: 52px;
+  height: 30px;
+}
+
+.custom-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.custom-switch .slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #e5e5ea; 
+  transition: 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+  border-radius: 34px;
+}
+
+.custom-switch .slider:before {
+  position: absolute;
+  content: "";
+  height: 26px;
+  width: 26px;
+  left: 2px;
+  bottom: 2px;
+  background-color: white;
+  transition: 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+  border-radius: 50%;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.custom-switch input:checked + .slider {
+  background-color: #34c759;
+}
+
+.custom-switch input:checked + .slider:before {
+  transform: translateX(22px);
+}
+
+/* =========================================================
+   UPLOAD DE ARQUIVO
+   ========================================================= */
+
+.input-arquivo-oculto {
+  display: none;
+}
+
+.upload-arquivo {
+  width: 100%;
+  min-height: 72px;
+  box-sizing: border-box;
+
+  display: flex;
+  align-items: center;
+  gap: 14px;
+
+  padding: 12px 14px;
+
+  border: 1px dashed #dcdcdc;
+  border-radius: 8px;
+
+  background: #fafafa;
+
+  cursor: pointer;
+
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.upload-arquivo:hover {
+  border-color: #4b80d5;
+  background-color: #f7faff;
+}
+
+.upload-arquivo-icone {
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 42px;
+  height: 42px;
+
+  border-radius: 8px;
+
+  background-color: #eef4fc;
+  color: #4b80d5;
+
+  font-size: 1.5rem;
+}
+
+.upload-arquivo-texto {
+  min-width: 0;
+  flex: 1;
+
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.upload-arquivo-texto strong {
+  overflow: hidden;
+
+  color: #333;
+
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 500;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.upload-arquivo-texto span {
+  color: #888;
+
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.75rem;
+}
+
+.upload-arquivo-botao {
+  flex-shrink: 0;
+  padding: 7px 12px;
+  border-radius: 6px;
+  background-color: var(--primary-color);
+  color: #fff;
+  font-weight: 500;
+  transition: background-color 0.15s ease;
+}
+
+.upload-arquivo:hover .upload-arquivo-botao {
+  background-color: var(--primary-hover-color);
+}
+
+/* Estado de erro */
+
+.upload-arquivo-erro {
+  border-color: red;
+  background-color: var(--branco);
+}
+
+.upload-arquivo-erro:hover {
+  border-color: red;
+  background-color: var(--branco);
+}
+
+
+/* =========================================================
+   PREVIEW DE IMAGEM
+   ========================================================= */
+
+.imagem-preview-wrapper {
+  position: relative;
+
+  margin-top: 12px;
+
+  min-height: 60px;
+}
+
+.imagem-preview {
+  display: block;
+
+  width: 100%;
+  max-height: 180px;
+
+  margin-top: 12px;
+
+  object-fit: cover;
+
+  border: 1px solid #f0f0f0;
+  border-radius: 8px;
+
+  transition: opacity 0.15s ease;
+}
+
+.imagem-preview-oculta {
+  position: absolute;
+
+  opacity: 0;
+
+  pointer-events: none;
+}
+
+.imagem-preview-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  gap: 10px;
+
+  height: 140px;
+
+  border: 1px dashed #dcdcdc;
+  border-radius: 8px;
+
+  background: #fafafa;
+
+  color: #757575;
+
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.85rem;
+}
+
+.spinner-escuro {
+  width: 20px;
+  height: 20px;
+
+  border: 2px solid rgba(75, 128, 213, 0.25);
+  border-top-color: #4b80d5;
+}
+
+
+/* =========================================================
+   INFORMAÇÃO DO PREVIEW
+   ========================================================= */
+
+.imagem-preview-info {
+  display: flex;
+  align-items: flex-start;
+
+  gap: 6px;
+
+  margin-top: 10px;
+  padding: 10px 12px;
+
+  border-radius: 8px;
+
+  background: #eef4fc;
+
+  color: #4a6f9e;
+
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+.imagem-preview-info .material-symbols-outlined {
+  flex-shrink: 0;
+
+  margin-top: 1px;
+
+  font-size: 1rem;
+}

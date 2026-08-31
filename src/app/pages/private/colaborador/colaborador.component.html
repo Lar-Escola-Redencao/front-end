@@ -1,0 +1,231 @@
+<section class="colaboradores-admin">
+  <h1>Colaboradores</h1>
+  <div class="conteudo">
+    <div class="acoes-colaboradores">
+      <button type="button" class="btn-primary" (click)="abrirCadastro()">
+        Novo colaborador
+      </button>
+
+      <mat-form-field appearance="outline" class="filtro-papel">
+        <mat-label>Papel de acesso</mat-label>
+        <mat-select
+          [(ngModel)]="filtroPapel"
+          (selectionChange)="aplicarFiltro()">
+          <mat-option value="">Todos os papéis</mat-option>
+          <mat-option
+            *ngFor="let papel of papeisDisponiveis"
+            [value]="papel">
+            {{ papel }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    <app-tabela-layout
+      [colunas]="colunas"
+      [dados]="colaboradoresFiltrados"
+      [acoes]="acoesTabela"
+      [tamanhoPagina]="10"
+      [tamanhosPagina]="[5, 10, 25]"
+      [mensagemVazia]="mensagemVazia"
+      (acao)="executarAcao($event)" />
+    </div>
+</section>
+
+@if (modalAberto) {
+<app-modal-layout
+  [class.tremer]="modalTremendo"
+  [titulo]="modoEdicao ? 'Editar colaborador' : 'Cadastrar novo colaborador'"
+  (closed)="fecharModal()">
+
+  <form
+    class="form-modal"
+    [formGroup]="formColaborador"
+    (ngSubmit)="salvar()">
+
+    <mat-form-field appearance="outline">
+      <mat-label>Nome completo</mat-label>
+      <input
+        matInput
+        formControlName="nomeCompleto"
+        (blur)="verificarErros()"
+        minlength="3"
+        maxlength="60" />
+    </mat-form-field>
+    <span class="error-text" *ngIf="erros['nomeCompleto']">
+      {{ erros['nomeCompleto'] }}
+    </span>
+
+    <div class="form-row">
+      <div>
+        <mat-form-field appearance="outline">
+          <mat-label>E-mail</mat-label>
+          <input
+            matInput
+            type="email"
+            formControlName="email"
+            (blur)="verificarErros()"
+            minlength="5"
+            maxlength="100" />
+        </mat-form-field>
+        <span class="error-text" *ngIf="erros['email']">
+          {{ erros['email'] }}
+        </span>
+      </div>
+
+      <div>
+        <mat-form-field appearance="outline">
+          <mat-label>CPF</mat-label>
+          <input
+            matInput
+            type="text"
+            inputmode="numeric"
+            formControlName="cpf"
+            (input)="aplicarMascaraCpf($event)"
+            (blur)="verificarErros()"
+            minlength="14"
+            maxlength="14" />
+        </mat-form-field>
+        <span class="error-text" *ngIf="erros['cpf']">
+          {{ erros['cpf'] }}
+        </span>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div>
+        <mat-form-field appearance="outline">
+          <mat-label>Telefone</mat-label>
+          <input
+            matInput
+            type="text"
+            inputmode="numeric"
+            formControlName="telefone"
+            (input)="aplicarMascaraTelefone($event)"
+            (blur)="verificarErros()"
+            minlength="14"
+            maxlength="15" />
+        </mat-form-field>
+        <span class="error-text" *ngIf="erros['telefone']">
+          {{ erros['telefone'] }}
+        </span>
+      </div>
+
+      <div>
+        <mat-form-field appearance="outline">
+          <mat-label>Endereco</mat-label>
+          <input
+            matInput
+            type="text"
+            formControlName="endereco"
+            (blur)="verificarErros()"
+            minlength="5"
+            maxlength="150" />
+        </mat-form-field>
+        <span class="error-text" *ngIf="erros['endereco']">
+          {{ erros['endereco'] }}
+        </span>
+      </div>
+    </div>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Papel de acesso</mat-label>
+      <mat-select
+        formControlName="idPapel"
+        (selectionChange)="verificarErros()"
+        (blur)="verificarErros()">
+        <mat-option
+          *ngFor="let papel of papeis"
+          [value]="papel.id">
+          {{ obterNomePapel(papel) }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+    <span class="error-text" *ngIf="erros['idPapel']">
+      {{ erros['idPapel'] }}
+    </span>
+
+    @if (!modoEdicao) {
+    <div class="form-row">
+      <div>
+        <mat-form-field appearance="outline">
+          <mat-label>Senha</mat-label>
+          <input
+            matInput
+            [type]="mostrarSenha ? 'text' : 'password'"
+            formControlName="senha"
+            (input)="verificarErros()"
+            (blur)="verificarErros()"
+            maxlength="50" />
+          <button
+            matSuffix
+            type="button"
+            class="btn-icone-senha"
+            tabindex="-1"
+            (click)="alternarVisibilidadeSenha('senha')">
+            <span class="material-symbols-outlined">
+              {{ mostrarSenha ? 'visibility_off' : 'visibility' }}
+            </span>
+          </button>
+        </mat-form-field>
+        <span class="hint-text">
+          Min. 6 caracteres, 1 maiuscula e 1 numero.
+        </span>
+        <span class="error-text" *ngIf="erros['senha']">
+          {{ erros['senha'] }}
+        </span>
+      </div>
+
+      <div>
+        <mat-form-field appearance="outline">
+          <mat-label>Confirmar senha</mat-label>
+          <input
+            matInput
+            [type]="mostrarConfirmarSenha ? 'text' : 'password'"
+            formControlName="confirmarSenha"
+            (input)="verificarErros()"
+            (blur)="verificarErros()" />
+          <button
+            matSuffix
+            type="button"
+            class="btn-icone-senha"
+            tabindex="-1"
+            (click)="alternarVisibilidadeSenha('confirmarSenha')">
+            <span class="material-symbols-outlined">
+              {{ mostrarConfirmarSenha ? 'visibility_off' : 'visibility' }}
+            </span>
+          </button>
+        </mat-form-field>
+        <span class="error-text" *ngIf="erros['confirmarSenha']">
+          {{ erros['confirmarSenha'] }}
+        </span>
+      </div>
+    </div>
+    }
+
+    <div class="acoes-modal">
+      <button
+        type="button"
+        class="btn-cancelar"
+        [disabled]="isLoading"
+        (click)="fecharModal()">
+        Cancelar
+      </button>
+
+      <button
+        type="submit"
+        class="btn-primary"
+        [disabled]="isLoading || (modoEdicao && !temAlteracoes)">
+        <span
+          *ngIf="isLoading"
+          class="spinner"
+          aria-hidden="true">
+        </span>
+        <span>
+          {{ isLoading ? 'Salvando...' : 'Salvar' }}
+        </span>
+      </button>
+    </div>
+  </form>
+</app-modal-layout>
+}

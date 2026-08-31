@@ -1,0 +1,43 @@
+<div class="content-management-page">
+  <div class="header-gerenciamento">
+    <h1>Conteúdo público</h1>
+
+    <mat-form-field appearance="outline" class="seletor-secao">
+      <mat-select
+        [value]="secaoSelecionada"
+        placeholder="Escolha uma página"
+        (selectionChange)="mudarSecao($event.value)"
+      >
+        <mat-option value="diretoria">Diretoria</mat-option>
+        <mat-option value="evento">Eventos</mat-option>
+        <mat-option value="parceiro">Parceiros</mat-option>
+        <mat-option value="redes-sociais">Redes Sociais</mat-option>
+        <mat-option value="transparencia">Transparência</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+  </div>
+
+  <div class="conteudo-mutavel">
+  @switch (secaoSelecionada) {
+    @case ('diretoria'){
+        <app-diretoria></app-diretoria>
+    }
+    @case ('evento'){ 
+        <app-evento></app-evento> 
+    }
+    @case ('parceiro'){ 
+        <app-partners-manager></app-partners-manager> 
+    }
+    @case ('redes-sociais'){
+        <app-social-links-manager></app-social-links-manager>
+    }
+     @case ('transparencia'){
+        <app-transparencia></app-transparencia>
+    }
+    @default{ 
+        <p class="mensagem-vazia">Nenhuma página selecionada</p> 
+    }
+  }
+  </div>
+</div>

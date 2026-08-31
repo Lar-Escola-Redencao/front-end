@@ -1,0 +1,157 @@
+.diretoria-admin {
+  width: 100%;
+}
+
+.acoes-diretoria {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+
+.diretoria-card {
+  min-height: 180px;
+  border-radius: 6px;
+  background: var(--branco);
+  box-shadow: var(--sombra-padrao);
+}
+
+.form-modal {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.form-modal .mat-mdc-form-field {
+  width: 100%;
+}
+
+.campo-textarea {
+  min-height: 116px;
+}
+
+.campo-textarea ::ng-deep .mat-mdc-text-field-wrapper {
+  height: 116px;
+}
+
+.campo-textarea textarea {
+  resize: none;
+}
+
+.image-preview img {
+  width: 100%;
+  max-height: auto;
+  object-fit: contain;
+}
+
+
+.upload-container {
+  width: 100%;
+}
+
+.upload-campo {
+  width: 100%;
+  min-height: 58px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  padding: 12px 16px;
+
+  border: 1px solid var(--input-border);
+  border-radius: var(--input-radius);
+
+  background-color: var(--branco);
+  cursor: pointer;
+
+  font-family: var(--fonte-texto);
+  color: var(--input-color);
+
+  transition: border-color 0.2s ease;
+}
+
+.upload-campo.com-erro {
+  border-color: var(--error-color);
+}
+
+.upload-campo {
+  min-height: 100px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 24px;
+  border: 2px dashed var(--input-border);
+  border-radius: var(--input-radius);
+  color: var(--input-color);
+  font-family: var(--fonte-texto);
+  font-size: 1.25rem;
+  text-align: center;
+  cursor: pointer;
+}
+
+.upload-campo.tem-arquivo {
+  border-color: var(--primary-color);
+  color: var(--preto);
+}
+
+.arquivo-nome {
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--primary-color);
+  font-size: 1.1rem;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.upload-campo small {
+  color: var(--input-color);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.upload-campo input {
+  display: none;
+}
+
+.acoes-modal {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 28px;
+  margin-top: 4px;
+}
+
+.btn-cancelar {
+  border: 0;
+  background: transparent;
+  color: var(--input-color);
+  cursor: pointer;
+  font-family: var(--fonte-texto);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+
+@media (max-width: 600px) {
+  .acoes-diretoria,
+  .acoes-modal,
+  .acoes-modal .btn-primary {
+    width: 100%;
+  }
+
+  .acoes-diretoria .btn-primary {
+    width: 100%;
+  }
+
+  .acoes-modal {
+    justify-content: space-between;
+  }
+
+  .upload-campo {
+    min-height: 180px;
+  }
+}
