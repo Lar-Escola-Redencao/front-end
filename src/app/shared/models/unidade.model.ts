@@ -10,6 +10,7 @@ export interface Unidade {
   idadeMin: number;
   idadeMax: number;
   corHex: string;
+  imagem?: string;
 }
 
 export interface CriarUnidadeDTO {
@@ -23,6 +24,7 @@ export interface CriarUnidadeDTO {
   idadeMin: number;
   idadeMax: number;
   corHex?: string;
+  imagem?: File;
 }
 
 export interface AtualizarUnidadeDTO extends CriarUnidadeDTO {}

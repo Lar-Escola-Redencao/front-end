@@ -30,8 +30,9 @@ import { ComponentComAlteracoesNaoSalvas } from 'src/app/shared/guards/can-deact
 import { AtualizarUnidadeDTO, CriarUnidadeDTO, Unidade } from 'src/app/shared/models/unidade.model';
 import { UnidadeService } from 'src/app/shared/services/unidade/unidade.service';
 import { Alertas } from 'src/app/shared/utils/alerts';
-import { mapearErrosFormulario } from 'src/app/shared/utils/form-validations';
+import { mapearErrosFormulario, validarImagem } from 'src/app/shared/utils/form-validations';
 import { formatarTelefone } from 'src/app/shared/utils/masks';
+import { environment } from 'src/environments/environment';
 
 type DiaSemana = { valor: string; label: string };
 
@@ -68,6 +69,10 @@ export class UnidadesTurmas
 
   modalVisualizacaoAberto = false;
   unidadeVisualizacao: Unidade | null = null;
+
+  imagemPreview: string | null = null;
+  nomeArquivoSelecionado = '';
+  imagemSelecionada: File | null = null;
 
   readonly corPadrao = '#F5F5F5';
 
@@ -192,7 +197,8 @@ export class UnidadesTurmas
         '',
         [Validators.required, Validators.min(0)]
       ],
-      corHex: [this.corPadrao]
+      corHex: [this.corPadrao],
+      imagem: [null, [validarImagem()]]
     });
   }
 
@@ -226,13 +232,17 @@ export class UnidadesTurmas
 
   get temAlteracoes(): boolean {
     if (!this.modoEdicao) {
-      return this.formUnidade.dirty;
+      return this.formUnidade.dirty || this.imagemSelecionada !== null;
     }
 
-    return (
-      JSON.stringify(this.formUnidade.getRawValue()) !==
-      JSON.stringify(this.valoresOriginaisDoFormulario)
-    );
+    if (this.imagemSelecionada !== null) {
+      return true;
+    }
+
+    const valorAtual = { ...this.formUnidade.getRawValue(), imagem: null };
+    const valorOriginal = { ...this.valoresOriginaisDoFormulario, imagem: null };
+
+    return JSON.stringify(valorAtual) !== JSON.stringify(valorOriginal);
   }
 
   carregarUnidades(): void {
@@ -269,6 +279,9 @@ export class UnidadesTurmas
     this.isLoading = false;
     this.modalTremendo = false;
     this.valoresOriginaisDoFormulario = null;
+    this.imagemPreview = null;
+    this.nomeArquivoSelecionado = '';
+    this.imagemSelecionada = null;
 
     this.formUnidade.reset({
       nome: '',
@@ -280,7 +293,8 @@ export class UnidadesTurmas
       horarioFechamento: '',
       idadeMin: '',
       idadeMax: '',
-      corHex: this.corPadrao
+      corHex: this.corPadrao,
+      imagem: null
     });
 
     this.formUnidade.markAsPristine();
@@ -293,6 +307,9 @@ export class UnidadesTurmas
     this.erros = {};
     this.isLoading = false;
     this.modalTremendo = false;
+    this.imagemPreview = this.tratarImagem(unidade.imagem);
+    this.nomeArquivoSelecionado = '';
+    this.imagemSelecionada = null;
 
     this.formUnidade.reset({
       nome: unidade.nome,
@@ -304,13 +321,64 @@ export class UnidadesTurmas
       horarioFechamento: this.paraInputHorario(unidade.horarioFechamento),
       idadeMin: unidade.idadeMin,
       idadeMax: unidade.idadeMax,
-      corHex: unidade.corHex || this.corPadrao
+      corHex: unidade.corHex || this.corPadrao,
+      imagem: null
     });
 
     this.formUnidade.markAsPristine();
     this.valoresOriginaisDoFormulario =
       this.formUnidade.getRawValue();
     this.modalAberto = true;
+  }
+
+  tratarImagem(caminho: string | null | undefined): string | null {
+    if (!caminho) {
+      return null;
+    }
+
+    if (
+      caminho.startsWith('http://') ||
+      caminho.startsWith('https://') ||
+      caminho.startsWith('data:')
+    ) {
+      return caminho;
+    }
+
+    return `${environment.apiUrl}${caminho.startsWith('/') ? '' : '/'}${caminho}`;
+  }
+
+  onImagemSelecionada(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const arquivo = input.files?.[0];
+
+    if (!arquivo) {
+      return;
+    }
+
+    const imagemControl = this.formUnidade.get('imagem');
+    imagemControl?.setValue(arquivo);
+    imagemControl?.markAsDirty();
+    imagemControl?.markAsTouched();
+    imagemControl?.updateValueAndValidity();
+    this.verificarErros();
+
+    if (imagemControl?.invalid) {
+      this.imagemSelecionada = null;
+      this.nomeArquivoSelecionado = '';
+      input.value = '';
+      this.cdr.detectChanges();
+      return;
+    }
+
+    this.imagemSelecionada = arquivo;
+    this.nomeArquivoSelecionado = arquivo.name;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      this.imagemPreview = reader.result as string;
+      this.cdr.detectChanges();
+    };
+    reader.readAsDataURL(arquivo);
   }
 
   fecharModal(): void {
@@ -574,7 +642,8 @@ export class UnidadesTurmas
       horarioFechamento: valores.horarioFechamento,
       idadeMin: Number(valores.idadeMin),
       idadeMax: Number(valores.idadeMax),
-      corHex: valores.corHex || this.corPadrao
+      corHex: valores.corHex || this.corPadrao,
+      imagem: this.imagemSelecionada ?? undefined
     };
   }
 
@@ -696,6 +765,9 @@ export class UnidadesTurmas
     this.unidadeSelecionadaId = null;
     this.erros = {};
     this.valoresOriginaisDoFormulario = null;
+    this.imagemPreview = null;
+    this.nomeArquivoSelecionado = '';
+    this.imagemSelecionada = null;
 
     this.formUnidade.reset({
       nome: '',
@@ -707,7 +779,8 @@ export class UnidadesTurmas
       horarioFechamento: '',
       idadeMin: '',
       idadeMax: '',
-      corHex: this.corPadrao
+      corHex: this.corPadrao,
+      imagem: null
     });
 
     this.formUnidade.markAsPristine();

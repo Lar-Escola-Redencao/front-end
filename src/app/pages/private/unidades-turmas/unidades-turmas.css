@@ -192,6 +192,13 @@ h1 {
   text-align: left;
 }
 
+.preview-capa img {
+  width: 100%;
+  max-height: 220px;
+  object-fit: cover;
+  border-radius: var(--input-radius);
+}
+
 .preview-info {
   display: flex;
   flex-direction: column;
@@ -233,6 +240,13 @@ h1 {
 .preview-linha .material-symbols-outlined {
   color: var(--primary-color);
   font-size: 1.2rem;
+}
+
+.image-preview img {
+  width: 100%;
+  max-height: 220px;
+  object-fit: contain;
+  border-radius: var(--input-radius);
 }
 
 .spinner {
