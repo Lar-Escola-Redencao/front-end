@@ -33,6 +33,11 @@ export const routes: Routes = [
         canActivate: [guestGuard],
         loadComponent: () => import('./pages/public/login/login').then((m) => m.Login),
     },
+    {
+        path: 'recuperar-senha',
+        canActivate: [guestGuard],
+        loadComponent: () => import('./pages/public/recuperar-senha/recuperar-senha').then((m) => m.RecuperarSenha),
+    },
     { path: '**', redirectTo: 'login' }
 ];
 
