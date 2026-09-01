@@ -1,0 +1,33 @@
+.home-main {
+  padding-top: 82px; /* Espaço para a navbar fixa */
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.hero-section {
+  background-color: var(--primary-color);
+  color: var(--branco);
+  padding: 100px 24px;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hero-content {
+  max-width: 800px;
+}
+
+.hero-content h1 {
+  font-family: var(--fonte-titulo);
+  font-size: clamp(2.5rem, 5vw, 3.5rem);
+  margin-bottom: 20px;
+  line-height: 1.1;
+}
+
+.hero-content p {
+  font-family: var(--fonte-texto);
+  font-size: 1.25rem;
+  opacity: 0.9;
+}

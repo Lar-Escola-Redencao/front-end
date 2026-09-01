@@ -1,0 +1,42 @@
+<section class="public-parceiros-section" *ngIf="!carregando && parceiros.length > 0">
+  <div class="container">
+    
+    <div class="parceiros-header">
+      <h2>Nossos parceiros</h2>
+    </div>
+
+    <div class="carousel-container">
+      <button
+        class="nav-btn prev-btn"
+        (click)="prev()"
+        [disabled]="currentIndex === 0"
+        [class.hidden]="parceiros.length <= itemsPerPage"
+        aria-label="Anterior">
+        <span class="material-symbols-outlined">chevron_left</span>
+      </button>
+
+      <div class="carousel-track-wrapper">
+        <div class="carousel-track" [style.transform]="'translateX(-' + (currentIndex * (100 / itemsPerPage)) + '%)'">
+          
+          <div class="parceiro-card" *ngFor="let parceiro of parceiros" [style.min-width]="(100 / itemsPerPage) + '%'">
+            <div class="logo-wrapper">
+              <img [src]="obterUrlImagem(parceiro.logo)" [alt]="parceiro.nome" loading="lazy" />
+            </div>
+            <span class="parceiro-nome">{{ parceiro.nome }}</span>
+          </div>
+
+        </div>
+      </div>
+
+      <button
+        class="nav-btn next-btn"
+        (click)="next()"
+        [disabled]="currentIndex >= parceiros.length - itemsPerPage"
+        [class.hidden]="parceiros.length <= itemsPerPage"
+        aria-label="Próximo">
+        <span class="material-symbols-outlined">chevron_right</span>
+      </button>
+    </div>
+
+  </div>
+</section>
