@@ -1,0 +1,114 @@
+<app-public-navbar></app-public-navbar>
+
+<main class="eventos-page">
+  <h1 class="titulo-pagina">Eventos</h1>
+
+  <form class="barra-busca" (ngSubmit)="buscar()">
+    <label class="campo campo-texto">
+      <input
+        type="text"
+        name="filtroTitulo"
+        placeholder="Busque por evento"
+        [(ngModel)]="filtroTitulo"
+      />
+    </label>
+
+    <label class="campo campo-data">
+      <span class="rotulo-data">Início</span>
+      <input
+        type="date"
+        name="filtroDataInicial"
+        [(ngModel)]="filtroDataInicial"
+      />
+      <span class="material-symbols-outlined icone">calendar_today</span>
+    </label>
+
+    <label class="campo campo-data">
+      <span class="rotulo-data">Fim</span>
+      <input
+        type="date"
+        name="filtroDataFinal"
+        [(ngModel)]="filtroDataFinal"
+      />
+      <span class="material-symbols-outlined icone">calendar_today</span>
+    </label>
+
+    <label class="campo campo-select">
+      <select name="filtroValor" [(ngModel)]="filtroValor">
+        <option value="todos">Gratuito ou pago</option>
+        <option value="gratuito">Gratuito</option>
+        <option value="pago">Pago</option>
+      </select>
+    </label>
+
+    <button type="submit" class="botao-buscar">
+      Buscar
+      <span class="material-symbols-outlined">search</span>
+    </button>
+  </form>
+
+  @if (carregando) {
+    <p class="mensagem-estado">Carregando eventos...</p>
+  } @else if (eventosFiltrados.length === 0) {
+    <p class="mensagem-estado">Nenhum evento encontrado para os filtros selecionados.</p>
+  } @else {
+    <div class="grade-eventos">
+      @for (evento of eventosPaginados; track evento.id) {
+        <article class="card-evento" [style.background-image]="'url(' + evento.imagem + ')'">
+          <div class="card-overlay">
+            <div class="card-topo">
+              <div class="card-data">
+                <span class="dia">{{ formatarDia(evento.dataEvento) }}</span>
+                <span class="mes">{{ formatarMes(evento.dataEvento) }}</span>
+                <span class="ano">{{ formatarAno(evento.dataEvento) }}</span>
+              </div>
+              <div class="card-hora">
+                <span class="material-symbols-outlined">schedule</span>
+                {{ formatarHora(evento.dataEvento) }}
+              </div>
+            </div>
+
+            <div class="card-rodape">
+              <h2 class="card-titulo">{{ evento.titulo }}</h2>
+              <p class="card-descricao">{{ evento.descricao }}</p>
+              <span class="card-valor" [class.gratuito]="!evento.valor">{{ formatarValor(evento) }}</span>
+            </div>
+          </div>
+        </article>
+      }
+    </div>
+
+    <nav class="paginacao" aria-label="Paginação de eventos">
+      <button
+        type="button"
+        class="botao-pagina botao-navegacao"
+        [disabled]="paginaAtual === 1"
+        (click)="paginaAnterior()"
+        aria-label="Página anterior"
+      >
+        <span class="material-symbols-outlined">chevron_left</span>
+      </button>
+
+      @for (pagina of paginas; track pagina) {
+        <button
+          type="button"
+          class="botao-pagina"
+          [class.ativo]="pagina === paginaAtual"
+          (click)="irParaPagina(pagina)"
+        >
+          {{ pagina }}
+        </button>
+      }
+
+      <button
+        type="button"
+        class="botao-pagina botao-navegacao"
+        [disabled]="paginaAtual === totalPaginas"
+        (click)="proximaPagina()"
+        aria-label="Próxima página"
+      >
+        <span class="material-symbols-outlined">chevron_right</span>
+      </button>
+    </nav>
+  }
+</main>
