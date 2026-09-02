@@ -17,6 +17,8 @@ import {
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { MatChipsModule } from '@angular/material/chips';
+import { MatIconModule } from '@angular/material/icon';
 
 import { ToastrService } from 'ngx-toastr';
 
@@ -61,7 +63,9 @@ type Unidade = {
     TabelaLayout,
     MatFormFieldModule,
     MatInputModule,
-    MatSelectModule
+    MatSelectModule,
+    MatChipsModule,
+    MatIconModule
   ],
   templateUrl: './colaborador.component.html',
   styleUrls: ['./colaborador.component.css']
@@ -73,7 +77,8 @@ export class ColaboradorComponent
   colaboradoresFiltrados: Colaborador[] = [];
   papeisDisponiveis: string[] = [];
   papeis: Papel[] = [];
-  filtroPapel = '';
+  filtroPapel: string[] = [];
+  unidadesDisponiveis: { id: number, nome: string }[] = [];
 
   modalAberto = false;
   modoEdicao = false;
@@ -85,7 +90,6 @@ export class ColaboradorComponent
   isLoading = false;
   modalTremendo = false;
   valoresOriginaisDoFormulario: any = null;
-  unidadesDisponiveis: Unidade[] = [];
   private readonly senhaRegex =
     /^(?=.*[A-Z])(?=.*[0-9]).{6,}$/;
 
@@ -239,20 +243,19 @@ export class ColaboradorComponent
     );
   }
 
-  carregarPapeis(): void {
-    this.papelService
-      .listarTodos()
-      .subscribe({
-        next: (dados: Papel[]) => {
-          this.papeis = dados;
-        },
-        error: (err: any) => {
-          console.error(
-            'Erro ao carregar papéis da API:',
-            err
-          );
-        }
-      });
+carregarPapeis(): void {
+    this.papelService.listarTodos().subscribe({
+      next: (dados: Papel[]) => {
+        this.papeis = dados;
+        this.papeisDisponiveis = dados
+          .map((papel) => this.obterNomePapel(papel))
+          .filter((nome): nome is string => Boolean(nome));
+        this.cdr.detectChanges();
+      },
+      error: (err: any) => {
+        console.error('Erro ao carregar papéis da API:', err);
+      }
+    });
   }
 
   carregarUnidades(): void {
@@ -280,22 +283,6 @@ export class ColaboradorComponent
           this.ngZone.run(() => {
 
             this.colaboradores = [...dados];
-
-            this.papeisDisponiveis = [
-              ...new Set(
-                this.colaboradores
-                  .map(
-                    (colaborador: Colaborador) =>
-                      colaborador.nomePapel
-                  )
-                  .filter(
-                    (
-                      nomePapel: string | undefined
-                    ): nomePapel is string =>
-                      Boolean(nomePapel)
-                  )
-              )
-            ];
 
             this.aplicarFiltro();
 
@@ -329,12 +316,43 @@ export class ColaboradorComponent
   }
 
   aplicarFiltro(): void {
-    this.colaboradoresFiltrados = this.filtroPapel
-      ? this.colaboradores.filter(
-        colaborador =>
-          colaborador.nomePapel === this.filtroPapel
-      )
+    this.colaboradoresFiltrados = this.filtroPapel && this.filtroPapel.length > 0
+      ? this.colaboradores.filter(colaborador =>
+          colaborador.nomePapel && this.filtroPapel.includes(colaborador.nomePapel)
+        )
       : this.colaboradores;
+  }
+
+  removerFiltroPapel(papel: string): void {
+    const index = this.filtroPapel.indexOf(papel);
+    if (index >= 0) {
+      this.filtroPapel.splice(index, 1);
+      this.filtroPapel = [...this.filtroPapel]; // Força o angular a detectar a mudança
+      this.aplicarFiltro();
+    }
+  }
+
+  isUnidadeSelecionada(id: number): boolean {
+    const selecionados: number[] = this.formColaborador.get('idsUnidades')?.value || [];
+    return selecionados.includes(id);
+  }
+
+  onUnidadeToggle(id: number, event: Event): void {
+    const checkbox = event.target as HTMLInputElement;
+    const selecionados: number[] = [...(this.formColaborador.get('idsUnidades')?.value || [])];
+
+    if (checkbox.checked && !selecionados.includes(id)) {
+      selecionados.push(id);
+    }
+
+    if (!checkbox.checked) {
+      const index = selecionados.indexOf(id);
+      if (index !== -1) selecionados.splice(index, 1);
+    }
+
+    this.formColaborador.patchValue({ idsUnidades: selecionados });
+    this.formColaborador.get('idsUnidades')?.markAsDirty();
+    this.formColaborador.markAsDirty();
   }
 
   abrirCadastro(): void {

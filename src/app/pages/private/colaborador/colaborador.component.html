@@ -7,14 +7,22 @@
       </button>
 
       <mat-form-field appearance="outline" class="filtro-papel">
-        <mat-label>Papel de acesso</mat-label>
+        <mat-label>Papéis de acesso</mat-label>
         <mat-select
           [(ngModel)]="filtroPapel"
-          (selectionChange)="aplicarFiltro()">
-          <mat-option value="">Todos os papéis</mat-option>
-          <mat-option
-            *ngFor="let papel of papeisDisponiveis"
-            [value]="papel">
+          (selectionChange)="aplicarFiltro()"
+          multiple>
+          <mat-select-trigger>
+            <mat-chip-set>
+              <mat-chip-row *ngFor="let papel of filtroPapel" (removed)="removerFiltroPapel(papel)">
+                {{ papel }}
+                <button matChipRemove>
+                  <mat-icon>cancel</mat-icon>
+                </button>
+              </mat-chip-row>
+            </mat-chip-set>
+          </mat-select-trigger>
+          <mat-option *ngFor="let papel of papeisDisponiveis" [value]="papel">
             {{ papel }}
           </mat-option>
         </mat-select>
@@ -29,7 +37,7 @@
       [tamanhosPagina]="[5, 10, 25]"
       [mensagemVazia]="mensagemVazia"
       (acao)="executarAcao($event)" />
-    </div>
+  </div>
 </section>
 
 @if (modalAberto) {
@@ -92,7 +100,23 @@
       </div>
     </div>
 
-    <div class="form-row">
+    <div class="form-row form-row-endereco-valor">
+      <div>
+        <mat-form-field appearance="outline">
+          <mat-label>Endereço</mat-label>
+          <input
+            matInput
+            type="text"
+            formControlName="endereco"
+            (blur)="verificarErros()"
+            minlength="5"
+            maxlength="150" />
+        </mat-form-field>
+        <span class="error-text" *ngIf="erros['endereco']">
+          {{ erros['endereco'] }}
+        </span>
+      </div>
+
       <div>
         <mat-form-field appearance="outline">
           <mat-label>Telefone</mat-label>
@@ -110,57 +134,40 @@
           {{ erros['telefone'] }}
         </span>
       </div>
-
-      <div>
-        <mat-form-field appearance="outline">
-          <mat-label>Endereco</mat-label>
-          <input
-            matInput
-            type="text"
-            formControlName="endereco"
-            (blur)="verificarErros()"
-            minlength="5"
-            maxlength="150" />
-        </mat-form-field>
-        <span class="error-text" *ngIf="erros['endereco']">
-          {{ erros['endereco'] }}
-        </span>
-      </div>
     </div>
 
-    <div class="form-row">
-      <div>
-        <mat-form-field appearance="outline">
-          <mat-label>Papel de acesso</mat-label>
-          <mat-select
-            formControlName="idPapel"
-            (selectionChange)="verificarErros()"
-            (blur)="verificarErros()">
-            <mat-option
-              *ngFor="let papel of papeis"
-              [value]="papel.id">
-              {{ obterNomePapel(papel) }}
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
-        <span class="error-text" *ngIf="erros['idPapel']">
-          {{ erros['idPapel'] }}
-        </span>
-      </div>
+    <mat-form-field appearance="outline">
+      <mat-label>Papel de acesso</mat-label>
+      <mat-select
+        formControlName="idPapel"
+        (selectionChange)="verificarErros()"
+        (blur)="verificarErros()">
+        <mat-option
+          *ngFor="let papel of papeis"
+          [value]="papel.id">
+          {{ obterNomePapel(papel) }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+    <span class="error-text" *ngIf="erros['idPapel']">
+      {{ erros['idPapel'] }}
+    </span>
 
-      <div>
-        <mat-form-field appearance="outline">
-          <mat-label>Unidades</mat-label>
-          <mat-select formControlName="idsUnidades" multiple (blur)="verificarErros()">
-            <mat-option *ngFor="let unidade of unidadesDisponiveis" [value]="unidade.id">
-              {{ unidade.nome }}
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
-        <span class="error-text" *ngIf="erros['idsUnidades']">
-          {{ erros['idsUnidades'] }}
-        </span>
+    <div class="form-group">
+      <div class="unidades-box">
+        <label id="unidade-header">Unidades vinculadas</label>
+        <div *ngIf="unidadesDisponiveis.length === 0" class="sem-unidades">
+          Nenhuma unidade disponível
+        </div>
+
+        <label *ngFor="let u of unidadesDisponiveis" class="unidade-item">
+          <input type="checkbox" [checked]="isUnidadeSelecionada(u.id)" (change)="onUnidadeToggle(u.id, $event)" />
+          <span>{{ u.nome }}</span>
+        </label>
       </div>
+      <span class="error-text" *ngIf="erros['idsUnidades']">
+        {{ erros['idsUnidades'] }}
+      </span>
     </div>
 
     @if (!modoEdicao) {
