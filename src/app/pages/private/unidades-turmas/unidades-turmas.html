@@ -2,299 +2,448 @@
   <h1>Unidades e Turmas</h1>
   <div class="conteudo">
     <div class="abas-container">
-      <button type="button" class="aba-btn" [class.ativa]="abaAtiva === 'turmas'" (click)="abaAtiva = 'turmas'">
+      <button
+        type="button"
+        class="aba-btn"
+        [class.ativa]="abaAtiva === 'turmas'"
+        (click)="abaAtiva = 'turmas'"
+      >
         Turmas
       </button>
-      <button type="button" class="aba-btn" [class.ativa]="abaAtiva === 'unidades'" (click)="abaAtiva = 'unidades'">
+      <button
+        type="button"
+        class="aba-btn"
+        [class.ativa]="abaAtiva === 'unidades'"
+        (click)="abaAtiva = 'unidades'"
+      >
         Unidades
       </button>
     </div>
 
     @if (abaAtiva === 'unidades') {
-    <div class="acoes-unidades">
-      <button type="button" class="btn-primary" (click)="abrirCadastro()">
-        Nova unidade
-      </button>
-    </div>
+      <div class="acoes-unidades">
+        <button type="button" class="btn-primary" (click)="abrirCadastro()">Nova unidade</button>
+      </div>
 
-    <app-tabela-layout
-      [colunas]="colunas"
-      [dados]="unidades"
-      [acoes]="acoesTabela"
-      [tamanhoPagina]="10"
-      [tamanhosPagina]="[5, 10, 25]"
-      [mensagemVazia]="mensagemVazia"
-      (acao)="executarAcao($event)" />
+      <app-tabela-layout
+        [colunas]="colunas"
+        [dados]="unidades"
+        [acoes]="acoesTabela"
+        [tamanhoPagina]="10"
+        [tamanhosPagina]="[5, 10, 25]"
+        [mensagemVazia]="mensagemVazia"
+        (acao)="executarAcao($event)"
+      />
+    }
+
+    @if (abaAtiva === 'turmas') {
+      <div class="acoes-unidades">
+        <button type="button" class="btn-primary" (click)="abrirCadastroTurma()">Nova turma</button>
+
+        <div class="filtro-unidade">
+          <label for="filtroUnidade">Unidade</label>
+          <select id="filtroUnidade" (change)="onFiltroUnidadeChange($event)">
+            <option value="" [selected]="unidadeFiltroId === null">Todas as unidades</option>
+            @for (unidade of unidades; track unidade.id) {
+              <option [value]="unidade.id" [selected]="unidadeFiltroId === unidade.id">
+                {{ unidade.nome }}
+              </option>
+            }
+          </select>
+        </div>
+      </div>
+
+      <app-tabela-layout
+        [colunas]="colunasTurmas"
+        [dados]="turmas"
+        [acoes]="acoesTabelaTurmas"
+        [tamanhoPagina]="10"
+        [tamanhosPagina]="[5, 10, 25]"
+        [mensagemVazia]="mensagemVaziaTurmas"
+        (acao)="executarAcaoTurma($event)"
+      />
     }
   </div>
 </section>
 
 @if (modalAberto) {
-<app-modal-layout
-  [class.tremer]="modalTremendo"
-  [titulo]="modoEdicao ? 'Editar unidade' : 'Cadastrar nova unidade'"
-  (closed)="fecharModal()">
+  <app-modal-layout
+    [class.tremer]="modalTremendo"
+    [titulo]="modoEdicao ? 'Editar unidade' : 'Cadastrar nova unidade'"
+    (closed)="fecharModal()"
+  >
+    <form class="form-modal" [formGroup]="formUnidade" (ngSubmit)="salvar()">
+      <mat-form-field appearance="outline">
+        <mat-label>Nome da unidade</mat-label>
+        <input matInput formControlName="nome" (blur)="verificarErros()" maxlength="100" />
+      </mat-form-field>
+      <span class="error-text" *ngIf="erros['nome']">
+        {{ erros['nome'] }}
+      </span>
 
-  <form
-    class="form-modal"
-    [formGroup]="formUnidade"
-    (ngSubmit)="salvar()">
+      <mat-form-field appearance="outline">
+        <mat-label>Endereço</mat-label>
+        <input matInput formControlName="endereco" (blur)="verificarErros()" maxlength="255" />
+      </mat-form-field>
+      <span class="error-text" *ngIf="erros['endereco']">
+        {{ erros['endereco'] }}
+      </span>
 
-    <mat-form-field appearance="outline">
-      <mat-label>Nome da unidade</mat-label>
-      <input
-        matInput
-        formControlName="nome"
-        (blur)="verificarErros()"
-        maxlength="100" />
-    </mat-form-field>
-    <span class="error-text" *ngIf="erros['nome']">
-      {{ erros['nome'] }}
-    </span>
-
-    <mat-form-field appearance="outline">
-      <mat-label>Endereço</mat-label>
-      <input
-        matInput
-        formControlName="endereco"
-        (blur)="verificarErros()"
-        maxlength="255" />
-    </mat-form-field>
-    <span class="error-text" *ngIf="erros['endereco']">
-      {{ erros['endereco'] }}
-    </span>
-
-    <div class="form-row">
-      <div>
-        <mat-form-field appearance="outline">
-          <mat-label>Telefone</mat-label>
-          <input
-            matInput
-            type="text"
-            inputmode="numeric"
-            formControlName="telefone"
-            (input)="aplicarMascaraTelefone($event)"
-            (blur)="verificarErros()"
-            minlength="14"
-            maxlength="15" />
-        </mat-form-field>
-        <span class="error-text" *ngIf="erros['telefone']">
-          {{ erros['telefone'] }}
-        </span>
-      </div>
-
-      <div>
-        <mat-form-field appearance="outline">
-          <mat-label>E-mail</mat-label>
-          <input
-            matInput
-            type="email"
-            formControlName="email"
-            (blur)="verificarErros()"
-            maxlength="100" />
-        </mat-form-field>
-        <span class="error-text" *ngIf="erros['email']">
-          {{ erros['email'] }}
-        </span>
-      </div>
-    </div>
-
-    <div class="dias-funcionamento-campo">
-      <label class="dias-funcionamento-label">Dias de funcionamento</label>
-      <div class="dias-funcionamento">
-        <label *ngFor="let dia of diasSemana">
-          <input
-            type="checkbox"
-            [checked]="diaSelecionado(dia.valor)"
-            (change)="toggleDia(dia.valor, $event)" />
-          {{ dia.label }}
-        </label>
-      </div>
-    </div>
-    <span class="error-text" *ngIf="erros['diasFuncionamento']">
-      {{ erros['diasFuncionamento'] }}
-    </span>
-
-    <div class="form-row">
-      <div>
-        <mat-form-field appearance="outline">
-          <mat-label>Horário de abertura</mat-label>
-          <input
-            matInput
-            type="time"
-            formControlName="horarioAbertura"
-            (blur)="verificarErros()" />
-        </mat-form-field>
-        <span class="error-text" *ngIf="erros['horarioAbertura']">
-          {{ erros['horarioAbertura'] }}
-        </span>
-      </div>
-
-      <div>
-        <mat-form-field appearance="outline">
-          <mat-label>Horário de fechamento</mat-label>
-          <input
-            matInput
-            type="time"
-            formControlName="horarioFechamento"
-            (blur)="verificarErros()" />
-        </mat-form-field>
-        <span class="error-text" *ngIf="erros['horarioFechamento']">
-          {{ erros['horarioFechamento'] }}
-        </span>
-      </div>
-    </div>
-
-    <div class="form-row">
-      <div>
-        <mat-form-field appearance="outline">
-          <mat-label>Idade mínima</mat-label>
-          <input
-            matInput
-            type="number"
-            formControlName="idadeMin"
-            (blur)="verificarErros()"
-            min="0" />
-        </mat-form-field>
-        <span class="error-text" *ngIf="erros['idadeMin']">
-          {{ erros['idadeMin'] }}
-        </span>
-      </div>
-
-      <div>
-        <mat-form-field appearance="outline">
-          <mat-label>Idade máxima</mat-label>
-          <input
-            matInput
-            type="number"
-            formControlName="idadeMax"
-            (blur)="verificarErros()"
-            min="0" />
-        </mat-form-field>
-        <span class="error-text" *ngIf="erros['idadeMax']">
-          {{ erros['idadeMax'] }}
-        </span>
-      </div>
-    </div>
-
-    <div class="campo-cor">
-      <label>Cor de identificação</label>
-      <div class="campo-cor-linha">
-        <input type="color" formControlName="corHex" />
-        <span class="cor-hex-valor">{{ formUnidade.value.corHex }}</span>
-      </div>
-    </div>
-
-    <div class="form-group">
-      <input
-        #inputImagem
-        id="imagemUnidade"
-        type="file"
-        class="input-arquivo-oculto"
-        accept=".jpg,.jpeg,.png,.webp"
-        (change)="onImagemSelecionada($event)" />
-
-      <div class="upload-arquivo" [class.upload-arquivo-erro]="erros['imagem']" (click)="inputImagem.click()">
-        <span class="material-symbols-outlined upload-arquivo-icone">
-          upload_file
-        </span>
-
-        <div class="upload-arquivo-texto">
-          <strong>
-            {{
-              nomeArquivoSelecionado
-                ? nomeArquivoSelecionado
-                : 'Selecione uma imagem para a unidade'
-            }}
-          </strong>
-          <span>PNG, JPEG, JPG ou WEBP</span>
+      <div class="form-row">
+        <div>
+          <mat-form-field appearance="outline">
+            <mat-label>Telefone</mat-label>
+            <input
+              matInput
+              type="text"
+              inputmode="numeric"
+              formControlName="telefone"
+              (input)="aplicarMascaraTelefone($event)"
+              (blur)="verificarErros()"
+              minlength="14"
+              maxlength="15"
+            />
+          </mat-form-field>
+          <span class="error-text" *ngIf="erros['telefone']">
+            {{ erros['telefone'] }}
+          </span>
         </div>
 
-        <span class="upload-arquivo-botao">
-          Procurar
-        </span>
+        <div>
+          <mat-form-field appearance="outline">
+            <mat-label>E-mail</mat-label>
+            <input
+              matInput
+              type="email"
+              formControlName="email"
+              (blur)="verificarErros()"
+              maxlength="100"
+            />
+          </mat-form-field>
+          <span class="error-text" *ngIf="erros['email']">
+            {{ erros['email'] }}
+          </span>
+        </div>
       </div>
-    </div>
 
-    <span class="error-text" *ngIf="erros['imagem']">{{ erros['imagem'] }}</span>
+      <div class="dias-funcionamento-campo">
+        <label class="dias-funcionamento-label">Dias de funcionamento</label>
+        <div class="dias-funcionamento">
+          <label *ngFor="let dia of diasSemana">
+            <input
+              type="checkbox"
+              [checked]="diaSelecionado(dia.valor)"
+              (change)="toggleDia(dia.valor, $event)"
+            />
+            {{ dia.label }}
+          </label>
+        </div>
+      </div>
+      <span class="error-text" *ngIf="erros['diasFuncionamento']">
+        {{ erros['diasFuncionamento'] }}
+      </span>
 
-    @if (imagemPreview) {
-    <div class="image-preview">
-      <img [src]="imagemPreview" [alt]="formUnidade.get('nome')?.value || 'Imagem da unidade'">
-    </div>
-    }
+      <div class="form-row">
+        <div>
+          <mat-form-field appearance="outline">
+            <mat-label>Horário de abertura</mat-label>
+            <input
+              matInput
+              type="time"
+              formControlName="horarioAbertura"
+              (blur)="verificarErros()"
+            />
+          </mat-form-field>
+          <span class="error-text" *ngIf="erros['horarioAbertura']">
+            {{ erros['horarioAbertura'] }}
+          </span>
+        </div>
 
-    <div class="acoes-modal">
-      <button
-        type="button"
-        class="btn-cancelar"
-        [disabled]="isLoading"
-        (click)="fecharModal()">
-        Cancelar
-      </button>
+        <div>
+          <mat-form-field appearance="outline">
+            <mat-label>Horário de fechamento</mat-label>
+            <input
+              matInput
+              type="time"
+              formControlName="horarioFechamento"
+              (blur)="verificarErros()"
+            />
+          </mat-form-field>
+          <span class="error-text" *ngIf="erros['horarioFechamento']">
+            {{ erros['horarioFechamento'] }}
+          </span>
+        </div>
+      </div>
 
-      <button
-        type="submit"
-        class="btn-primary"
-        [disabled]="isLoading || (modoEdicao && !temAlteracoes)">
-        <span
-          *ngIf="isLoading"
-          class="spinner"
-          aria-hidden="true">
-        </span>
-        <span>
-          {{ isLoading ? 'Salvando...' : 'Salvar' }}
-        </span>
-      </button>
-    </div>
-  </form>
-</app-modal-layout>
+      <div class="form-row">
+        <div>
+          <mat-form-field appearance="outline">
+            <mat-label>Idade mínima</mat-label>
+            <input
+              matInput
+              type="number"
+              formControlName="idadeMin"
+              (blur)="verificarErros()"
+              min="0"
+            />
+          </mat-form-field>
+          <span class="error-text" *ngIf="erros['idadeMin']">
+            {{ erros['idadeMin'] }}
+          </span>
+        </div>
+
+        <div>
+          <mat-form-field appearance="outline">
+            <mat-label>Idade máxima</mat-label>
+            <input
+              matInput
+              type="number"
+              formControlName="idadeMax"
+              (blur)="verificarErros()"
+              min="0"
+            />
+          </mat-form-field>
+          <span class="error-text" *ngIf="erros['idadeMax']">
+            {{ erros['idadeMax'] }}
+          </span>
+        </div>
+      </div>
+
+      <div class="campo-cor">
+        <label>Cor de identificação</label>
+        <div class="campo-cor-linha">
+          <input type="color" formControlName="corHex" />
+          <span class="cor-hex-valor">{{ formUnidade.value.corHex }}</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <input
+          #inputImagem
+          id="imagemUnidade"
+          type="file"
+          class="input-arquivo-oculto"
+          accept=".jpg,.jpeg,.png,.webp"
+          (change)="onImagemSelecionada($event)"
+        />
+
+        <div
+          class="upload-arquivo"
+          [class.upload-arquivo-erro]="erros['imagem']"
+          (click)="inputImagem.click()"
+        >
+          <span class="material-symbols-outlined upload-arquivo-icone"> upload_file </span>
+
+          <div class="upload-arquivo-texto">
+            <strong>
+              {{
+                nomeArquivoSelecionado
+                  ? nomeArquivoSelecionado
+                  : 'Selecione uma imagem para a unidade'
+              }}
+            </strong>
+            <span>PNG, JPEG, JPG ou WEBP</span>
+          </div>
+
+          <span class="upload-arquivo-botao"> Procurar </span>
+        </div>
+      </div>
+
+      <span class="error-text" *ngIf="erros['imagem']">{{ erros['imagem'] }}</span>
+
+      @if (imagemPreview) {
+        <div class="image-preview">
+          <img
+            [src]="imagemPreview"
+            [alt]="formUnidade.get('nome')?.value || 'Imagem da unidade'"
+          />
+        </div>
+      }
+
+      <div class="acoes-modal">
+        <button type="button" class="btn-cancelar" [disabled]="isLoading" (click)="fecharModal()">
+          Cancelar
+        </button>
+
+        <button
+          type="submit"
+          class="btn-primary"
+          [disabled]="isLoading || (modoEdicao && !temAlteracoes)"
+        >
+          <span *ngIf="isLoading" class="spinner" aria-hidden="true"> </span>
+          <span>
+            {{ isLoading ? 'Salvando...' : 'Salvar' }}
+          </span>
+        </button>
+      </div>
+    </form>
+  </app-modal-layout>
+}
+
+@if (modalTurmaAberto) {
+  <app-modal-layout
+    [class.tremer]="modalTurmaTremendo"
+    [titulo]="modoEdicaoTurma ? 'Editar turma' : 'Cadastrar nova turma'"
+    (closed)="fecharModalTurma()"
+  >
+    <form class="form-modal" [formGroup]="formTurma" (ngSubmit)="salvarTurma()">
+      <mat-form-field appearance="outline">
+        <mat-label>Período</mat-label>
+        <select matNativeControl formControlName="periodo" (blur)="verificarErrosTurma()">
+          <option value="" disabled>Selecione um período</option>
+          @for (periodo of periodos; track periodo.valor) {
+            <option [value]="periodo.valor">{{ periodo.label }}</option>
+          }
+        </select>
+      </mat-form-field>
+      <span class="error-text" *ngIf="errosTurma['periodo']">
+        {{ errosTurma['periodo'] }}
+      </span>
+
+      <div class="form-row">
+        <div>
+          <mat-form-field appearance="outline">
+            <mat-label>Horário de início</mat-label>
+            <input
+              matInput
+              type="time"
+              formControlName="horaInicio"
+              (blur)="verificarErrosTurma()"
+            />
+          </mat-form-field>
+          <span class="error-text" *ngIf="errosTurma['horaInicio']">
+            {{ errosTurma['horaInicio'] }}
+          </span>
+        </div>
+
+        <div>
+          <mat-form-field appearance="outline">
+            <mat-label>Horário de término</mat-label>
+            <input matInput type="time" formControlName="horaFim" (blur)="verificarErrosTurma()" />
+          </mat-form-field>
+          <span class="error-text" *ngIf="errosTurma['horaFim']">
+            {{ errosTurma['horaFim'] }}
+          </span>
+        </div>
+      </div>
+
+      <div class="campo-unidade">
+        <mat-form-field appearance="outline">
+          <mat-label>Unidade</mat-label>
+
+          @if (carregandoUnidades) {
+            <select matNativeControl disabled>
+              <option>Carregando unidades...</option>
+            </select>
+          } @else {
+            <select matNativeControl formControlName="unidadeId" (blur)="verificarErrosTurma()">
+              <option [ngValue]="null" disabled>Selecione uma unidade</option>
+              @for (unidade of unidades; track unidade.id) {
+                <option [ngValue]="unidade.id">{{ unidade.nome }}</option>
+              }
+            </select>
+          }
+        </mat-form-field>
+
+        @if (carregandoUnidades) {
+          <span class="spinner" aria-hidden="true"></span>
+        }
+      </div>
+
+      @if (erroCarregarUnidades) {
+        <div class="alerta-unidade">
+          <span class="error-text">Não foi possível carregar as unidades.</span>
+          <button type="button" class="btn-cancelar" (click)="carregarUnidades()">
+            Tentar novamente
+          </button>
+        </div>
+      }
+
+      @if (!carregandoUnidades && !erroCarregarUnidades && unidades.length === 0) {
+        <div class="alerta-unidade">
+          <span class="error-text">É preciso cadastrar uma unidade antes de criar uma turma.</span>
+        </div>
+      }
+
+      <span class="error-text" *ngIf="errosTurma['unidadeId']">
+        {{ errosTurma['unidadeId'] }}
+      </span>
+
+      <div class="acoes-modal">
+        <button
+          type="button"
+          class="btn-cancelar"
+          [disabled]="isLoadingTurma"
+          (click)="fecharModalTurma()"
+        >
+          Cancelar
+        </button>
+
+        <button
+          type="submit"
+          class="btn-primary"
+          [disabled]="
+            isLoadingTurma ||
+            formTurma.invalid ||
+            unidades.length === 0 ||
+            (modoEdicaoTurma && !temAlteracoesTurma)
+          "
+        >
+          <span *ngIf="isLoadingTurma" class="spinner" aria-hidden="true"> </span>
+          <span>
+            {{ isLoadingTurma ? 'Salvando...' : 'Salvar' }}
+          </span>
+        </button>
+      </div>
+    </form>
+  </app-modal-layout>
 }
 
 @if (modalVisualizacaoAberto) {
-<app-modal-layout titulo="Detalhes da unidade" (closed)="fecharVisualizacao()">
-  <div class="modal-body-preview" *ngIf="unidadeVisualizacao">
-    <div class="preview-capa" *ngIf="tratarImagem(unidadeVisualizacao.imagem)">
-      <img [src]="tratarImagem(unidadeVisualizacao.imagem)" alt="Imagem da unidade" />
-    </div>
-
-    <div class="preview-info">
-      <div class="tag-cor" [style.background]="unidadeVisualizacao.corHex || corPadrao">
-        <span class="material-symbols-outlined">location_on</span>
+  <app-modal-layout titulo="Detalhes da unidade" (closed)="fecharVisualizacao()">
+    <div class="modal-body-preview" *ngIf="unidadeVisualizacao">
+      <div class="preview-capa" *ngIf="tratarImagem(unidadeVisualizacao.imagem)">
+        <img [src]="tratarImagem(unidadeVisualizacao.imagem)" alt="Imagem da unidade" />
       </div>
 
-      <h2>{{ unidadeVisualizacao.nome }}</h2>
+      <div class="preview-info">
+        <div class="tag-cor" [style.background]="unidadeVisualizacao.corHex || corPadrao">
+          <span class="material-symbols-outlined">location_on</span>
+        </div>
 
-      <p class="preview-linha">
-        <span class="material-symbols-outlined">location_on</span>
-        {{ unidadeVisualizacao.endereco }}
-      </p>
+        <h2>{{ unidadeVisualizacao.nome }}</h2>
 
-      <p class="preview-linha">
-        <span class="material-symbols-outlined">call</span>
-        {{ unidadeVisualizacao.telefone }}
-      </p>
+        <p class="preview-linha">
+          <span class="material-symbols-outlined">location_on</span>
+          {{ unidadeVisualizacao.endereco }}
+        </p>
 
-      <p class="preview-linha">
-        <span class="material-symbols-outlined">mail</span>
-        {{ unidadeVisualizacao.email }}
-      </p>
+        <p class="preview-linha">
+          <span class="material-symbols-outlined">call</span>
+          {{ unidadeVisualizacao.telefone }}
+        </p>
 
-      <p class="preview-linha">
-        <span class="material-symbols-outlined">event</span>
-        {{ formatarDiasFuncionamento(unidadeVisualizacao.diasFuncionamento) }}
-      </p>
+        <p class="preview-linha">
+          <span class="material-symbols-outlined">mail</span>
+          {{ unidadeVisualizacao.email }}
+        </p>
 
-      <p class="preview-linha">
-        <span class="material-symbols-outlined">schedule</span>
-        {{ formatarHorario(unidadeVisualizacao.horarioAbertura) }} às {{ formatarHorario(unidadeVisualizacao.horarioFechamento) }}
-      </p>
+        <p class="preview-linha">
+          <span class="material-symbols-outlined">event</span>
+          {{ formatarDiasFuncionamento(unidadeVisualizacao.diasFuncionamento) }}
+        </p>
 
-      <p class="preview-linha">
-        <span class="material-symbols-outlined">groups</span>
-        Atende de {{ unidadeVisualizacao.idadeMin }} a {{ unidadeVisualizacao.idadeMax }} anos
-      </p>
+        <p class="preview-linha">
+          <span class="material-symbols-outlined">schedule</span>
+          {{ formatarHorario(unidadeVisualizacao.horarioAbertura) }} às
+          {{ formatarHorario(unidadeVisualizacao.horarioFechamento) }}
+        </p>
+
+        <p class="preview-linha">
+          <span class="material-symbols-outlined">groups</span>
+          Atende de {{ unidadeVisualizacao.idadeMin }} a {{ unidadeVisualizacao.idadeMax }} anos
+        </p>
+      </div>
     </div>
-  </div>
-</app-modal-layout>
+  </app-modal-layout>
 }
