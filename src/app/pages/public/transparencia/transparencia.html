@@ -1,0 +1,61 @@
+<app-public-navbar></app-public-navbar>
+
+<main class="container">
+  <header class="page-header">
+    <h1>Transparência</h1>
+    <p>Documentos institucionais, planos de trabalho, atas e relatórios financeiros da organização.</p>
+  </header>
+
+  @if (isLoading()) {
+    <div class="state-box" role="status" aria-live="polite">
+      <span class="spinner" aria-hidden="true"></span>
+      <p>Carregando documentos...</p>
+    </div>
+  } @else if (errorMessage()) {
+    <div class="state-box state-error" role="alert">
+      <p>{{ errorMessage() }}</p>
+      <button type="button" class="btn-retry" (click)="carregar()">Tentar novamente</button>
+    </div>
+  } @else if (secoes().length === 0) {
+    <div class="state-box">
+      <p>Nenhum documento de transparência foi publicado até o momento.</p>
+    </div>
+  } @else {
+    <div class="secoes">
+      @for (secao of secoes(); track secao.id) {
+        <section class="secao" aria-labelledby="secao-titulo-{{ secao.id }}">
+          <h2 [id]="'secao-titulo-' + secao.id">{{ secao.titulo }}</h2>
+          @if (secao.conteudo) {
+            <p class="secao-descricao">{{ secao.conteudo }}</p>
+          }
+
+          @if (secao.documentos.length === 0) {
+            <p class="secao-vazia">Nenhum documento publicado nesta categoria ainda.</p>
+          } @else {
+            <ul class="documentos">
+              @for (documento of secao.documentos; track documento.id) {
+                <li class="documento-card">
+                  <span class="documento-icone" aria-hidden="true">📄</span>
+                  <span class="documento-titulo">{{ documento.titulo }}</span>
+                  <div class="documento-acoes">
+                    <a
+                      [href]="urlVisualizar(documento)"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="btn-acao"
+                    >
+                      Visualizar
+                    </a>
+                    <a [href]="urlBaixar(documento)" class="btn-acao btn-acao-secundario">
+                      Baixar
+                    </a>
+                  </div>
+                </li>
+              }
+            </ul>
+          }
+        </section>
+      }
+    </div>
+  }
+</main>
