@@ -24,11 +24,12 @@
       <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
         <div class="field">
           <input
-            id="email"
-            type="email"
-            formControlName="email"
-            placeholder="E-mail"
-            autocomplete="email"
+            id="identifier"
+            type="text"
+            formControlName="identifier"
+            placeholder="E-mail ou CPF"
+            autocomplete="username"
+            (input)="onIdentifierInput($event)"
           />
           <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <path
@@ -37,8 +38,8 @@
             />
           </svg>
         </div>
-        @if (form.controls.email.invalid && form.controls.email.touched) {
-          <p class="field-error">Informe um e-mail válido.</p>
+        @if (form.controls.identifier.invalid && form.controls.identifier.touched) {
+          <p class="field-error">Informe um e-mail ou CPF válido.</p>
         }
 
         <div class="field">

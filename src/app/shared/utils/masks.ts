@@ -1,3 +1,8 @@
+/** True once the value contains a letter or `@`, i.e. it can no longer be a CPF-in-progress. */
+export function pareceEmail(valor: string | null | undefined): boolean {
+  return /[a-zA-Z@]/.test(String(valor ?? ''));
+}
+
 export function formatarCpf(valor: string | null | undefined): string {
   if (!valor) return '';
   let v = String(valor).replace(/\D/g, '');
