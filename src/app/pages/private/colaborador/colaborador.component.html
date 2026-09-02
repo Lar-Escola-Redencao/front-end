@@ -128,22 +128,40 @@
       </div>
     </div>
 
-    <mat-form-field appearance="outline">
-      <mat-label>Papel de acesso</mat-label>
-      <mat-select
-        formControlName="idPapel"
-        (selectionChange)="verificarErros()"
-        (blur)="verificarErros()">
-        <mat-option
-          *ngFor="let papel of papeis"
-          [value]="papel.id">
-          {{ obterNomePapel(papel) }}
-        </mat-option>
-      </mat-select>
-    </mat-form-field>
-    <span class="error-text" *ngIf="erros['idPapel']">
-      {{ erros['idPapel'] }}
-    </span>
+    <div class="form-row">
+      <div>
+        <mat-form-field appearance="outline">
+          <mat-label>Papel de acesso</mat-label>
+          <mat-select
+            formControlName="idPapel"
+            (selectionChange)="verificarErros()"
+            (blur)="verificarErros()">
+            <mat-option
+              *ngFor="let papel of papeis"
+              [value]="papel.id">
+              {{ obterNomePapel(papel) }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+        <span class="error-text" *ngIf="erros['idPapel']">
+          {{ erros['idPapel'] }}
+        </span>
+      </div>
+
+      <div>
+        <mat-form-field appearance="outline">
+          <mat-label>Unidades</mat-label>
+          <mat-select formControlName="idsUnidades" multiple (blur)="verificarErros()">
+            <mat-option *ngFor="let unidade of unidadesDisponiveis" [value]="unidade.id">
+              {{ unidade.nome }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+        <span class="error-text" *ngIf="erros['idsUnidades']">
+          {{ erros['idsUnidades'] }}
+        </span>
+      </div>
+    </div>
 
     @if (!modoEdicao) {
     <div class="form-row">

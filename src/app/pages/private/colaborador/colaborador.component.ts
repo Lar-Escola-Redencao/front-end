@@ -31,6 +31,7 @@ import { ComponentComAlteracoesNaoSalvas } from 'src/app/shared/guards/can-deact
 import { AtualizarColaboradorDTO, Colaborador, CriarColaboradorDTO } from 'src/app/shared/models/colaborador.model';
 import { ColaboradorService } from 'src/app/shared/services/colaborador/colaborador.service';
 import { PapelService } from 'src/app/shared/services/colaborador/papel.service';
+import { UnidadeService } from 'src/app/shared/services/colaborador/unidade.service';
 import { Alertas } from 'src/app/shared/utils/alerts';
 import { mapearErrosFormulario } from 'src/app/shared/utils/form-validations';
 import {
@@ -42,6 +43,11 @@ type Papel = {
   id: number;
   nome?: string;
   nomePapel?: string;
+};
+
+type Unidade = {
+  id: number;
+  nome: string;
 };
 
 @Component({
@@ -79,7 +85,7 @@ export class ColaboradorComponent
   isLoading = false;
   modalTremendo = false;
   valoresOriginaisDoFormulario: any = null;
-
+  unidadesDisponiveis: Unidade[] = [];
   private readonly senhaRegex =
     /^(?=.*[A-Z])(?=.*[0-9]).{6,}$/;
 
@@ -139,6 +145,7 @@ export class ColaboradorComponent
   constructor(
     private colaboradorService: ColaboradorService,
     private papelService: PapelService,
+    private unidadeService: UnidadeService,
     private fb: FormBuilder,
     private cdr: ChangeDetectorRef,
     private toastr: ToastrService,
@@ -191,12 +198,17 @@ export class ColaboradorComponent
       idPapel: [
         '',
         Validators.required
+      ],
+      idsUnidades: [
+        [],
+        Validators.required
       ]
     });
   }
 
   ngOnInit(): void {
     this.carregarPapeis();
+    this.carregarUnidades();
     this.carregarColaboradores();
 
     this.formColaborador
@@ -237,6 +249,22 @@ export class ColaboradorComponent
         error: (err: any) => {
           console.error(
             'Erro ao carregar papéis da API:',
+            err
+          );
+        }
+      });
+  }
+
+  carregarUnidades(): void {
+    this.unidadeService
+      .listarTodos()
+      .subscribe({
+        next: (dados: Unidade[]) => {
+          this.unidadesDisponiveis = dados;
+        },
+        error: (err: any) => {
+          console.error(
+            'Erro ao carregar unidades da API:',
             err
           );
         }
@@ -341,7 +369,8 @@ export class ColaboradorComponent
       cpf: '',
       endereco: '',
       telefone: '',
-      idPapel: ''
+      idPapel: '',
+      idsUnidades: []
     });
 
     this.atualizarValidadoresSenha();
@@ -374,7 +403,8 @@ export class ColaboradorComponent
       cpf: formatarCpf(colaborador.cpf),
       endereco: colaborador.endereco,
       telefone: formatarTelefone(colaborador.telefone),
-      idPapel: colaborador.idPapel
+      idPapel: colaborador.idPapel,
+      idsUnidades: colaborador.unidades?.map(u => u.id) || []
     });
 
     this.atualizarValidadoresSenha();
@@ -698,7 +728,8 @@ export class ColaboradorComponent
       cpf: '',
       endereco: '',
       telefone: '',
-      idPapel: ''
+      idPapel: '',
+      idsUnidades: []
     });
 
     this.formColaborador.markAsPristine();
