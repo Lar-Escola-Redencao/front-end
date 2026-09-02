@@ -49,11 +49,6 @@
   color: var(--primary-color);
 }
 
-.nav-btn:disabled {
-  opacity: 0.2;
-  cursor: default;
-}
-
 .nav-btn.hidden {
   visibility: hidden;
   opacity: 0;
@@ -66,7 +61,12 @@
 
 .carousel-track {
   display: flex;
-  transition: transform 0.4s ease-in-out;
+  transition: transform 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.carousel-track.no-transition,
+.carousel-track.no-transition .parceiro-card {
+  transition: none !important;
 }
 
 .parceiro-card {
@@ -99,6 +99,14 @@
   color: var(--input-color);
   text-align: center;
   font-weight: 500;
+}
+
+.mensagem-vazia {
+  text-align: center;
+  font-family: var(--fonte-texto);
+  color: var(--input-color);
+  font-size: 1.1rem;
+  margin-top: 32px;
 }
 
 @media (max-width: 900px) {

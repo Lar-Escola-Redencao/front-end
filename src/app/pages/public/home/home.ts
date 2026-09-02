@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { PublicNavbar } from '@components/public-navbar/public-navbar';
-import { PublicDiretoriaComponent } from '../../../components/public-diretoria/public-diretoria';
-import { PublicParceirosComponent } from '../../../components/public-parceiros/public-parceiros';
+import { PublicDiretoriaComponent } from './public-diretoria/public-diretoria';
+import { PublicParceirosComponent } from './public-parceiros/public-parceiros';
 
 @Component({
   selector: 'app-home',
