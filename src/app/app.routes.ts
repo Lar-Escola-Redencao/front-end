@@ -33,6 +33,11 @@ export const routes: Routes = [
         canActivate: [guestGuard],
         loadComponent: () => import('./pages/public/login/login').then((m) => m.Login),
     },
+    {
+        path: 'transparencia',
+        loadComponent: () =>
+            import('./pages/public/transparencia/transparencia').then((m) => m.Transparencia),
+    },
     { path: '**', redirectTo: 'login' }
 ];
 
