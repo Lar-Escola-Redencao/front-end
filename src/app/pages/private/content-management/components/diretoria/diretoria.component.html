@@ -9,10 +9,23 @@
     [colunas]="colunas"
     [dados]="diretores"
     [acoes]="acoesTabela"
-    [tamanhoPagina]="10"
-    [tamanhosPagina]="[5, 10, 25]"
+    [carregando]="carregandoLista"
+    [erro]="erroLista"
+    [ordenacao]="ordenacao"
     mensagemVazia="Nenhum membro da diretoria cadastrado."
     (acao)="executarAcao($event)"
+    (ordenar)="ordenarPor($event)"
+    (tentarNovamente)="carregarDiretores()"
+  />
+
+  <app-paginacao
+    [paginaAtual]="pagina"
+    [totalPaginas]="totalPaginas"
+    [totalElementos]="totalElementos"
+    [tamanho]="tamanho"
+    [carregando]="carregandoLista"
+    (paginaChange)="irParaPagina($event)"
+    (tamanhoChange)="mudarTamanhoPagina($event)"
   />
 </section>
 
