@@ -5,7 +5,11 @@
       <h2>Composição da diretoria</h2>
     </div>
 
-    <div class="carousel-container" *ngIf="diretoresOriginal.length > 0; else semDiretoria">
+    <div
+      class="carousel-container"
+      *ngIf="diretoresOriginal.length > 0; else semDiretoria"
+      (mouseenter)="stopAutoPlay()"
+      (mouseleave)="startAutoPlay()">
       <button
         class="nav-btn prev-btn"
         (click)="prev()"

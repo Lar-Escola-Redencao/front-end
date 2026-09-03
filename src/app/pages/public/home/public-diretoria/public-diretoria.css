@@ -31,7 +31,7 @@
 .nav-btn {
   background: transparent;
   border: none;
-  color: #ccc;
+  color: var(--preto);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -137,7 +137,6 @@
 @media (min-width: 900px) {
   .center-card {
     transform: scale(1.12);
-    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.12);
     z-index: 2;
     position: relative;
     filter: blur(0);

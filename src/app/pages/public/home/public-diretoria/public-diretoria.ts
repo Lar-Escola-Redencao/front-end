@@ -1,4 +1,4 @@
-import { Component, OnInit, HostListener, inject, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Diretoria } from 'src/app/shared/models/diretoria.model';
 import { PublicContentService } from 'src/app/shared/services/public-content/public-content.service';
@@ -10,7 +10,7 @@ import { PublicContentService } from 'src/app/shared/services/public-content/pub
   templateUrl: './public-diretoria.html',
   styleUrl: './public-diretoria.css'
 })
-export class PublicDiretoriaComponent implements OnInit {
+export class PublicDiretoriaComponent implements OnInit, OnDestroy {
   private readonly publicContentService = inject(PublicContentService);
   private readonly cdr = inject(ChangeDetectorRef);
   
@@ -23,6 +23,7 @@ export class PublicDiretoriaComponent implements OnInit {
 
   isTransitioning = true;
   isAnimating = false;
+  private autoPlayInterval: any;
 
   ngOnInit(): void {
     this.atualizarItemsPerPage();
@@ -38,12 +39,17 @@ export class PublicDiretoriaComponent implements OnInit {
         }
         this.carregando = false;
         this.cdr.detectChanges();
+        this.startAutoPlay();
       },
       error: () => {
         this.carregando = false;
         this.cdr.detectChanges();
       }
     });
+  }
+
+  ngOnDestroy(): void {
+    this.stopAutoPlay();
   }
 
   @HostListener('window:resize')
@@ -74,6 +80,22 @@ export class PublicDiretoriaComponent implements OnInit {
 
   private getFallbackImage(): string {
     return 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23cccccc"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>';
+  }
+
+  startAutoPlay(): void {
+    this.stopAutoPlay();
+    if (this.diretoresOriginal.length > 1) {
+      this.autoPlayInterval = setInterval(() => {
+        this.next();
+        this.cdr.detectChanges();
+      }, 3000);
+    }
+  }
+
+  stopAutoPlay(): void {
+    if (this.autoPlayInterval) {
+      clearInterval(this.autoPlayInterval);
+    }
   }
 
   next(): void {
