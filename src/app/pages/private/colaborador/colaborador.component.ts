@@ -17,6 +17,8 @@ import {
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { MatChipsModule } from '@angular/material/chips';
+import { MatIconModule } from '@angular/material/icon';
 
 import { ToastrService } from 'ngx-toastr';
 
@@ -31,6 +33,7 @@ import { ComponentComAlteracoesNaoSalvas } from 'src/app/shared/guards/can-deact
 import { AtualizarColaboradorDTO, Colaborador, CriarColaboradorDTO } from 'src/app/shared/models/colaborador.model';
 import { ColaboradorService } from 'src/app/shared/services/colaborador/colaborador.service';
 import { PapelService } from 'src/app/shared/services/colaborador/papel.service';
+import { UnidadeService } from 'src/app/shared/services/colaborador/unidade.service';
 import { Alertas } from 'src/app/shared/utils/alerts';
 import { mapearErrosFormulario } from 'src/app/shared/utils/form-validations';
 import {
@@ -44,6 +47,11 @@ type Papel = {
   nomePapel?: string;
 };
 
+type Unidade = {
+  id: number;
+  nome: string;
+};
+
 @Component({
   selector: 'app-colaborador',
   standalone: true,
@@ -55,7 +63,9 @@ type Papel = {
     TabelaLayout,
     MatFormFieldModule,
     MatInputModule,
-    MatSelectModule
+    MatSelectModule,
+    MatChipsModule,
+    MatIconModule
   ],
   templateUrl: './colaborador.component.html',
   styleUrls: ['./colaborador.component.css']
@@ -67,7 +77,8 @@ export class ColaboradorComponent
   colaboradoresFiltrados: Colaborador[] = [];
   papeisDisponiveis: string[] = [];
   papeis: Papel[] = [];
-  filtroPapel = '';
+  filtroPapel: string[] = [];
+  unidadesDisponiveis: { id: number, nome: string }[] = [];
 
   modalAberto = false;
   modoEdicao = false;
@@ -79,7 +90,6 @@ export class ColaboradorComponent
   isLoading = false;
   modalTremendo = false;
   valoresOriginaisDoFormulario: any = null;
-
   private readonly senhaRegex =
     /^(?=.*[A-Z])(?=.*[0-9]).{6,}$/;
 
@@ -139,6 +149,7 @@ export class ColaboradorComponent
   constructor(
     private colaboradorService: ColaboradorService,
     private papelService: PapelService,
+    private unidadeService: UnidadeService,
     private fb: FormBuilder,
     private cdr: ChangeDetectorRef,
     private toastr: ToastrService,
@@ -191,12 +202,17 @@ export class ColaboradorComponent
       idPapel: [
         '',
         Validators.required
+      ],
+      idsUnidades: [
+        [],
+        Validators.required
       ]
     });
   }
 
   ngOnInit(): void {
     this.carregarPapeis();
+    this.carregarUnidades();
     this.carregarColaboradores();
 
     this.formColaborador
@@ -227,16 +243,31 @@ export class ColaboradorComponent
     );
   }
 
-  carregarPapeis(): void {
-    this.papelService
+carregarPapeis(): void {
+    this.papelService.listarTodos().subscribe({
+      next: (dados: Papel[]) => {
+        this.papeis = dados;
+        this.papeisDisponiveis = dados
+          .map((papel) => this.obterNomePapel(papel))
+          .filter((nome): nome is string => Boolean(nome));
+        this.cdr.detectChanges();
+      },
+      error: (err: any) => {
+        console.error('Erro ao carregar papéis da API:', err);
+      }
+    });
+  }
+
+  carregarUnidades(): void {
+    this.unidadeService
       .listarTodos()
       .subscribe({
-        next: (dados: Papel[]) => {
-          this.papeis = dados;
+        next: (dados: Unidade[]) => {
+          this.unidadesDisponiveis = dados;
         },
         error: (err: any) => {
           console.error(
-            'Erro ao carregar papéis da API:',
+            'Erro ao carregar unidades da API:',
             err
           );
         }
@@ -252,22 +283,6 @@ export class ColaboradorComponent
           this.ngZone.run(() => {
 
             this.colaboradores = [...dados];
-
-            this.papeisDisponiveis = [
-              ...new Set(
-                this.colaboradores
-                  .map(
-                    (colaborador: Colaborador) =>
-                      colaborador.nomePapel
-                  )
-                  .filter(
-                    (
-                      nomePapel: string | undefined
-                    ): nomePapel is string =>
-                      Boolean(nomePapel)
-                  )
-              )
-            ];
 
             this.aplicarFiltro();
 
@@ -301,12 +316,43 @@ export class ColaboradorComponent
   }
 
   aplicarFiltro(): void {
-    this.colaboradoresFiltrados = this.filtroPapel
-      ? this.colaboradores.filter(
-        colaborador =>
-          colaborador.nomePapel === this.filtroPapel
-      )
+    this.colaboradoresFiltrados = this.filtroPapel && this.filtroPapel.length > 0
+      ? this.colaboradores.filter(colaborador =>
+          colaborador.nomePapel && this.filtroPapel.includes(colaborador.nomePapel)
+        )
       : this.colaboradores;
+  }
+
+  removerFiltroPapel(papel: string): void {
+    const index = this.filtroPapel.indexOf(papel);
+    if (index >= 0) {
+      this.filtroPapel.splice(index, 1);
+      this.filtroPapel = [...this.filtroPapel]; // Força o angular a detectar a mudança
+      this.aplicarFiltro();
+    }
+  }
+
+  isUnidadeSelecionada(id: number): boolean {
+    const selecionados: number[] = this.formColaborador.get('idsUnidades')?.value || [];
+    return selecionados.includes(id);
+  }
+
+  onUnidadeToggle(id: number, event: Event): void {
+    const checkbox = event.target as HTMLInputElement;
+    const selecionados: number[] = [...(this.formColaborador.get('idsUnidades')?.value || [])];
+
+    if (checkbox.checked && !selecionados.includes(id)) {
+      selecionados.push(id);
+    }
+
+    if (!checkbox.checked) {
+      const index = selecionados.indexOf(id);
+      if (index !== -1) selecionados.splice(index, 1);
+    }
+
+    this.formColaborador.patchValue({ idsUnidades: selecionados });
+    this.formColaborador.get('idsUnidades')?.markAsDirty();
+    this.formColaborador.markAsDirty();
   }
 
   abrirCadastro(): void {
@@ -341,7 +387,8 @@ export class ColaboradorComponent
       cpf: '',
       endereco: '',
       telefone: '',
-      idPapel: ''
+      idPapel: '',
+      idsUnidades: []
     });
 
     this.atualizarValidadoresSenha();
@@ -374,7 +421,8 @@ export class ColaboradorComponent
       cpf: formatarCpf(colaborador.cpf),
       endereco: colaborador.endereco,
       telefone: formatarTelefone(colaborador.telefone),
-      idPapel: colaborador.idPapel
+      idPapel: colaborador.idPapel,
+      idsUnidades: colaborador.unidades?.map(u => u.id) || []
     });
 
     this.atualizarValidadoresSenha();
@@ -698,7 +746,8 @@ export class ColaboradorComponent
       cpf: '',
       endereco: '',
       telefone: '',
-      idPapel: ''
+      idPapel: '',
+      idsUnidades: []
     });
 
     this.formColaborador.markAsPristine();
