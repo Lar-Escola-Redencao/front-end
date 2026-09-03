@@ -5,10 +5,11 @@ import { ToastrService } from 'ngx-toastr';
 import { PublicNavbar } from '../../../components/public-navbar/public-navbar';
 import { RecuperacaoSenhaService } from '../../../shared/services/auth/recuperacao-senha.service';
 
-const PENALIDADES_SEGUNDOS = [60, 180, 600, 1800, 3600];
+const PENALIDADES_SEGUNDOS = [30, 60, 90, 180, 600, 1800, 3600];
 const STORAGE_KEY = 'ler_recovery_session';
 const CODIGO_VALIDADE_MS = 15 * 60 * 1000;
 const TEMPO_RESET_TENTATIVAS_MS = 2 * 60 * 60 * 1000;
+const TEMPO_PERDAO_MS = 2 * 60 * 1000; 
 
 interface EmailCooldown {
     solicitadoEm: number;
@@ -53,7 +54,7 @@ export class RecuperarSenha implements OnInit, OnDestroy {
             nonNullable: true,
             validators: [
                 Validators.required,
-                Validators.pattern(/^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{7,}$/)
+                Validators.pattern(/^(?=.*[A-Z])(?=.*\d).{6,}$/)
             ]
         }),
         confirmarSenha: new FormControl('', {
@@ -246,7 +247,9 @@ export class RecuperarSenha implements OnInit, OnDestroy {
         if (historicoAnterior) {
             const tempoDesdeFimDoCooldown = agora - historicoAnterior.proximoEnvioLiberadoEm;
             const continuaMesmoCiclo = tempoDesdeFimDoCooldown < TEMPO_RESET_TENTATIVAS_MS;
-            tentativas = continuaMesmoCiclo ? historicoAnterior.tentativas + 1 : 0;
+            const envioImediato = tempoDesdeFimDoCooldown < TEMPO_PERDAO_MS;
+
+            tentativas = (continuaMesmoCiclo && envioImediato) ? historicoAnterior.tentativas + 1 : 0;
         }
 
         const penalidade = PENALIDADES_SEGUNDOS[Math.min(tentativas, PENALIDADES_SEGUNDOS.length - 1)];
