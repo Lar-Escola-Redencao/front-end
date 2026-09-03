@@ -66,9 +66,7 @@
             Lembre de mim
           </label>
 
-          <button type="button" class="link-button" (click)="toggleForgotHint()">
-            Esqueci a senha
-          </button>
+          <a routerLink="/recuperar-senha" class="link-button">Esqueci a senha</a>
         </div>
 
         @if (showForgotHint()) {

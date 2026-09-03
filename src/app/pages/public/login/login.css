@@ -330,3 +330,7 @@ form {
     translate: -50% 0;
   }
 }
+
+.link-button{
+  text-decoration: none;
+}
