@@ -240,7 +240,7 @@
       <button
         type="submit"
         class="btn-primary"
-        [disabled]="isLoading || (modoEdicao && !temAlteracoes)">
+        [disabled]="isLoading || formColaborador.invalid">
         <span
           *ngIf="isLoading"
           class="spinner"
