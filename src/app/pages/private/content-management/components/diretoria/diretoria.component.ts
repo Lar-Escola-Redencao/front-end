@@ -1,17 +1,26 @@
 import { Component, ChangeDetectorRef, HostListener, NgZone, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { ToastrService } from 'ngx-toastr';
 import { ModalLayout } from '../../../../../components/modal-layout/modal-layout';
+import { Paginacao } from '../../../../../components/paginacao/paginacao';
 import { TabelaAcao, TabelaColuna, TabelaLayout } from '../../../../../components/tabela-layout/tabela-layout';
 import { ComponentComAlteracoesNaoSalvas } from '../../../../../shared/guards/can-deactivate.guard';
 import { AtualizarDiretoriaDTO, CriarDiretoriaDTO, Diretoria } from '../../../../../shared/models/diretoria.model';
 import { DiretoriaService } from '../../../../../shared/services/content-management/diretoria/diretoria.service';
 import { Alertas } from '../../../../../shared/utils/alerts';
 import { mapearErrosFormulario, validarImagem } from '../../../../../shared/utils/form-validations';
+import {
+  CampoOrdenacao,
+  alternarOrdenacao,
+  analisarOrdenacao,
+  lerParametrosPagina
+} from '../../../../../shared/utils/paginacao-url';
 
 @Component({
   selector: 'app-diretoria',
@@ -21,6 +30,7 @@ import { mapearErrosFormulario, validarImagem } from '../../../../../shared/util
     ReactiveFormsModule,
     ModalLayout,
     TabelaLayout,
+    Paginacao,
     MatFormFieldModule,
     MatInputModule,
     MatSlideToggleModule
@@ -32,11 +42,22 @@ export class DiretoriaComponent implements OnInit, OnDestroy, ComponentComAltera
 
   diretores: Diretoria[] = [];
 
+  pagina = 0;
+  tamanho = 10;
+  sort: string | undefined;
+  ordenacao: CampoOrdenacao | null = null;
+  totalElementos = 0;
+  totalPaginas = 0;
+  carregandoLista = false;
+  erroLista = false;
+
+  private routeSub?: Subscription;
+
   colunas: TabelaColuna<Diretoria>[] = [
     { chave: 'foto', titulo: 'Foto', tipo: 'imagem' },
-    { chave: 'nome', titulo: 'Nome', principalMobile: true },
-    { chave: 'cargo', titulo: 'Cargo' },
-    { chave: 'ativo', titulo: 'Exibição', tipo: 'status' }
+    { chave: 'nome', titulo: 'Nome', principalMobile: true, ordenavel: true },
+    { chave: 'cargo', titulo: 'Cargo', ordenavel: true },
+    { chave: 'ativo', titulo: 'Exibição', tipo: 'status', ordenavel: true }
   ];
 
   acoesTabela: TabelaAcao<Diretoria>[] = [
@@ -62,7 +83,9 @@ export class DiretoriaComponent implements OnInit, OnDestroy, ComponentComAltera
     private fb: FormBuilder,
     private cdr: ChangeDetectorRef,
     private toastr: ToastrService,
-    private ngZone: NgZone
+    private ngZone: NgZone,
+    private route: ActivatedRoute,
+    private router: Router
   ) {
     this.formDiretoria = this.fb.group({
       nome: ['', [Validators.required, Validators.maxLength(150)]],
@@ -73,22 +96,69 @@ export class DiretoriaComponent implements OnInit, OnDestroy, ComponentComAltera
   }
 
   ngOnInit(): void {
-    this.carregarDiretores();
+    this.routeSub = this.route.queryParamMap.subscribe(params => {
+      const { pagina, tamanho, sort } = lerParametrosPagina(params);
+      this.pagina = pagina;
+      this.tamanho = tamanho;
+      this.sort = sort;
+      this.ordenacao = analisarOrdenacao(sort);
+      this.carregarDiretores();
+    });
   }
 
   ngOnDestroy(): void {
     this.revogarPreviewSeNecessario();
+    this.routeSub?.unsubscribe();
   }
 
   carregarDiretores(): void {
-    this.diretoriaService.listarTodos().subscribe({
-      next: (dados: Diretoria[]) => {
-        this.diretores = dados;
+    if (this.carregandoLista) {
+      return;
+    }
+
+    this.carregandoLista = true;
+    this.erroLista = false;
+
+    this.diretoriaService.listarTodos(this.pagina, this.tamanho, this.sort).subscribe({
+      next: (resposta) => {
+        this.diretores = resposta.content;
+        this.totalElementos = resposta.page.totalElements;
+        this.totalPaginas = resposta.page.totalPages;
+        this.carregandoLista = false;
+
+        if (this.diretores.length === 0 && this.pagina > 0) {
+          this.irParaPagina(Math.max(0, resposta.page.totalPages - 1));
+          return;
+        }
+
         this.cdr.detectChanges();
       },
       error: () => {
+        this.carregandoLista = false;
+        this.erroLista = true;
         this.toastr.error('Não foi possivel carregar a lista da diretoria.', 'Erro');
+        this.cdr.detectChanges();
       }
+    });
+  }
+
+  irParaPagina(pagina: number): void {
+    this.navegar({ page: pagina });
+  }
+
+  mudarTamanhoPagina(tamanho: number): void {
+    this.navegar({ page: 0, size: tamanho });
+  }
+
+  ordenarPor(campo: string): void {
+    this.navegar({ page: 0, sort: alternarOrdenacao(this.ordenacao, campo) });
+  }
+
+  private navegar(queryParams: Record<string, any>): void {
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams,
+      queryParamsHandling: 'merge'
     });
   }
 

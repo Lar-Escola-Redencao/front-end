@@ -13,19 +13,38 @@
   </div>
 
   <div class="abas-container">
-    <button type="button" class="aba-btn" [class.ativa]="abaAtiva === 'documentos'" (click)="abaAtiva = 'documentos'">
+    <button type="button" class="aba-btn" [class.ativa]="abaAtiva === 'documentos'" (click)="mudarAba('documentos')">
       Documentos
     </button>
-    <button type="button" class="aba-btn" [class.ativa]="abaAtiva === 'secoes'" (click)="abaAtiva = 'secoes'">
+    <button type="button" class="aba-btn" [class.ativa]="abaAtiva === 'secoes'" (click)="mudarAba('secoes')">
       Seções
     </button>
   </div>
 
-  <app-tabela-layout [colunas]="abaAtiva === 'documentos' ? colunasDocumentos : colunasSecoes"
-    [dados]="abaAtiva === 'documentos' ? documentos : secoes" [acoes]="acoesTabela" [tamanhoPagina]="10"
-    [tamanhosPagina]="[5, 10, 25]"
-    [mensagemVazia]="abaAtiva === 'documentos' ? 'Nenhum documento cadastrado.' : 'Nenhuma seção cadastrada.'"
-    (acao)="executarAcao($event)" />
+  @if (abaAtiva === 'documentos') {
+    <app-tabela-layout [colunas]="colunasDocumentos" [dados]="documentos" [acoes]="acoesTabela"
+      [carregando]="carregandoLista" [erro]="erroLista" [ordenacao]="ordenacao"
+      [mensagemVazia]="mensagemVazia"
+      (acao)="executarAcao($event)"
+      (ordenar)="ordenarPor($event)"
+      (tentarNovamente)="tentarNovamente()" />
+  } @else {
+    <app-tabela-layout [colunas]="colunasSecoes" [dados]="secoes" [acoes]="acoesTabela"
+      [carregando]="carregandoLista" [erro]="erroLista" [ordenacao]="ordenacao"
+      [mensagemVazia]="mensagemVazia"
+      (acao)="executarAcao($event)"
+      (ordenar)="ordenarPor($event)"
+      (tentarNovamente)="tentarNovamente()" />
+  }
+
+  <app-paginacao
+    [paginaAtual]="pagina"
+    [totalPaginas]="totalPaginas"
+    [totalElementos]="totalElementos"
+    [tamanho]="tamanho"
+    [carregando]="carregandoLista"
+    (paginaChange)="irParaPagina($event)"
+    (tamanhoChange)="mudarTamanhoPagina($event)" />
 
 </section>
 
@@ -41,7 +60,7 @@
 
     <mat-form-field appearance="outline">
       <mat-select formControlName="secaoId" placeholder="Seção*" (blur)="verificarErrosDocumento()">
-        @for (secao of secoes; track secao.id) {
+        @for (secao of secoesParaSelecao; track secao.id) {
         <mat-option [value]="secao.id">{{ secao.titulo }}</mat-option>
         }
       </mat-select>

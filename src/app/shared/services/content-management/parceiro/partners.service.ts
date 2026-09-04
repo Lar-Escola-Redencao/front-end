@@ -3,14 +3,17 @@ import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../../../environments/environment';
 import { Partner, PartnerInput } from '../../../models/partner.model';
+import { PaginaResposta } from '../../../models/pagina.model';
+import { construirHttpParams } from '../../../utils/paginacao-url';
 
 @Injectable({ providedIn: 'root' })
 export class PartnersService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = `${environment.apiUrl}/parceiro`;
 
-  listarTodos(): Promise<Partner[]> {
-    return firstValueFrom(this.http.get<Partner[]>(`${this.baseUrl}/todos`));
+  listarTodos(pagina: number, tamanho: number, sort?: string): Promise<PaginaResposta<Partner>> {
+    const params = construirHttpParams({ pagina, tamanho, sort });
+    return firstValueFrom(this.http.get<PaginaResposta<Partner>>(`${this.baseUrl}/todos`, { params }));
   }
 
   create(input: PartnerInput): Promise<Partner> {

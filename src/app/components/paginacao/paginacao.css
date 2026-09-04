@@ -1,0 +1,97 @@
+.paginacao {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+
+  margin-top: 16px;
+  padding: 14px 20px;
+
+  background: var(--branco);
+  border-radius: 12px;
+  box-shadow: var(--sombra-padrao);
+
+  font-family: var(--fonte-texto);
+  font-size: 0.85rem;
+  color: rgba(0, 0, 0, 0.7);
+}
+
+.paginacao--carregando {
+  opacity: 0.7;
+}
+
+.paginacao-controles {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 20px;
+}
+
+.paginacao-tamanho {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.paginacao-tamanho select {
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+  background: var(--branco);
+  color: var(--preto);
+  font-family: var(--fonte-texto);
+}
+
+.paginacao-navegacao {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.paginacao-pagina-atual {
+  min-width: 110px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.paginacao-botao {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 32px;
+  height: 32px;
+
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background: var(--branco);
+  color: var(--primary-color);
+
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.paginacao-botao:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--primary-hover-color);
+}
+
+.paginacao-botao:disabled {
+  color: #bbb;
+  cursor: not-allowed;
+}
+
+@media (max-width: 600px) {
+  .paginacao {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .paginacao-controles {
+    justify-content: space-between;
+  }
+}
