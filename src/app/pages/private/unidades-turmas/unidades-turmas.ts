@@ -95,14 +95,14 @@ export class UnidadesTurmas implements OnInit, ComponentComAlteracoesNaoSalvas {
     horarioFechamento: {
       horarioInvalido: 'O horário de fechamento deve ser depois da abertura.',
     },
-    idadeMin: {
-      max: 'Idade inválida',
-    },
     idadeMax: {
       idadeInvalida: 'A idade máxima não pode ser menor que a mínima.',
-      max: 'Idade inválida',
     },
   };
+
+  // ---------------------------------------------------------------
+  // TURMAS
+  // ---------------------------------------------------------------
 
   turmas: Turma[] = [];
   unidadeFiltroId: number | null = null;
@@ -230,8 +230,8 @@ export class UnidadesTurmas implements OnInit, ComponentComAlteracoesNaoSalvas {
       diasFuncionamento: [[] as string[], Validators.required],
       horarioAbertura: ['', Validators.required],
       horarioFechamento: ['', Validators.required],
-      idadeMin: ['', [Validators.required, Validators.min(0), Validators.max(100)]],
-      idadeMax: ['', [Validators.required, Validators.min(0), Validators.max(100)]],
+      idadeMin: ['', [Validators.required, Validators.min(0)]],
+      idadeMax: ['', [Validators.required, Validators.min(0)]],
       corHex: [this.corPadrao],
       imagem: [null, [validarImagem()]],
     });
