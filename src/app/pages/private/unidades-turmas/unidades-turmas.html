@@ -154,7 +154,8 @@
             type="number"
             formControlName="idadeMin"
             (blur)="verificarErros()"
-            min="0" />
+            min="0"
+            max="100" />
         </mat-form-field>
         <span class="error-text" *ngIf="erros['idadeMin']">
           {{ erros['idadeMin'] }}
@@ -169,7 +170,8 @@
             type="number"
             formControlName="idadeMax"
             (blur)="verificarErros()"
-            min="0" />
+            min="0"
+            max="100" />
         </mat-form-field>
         <span class="error-text" *ngIf="erros['idadeMax']">
           {{ erros['idadeMax'] }}

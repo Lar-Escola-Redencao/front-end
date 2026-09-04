@@ -100,8 +100,14 @@ export class UnidadesTurmas
     horarioFechamento: {
       horarioInvalido: 'O horário de fechamento deve ser depois da abertura.'
     },
+    idadeMin: {
+      max: 'Idade inválida',
+      min: 'Idade inválida'
+    },
     idadeMax: {
-      idadeInvalida: 'A idade máxima não pode ser menor que a mínima.'
+      idadeInvalida: 'A idade máxima não pode ser menor que a mínima.',
+      max: 'Idade inválida',
+      min: 'Idade inválida'
     }
   };
 
@@ -191,11 +197,11 @@ export class UnidadesTurmas
       ],
       idadeMin: [
         '',
-        [Validators.required, Validators.min(0)]
+        [Validators.required, Validators.min(0), Validators.max(100)]
       ],
       idadeMax: [
         '',
-        [Validators.required, Validators.min(0)]
+        [Validators.required, Validators.min(0), Validators.max(100)]
       ],
       corHex: [this.corPadrao],
       imagem: [null, [validarImagem()]]
