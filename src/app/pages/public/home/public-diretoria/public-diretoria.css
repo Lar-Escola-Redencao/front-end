@@ -1,0 +1,163 @@
+.public-diretoria-section {
+  padding: 80px 24px;
+  background-color: var(--branco);
+}
+
+.container {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.diretoria-header {
+  text-align: center;
+  margin-bottom: 12px;
+}
+
+.diretoria-header h2 {
+  font-family: var(--fonte-titulo);
+  font-size: clamp(2rem, 4vw, 2.5rem);
+  color: var(--preto);
+  margin: 0;
+}
+
+.carousel-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  gap: 16px;
+}
+
+.nav-btn {
+  background: transparent;
+  border: none;
+  color: var(--preto);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  transition: color 0.2s ease, opacity 0.2s ease;
+  z-index: 3;
+}
+
+.nav-btn .material-symbols-outlined {
+  font-size: 2.2rem;
+  font-weight: 300;
+}
+
+.nav-btn:hover:not(:disabled) {
+  color: var(--primary-color);
+}
+
+.nav-btn.hidden {
+  visibility: hidden;
+  opacity: 0;
+}
+
+.carousel-track-wrapper {
+  flex: 1;
+  overflow: hidden;
+  padding: 40px 0; 
+}
+
+.carousel-track {
+  display: flex;
+  align-items: center;
+  transition: transform 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.carousel-track.no-transition,
+.carousel-track.no-transition .diretor-card {
+  transition: none !important;
+}
+
+.diretor-card-wrapper {
+  box-sizing: border-box;
+  padding: 0 14px;
+}
+
+.diretor-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--branco);
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  height: 100%;
+  transition: transform 0.5s ease, filter 0.5s ease, opacity 0.5s ease, box-shadow 0.5s ease;
+  transform: scale(1);
+  filter: blur(0);
+  opacity: 1;
+}
+
+.foto-wrapper {
+  width: 100%;
+  height: 260px;
+  background-color: #f0f0f0;
+}
+
+.foto-wrapper img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.info-wrapper {
+  padding: 24px 16px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: var(--branco);
+}
+
+.nome {
+  font-family: var(--fonte-texto);
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--preto);
+  margin: 0;
+}
+
+.cargo {
+  font-family: var(--fonte-texto);
+  font-size: 0.85rem;
+  color: var(--input-color);
+}
+
+.mensagem-vazia {
+  text-align: center;
+  font-family: var(--fonte-texto);
+  color: var(--input-color);
+  font-size: 1.1rem;
+  margin-top: 32px;
+}
+
+@media (min-width: 900px) {
+  .center-card {
+    transform: scale(1.12);
+    z-index: 2;
+    position: relative;
+    filter: blur(0);
+  }
+
+  .side-card {
+    transform: scale(0.82);
+    filter: blur(2px);
+    opacity: 0.6;
+    z-index: 1;
+  }
+
+  .out-of-view-card {
+    transform: scale(0.70);
+    filter: blur(4px);
+    opacity: 0.2;
+  }
+}
+
+@media (max-width: 899px) {
+  .nav-btn .material-symbols-outlined {
+    font-size: 1.8rem;
+  }
+}

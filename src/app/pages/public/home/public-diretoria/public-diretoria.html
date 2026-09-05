@@ -1,0 +1,63 @@
+<section class="public-diretoria-section" *ngIf="!carregando">
+  <div class="container">
+    
+    <div class="diretoria-header">
+      <h2>Composição da diretoria</h2>
+    </div>
+
+    <div
+      class="carousel-container"
+      *ngIf="diretoresOriginal.length > 0; else semDiretoria"
+      (mouseenter)="stopAutoPlay()"
+      (mouseleave)="startAutoPlay()">
+      <button
+        class="nav-btn prev-btn"
+        (click)="prev()"
+        [class.hidden]="diretoresOriginal.length <= 1"
+        aria-label="Anterior">
+        <span class="material-symbols-outlined">chevron_left</span>
+      </button>
+
+      <div class="carousel-track-wrapper">
+        <div class="carousel-track" [class.no-transition]="!isTransitioning" [style.transform]="trackTransform">
+          
+          <div 
+            class="diretor-card-wrapper" 
+            *ngFor="let membro of diretoresCarousel; let i = index" 
+            [style.min-width]="(100 / itemsPerPage) + '%'">
+            
+            <div 
+              class="diretor-card" 
+              [class.center-card]="isCenter(i)" 
+              [class.side-card]="isSide(i)"
+              [class.out-of-view-card]="isOutOfView(i)">
+              
+              <div class="foto-wrapper">
+                <img [src]="obterUrlImagem(membro.foto)" (error)="onImageError($event)" [alt]="membro.nome" loading="lazy" />
+              </div>
+              <div class="info-wrapper">
+                <h3 class="nome">{{ membro.nome }}</h3>
+                <span class="cargo">{{ membro.cargo }}</span>
+              </div>
+              
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <button
+        class="nav-btn next-btn"
+        (click)="next()"
+        [class.hidden]="diretoresOriginal.length <= 1"
+        aria-label="Próximo">
+        <span class="material-symbols-outlined">chevron_right</span>
+      </button>
+    </div>
+
+    <ng-template #semDiretoria>
+      <p class="mensagem-vazia">Nenhum membro da diretoria cadastrado no momento.</p>
+    </ng-template>
+
+  </div>
+</section>

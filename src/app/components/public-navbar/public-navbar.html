@@ -1,28 +1,25 @@
 <nav class="navbar">
-  <!-- Lado Esquerdo: Logo -->
   <div class="logo-container">
-    <a style="cursor: pointer;" routerLink="/">
+    <a style="cursor: pointer;" (click)="scrollTo('inicio')">
       <img src="/images/logo_colorida_texto.png" alt="Logo Lar Escola Redenção">
     </a>
   </div>
 
-  <!-- Botão Hambúrguer (Visível apenas no mobile) -->
   <button class="menu-toggle" (click)="alternarMenu()" aria-label="Abrir menu">
     <span class="material-symbols-outlined">
       {{ menuAberto() ? 'close' : 'menu' }}
     </span>
   </button>
 
-  <!-- Centro/Direita: Links e Botão -->
   <div class="nav-content" [class.ativo]="menuAberto()">
     <ul class="nav-links">
-      <li><a (click)="alternarMenu()">Início</a></li>
-      <li><a (click)="alternarMenu()">Conheça a OSC</a></li>
-      <li><a (click)="alternarMenu()">Como ajudar?</a></li>
-      <li><a (click)="alternarMenu()">Unidades</a></li>
-      <li><a (click)="alternarMenu()">Eventos</a></li>
-      <li><a (click)="alternarMenu()">Parceiros</a></li>
-      <li><a (click)="alternarMenu()">Transparência</a></li>
+      <li><a style="cursor: pointer;" (click)="scrollTo('inicio')">Início</a></li>
+      <li><a style="cursor: pointer;" (click)="scrollTo('conheca-osc')">Conheça a OSC</a></li>
+      <li><a style="cursor: pointer;" (click)="scrollTo('como-ajudar')">Como ajudar?</a></li>
+      <li><a style="cursor: pointer;" (click)="scrollTo('unidades')">Unidades</a></li>
+      <li><a style="cursor: pointer;" (click)="scrollTo('eventos')">Eventos</a></li>
+      <li><a style="cursor: pointer;" (click)="scrollTo('parceiros')">Parceiros</a></li>
+      <li><a style="cursor: pointer;" (click)="scrollTo('transparencia')">Transparência</a></li>
     </ul>
 
     <div class="nav-action">
