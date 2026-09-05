@@ -1,0 +1,32 @@
+<div class="paginacao" [class.paginacao--carregando]="carregando">
+
+  <div class="paginacao-info">
+    @if (totalElementos > 0) {
+      <span>Mostrando {{ inicioIntervalo }}–{{ fimIntervalo }} de {{ totalElementos }} registros</span>
+    } @else {
+      <span>0 registros</span>
+    }
+  </div>
+
+  <div class="paginacao-controles">
+
+    <label class="paginacao-tamanho">
+      Itens por página:
+      <select (change)="aoMudarTamanho($event)" [disabled]="carregando">
+        @for (opcao of tamanhosDisponiveis; track opcao) {
+          <option [value]="opcao" [selected]="opcao === tamanho">{{ opcao }}</option>
+        }
+      </select>
+    </label>
+
+    <div class="paginacao-navegacao">
+      <button type="button" class="paginacao-botao" title="Primeira página" [disabled]="!podeVoltar" (click)="irParaPrimeira()">«</button>
+      <button type="button" class="paginacao-botao" title="Página anterior" [disabled]="!podeVoltar" (click)="irParaAnterior()">‹</button>
+      <span class="paginacao-pagina-atual">Página {{ totalPaginas === 0 ? 0 : paginaAtual + 1 }} de {{ totalPaginas }}</span>
+      <button type="button" class="paginacao-botao" title="Próxima página" [disabled]="!podeAvancar" (click)="irParaProxima()">›</button>
+      <button type="button" class="paginacao-botao" title="Última página" [disabled]="!podeAvancar" (click)="irParaUltima()">»</button>
+    </div>
+
+  </div>
+
+</div>
