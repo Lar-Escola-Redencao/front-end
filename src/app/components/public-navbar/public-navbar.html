@@ -1,19 +1,16 @@
 <nav class="navbar">
-  <!-- Lado Esquerdo: Logo -->
   <div class="logo-container">
-    <a style="cursor: pointer;" routerLink="/">
+    <a style="cursor: pointer;" (click)="scrollTo('inicio')">
       <img src="/images/logo_colorida_texto.png" alt="Logo Lar Escola Redenção">
     </a>
   </div>
 
-  <!-- Botão Hambúrguer (Visível apenas no mobile) -->
   <button class="menu-toggle" (click)="alternarMenu()" aria-label="Abrir menu">
     <span class="material-symbols-outlined">
       {{ menuAberto() ? 'close' : 'menu' }}
     </span>
   </button>
 
-  <!-- Centro/Direita: Links e Botão -->
   <div class="nav-content" [class.ativo]="menuAberto()">
     <ul class="nav-links">
       <li><a (click)="alternarMenu()">Início</a></li>
