@@ -272,48 +272,13 @@
    ========================= */
 
 .paginacao {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 8px;
   margin-top: 48px;
-}
-
-.botao-pagina {
-  min-width: 40px;
-  height: 40px;
-  padding: 0 8px;
-  border: 1px solid var(--input-border);
-  border-radius: 6px;
-  background-color: var(--branco);
+  background-color: transparent;
   color: var(--preto);
-  font-family: var(--fonte-texto);
-  font-size: 14px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
+}
+
+.paginacao ::ng-deep .mat-mdc-paginator-container {
   justify-content: center;
-  transition: border-color 0.2s ease, color 0.2s ease;
-}
-
-.botao-pagina:hover:not(:disabled) {
-  border-color: var(--primary-color);
-  color: var(--primary-color);
-}
-
-.botao-pagina.ativo {
-  border-color: var(--primary-color);
-  color: var(--primary-color);
-  font-weight: bold;
-}
-
-.botao-pagina:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.botao-navegacao .material-symbols-outlined {
-  font-size: 20px;
 }
 
 /* =========================

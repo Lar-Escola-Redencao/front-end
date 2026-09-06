@@ -14,7 +14,7 @@
     </label>
 
     <label class="campo campo-data">
-      <span class="rotulo-data">Início</span>
+      <span class="rotulo-data">Inicio</span>
       <input
         type="date"
         name="filtroDataInicial"
@@ -78,37 +78,16 @@
       }
     </div>
 
-    <nav class="paginacao" aria-label="Paginação de eventos">
-      <button
-        type="button"
-        class="botao-pagina botao-navegacao"
-        [disabled]="paginaAtual === 1"
-        (click)="paginaAnterior()"
-        aria-label="Página anterior"
-      >
-        <span class="material-symbols-outlined">chevron_left</span>
-      </button>
-
-      @for (pagina of paginas; track pagina) {
-        <button
-          type="button"
-          class="botao-pagina"
-          [class.ativo]="pagina === paginaAtual"
-          (click)="irParaPagina(pagina)"
-        >
-          {{ pagina }}
-        </button>
-      }
-
-      <button
-        type="button"
-        class="botao-pagina botao-navegacao"
-        [disabled]="paginaAtual === totalPaginas"
-        (click)="proximaPagina()"
-        aria-label="Próxima página"
-      >
-        <span class="material-symbols-outlined">chevron_right</span>
-      </button>
-    </nav>
+    <mat-paginator
+      class="paginacao"
+      [length]="eventosFiltrados.length"
+      [pageIndex]="paginaAtual"
+      [pageSize]="tamanhoPagina"
+      [pageSizeOptions]="tamanhosPagina"
+      (page)="alterarPagina($event)"
+      showFirstLastButtons
+      aria-label="Paginacao de eventos"
+    >
+    </mat-paginator>
   }
 </main>

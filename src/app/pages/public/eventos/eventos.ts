@@ -1,7 +1,13 @@
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import {
+  MatPaginatorIntl,
+  MatPaginatorModule,
+  PageEvent
+} from '@angular/material/paginator';
 import { PublicNavbar } from '@components/public-navbar/public-navbar';
+import { PaginatorIntlPtBr } from '@components/tabela-layout/tabela-layout';
 import { Evento } from 'src/app/shared/models/evento.model';
 import { EventoPublicoService } from 'src/app/shared/services/evento-publico/evento-publico.service';
 
@@ -10,13 +16,20 @@ type FiltroValor = 'todos' | 'gratuito' | 'pago';
 @Component({
   selector: 'app-eventos',
   standalone: true,
-  imports: [CommonModule, FormsModule, PublicNavbar],
+  imports: [CommonModule, FormsModule, MatPaginatorModule, PublicNavbar],
   templateUrl: './eventos.html',
-  styleUrl: './eventos.css'
+  styleUrl: './eventos.css',
+  providers: [
+    {
+      provide: MatPaginatorIntl,
+      useClass: PaginatorIntlPtBr
+    }
+  ]
 })
 export class Eventos implements OnInit {
   eventos: Evento[] = [];
   eventosFiltrados: Evento[] = [];
+  eventosPaginados: Evento[] = [];
   carregando = false;
 
   filtroTitulo = '';
@@ -24,8 +37,9 @@ export class Eventos implements OnInit {
   filtroDataFinal = '';
   filtroValor: FiltroValor = 'todos';
 
-  paginaAtual = 1;
-  readonly itensPorPagina = 5;
+  paginaAtual = 0;
+  tamanhoPagina = 6;
+  readonly tamanhosPagina = [6];
 
   constructor(
     private eventoPublicoService: EventoPublicoService,
@@ -53,7 +67,7 @@ export class Eventos implements OnInit {
   }
 
   buscar(): void {
-    this.paginaAtual = 1;
+    this.paginaAtual = 0;
     this.aplicarFiltros();
   }
 
@@ -92,35 +106,21 @@ export class Eventos implements OnInit {
       return true;
     });
 
-    if (this.paginaAtual > this.totalPaginas) {
-      this.paginaAtual = Math.max(1, this.totalPaginas);
+    if (this.paginaAtual >= this.totalPaginas) {
+      this.paginaAtual = Math.max(0, this.totalPaginas - 1);
     }
+
+    this.atualizarPagina();
   }
 
   get totalPaginas(): number {
-    return Math.max(1, Math.ceil(this.eventosFiltrados.length / this.itensPorPagina));
+    return Math.max(1, Math.ceil(this.eventosFiltrados.length / this.tamanhoPagina));
   }
 
-  get eventosPaginados(): Evento[] {
-    const inicio = (this.paginaAtual - 1) * this.itensPorPagina;
-    return this.eventosFiltrados.slice(inicio, inicio + this.itensPorPagina);
-  }
-
-  get paginas(): number[] {
-    return Array.from({ length: this.totalPaginas }, (_, i) => i + 1);
-  }
-
-  irParaPagina(pagina: number): void {
-    if (pagina < 1 || pagina > this.totalPaginas) return;
-    this.paginaAtual = pagina;
-  }
-
-  paginaAnterior(): void {
-    this.irParaPagina(this.paginaAtual - 1);
-  }
-
-  proximaPagina(): void {
-    this.irParaPagina(this.paginaAtual + 1);
+  alterarPagina(evento: PageEvent): void {
+    this.paginaAtual = evento.pageIndex;
+    this.tamanhoPagina = evento.pageSize;
+    this.atualizarPagina();
   }
 
   formatarDia(data: Date | string): string {
@@ -144,5 +144,12 @@ export class Eventos implements OnInit {
   formatarValor(evento: Evento): string {
     if (!evento.valor) return 'Gratuito';
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(evento.valor);
+  }
+
+  private atualizarPagina(): void {
+    const inicio = this.paginaAtual * this.tamanhoPagina;
+    const fim = inicio + this.tamanhoPagina;
+
+    this.eventosPaginados = this.eventosFiltrados.slice(inicio, fim);
   }
 }
