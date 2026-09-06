@@ -1,6 +1,7 @@
 import { ChangeDetectorRef, Component, HostListener, NgZone, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
+  AbstractControl,
   FormBuilder,
   FormGroup,
   FormsModule,
@@ -122,15 +123,18 @@ export class UnidadesTurmas implements OnInit, ComponentComAlteracoesNaoSalvas {
   readonly periodos: OpcaoPeriodo[] = [
     { valor: 'MANHA', label: 'Manhã' },
     { valor: 'TARDE', label: 'Tarde' },
-    { valor: 'NOITE', label: 'Noite' },
   ];
 
   private readonly mensagensCustomizadasTurma: Record<string, Record<string, string>> = {
     horaFim: {
       horarioInvalido: 'O horário de término deve ser depois do início.',
+      horarioConflito: 'Este horário conflita com outra turma já cadastrada para esta unidade.',
     },
     unidadeId: {
       required: 'Selecione uma unidade.',
+    },
+    periodo: {
+      periodoConflito: 'Esta unidade já possui uma turma cadastrada nesse período.',
     },
   };
 
@@ -249,9 +253,19 @@ export class UnidadesTurmas implements OnInit, ComponentComAlteracoesNaoSalvas {
 
     this.formUnidade.get('idadeMax')?.valueChanges.subscribe(() => this.checarFaixaEtaria());
 
-    this.formTurma.get('horaInicio')?.valueChanges.subscribe(() => this.checarHorariosTurma());
+    this.formTurma.get('periodo')?.valueChanges.subscribe(() => this.checarConflitoTurma());
 
-    this.formTurma.get('horaFim')?.valueChanges.subscribe(() => this.checarHorariosTurma());
+    this.formTurma.get('horaInicio')?.valueChanges.subscribe(() => {
+      this.checarHorariosTurma();
+      this.checarConflitoTurma();
+    });
+
+    this.formTurma.get('horaFim')?.valueChanges.subscribe(() => {
+      this.checarHorariosTurma();
+      this.checarConflitoTurma();
+    });
+
+    this.formTurma.get('unidadeId')?.valueChanges.subscribe(() => this.checarConflitoTurma());
   }
 
   get mensagemVazia(): string {
@@ -333,7 +347,12 @@ export class UnidadesTurmas implements OnInit, ComponentComAlteracoesNaoSalvas {
     this.turmaService.listar(this.unidadeFiltroId).subscribe({
       next: (dados: Turma[]) => {
         this.ngZone.run(() => {
-          this.turmas = [...dados];
+          // A API ignora o filtro unidadeId e sempre devolve todas as turmas,
+          // então o filtro é reforçado aqui.
+          this.turmas =
+            this.unidadeFiltroId !== null
+              ? dados.filter((turma) => turma.unidade?.id === this.unidadeFiltroId)
+              : [...dados];
           this.cdr.detectChanges();
         });
       },
@@ -831,16 +850,18 @@ export class UnidadesTurmas implements OnInit, ComponentComAlteracoesNaoSalvas {
   }
 
   private tratarErroTurma(err: any, mensagemPadrao: string): void {
-    if (err.status === 400 && Array.isArray(err.error?.errors)) {
-      const mapeados: { [key: string]: string } = {};
+    if (err.status === 400 && err.error && typeof err.error === 'object' && !err.error.message) {
+      this.errosTurma = { ...this.errosTurma, ...err.error };
+      this.cdr.detectChanges();
+      return;
+    }
 
-      for (const erro of err.error.errors) {
-        if (erro?.field) {
-          mapeados[erro.field] = erro.defaultMessage || mensagemPadrao;
-        }
-      }
-
-      this.errosTurma = { ...this.errosTurma, ...mapeados };
+    if (err.status === 409) {
+      this.toastr.error(
+        err.error?.message ||
+          'Esta unidade já possui uma turma nesse período ou com horário conflitante.',
+        'Conflito de horário',
+      );
       this.cdr.detectChanges();
       return;
     }
@@ -881,6 +902,64 @@ export class UnidadesTurmas implements OnInit, ComponentComAlteracoesNaoSalvas {
 
       fim.setErrors(Object.keys(errosRestantes).length ? errosRestantes : null);
     }
+  }
+
+  private checarConflitoTurma(): void {
+    const periodoCtrl = this.formTurma.get('periodo');
+    const horaInicioCtrl = this.formTurma.get('horaInicio');
+    const horaFimCtrl = this.formTurma.get('horaFim');
+    const unidadeIdCtrl = this.formTurma.get('unidadeId');
+
+    if (!periodoCtrl || !horaInicioCtrl || !horaFimCtrl || !unidadeIdCtrl) {
+      return;
+    }
+
+    const periodo: Periodo = periodoCtrl.value;
+    const horaInicio: string = horaInicioCtrl.value;
+    const horaFim: string = horaFimCtrl.value;
+    const unidadeId = unidadeIdCtrl.value;
+
+    if (!periodo || !horaInicio || !horaFim || !unidadeId || horaFimCtrl.hasError('horarioInvalido')) {
+      this.definirErroControle(periodoCtrl, 'periodoConflito', false);
+      this.definirErroControle(horaFimCtrl, 'horarioConflito', false);
+      this.verificarErrosTurma();
+      return;
+    }
+
+    this.turmaService.listar(Number(unidadeId)).subscribe({
+      next: (turmasRecebidas) => {
+        // A API ignora o filtro unidadeId e sempre devolve todas as turmas
+        // (de todas as unidades), então o filtro é reforçado aqui.
+        const outrasTurmas = turmasRecebidas.filter(
+          (turma) =>
+            turma.unidade?.id === Number(unidadeId) &&
+            !(this.modoEdicaoTurma && turma.id === this.turmaSelecionadaId),
+        );
+
+        const mesmoPeriodo = outrasTurmas.some((turma) => turma.periodo === periodo);
+        const horarioSobreposto = outrasTurmas.some(
+          (turma) =>
+            turma.periodo !== periodo && horaInicio < turma.horaFim && turma.horaInicio < horaFim,
+        );
+
+        this.definirErroControle(periodoCtrl, 'periodoConflito', mesmoPeriodo);
+        this.definirErroControle(horaFimCtrl, 'horarioConflito', horarioSobreposto);
+        this.verificarErrosTurma();
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  private definirErroControle(controle: AbstractControl, chave: string, ativo: boolean): void {
+    const { [chave]: _valorAnterior, ...outrosErros } = controle.errors || {};
+
+    if (ativo) {
+      controle.setErrors({ ...outrosErros, [chave]: true });
+      controle.markAsTouched();
+      return;
+    }
+
+    controle.setErrors(Object.keys(outrosErros).length ? outrosErros : null);
   }
 
   private checarHorarios(): void {

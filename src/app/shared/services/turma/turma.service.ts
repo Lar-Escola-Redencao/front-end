@@ -3,7 +3,13 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
-import { AtualizarTurmaDTO, CriarTurmaDTO, HoraBackend, Turma } from '../../models/turma.model';
+import {
+  AtualizarTurmaDTO,
+  CriarTurmaDTO,
+  HoraBackend,
+  Turma,
+  TurmaBackend,
+} from '../../models/turma.model';
 
 @Injectable({
   providedIn: 'root',
@@ -21,30 +27,30 @@ export class TurmaService {
     }
 
     return this.http
-      .get<Turma[]>(`${this.apiUrl}/Listar`, { params })
+      .get<TurmaBackend[]>(`${this.apiUrl}/todas`, { params })
       .pipe(map((turmas) => turmas.map((turma) => this.normalizarTurma(turma))));
   }
 
   buscarPorId(id: number): Observable<Turma> {
     return this.http
-      .get<Turma>(`${this.apiUrl}/busca/${id}`)
+      .get<TurmaBackend>(`${this.apiUrl}/${id}`)
       .pipe(map((turma) => this.normalizarTurma(turma)));
   }
 
   criar(turma: CriarTurmaDTO): Observable<Turma> {
     return this.http
-      .post<Turma>(`${this.apiUrl}/Criar`, this.montarPayload(turma))
+      .post<TurmaBackend>(`${this.apiUrl}/criar`, this.montarPayload(turma))
       .pipe(map((turma) => this.normalizarTurma(turma)));
   }
 
   atualizar(id: number, turma: AtualizarTurmaDTO): Observable<Turma> {
     return this.http
-      .put<Turma>(`${this.apiUrl}/atualizar/${id}`, this.montarPayload(turma))
+      .put<TurmaBackend>(`${this.apiUrl}/${id}`, this.montarPayload(turma))
       .pipe(map((turma) => this.normalizarTurma(turma)));
   }
 
   deletar(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/deletar/${id}`);
+    return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
 
   private montarPayload(turma: CriarTurmaDTO): CriarTurmaDTO {
@@ -56,11 +62,13 @@ export class TurmaService {
     };
   }
 
-  private normalizarTurma(turma: Turma): Turma {
+  private normalizarTurma(turma: TurmaBackend): Turma {
     return {
-      ...turma,
-      horaInicio: this.paraHoraExibicao(turma.horaInicio as unknown as HoraBackend),
-      horaFim: this.paraHoraExibicao(turma.horaFim as unknown as HoraBackend),
+      id: turma.id,
+      periodo: turma.periodo,
+      horaInicio: this.paraHoraExibicao(turma.horaInicio),
+      horaFim: this.paraHoraExibicao(turma.horaFim),
+      unidade: { id: turma.unidadeId, nome: turma.unidadeNome },
     };
   }
 

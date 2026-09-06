@@ -193,6 +193,24 @@ describe('UnidadesTurmas', () => {
     expect(component.formTurma.get('horaFim')?.hasError('horarioInvalido')).toBe(false);
   });
 
+  it('não sinaliza conflito para uma turma de mesmo período/horário de outra unidade', () => {
+    // turmaService.listar ignora o unidadeId (assim como a API real) e sempre
+    // devolve a turma da unidade 1; a checagem de conflito precisa filtrar
+    // pelo lado do front antes de comparar período/horário.
+    component.abrirCadastroTurma();
+
+    component.formTurma.setValue({
+      periodo: 'MANHA',
+      horaInicio: '08:00',
+      horaFim: '12:00',
+      unidadeId: 2,
+    });
+
+    expect(component.formTurma.get('periodo')?.hasError('periodoConflito')).toBe(false);
+    expect(component.formTurma.get('horaFim')?.hasError('horarioConflito')).toBe(false);
+    expect(component.formTurma.valid).toBe(true);
+  });
+
   it('pré-seleciona a unidade da turma na edição, convertendo o id para número', () => {
     component.abrirEdicaoTurma({
       ...turma,
