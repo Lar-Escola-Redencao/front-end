@@ -1,11 +1,11 @@
 import { Component, signal } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 
 @Component({
   selector: 'app-public-navbar',
   standalone: true, 
-  imports: [MatButtonModule], 
+  imports: [MatButtonModule, RouterLink], 
   templateUrl: './public-navbar.html',
   styleUrl: './public-navbar.css',
 })
