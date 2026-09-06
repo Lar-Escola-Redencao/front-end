@@ -134,6 +134,19 @@ describe('Eventos', () => {
     expect(elementoFechado.querySelector('app-modal-layout')).toBeNull();
   });
 
+  it('deve fechar o drawer de filtros ao voltar para largura desktop', () => {
+    component.abrirFiltrosMobile();
+
+    Object.defineProperty(window, 'innerWidth', {
+      configurable: true,
+      value: 641
+    });
+
+    component.aoRedimensionarJanela();
+
+    expect(component.filtrosMobileAberto).toBe(false);
+  });
+
   it('deve aplicar filtros pelo drawer mobile e fechar o drawer', () => {
     component.abrirFiltrosMobile();
     component.proximaPagina();

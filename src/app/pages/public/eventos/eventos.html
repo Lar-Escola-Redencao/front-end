@@ -4,17 +4,6 @@
   <h1 class="titulo-pagina">Eventos</h1>
 
   <ng-template #camposFiltro>
-    @if (possuiFiltrosAplicados) {
-      <button
-        type="button"
-        class="botao-limpar-filtros"
-        (click)="limparFiltros()"
-      >
-        <span class="material-symbols-outlined">close</span>
-        Limpar filtros
-      </button>
-    }
-
     <label class="campo campo-texto">
       <input
         type="text"
@@ -49,6 +38,17 @@
         <option value="pago">Pago</option>
       </select>
     </label>
+    
+     @if (possuiFiltrosAplicados) {
+      <button
+        type="button"
+        class="botao-limpar-filtros"
+        (click)="limparFiltros()"
+      >
+        <span class="material-symbols-outlined">close</span>
+        Limpar filtros
+      </button>
+    }
 
     <button type="submit" class="botao-buscar">
       <span class="material-symbols-outlined">search</span>

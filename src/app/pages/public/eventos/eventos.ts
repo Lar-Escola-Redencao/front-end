@@ -1,6 +1,7 @@
 import {
   ChangeDetectorRef,
   Component,
+  HostListener,
   OnInit
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -93,6 +94,13 @@ export class Eventos implements OnInit {
 
   fecharFiltrosMobile(): void {
     this.filtrosMobileAberto = false;
+  }
+
+  @HostListener('window:resize')
+  aoRedimensionarJanela(): void {
+    if (window.innerWidth > 640 && this.filtrosMobileAberto) {
+      this.fecharFiltrosMobile();
+    }
   }
 
   aplicarFiltros(): void {
