@@ -1,13 +1,14 @@
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import {
+  ChangeDetectorRef,
+  Component,
+  OnInit
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import {
-  MatPaginatorIntl,
-  MatPaginatorModule,
-  PageEvent
-} from '@angular/material/paginator';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatSelectModule } from '@angular/material/select';
+import { ModalLayout } from '@components/modal-layout/modal-layout';
 import { PublicNavbar } from '@components/public-navbar/public-navbar';
-import { PaginatorIntlPtBr } from '@components/tabela-layout/tabela-layout';
 import { Evento } from 'src/app/shared/models/evento.model';
 import { EventoPublicoService } from 'src/app/shared/services/evento-publico/evento-publico.service';
 
@@ -16,15 +17,16 @@ type FiltroValor = 'todos' | 'gratuito' | 'pago';
 @Component({
   selector: 'app-eventos',
   standalone: true,
-  imports: [CommonModule, FormsModule, MatPaginatorModule, PublicNavbar],
+  imports: [
+    CommonModule,
+    FormsModule,
+    MatFormFieldModule,
+    MatSelectModule,
+    ModalLayout,
+    PublicNavbar
+  ],
   templateUrl: './eventos.html',
-  styleUrl: './eventos.css',
-  providers: [
-    {
-      provide: MatPaginatorIntl,
-      useClass: PaginatorIntlPtBr
-    }
-  ]
+  styleUrl: './eventos.css'
 })
 export class Eventos implements OnInit {
   eventos: Evento[] = [];
@@ -40,6 +42,7 @@ export class Eventos implements OnInit {
   paginaAtual = 0;
   tamanhoPagina = 6;
   readonly tamanhosPagina = [6];
+  filtrosMobileAberto = false;
 
   constructor(
     private eventoPublicoService: EventoPublicoService,
@@ -69,6 +72,27 @@ export class Eventos implements OnInit {
   buscar(): void {
     this.paginaAtual = 0;
     this.aplicarFiltros();
+  }
+
+  buscarMobile(): void {
+    this.buscar();
+    this.fecharFiltrosMobile();
+  }
+
+  limparFiltros(): void {
+    this.filtroTitulo = '';
+    this.filtroDataInicial = '';
+    this.filtroDataFinal = '';
+    this.filtroValor = 'todos';
+    this.buscar();
+  }
+
+  abrirFiltrosMobile(): void {
+    this.filtrosMobileAberto = true;
+  }
+
+  fecharFiltrosMobile(): void {
+    this.filtrosMobileAberto = false;
   }
 
   aplicarFiltros(): void {
@@ -117,10 +141,61 @@ export class Eventos implements OnInit {
     return Math.max(1, Math.ceil(this.eventosFiltrados.length / this.tamanhoPagina));
   }
 
-  alterarPagina(evento: PageEvent): void {
-    this.paginaAtual = evento.pageIndex;
-    this.tamanhoPagina = evento.pageSize;
+  get primeiraPaginaSelecionada(): boolean {
+    return this.paginaAtual === 0;
+  }
+
+  get ultimaPaginaSelecionada(): boolean {
+    return this.paginaAtual >= this.totalPaginas - 1;
+  }
+
+  get inicioRegistros(): number {
+    if (this.eventosFiltrados.length === 0) {
+      return 0;
+    }
+
+    return this.paginaAtual * this.tamanhoPagina + 1;
+  }
+
+  get fimRegistros(): number {
+    return Math.min(
+      (this.paginaAtual + 1) * this.tamanhoPagina,
+      this.eventosFiltrados.length
+    );
+  }
+
+  get possuiFiltrosAplicados(): boolean {
+    return Boolean(
+      this.filtroTitulo.trim() ||
+      this.filtroDataInicial ||
+      this.filtroDataFinal ||
+      this.filtroValor !== 'todos'
+    );
+  }
+
+  irParaPagina(pagina: number): void {
+    if (pagina < 0 || pagina >= this.totalPaginas) {
+      return;
+    }
+
+    this.paginaAtual = pagina;
     this.atualizarPagina();
+  }
+
+  primeiraPagina(): void {
+    this.irParaPagina(0);
+  }
+
+  paginaAnterior(): void {
+    this.irParaPagina(this.paginaAtual - 1);
+  }
+
+  proximaPagina(): void {
+    this.irParaPagina(this.paginaAtual + 1);
+  }
+
+  ultimaPagina(): void {
+    this.irParaPagina(this.totalPaginas - 1);
   }
 
   formatarDia(data: Date | string): string {

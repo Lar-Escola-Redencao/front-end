@@ -3,7 +3,18 @@
 <main class="eventos-page">
   <h1 class="titulo-pagina">Eventos</h1>
 
-  <form class="barra-busca" (ngSubmit)="buscar()">
+  <ng-template #camposFiltro>
+    @if (possuiFiltrosAplicados) {
+      <button
+        type="button"
+        class="botao-limpar-filtros"
+        (click)="limparFiltros()"
+      >
+        <span class="material-symbols-outlined">close</span>
+        Limpar filtros
+      </button>
+    }
+
     <label class="campo campo-texto">
       <input
         type="text"
@@ -20,7 +31,6 @@
         name="filtroDataInicial"
         [(ngModel)]="filtroDataInicial"
       />
-      <span class="material-symbols-outlined icone">calendar_today</span>
     </label>
 
     <label class="campo campo-data">
@@ -30,7 +40,6 @@
         name="filtroDataFinal"
         [(ngModel)]="filtroDataFinal"
       />
-      <span class="material-symbols-outlined icone">calendar_today</span>
     </label>
 
     <label class="campo campo-select">
@@ -42,10 +51,31 @@
     </label>
 
     <button type="submit" class="botao-buscar">
-      Buscar
       <span class="material-symbols-outlined">search</span>
     </button>
+  </ng-template>
+
+  <button
+    type="button"
+    class="botao-filtros-mobile"
+    (click)="abrirFiltrosMobile()"
+    aria-label="Abrir filtros de eventos"
+  >
+    Filtros
+    <span class="material-symbols-outlined">filter_list</span>
+  </button>
+
+  <form class="barra-busca barra-busca-desktop" (ngSubmit)="buscar()">
+    <ng-container *ngTemplateOutlet="camposFiltro"></ng-container>
   </form>
+
+  @if (filtrosMobileAberto) {
+    <app-modal-layout titulo="Filtrar eventos" (closed)="fecharFiltrosMobile()">
+      <form class="barra-busca barra-busca-mobile" (ngSubmit)="buscarMobile()">
+        <ng-container *ngTemplateOutlet="camposFiltro"></ng-container>
+      </form>
+    </app-modal-layout>
+  }
 
   @if (carregando) {
     <p class="mensagem-estado">Carregando eventos...</p>
@@ -78,16 +108,56 @@
       }
     </div>
 
-    <mat-paginator
-      class="paginacao"
-      [length]="eventosFiltrados.length"
-      [pageIndex]="paginaAtual"
-      [pageSize]="tamanhoPagina"
-      [pageSizeOptions]="tamanhosPagina"
-      (page)="alterarPagina($event)"
-      showFirstLastButtons
-      aria-label="Paginacao de eventos"
-    >
-    </mat-paginator>
+    <nav class="paginacao" aria-label="Paginacao de eventos">
+      <span class="paginacao-registros">
+        Mostrando {{ inicioRegistros }}-{{ fimRegistros }} de {{ eventosFiltrados.length }} registros
+      </span>
+
+      <div class="paginacao-controles">
+        <button
+          type="button"
+          class="botao-pagina"
+          [disabled]="primeiraPaginaSelecionada"
+          (click)="primeiraPagina()"
+          aria-label="Primeira página"
+        >
+          <span class="material-symbols-outlined" aria-hidden="true">keyboard_double_arrow_left</span>
+        </button>
+
+        <button
+          type="button"
+          class="botao-pagina"
+          [disabled]="primeiraPaginaSelecionada"
+          (click)="paginaAnterior()"
+          aria-label="Página anterior"
+        >
+          <span class="material-symbols-outlined" aria-hidden="true">chevron_left</span>
+        </button>
+
+        <span class="paginacao-pagina">
+          Página {{ paginaAtual + 1 }} de {{ totalPaginas }}
+        </span>
+
+        <button
+          type="button"
+          class="botao-pagina"
+          [disabled]="ultimaPaginaSelecionada"
+          (click)="proximaPagina()"
+          aria-label="Próxima página"
+        >
+          <span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
+        </button>
+
+        <button
+          type="button"
+          class="botao-pagina"
+          [disabled]="ultimaPaginaSelecionada"
+          (click)="ultimaPagina()"
+          aria-label="Última página"
+        >
+          <span class="material-symbols-outlined" aria-hidden="true">keyboard_double_arrow_right</span>
+        </button>
+      </div>
+    </nav>
   }
 </main>
