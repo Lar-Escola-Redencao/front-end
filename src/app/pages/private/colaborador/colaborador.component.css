@@ -159,7 +159,7 @@ h1{
 }
 
 .acoes-colaboradores .filtro-papel{
-  width: 50%;
+  width: 60%;
 }
 
 .colaboradores-card {
@@ -286,6 +286,49 @@ h1{
   font-family: var(--fonte-texto);
   font-size: 1rem;
   font-weight: 700;
+}
+
+.filtro-papel mat-chip-set{
+   margin-top: 4px;
+   padding-bottom: -10px;
+}
+
+.filtro-papel ::ng-deep mat-chip-row,
+.filtro-papel ::ng-deep .mat-mdc-chip {
+  --mdc-chip-container-shape-radius: var(--input-radius);
+  --mdc-chip-elevated-container-color: rgba(54, 130, 220, 0.16);
+  --mdc-chip-flat-selected-container-color: rgba(54, 130, 220, 0.16);
+  --mdc-chip-label-text-color: var(--primary-color);
+  --mdc-chip-outline-color: transparent;
+  --mdc-chip-with-trailing-icon-trailing-icon-color: var(--branco);
+  --mdc-chip-with-trailing-icon-hover-trailing-icon-color: var(--branco);
+  --mdc-chip-with-trailing-icon-focus-trailing-icon-color: var(--branco);
+
+  border: 0 !important;
+  border-radius: var(--input-radius) !important;
+  background-color: rgba(54, 130, 220, 0.16) !important;
+  color: var(--primary-color) !important;
+}
+
+.filtro-papel ::ng-deep mat-chip-row *,
+.filtro-papel ::ng-deep .mat-mdc-chip *,
+.filtro-papel ::ng-deep .mat-mdc-chip-action,
+.filtro-papel ::ng-deep .mdc-evolution-chip__cell,
+.filtro-papel ::ng-deep .mdc-evolution-chip__action,
+.filtro-papel ::ng-deep .mdc-evolution-chip__action--primary {
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+}
+
+.filtro-papel ::ng-deep mat-chip-row mat-icon,
+.filtro-papel ::ng-deep .mat-mdc-chip mat-icon {
+  color: var(--primary-color) !important;
+}
+
+.filtro-papel ::ng-deep mat-chip-row button[matChipRemove] {
+  color: var(--primary-color) !important;
+  opacity: 1;
 }
 
 
