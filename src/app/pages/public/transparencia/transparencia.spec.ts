@@ -50,28 +50,32 @@ describe('Transparencia', () => {
     httpMock.expectOne(`${environment.apiUrl}/transparencia/secoes`).flush(secoesMock);
   });
 
-  it('renders sections grouped with their documents once loaded', () => {
+  it('renders only sections with documents and keeps them closed once loaded', () => {
     setup();
     fixture.detectChanges();
 
     httpMock.expectOne(`${environment.apiUrl}/transparencia/secoes`).flush(secoesMock);
     fixture.detectChanges();
 
-    const titles = Array.from(fixture.nativeElement.querySelectorAll('.secao h2')).map(
+    const titles = Array.from(fixture.nativeElement.querySelectorAll('.secao-titulo')).map(
       (el) => (el as HTMLElement).textContent,
     );
-    expect(titles).toEqual(['Estatuto Social e Atas', 'Relatórios Financeiros']);
-    expect(fixture.nativeElement.textContent).toContain('Ata de Assembleia 2025');
+    expect(titles).toEqual(['Estatuto Social e Atas']);
+    expect(fixture.nativeElement.textContent).not.toContain('Ata de Assembleia 2025');
   });
 
-  it('shows an empty state for a section without published documents', () => {
+  it('opens a section when clicking its chevron button', () => {
     setup();
     fixture.detectChanges();
 
     httpMock.expectOne(`${environment.apiUrl}/transparencia/secoes`).flush(secoesMock);
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.textContent).toContain('Nenhum documento publicado nesta categoria ainda.');
+    (fixture.nativeElement.querySelector('.secao-cabecalho') as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain('Ata de Assembleia 2025');
+    expect(fixture.nativeElement.querySelector('.documento-icone')?.textContent).toContain('description');
   });
 
   it('shows an error message with a retry action when the request fails', () => {

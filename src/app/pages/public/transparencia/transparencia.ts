@@ -15,6 +15,7 @@ export class Transparencia {
   private readonly transparenciaService = inject(TransparenciaPublicaService);
 
   protected readonly secoes = signal<Secao[]>([]);
+  protected readonly secoesAbertas = signal<Set<number>>(new Set());
   protected readonly isLoading = signal(true);
   protected readonly errorMessage = signal<string | null>(null);
 
@@ -28,7 +29,10 @@ export class Transparencia {
 
     this.transparenciaService.listarSecoes().subscribe({
       next: (secoes) => {
-        this.secoes.set(secoes.filter((secao) => secao.ativo));
+        this.secoes.set(
+          secoes.filter((secao) => secao.ativo && secao.documentos.length > 0),
+        );
+        this.secoesAbertas.set(new Set());
         this.isLoading.set(false);
       },
       error: () => {
@@ -46,5 +50,23 @@ export class Transparencia {
 
   protected urlBaixar(documento: Documento): string {
     return this.transparenciaService.urlBaixar(documento);
+  }
+
+  protected alternarSecao(secaoId: number): void {
+    this.secoesAbertas.update((idsAbertos) => {
+      const proximosIds = new Set(idsAbertos);
+
+      if (proximosIds.has(secaoId)) {
+        proximosIds.delete(secaoId);
+      } else {
+        proximosIds.add(secaoId);
+      }
+
+      return proximosIds;
+    });
+  }
+
+  protected secaoAberta(secaoId: number): boolean {
+    return this.secoesAbertas().has(secaoId);
   }
 }

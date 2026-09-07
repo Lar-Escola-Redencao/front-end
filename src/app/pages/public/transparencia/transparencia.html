@@ -23,19 +23,30 @@
   } @else {
     <div class="secoes">
       @for (secao of secoes(); track secao.id) {
-        <section class="secao" aria-labelledby="secao-titulo-{{ secao.id }}">
-          <h2 [id]="'secao-titulo-' + secao.id">{{ secao.titulo }}</h2>
-          @if (secao.conteudo) {
-            <p class="secao-descricao">{{ secao.conteudo }}</p>
-          }
+        <section class="secao" [class.secao-aberta]="secaoAberta(secao.id)">
+          <button
+            type="button"
+            class="secao-cabecalho"
+            [attr.aria-expanded]="secaoAberta(secao.id)"
+            [attr.aria-controls]="'secao-documentos-' + secao.id"
+            (click)="alternarSecao(secao.id)"
+          >
+            <span class="secao-texto">
+              <span class="secao-titulo">{{ secao.titulo }}</span>
+              @if (secao.conteudo) {
+                <span class="secao-descricao">{{ secao.conteudo }}</span>
+              }
+            </span>
+            <span class="material-symbols-outlined secao-chevron" aria-hidden="true">expand_more</span>
+          </button>
 
-          @if (secao.documentos.length === 0) {
-            <p class="secao-vazia">Nenhum documento publicado nesta categoria ainda.</p>
-          } @else {
-            <ul class="documentos">
+          @if (secaoAberta(secao.id)) {
+            <ul class="documentos" [id]="'secao-documentos-' + secao.id">
               @for (documento of secao.documentos; track documento.id) {
                 <li class="documento-card">
-                  <span class="documento-icone" aria-hidden="true">📄</span>
+                  <span class="material-symbols-outlined documento-icone" aria-hidden="true">
+                    description
+                  </span>
                   <span class="documento-titulo">{{ documento.titulo }}</span>
                   <div class="documento-acoes">
                     <a

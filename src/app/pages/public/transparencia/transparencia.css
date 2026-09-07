@@ -12,6 +12,9 @@
 
 .page-header {
   margin-bottom: 40px;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
 }
 
 .page-header h1 {
@@ -25,6 +28,7 @@
   color: rgba(30, 30, 30, 0.7);
   font-size: 1rem;
   line-height: 1.5;
+  text-align: center;
 }
 
 .state-box {
@@ -83,32 +87,62 @@
 .secoes {
   display: flex;
   flex-direction: column;
-  gap: 32px;
+  gap: 16px;
 }
 
 .secao {
   background-color: var(--branco);
   border-radius: 12px;
   box-shadow: var(--sombra-padrao);
-  padding: 24px;
+  overflow: hidden;
 }
 
-.secao h2 {
+.secao-cabecalho {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border: 0;
+  background: transparent;
+  padding: 24px;
+  font-family: var(--fonte-texto);
+  text-align: left;
+  cursor: pointer;
+}
+
+.secao-cabecalho:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: -4px;
+}
+
+.secao-texto {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.secao-titulo {
   font-family: var(--fonte-titulo);
   font-size: 1.4rem;
   color: var(--preto);
-  margin-bottom: 8px;
+  line-height: 1.2;
 }
 
 .secao-descricao {
   color: rgba(30, 30, 30, 0.7);
   line-height: 1.5;
-  margin-bottom: 16px;
 }
 
-.secao-vazia {
-  color: rgba(30, 30, 30, 0.55);
-  font-style: italic;
+.secao-chevron {
+  flex-shrink: 0;
+  color: var(--primary-color);
+  transition: transform 0.2s ease-in-out;
+}
+
+.secao-aberta .secao-chevron {
+  transform: rotate(180deg);
 }
 
 .documentos {
@@ -116,6 +150,7 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+  padding: 0 24px 24px;
 }
 
 .documento-card {
@@ -129,7 +164,8 @@
 }
 
 .documento-icone {
-  font-size: 1.4rem;
+  color: var(--primary-color);
+  font-size: 1.5rem;
   flex-shrink: 0;
 }
 
@@ -185,12 +221,18 @@
   }
 
   .documento-card {
-    flex-direction: column;
-    align-items: flex-start;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
   }
 
+  .documento-titulo,
   .documento-acoes {
+    grid-column: 1 / -1;
     width: 100%;
+  }
+
+  .documento-titulo {
+    flex: initial;
   }
 
   .btn-acao {
