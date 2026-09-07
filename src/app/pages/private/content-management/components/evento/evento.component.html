@@ -19,12 +19,24 @@
 
   <app-tabela-layout
     [colunas]="colunas"
-    [dados]="eventosFiltrados"
+    [dados]="eventos"
     [acoes]="acoesTabela"
-    [tamanhoPagina]="10"
-    [tamanhosPagina]="[5, 10, 25]"
+    [carregando]="carregandoLista"
+    [erro]="erroLista"
+    [ordenacao]="ordenacao"
     [mensagemVazia]="mensagemVazia"
-    (acao)="executarAcao($event)" />
+    (acao)="executarAcao($event)"
+    (ordenar)="ordenarPor($event)"
+    (tentarNovamente)="carregarEventos()" />
+
+  <app-paginacao
+    [paginaAtual]="pagina"
+    [totalPaginas]="totalPaginas"
+    [totalElementos]="totalElementos"
+    [tamanho]="tamanho"
+    [carregando]="carregandoLista"
+    (paginaChange)="irParaPagina($event)"
+    (tamanhoChange)="mudarTamanhoPagina($event)" />
 </section>
 
 @if (modalAberto) {

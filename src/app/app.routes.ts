@@ -38,7 +38,7 @@ export const routes: Routes = [
         loadComponent: () =>
             import('./pages/public/transparencia/transparencia').then((m) => m.Transparencia),
     },
-    { path: '**', redirectTo: 'login' }
+    { path: '**', redirectTo: 'entrar' }
 ];
 
 

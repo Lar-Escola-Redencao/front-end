@@ -2,11 +2,21 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
+import { PaginaResposta } from 'src/app/shared/models/pagina.model';
+import { construirHttpParams } from 'src/app/shared/utils/paginacao-url';
 
 export interface Secao {
   id: number;
   titulo: string;
   ativo: boolean;
+}
+
+export interface DocumentoAdmin {
+  id: number;
+  titulo: string;
+  arquivo: string;
+  secaoId: number;
+  secaoTitulo: string;
 }
 
 export interface CriarSecaoDTO {
@@ -39,8 +49,21 @@ export class TransparenciaService {
     return this.http.get<Pagina>(`${this.apiUrl}`);
   }
 
+  /** Rota pública, sem paginação — hoje não é usada pela tela admin. */
   listarSecoes(): Observable<Secao[]> {
     return this.http.get<Secao[]>(`${this.apiUrl}/secoes`);
+  }
+
+  /** Rota autenticada e paginada, usada pela tabela de seções da tela admin. */
+  listarSecoesAdmin(pagina: number, tamanho: number, sort?: string): Observable<PaginaResposta<Secao>> {
+    const params = construirHttpParams({ pagina, tamanho, sort });
+    return this.http.get<PaginaResposta<Secao>>(`${this.apiUrl}/secoes/admin`, { params });
+  }
+
+  /** Rota autenticada e paginada, usada pela tabela de documentos da tela admin. */
+  listarDocumentosAdmin(pagina: number, tamanho: number, sort?: string): Observable<PaginaResposta<DocumentoAdmin>> {
+    const params = construirHttpParams({ pagina, tamanho, sort });
+    return this.http.get<PaginaResposta<DocumentoAdmin>>(`${this.apiUrl}/documentos/admin`, { params });
   }
 
   buscarSecao(id: number): Observable<Secao> {

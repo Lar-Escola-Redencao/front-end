@@ -1,6 +1,7 @@
 import {
   Component,
   OnInit,
+  OnDestroy,
   ChangeDetectorRef,
   HostListener,
   NgZone
@@ -14,6 +15,9 @@ import {
   ReactiveFormsModule,
   Validators
 } from '@angular/forms';
+
+import { ActivatedRoute, Router } from '@angular/router';
+import { Subscription } from 'rxjs';
 
 import { ToastrService } from 'ngx-toastr';
 
@@ -34,6 +38,8 @@ import {
   TabelaAcao
 } from '@components/tabela-layout/tabela-layout';
 
+import { Paginacao } from '@components/paginacao/paginacao';
+
 import { ModalLayout } from '@components/modal-layout/modal-layout';
 
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -47,6 +53,13 @@ import {
   PartnerInput
 } from '../../../../../shared/models/partner.model';
 
+import {
+  CampoOrdenacao,
+  alternarOrdenacao,
+  analisarOrdenacao,
+  lerParametrosPagina
+} from '../../../../../shared/utils/paginacao-url';
+
 import { environment } from '../../../../../../environments/environment';
 
 
@@ -59,6 +72,7 @@ import { environment } from '../../../../../../environments/environment';
     ReactiveFormsModule,
     ModalLayout,
     TabelaLayout,
+    Paginacao,
     MatFormFieldModule,
     MatInputModule,
     MatSlideToggleModule
@@ -68,7 +82,7 @@ import { environment } from '../../../../../../environments/environment';
   styleUrl: './partners-manager.css'
 })
 export class PartnersManager
-  implements OnInit, ComponentComAlteracoesNaoSalvas {
+  implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalvas {
 
   // =========================================================
   // CONSTRUTOR
@@ -79,7 +93,9 @@ export class PartnersManager
     private partnersService: PartnersService,
     private toastr: ToastrService,
     private cdr: ChangeDetectorRef,
-    private ngZone: NgZone
+    private ngZone: NgZone,
+    private route: ActivatedRoute,
+    private router: Router
   ) {
 
     this.form = this.fb.group({
@@ -119,6 +135,15 @@ export class PartnersManager
   modoEdicao = false;
   modalTremendo = false;
 
+  pagina = 0;
+  tamanho = 10;
+  sort: string | undefined;
+  ordenacao: CampoOrdenacao | null = null;
+  totalElementos = 0;
+  totalPaginas = 0;
+
+  private routeSub?: Subscription;
+
 
   // =========================================================
   // TABELA
@@ -133,12 +158,14 @@ export class PartnersManager
     {
       chave: 'nome',
       titulo: 'Nome',
-      principalMobile: true
+      principalMobile: true,
+      ordenavel: true
     },
     {
       chave: 'ativo',
       titulo: 'Exibição',
-      tipo: 'status'
+      tipo: 'status',
+      ordenavel: true
     }
 
   ];
@@ -183,7 +210,18 @@ export class PartnersManager
   // =========================================================
 
   ngOnInit(): void {
-    this.carregarPartners();
+    this.routeSub = this.route.queryParamMap.subscribe(params => {
+      const { pagina, tamanho, sort } = lerParametrosPagina(params);
+      this.pagina = pagina;
+      this.tamanho = tamanho;
+      this.sort = sort;
+      this.ordenacao = analisarOrdenacao(sort);
+      this.carregarPartners();
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.routeSub?.unsubscribe();
   }
 
   // =========================================================
@@ -191,13 +229,25 @@ export class PartnersManager
   // =========================================================
 
   carregarPartners(): void {
+    if (this.isLoading) {
+      return;
+    }
+
     this.isLoading = true;
     this.loadError = false;
     this.partnersService
-      .listarTodos()
-      .then((dados: Partner[]) => {
-        this.partners = dados;
+      .listarTodos(this.pagina, this.tamanho, this.sort)
+      .then((resposta) => {
+        this.partners = resposta.content;
+        this.totalElementos = resposta.page.totalElements;
+        this.totalPaginas = resposta.page.totalPages;
         this.isLoading = false;
+
+        if (this.partners.length === 0 && this.pagina > 0) {
+          this.irParaPagina(Math.max(0, resposta.page.totalPages - 1));
+          return;
+        }
+
         this.cdr.detectChanges();
       })
 
@@ -210,6 +260,26 @@ export class PartnersManager
         );
         this.cdr.detectChanges();
       });
+  }
+
+  irParaPagina(pagina: number): void {
+    this.navegar({ page: pagina });
+  }
+
+  mudarTamanhoPagina(tamanho: number): void {
+    this.navegar({ page: 0, size: tamanho });
+  }
+
+  ordenarPor(campo: string): void {
+    this.navegar({ page: 0, sort: alternarOrdenacao(this.ordenacao, campo) });
+  }
+
+  private navegar(queryParams: Record<string, any>): void {
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams,
+      queryParamsHandling: 'merge'
+    });
   }
 
 
