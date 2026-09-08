@@ -87,9 +87,13 @@ export class ColaboradorComponent
   implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalvas {
 
   colaboradores: Colaborador[] = [];
+  papeisDisponiveis: string[] = [];
   papeis: Papel[] = [];
-  filtroPapel: string[] = [];
-  unidadesDisponiveis: { id: number, nome: string }[] = [];
+
+  // Filtro por papel agora é feito no back-end (idPapel), não em memória.
+  filtroPapel: number | null = null;
+
+  unidadesDisponiveis: Unidade[] = [];
 
   pagina = 0;
   tamanho = 10;
@@ -242,8 +246,10 @@ export class ColaboradorComponent
   ngOnInit(): void {
     this.carregarPapeis();
     this.carregarUnidades();
-    this.carregarColaboradores();
 
+    // A carga inicial de colaboradores acontece via queryParamMap abaixo
+    // (ele dispara mesmo sem parâmetros na URL na primeira emissão),
+    // então não chamamos carregarColaboradores() duas vezes aqui.
     this.routeSub = this.route.queryParamMap.subscribe(params => {
       const { pagina, tamanho, sort } = lerParametrosPagina(params);
       this.pagina = pagina;
@@ -252,7 +258,9 @@ export class ColaboradorComponent
       this.ordenacao = analisarOrdenacao(sort);
 
       const papelBruto = Number(params.get('papel'));
-      this.filtroPapel = Number.isFinite(papelBruto) && papelBruto > 0 ? papelBruto : '';
+      this.filtroPapel = Number.isFinite(papelBruto) && papelBruto > 0
+        ? papelBruto
+        : null;
 
       this.carregarColaboradores();
     });
@@ -290,7 +298,7 @@ export class ColaboradorComponent
     );
   }
 
-carregarPapeis(): void {
+  carregarPapeis(): void {
     this.papelService.listarTodos().subscribe({
       next: (dados: Papel[]) => {
         this.papeis = dados;
@@ -309,8 +317,8 @@ carregarPapeis(): void {
     this.unidadeService
       .listarTodos()
       .subscribe({
-        next: (dados: Papel[]) => {
-          this.papeis = dados;
+        next: (dados: Unidade[]) => {
+          this.unidadesDisponiveis = dados;
         },
         error: (err: any) => {
           console.error(
@@ -329,49 +337,23 @@ carregarPapeis(): void {
     this.carregandoLista = true;
     this.erroLista = false;
 
-    const idPapel = this.filtroPapel || undefined;
+    const idPapel = this.filtroPapel ?? undefined;
 
     this.colaboradorService
       .listarTodos(this.pagina, this.tamanho, this.sort, idPapel)
       .subscribe({
         next: (resposta) => {
-
           this.ngZone.run(() => {
+            this.colaboradores = [...resposta.content];
+            this.totalElementos = resposta.page.totalElements;
+            this.totalPaginas = resposta.page.totalPages;
 
-            this.colaboradores = [...dados];
-
-            this.papeisDisponiveis = [
-              ...new Set(
-                this.colaboradores
-                  .map(
-                    (colaborador: Colaborador) =>
-                      colaborador.nomePapel
-                  )
-                  .filter(
-                    (
-                      nomePapel: string | undefined
-                    ): nomePapel is string =>
-                      Boolean(nomePapel)
-                  )
-              )
-            ];
-
-            this.aplicarFiltro();
-
-            /*
-            * Força a tabela a receber uma nova referência
-            * dos dados.
-            */
-            this.colaboradoresFiltrados = [
-              ...this.colaboradoresFiltrados
-            ];
-
+            this.carregandoLista = false;
             this.cdr.detectChanges();
           });
         },
 
         error: (err: any) => {
-
           console.error(
             'Erro na API:',
             err
@@ -390,22 +372,42 @@ carregarPapeis(): void {
       });
   }
 
-  aplicarFiltro(): void {
-    this.colaboradoresFiltrados = this.filtroPapel
-      ? this.colaboradores.filter(
-        colaborador =>
-          colaborador.nomePapel === this.filtroPapel
-      )
-      : this.colaboradores;
+  /** Atualiza a URL (?papel=id); o próprio queryParamMap.subscribe recarrega a lista. */
+  filtrarPorPapel(idPapel: number | null): void {
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { papel: idPapel || null, page: 0 },
+      queryParamsHandling: 'merge'
+    });
   }
 
-  removerFiltroPapel(papel: string): void {
-    const index = this.filtroPapel.indexOf(papel);
-    if (index >= 0) {
-      this.filtroPapel.splice(index, 1);
-      this.filtroPapel = [...this.filtroPapel]; // Força o angular a detectar a mudança
-      this.aplicarFiltro();
-    }
+  removerFiltroPapel(): void {
+    this.filtrarPorPapel(null);
+  }
+
+  ordenarPor(campo: string): void {
+    const novoSort = alternarOrdenacao(this.ordenacao, campo);
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { sort: novoSort },
+      queryParamsHandling: 'merge'
+    });
+  }
+
+  irParaPagina(novaPagina: number): void {
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { page: novaPagina },
+      queryParamsHandling: 'merge'
+    });
+  }
+
+  mudarTamanhoPagina(novoTamanho: number): void {
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { size: novoTamanho, page: 0 },
+      queryParamsHandling: 'merge'
+    });
   }
 
   isUnidadeSelecionada(id: number): boolean {

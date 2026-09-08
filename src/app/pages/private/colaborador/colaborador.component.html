@@ -7,23 +7,15 @@
       </button>
 
       <mat-form-field appearance="outline" class="filtro-papel">
-        <mat-label>Papéis de acesso</mat-label>
+        <mat-label>Papel de acesso</mat-label>
         <mat-select
-          [(ngModel)]="filtroPapel"
-          (selectionChange)="aplicarFiltro()"
-          multiple>
-          <mat-select-trigger>
-            <mat-chip-set>
-              <mat-chip-row *ngFor="let papel of filtroPapel" (removed)="removerFiltroPapel(papel)">
-                {{ papel }}
-                <button matChipRemove>
-                  <mat-icon>cancel</mat-icon>
-                </button>
-              </mat-chip-row>
-            </mat-chip-set>
-          </mat-select-trigger>
-          <mat-option *ngFor="let papel of papeisDisponiveis" [value]="papel">
-            {{ papel }}
+          [value]="filtroPapel"
+          (selectionChange)="filtrarPorPapel($event.value)">
+          <mat-option [value]="null">Todos os papéis</mat-option>
+          <mat-option
+            *ngFor="let papel of papeis"
+            [value]="papel.id">
+            {{ obterNomePapel(papel) }}
           </mat-option>
         </mat-select>
       </mat-form-field>
@@ -49,7 +41,7 @@
       [carregando]="carregandoLista"
       (paginaChange)="irParaPagina($event)"
       (tamanhoChange)="mudarTamanhoPagina($event)" />
-    </div>
+  </div>
 </section>
 
 @if (modalAberto) {
@@ -252,7 +244,7 @@
       <button
         type="submit"
         class="btn-primary"
-        [disabled]="isLoading || formColaborador.invalid">
+        [disabled]="isLoading || formColaborador.invalid || (modoEdicao && !temAlteracoes)">
         <span
           *ngIf="isLoading"
           class="spinner"
