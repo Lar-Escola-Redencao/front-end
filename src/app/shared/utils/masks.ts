@@ -1,3 +1,18 @@
+/** True once the value contains a letter or `@`, i.e. it can no longer be a CPF-in-progress. */
+export function pareceEmail(valor: string | null | undefined): boolean {
+  return /[a-zA-Z@]/.test(String(valor ?? ''));
+}
+
+
+export function limparMascaraCpfSeVirouEmail(valor: string | null | undefined): string {
+  const texto = String(valor ?? '');
+  if (!pareceEmail(texto)) return texto;
+
+  const prefixoNumerico = texto.match(/^[\d.\-]*/)?.[0] ?? '';
+  const resto = texto.slice(prefixoNumerico.length);
+  return prefixoNumerico.replace(/[.\-]/g, '') + resto;
+}
+
 export function formatarCpf(valor: string | null | undefined): string {
   if (!valor) return '';
   let v = String(valor).replace(/\D/g, '');

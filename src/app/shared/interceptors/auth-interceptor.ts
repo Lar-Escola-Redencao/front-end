@@ -23,7 +23,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
       // token — otherwise a plain wrong-password 401 on /auth/login would also trigger it.
       if (error instanceof HttpErrorResponse && error.status === 401 && isApiRequest && token) {
         auth.logout();
-        router.navigate(['/login'], { queryParams: { reason: 'expired' } });
+        router.navigate(['/entrar'], { queryParams: { reason: 'expired' } });
       }
       return throwError(() => error);
     }),

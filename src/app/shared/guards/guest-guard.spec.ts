@@ -29,12 +29,12 @@ describe('guestGuard', () => {
     expect(runGuard()).toBe(true);
   });
 
-  it('redirects an already-authenticated visitor (e.g. a remembered session) to /backoffice', () => {
+  it('redirects an already-authenticated visitor (e.g. a remembered session) to /dashboard', () => {
     authStub.isAuthenticated.mockReturnValue(true);
 
     const result = runGuard() as UrlTree;
 
     expect(result instanceof UrlTree).toBe(true);
-    expect(router.serializeUrl(result)).toBe('/backoffice');
+    expect(router.serializeUrl(result)).toBe('/dashboard');
   });
 });

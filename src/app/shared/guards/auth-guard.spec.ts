@@ -38,25 +38,25 @@ describe('authGuard', () => {
     expect(authStub.consumeExpiredSessionFlag).not.toHaveBeenCalled();
   });
 
-  it('redirects to /login without a reason when there was no prior session', () => {
+  it('redirects to /entrar without a reason when there was no prior session', () => {
     authStub.isAuthenticated.mockReturnValue(false);
     authStub.consumeExpiredSessionFlag.mockReturnValue(false);
 
-    const result = runGuard('/backoffice') as UrlTree;
+    const result = runGuard('/dashboard') as UrlTree;
 
     expect(result instanceof UrlTree).toBe(true);
-    expect(router.serializeUrl(result)).toBe('/login?returnUrl=%2Fbackoffice');
+    expect(router.serializeUrl(result)).toBe('/entrar?returnUrl=%2Fdashboard');
   });
 
-  it('redirects to /login with reason=expired when a stored token was dropped as expired', () => {
+  it('redirects to /entrar with reason=expired when a stored token was dropped as expired', () => {
     authStub.isAuthenticated.mockReturnValue(false);
     authStub.consumeExpiredSessionFlag.mockReturnValue(true);
 
-    const result = runGuard('/backoffice') as UrlTree;
+    const result = runGuard('/dashboard') as UrlTree;
 
     expect(result instanceof UrlTree).toBe(true);
     const serialized = router.serializeUrl(result);
     expect(serialized).toContain('reason=expired');
-    expect(serialized).toContain('returnUrl=%2Fbackoffice');
+    expect(serialized).toContain('returnUrl=%2Fdashboard');
   });
 });

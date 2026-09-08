@@ -11,7 +11,7 @@ import { Diario } from '@pages/private/diario/diario';
 import { UnidadesTurmas } from '@pages/private/unidades-turmas/unidades-turmas';
 
 export const routes: Routes = [
-    { path: '', component: Home},
+    { path: '', component: Home, canActivate: [guestGuard]},
     {
         path: 'dashboard',
         //loadComponent: () =>

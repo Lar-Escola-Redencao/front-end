@@ -57,7 +57,7 @@ describe('authInterceptor', () => {
     );
 
     expect(authStub.logout).toHaveBeenCalled();
-    expect(router.navigate).toHaveBeenCalledWith(['/login'], {
+    expect(router.navigate).toHaveBeenCalledWith(['/entrar'], {
       queryParams: { reason: 'expired' },
     });
   });
