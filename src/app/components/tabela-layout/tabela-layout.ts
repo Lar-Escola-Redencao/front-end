@@ -2,18 +2,10 @@ import {
   Component,
   EventEmitter,
   Input,
-  Output,
-  OnChanges,
-  SimpleChanges,
-  Injectable
+  Output
 } from '@angular/core';
 
 import { MatIconModule } from '@angular/material/icon';
-import {
-  MatPaginatorIntl,
-  MatPaginatorModule,
-  PageEvent
-} from '@angular/material/paginator';
 
 import { environment } from 'src/environments/environment';
 
@@ -23,6 +15,13 @@ export interface TabelaColuna<T = any> {
   formatar?: (valor: any, linha: T) => string;
   principalMobile?: boolean;
   tipo?: 'texto' | 'status' | 'imagem' | 'documento';
+  /** Quando true, o cabeçalho fica clicável e emite (ordenar). */
+  ordenavel?: boolean;
+  /**
+   * Nome do campo a enviar no `sort` pro back, quando diferente de `chave`
+   * (ex.: coluna exibe `nomePapel`, mas o back ordena por `papel.nomePapel`).
+   */
+  campoOrdenacao?: string;
 }
 
 export interface TabelaAcao<T = any> {
@@ -32,34 +31,9 @@ export interface TabelaAcao<T = any> {
   executar?: (linha: T) => void;
 }
 
-@Injectable()
-export class PaginatorIntlPtBr extends MatPaginatorIntl {
-  override itemsPerPageLabel = 'Itens por página:';
-  override nextPageLabel = 'Próxima página';
-  override previousPageLabel = 'Página anterior';
-  override firstPageLabel = 'Primeira página';
-  override lastPageLabel = 'Última página';
-
-  override getRangeLabel = (
-    page: number,
-    pageSize: number,
-    length: number
-  ) => {
-    if (length === 0 || pageSize === 0) {
-      return `0 de ${length}`;
-    }
-
-    length = Math.max(length, 0);
-
-    const startIndex = page * pageSize;
-
-    const endIndex =
-      startIndex < length
-        ? Math.min(startIndex + pageSize, length)
-        : startIndex + pageSize;
-
-    return `${startIndex + 1} - ${endIndex} de ${length}`;
-  };
+export interface TabelaOrdenacao {
+  campo: string;
+  direcao: 'asc' | 'desc';
 }
 
 @Component({
@@ -67,47 +41,41 @@ export class PaginatorIntlPtBr extends MatPaginatorIntl {
   standalone: true,
 
   imports: [
-    MatIconModule,
-    MatPaginatorModule
+    MatIconModule
   ],
 
   templateUrl: './tabela-layout.html',
-  styleUrl: './tabela-layout.css',
-
-  providers: [
-    {
-      provide: MatPaginatorIntl,
-      useClass: PaginatorIntlPtBr
-    }
-  ]
+  styleUrl: './tabela-layout.css'
 })
 export class TabelaLayout<T = any> {
 
   @Input() colunas: TabelaColuna<T>[] = [];
 
+  /** Já é a página atual vinda do back — este componente não pagina no cliente. */
   @Input() dados: T[] = [];
 
   @Input() acoes: TabelaAcao<T>[] = [];
 
-  @Input() exibirPaginacao = true;
-
-  @Input() tamanhoPagina = 10;
-
-  @Input() tamanhosPagina: number[] = [5, 10, 25, 50];
-
   @Input() mensagemVazia = 'Nenhum registro encontrado.';
+
+  @Input() carregando = false;
+
+  @Input() erro = false;
+
+  @Input() mensagemErro = 'Não foi possível carregar os dados. Tente novamente.';
+
+  @Input() ordenacao: TabelaOrdenacao | null = null;
 
   @Output() acao = new EventEmitter<{
     tipo: string;
     linha: T;
   }>();
 
+  @Output() ordenar = new EventEmitter<string>();
+
+  @Output() tentarNovamente = new EventEmitter<void>();
+
   apiUrl = environment.apiUrl;
-
-
-  dadosPaginados: T[] = [];
-
-  paginaAtual = 0;
 
   linhaExpandida: number | null = null;
 
@@ -124,15 +92,6 @@ export class TabelaLayout<T = any> {
       this.colunas[0];
 
     return this.obterValor(linha, colunaPrincipal);
-  }
-
-  ngOnChanges(changes: SimpleChanges): void {
-    if (
-      changes['dados'] ||
-      changes['tamanhoPagina']
-    ) {
-      this.atualizarPagina();
-    }
   }
 
   get valorTotalColunas(): number {
@@ -217,33 +176,16 @@ export class TabelaLayout<T = any> {
     });
   }
 
-  alterarPagina(evento: PageEvent): void {
-    this.paginaAtual = evento.pageIndex;
-    this.tamanhoPagina = evento.pageSize;
-    this.atualizarPagina();
-  }
-
-  private atualizarPagina(): void {
-    if (!this.exibirPaginacao) {
-      this.dadosPaginados = [
-        ...this.dados
-      ];
-
+  ordenarPor(coluna: TabelaColuna<T>): void {
+    if (!coluna.ordenavel || this.carregando) {
       return;
     }
 
-    const inicio =
-      this.paginaAtual *
-      this.tamanhoPagina;
+    this.ordenar.emit(coluna.campoOrdenacao ?? coluna.chave);
+  }
 
-    const fim =
-      inicio +
-      this.tamanhoPagina;
-
-    this.dadosPaginados =
-      this.dados.slice(
-        inicio,
-        fim
-      );
+  direcaoOrdenacao(coluna: TabelaColuna<T>): 'asc' | 'desc' | null {
+    const campo = coluna.campoOrdenacao ?? coluna.chave;
+    return this.ordenacao?.campo === campo ? this.ordenacao.direcao : null;
   }
 }
