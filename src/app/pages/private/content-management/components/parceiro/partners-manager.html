@@ -4,8 +4,13 @@
       Novo parceiro
     </button>
   </div>
-  <app-tabela-layout [colunas]="colunas" [dados]="partners" [acoes]="acoesTabela" [tamanhoPagina]="10"
-    [tamanhosPagina]="[5, 10, 25]" mensagemVazia="Nenhum parceiro cadastrado." (acao)="executarAcao($event)" />
+  <app-tabela-layout [colunas]="colunas" [dados]="partners" [acoes]="acoesTabela" [carregando]="isLoading"
+    [erro]="loadError" [ordenacao]="ordenacao" mensagemVazia="Nenhum parceiro cadastrado."
+    (acao)="executarAcao($event)" (ordenar)="ordenarPor($event)" (tentarNovamente)="carregarPartners()" />
+
+  <app-paginacao [paginaAtual]="pagina" [totalPaginas]="totalPaginas" [totalElementos]="totalElementos"
+    [tamanho]="tamanho" [carregando]="isLoading" (paginaChange)="irParaPagina($event)"
+    (tamanhoChange)="mudarTamanhoPagina($event)" />
 </section>
 
 
