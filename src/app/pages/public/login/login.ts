@@ -13,7 +13,11 @@ import { ActivatedRoute, Router } from '@angular/router';
 
 import { PublicNavbar } from '@components/public-navbar/public-navbar';
 import { Auth } from 'src/app/shared/services/auth/auth';
-import { formatarCpf, pareceEmail } from 'src/app/shared/utils/masks';
+import {
+  formatarCpf,
+  limparMascaraCpfSeVirouEmail,
+  pareceEmail,
+} from 'src/app/shared/utils/masks';
 
 const SESSION_EXPIRED_TOAST_MS = 6000;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -87,6 +91,11 @@ export class Login {
   protected onIdentifierInput(event: Event): void {
     const input = event.target as HTMLInputElement;
     if (pareceEmail(input.value)) {
+      const limpo = limparMascaraCpfSeVirouEmail(input.value);
+      if (limpo !== input.value) {
+        this.form.controls.identifier.setValue(limpo, { emitEvent: false });
+        input.value = limpo;
+      }
       return;
     }
 
