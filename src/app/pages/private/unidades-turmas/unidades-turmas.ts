@@ -1,18 +1,15 @@
-import {
-  ChangeDetectorRef,
-  Component,
-  HostListener,
-  NgZone,
-  OnInit
-} from '@angular/core';
+import { ChangeDetectorRef, Component, HostListener, NgZone, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
+  AbstractControl,
   FormBuilder,
   FormGroup,
   FormsModule,
   ReactiveFormsModule,
-  Validators
+  Validators,
 } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
+import { Subscription } from 'rxjs';
 
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -20,21 +17,27 @@ import { MatInputModule } from '@angular/material/input';
 import { ToastrService } from 'ngx-toastr';
 
 import { ModalLayout } from '@components/modal-layout/modal-layout';
-import {
-  TabelaAcao,
-  TabelaColuna,
-  TabelaLayout
-} from '@components/tabela-layout/tabela-layout';
+import { Paginacao } from '@components/paginacao/paginacao';
+import { TabelaAcao, TabelaColuna, TabelaLayout } from '@components/tabela-layout/tabela-layout';
 
 import { ComponentComAlteracoesNaoSalvas } from 'src/app/shared/guards/can-deactivate.guard';
 import { AtualizarUnidadeDTO, CriarUnidadeDTO, Unidade } from 'src/app/shared/models/unidade.model';
+import {
+  AtualizarTurmaDTO,
+  CriarTurmaDTO,
+  Periodo,
+  Turma,
+} from 'src/app/shared/models/turma.model';
 import { UnidadeService } from 'src/app/shared/services/unidade/unidade.service';
+import { TurmaService } from 'src/app/shared/services/turma/turma.service';
 import { Alertas } from 'src/app/shared/utils/alerts';
 import { mapearErrosFormulario, validarImagem } from 'src/app/shared/utils/form-validations';
 import { formatarTelefone } from 'src/app/shared/utils/masks';
+import { lerParametrosPagina } from 'src/app/shared/utils/paginacao-url';
 import { environment } from 'src/environments/environment';
 
 type DiaSemana = { valor: string; label: string };
+type OpcaoPeriodo = { valor: Periodo; label: string };
 
 @Component({
   selector: 'app-unidades-turmas',
@@ -45,18 +48,32 @@ type DiaSemana = { valor: string; label: string };
     ReactiveFormsModule,
     ModalLayout,
     TabelaLayout,
+    Paginacao,
     MatFormFieldModule,
-    MatInputModule
+    MatInputModule,
   ],
   templateUrl: './unidades-turmas.html',
   styleUrl: './unidades-turmas.css',
 })
-export class UnidadesTurmas
-  implements OnInit, ComponentComAlteracoesNaoSalvas {
-
+export class UnidadesTurmas implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalvas {
   abaAtiva: 'turmas' | 'unidades' = 'unidades';
 
+  private routeSub?: Subscription;
+
+  // Paginação compartilhada: sempre descreve a lista da aba ativa no momento
+  // (igual à tela de Eventos), por isso é resetada para a página 0 ao trocar
+  // de aba ou de filtro.
+  pagina = 0;
+  tamanho = 10;
+  totalElementos = 0;
+  totalPaginas = 0;
+  carregandoLista = false;
+  erroLista = false;
+
+  // Lista completa (não paginada), usada nos selects de unidade do formulário
+  // de turma e do filtro — a tabela de unidades usa `unidadesTabela`.
   unidades: Unidade[] = [];
+  unidadesTabela: Unidade[] = [];
 
   modalAberto = false;
   modoEdicao = false;
@@ -83,22 +100,21 @@ export class UnidadesTurmas
     { valor: 'QUI', label: 'Quinta' },
     { valor: 'SEX', label: 'Sexta' },
     { valor: 'SAB', label: 'Sábado' },
-    { valor: 'DOM', label: 'Domingo' }
+    { valor: 'DOM', label: 'Domingo' },
   ];
 
   private readonly diasUteis = ['SEG', 'TER', 'QUA', 'QUI', 'SEX'];
 
-  private readonly mensagensCustomizadas:
-    Record<string, Record<string, string>> = {
+  private readonly mensagensCustomizadas: Record<string, Record<string, string>> = {
     telefone: {
       minlength: 'Telefone incompleto.',
-      maxlength: 'Telefone incompleto.'
+      maxlength: 'Telefone incompleto.',
     },
     diasFuncionamento: {
-      required: 'Selecione ao menos um dia de funcionamento.'
+      required: 'Selecione ao menos um dia de funcionamento.',
     },
     horarioFechamento: {
-      horarioInvalido: 'O horário de fechamento deve ser depois da abertura.'
+      horarioInvalido: 'O horário de fechamento deve ser depois da abertura.',
     },
     idadeMin: {
       max: 'Idade inválida',
@@ -111,53 +127,133 @@ export class UnidadesTurmas
     }
   };
 
+  // ---------------------------------------------------------------
+  // TURMAS
+  // ---------------------------------------------------------------
+
+  turmas: Turma[] = [];
+  unidadeFiltroId: number | null = null;
+
+  modalTurmaAberto = false;
+  modoEdicaoTurma = false;
+  turmaSelecionadaId: number | null = null;
+  formTurma: FormGroup;
+  errosTurma: { [key: string]: string } = {};
+  isLoadingTurma = false;
+  modalTurmaTremendo = false;
+  valoresOriginaisFormTurma: any = null;
+
+  carregandoUnidades = false;
+  erroCarregarUnidades = false;
+
+  readonly periodos: OpcaoPeriodo[] = [
+    { valor: 'MANHA', label: 'Manhã' },
+    { valor: 'TARDE', label: 'Tarde' },
+  ];
+
+  private readonly mensagensCustomizadasTurma: Record<string, Record<string, string>> = {
+    horaFim: {
+      horarioInvalido: 'O horário de término deve ser depois do início.',
+      horarioConflito: 'Este horário conflita com outra turma já cadastrada para esta unidade.',
+    },
+    unidadeId: {
+      required: 'Selecione uma unidade.',
+    },
+    periodo: {
+      periodoConflito: 'Esta unidade já possui uma turma cadastrada nesse período.',
+    },
+  };
+
+  colunasTurmas: TabelaColuna<Turma>[] = [
+    {
+      chave: 'periodo',
+      titulo: 'Período',
+      principalMobile: true,
+      formatar: (valor: Periodo) => this.formatarPeriodo(valor),
+    },
+    {
+      chave: 'horaInicio',
+      titulo: 'Horário',
+      formatar: (_valor: string, linha: Turma) =>
+        `${this.formatarHorario(linha.horaInicio)} às ${this.formatarHorario(linha.horaFim)}`,
+    },
+    {
+      chave: 'unidade',
+      titulo: 'Unidade',
+      formatar: (valor: Turma['unidade']) => valor?.nome || '-',
+    },
+  ];
+
+  acoesTabelaTurmas: TabelaAcao<Turma>[] = [
+    {
+      icone: 'edit',
+      tooltip: 'Editar',
+      acao: 'editar',
+    },
+    {
+      icone: 'delete',
+      tooltip: 'Excluir',
+      acao: 'excluir',
+    },
+  ];
+
   colunas: TabelaColuna<Unidade>[] = [
     {
       chave: 'nome',
       titulo: 'Nome',
-      principalMobile: true
+      principalMobile: true,
     },
     {
       chave: 'endereco',
-      titulo: 'Endereço'
+      titulo: 'Endereço',
     },
     {
       chave: 'telefone',
-      titulo: 'Telefone'
+      titulo: 'Telefone',
     },
     {
       chave: 'horarioAbertura',
       titulo: 'Horário',
       formatar: (_valor: string, linha: Unidade) =>
-        `${this.formatarHorario(linha.horarioAbertura)} às ${this.formatarHorario(linha.horarioFechamento)}`
-    }
+        `${this.formatarHorario(linha.horarioAbertura)} às ${this.formatarHorario(linha.horarioFechamento)}`,
+    },
   ];
 
   acoesTabela: TabelaAcao<Unidade>[] = [
     {
       icone: 'visibility',
       tooltip: 'Visualizar',
-      acao: 'visualizar'
+      acao: 'visualizar',
     },
     {
       icone: 'edit',
       tooltip: 'Editar',
-      acao: 'editar'
+      acao: 'editar',
     },
     {
       icone: 'delete',
       tooltip: 'Excluir',
-      acao: 'excluir'
-    }
+      acao: 'excluir',
+    },
   ];
 
   constructor(
     private unidadeService: UnidadeService,
+    private turmaService: TurmaService,
     private fb: FormBuilder,
     private cdr: ChangeDetectorRef,
     private toastr: ToastrService,
-    private ngZone: NgZone
+    private ngZone: NgZone,
+    private route: ActivatedRoute,
+    private router: Router,
   ) {
+    this.formTurma = this.fb.group({
+      periodo: ['', Validators.required],
+      horaInicio: ['', Validators.required],
+      horaFim: ['', Validators.required],
+      unidadeId: [null, Validators.required],
+    });
+
     this.formUnidade = this.fb.group({
       nome: [
         '',
@@ -204,36 +300,88 @@ export class UnidadesTurmas
         [Validators.required, Validators.min(0), Validators.max(100)]
       ],
       corHex: [this.corPadrao],
-      imagem: [null, [validarImagem()]]
+      imagem: [null, [validarImagem()]],
     });
   }
 
   ngOnInit(): void {
     this.carregarUnidades();
 
-    this.formUnidade
-      .get('horarioAbertura')
-      ?.valueChanges
-      .subscribe(() => this.checarHorarios());
+    this.routeSub = this.route.queryParamMap.subscribe((params) => {
+      const { pagina, tamanho } = lerParametrosPagina(params);
+      this.pagina = pagina;
+      this.tamanho = tamanho;
 
-    this.formUnidade
-      .get('horarioFechamento')
-      ?.valueChanges
-      .subscribe(() => this.checarHorarios());
+      this.abaAtiva = params.get('aba') === 'turmas' ? 'turmas' : 'unidades';
 
-    this.formUnidade
-      .get('idadeMin')
-      ?.valueChanges
-      .subscribe(() => this.checarFaixaEtaria());
+      const unidadeIdBruto = Number(params.get('unidadeId'));
+      this.unidadeFiltroId =
+        Number.isFinite(unidadeIdBruto) && unidadeIdBruto > 0 ? unidadeIdBruto : null;
 
-    this.formUnidade
-      .get('idadeMax')
-      ?.valueChanges
-      .subscribe(() => this.checarFaixaEtaria());
+      this.carregarListaAtiva();
+    });
+
+    this.formUnidade.get('horarioAbertura')?.valueChanges.subscribe(() => this.checarHorarios());
+
+    this.formUnidade.get('horarioFechamento')?.valueChanges.subscribe(() => this.checarHorarios());
+
+    this.formUnidade.get('idadeMin')?.valueChanges.subscribe(() => this.checarFaixaEtaria());
+
+    this.formUnidade.get('idadeMax')?.valueChanges.subscribe(() => this.checarFaixaEtaria());
+
+    this.formTurma.get('periodo')?.valueChanges.subscribe(() => this.checarConflitoTurma());
+
+    this.formTurma.get('horaInicio')?.valueChanges.subscribe(() => {
+      this.checarHorariosTurma();
+      this.checarConflitoTurma();
+    });
+
+    this.formTurma.get('horaFim')?.valueChanges.subscribe(() => {
+      this.checarHorariosTurma();
+      this.checarConflitoTurma();
+    });
+
+    this.formTurma.get('unidadeId')?.valueChanges.subscribe(() => this.checarConflitoTurma());
+  }
+
+  ngOnDestroy(): void {
+    this.routeSub?.unsubscribe();
+  }
+
+  mudarAba(aba: 'unidades' | 'turmas'): void {
+    this.navegar({ aba, page: 0 });
+  }
+
+  private navegar(queryParams: Record<string, any>): void {
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams,
+      queryParamsHandling: 'merge',
+    });
+  }
+
+  private carregarListaAtiva(): void {
+    if (this.abaAtiva === 'unidades') {
+      this.carregarUnidadesTabela();
+    } else {
+      this.carregarTurmas();
+    }
   }
 
   get mensagemVazia(): string {
     return 'Nenhuma unidade cadastrada ainda';
+  }
+
+  get mensagemVaziaTurmas(): string {
+    return 'Nenhuma turma cadastrada ainda';
+  }
+
+  irParaPagina(pagina: number): void {
+    this.navegar({ page: pagina });
+  }
+
+  mudarTamanhoPagina(tamanho: number): void {
+    this.navegar({ page: 0, size: tamanho });
   }
 
   get temAlteracoes(): boolean {
@@ -251,31 +399,163 @@ export class UnidadesTurmas
     return JSON.stringify(valorAtual) !== JSON.stringify(valorOriginal);
   }
 
+  get temAlteracoesTurma(): boolean {
+    if (!this.modoEdicaoTurma) {
+      return this.formTurma.dirty;
+    }
+
+    return (
+      JSON.stringify(this.formTurma.getRawValue()) !==
+      JSON.stringify(this.valoresOriginaisFormTurma)
+    );
+  }
+
+  // Lista completa, para os selects de unidade (form de turma e filtro) — não
+  // é a mesma requisição/paginação da tabela de unidades.
   carregarUnidades(): void {
-    this.unidadeService
-      .listarTodas()
-      .subscribe({
-        next: (dados: Unidade[]) => {
-          this.ngZone.run(() => {
-            this.unidades = [...dados];
-            this.cdr.detectChanges();
-          });
-        },
+    this.carregandoUnidades = true;
+    this.erroCarregarUnidades = false;
 
-        error: (err: any) => {
-          console.error(
-            'Erro na API:',
-            err
-          );
+    this.unidadeService.listarTodas().subscribe({
+      next: (dados: Unidade[]) => {
+        this.ngZone.run(() => {
+          this.unidades = [...dados];
+          this.carregandoUnidades = false;
+          this.atualizarDisponibilidadeUnidadeId();
+          this.cdr.detectChanges();
+        });
+      },
 
-          this.toastr.error(
-            'Não foi possível carregar a lista de unidades.',
-            'Erro'
-          );
+      error: (err: any) => {
+        console.error('Erro na API:', err);
+
+        this.toastr.error('Não foi possível carregar a lista de unidades.', 'Erro');
+
+        this.carregandoUnidades = false;
+        this.erroCarregarUnidades = true;
+        this.atualizarDisponibilidadeUnidadeId();
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  // Depois de criar/editar/excluir uma unidade, a lista completa (selects)
+  // sempre precisa refletir a mudança; a tabela só é recarregada se for a aba
+  // visível no momento — senão sobrescreveria pagina/totalElementos/totalPaginas
+  // (estado compartilhado) com os números da tabela errada.
+  private recarregarUnidades(): void {
+    this.carregarUnidades();
+
+    if (this.abaAtiva === 'unidades') {
+      this.carregarUnidadesTabela();
+    }
+  }
+
+  private atualizarDisponibilidadeUnidadeId(): void {
+    const controle = this.formTurma.get('unidadeId');
+
+    if (!controle) {
+      return;
+    }
+
+    if (this.erroCarregarUnidades || this.unidades.length === 0) {
+      controle.disable();
+    } else {
+      controle.enable();
+    }
+  }
+
+  carregarUnidadesTabela(): void {
+    if (this.carregandoLista) {
+      return;
+    }
+
+    this.carregandoLista = true;
+    this.erroLista = false;
+
+    this.unidadeService.listarPaginado(this.pagina, this.tamanho).subscribe({
+      next: (resposta) => {
+        this.ngZone.run(() => {
+          this.unidadesTabela = [...resposta.content];
+          this.totalElementos = resposta.page.totalElements;
+          this.totalPaginas = resposta.page.totalPages;
+          this.carregandoLista = false;
+
+          if (this.unidadesTabela.length === 0 && this.pagina > 0) {
+            this.irParaPagina(Math.max(0, resposta.page.totalPages - 1));
+            return;
+          }
 
           this.cdr.detectChanges();
-        }
-      });
+        });
+      },
+
+      error: (err: any) => {
+        console.error('Erro na API:', err);
+
+        this.ngZone.run(() => {
+          this.carregandoLista = false;
+          this.erroLista = true;
+          this.toastr.error('Não foi possível carregar a lista de unidades.', 'Erro');
+          this.cdr.detectChanges();
+        });
+      },
+    });
+  }
+
+  carregarTurmas(): void {
+    if (this.carregandoLista) {
+      return;
+    }
+
+    this.carregandoLista = true;
+    this.erroLista = false;
+
+    this.turmaService.listarPaginado(this.pagina, this.tamanho, this.unidadeFiltroId).subscribe({
+      next: (resposta) => {
+        this.ngZone.run(() => {
+          // O back ignora o filtro unidadeId nas turmas (só pagina), então ele é
+          // reforçado aqui — mas isso só é confiável dentro da página atual: se
+          // as turmas da unidade escolhida caírem em outra página, elas não
+          // aparecem até o back passar a filtrar de verdade.
+          this.turmas =
+            this.unidadeFiltroId !== null
+              ? resposta.content.filter((turma) => turma.unidade?.id === this.unidadeFiltroId)
+              : [...resposta.content];
+
+          this.totalElementos = resposta.page.totalElements;
+          this.totalPaginas = resposta.page.totalPages;
+          this.carregandoLista = false;
+
+          if (this.unidadeFiltroId === null && this.turmas.length === 0 && this.pagina > 0) {
+            this.irParaPagina(Math.max(0, resposta.page.totalPages - 1));
+            return;
+          }
+
+          this.cdr.detectChanges();
+        });
+      },
+
+      error: (err: any) => {
+        console.error('Erro na API:', err);
+
+        this.ngZone.run(() => {
+          this.carregandoLista = false;
+          this.erroLista = true;
+          this.toastr.error('Não foi possível carregar a lista de turmas.', 'Erro');
+          this.cdr.detectChanges();
+        });
+      },
+    });
+  }
+
+  onFiltroUnidadeChange(event: Event): void {
+    const valor = (event.target as HTMLSelectElement).value;
+    this.navegar({ page: 0, unidadeId: valor || null });
+  }
+
+  formatarPeriodo(valor: Periodo): string {
+    return this.periodos.find((p) => p.valor === valor)?.label || valor;
   }
 
   abrirCadastro(): void {
@@ -300,7 +580,7 @@ export class UnidadesTurmas
       idadeMin: '',
       idadeMax: '',
       corHex: this.corPadrao,
-      imagem: null
+      imagem: null,
     });
 
     this.formUnidade.markAsPristine();
@@ -328,13 +608,50 @@ export class UnidadesTurmas
       idadeMin: unidade.idadeMin,
       idadeMax: unidade.idadeMax,
       corHex: unidade.corHex || this.corPadrao,
-      imagem: null
+      imagem: null,
     });
 
     this.formUnidade.markAsPristine();
-    this.valoresOriginaisDoFormulario =
-      this.formUnidade.getRawValue();
+    this.valoresOriginaisDoFormulario = this.formUnidade.getRawValue();
     this.modalAberto = true;
+  }
+
+  abrirCadastroTurma(): void {
+    this.modoEdicaoTurma = false;
+    this.turmaSelecionadaId = null;
+    this.errosTurma = {};
+    this.isLoadingTurma = false;
+    this.modalTurmaTremendo = false;
+    this.valoresOriginaisFormTurma = null;
+
+    this.formTurma.reset({
+      periodo: '',
+      horaInicio: '',
+      horaFim: '',
+      unidadeId: null,
+    });
+
+    this.formTurma.markAsPristine();
+    this.modalTurmaAberto = true;
+  }
+
+  abrirEdicaoTurma(turma: Turma): void {
+    this.modoEdicaoTurma = true;
+    this.turmaSelecionadaId = turma.id;
+    this.errosTurma = {};
+    this.isLoadingTurma = false;
+    this.modalTurmaTremendo = false;
+
+    this.formTurma.reset({
+      periodo: turma.periodo,
+      horaInicio: turma.horaInicio,
+      horaFim: turma.horaFim,
+      unidadeId: turma.unidade ? Number(turma.unidade.id) : null,
+    });
+
+    this.formTurma.markAsPristine();
+    this.valoresOriginaisFormTurma = this.formTurma.getRawValue();
+    this.modalTurmaAberto = true;
   }
 
   tratarImagem(caminho: string | null | undefined): string | null {
@@ -388,41 +705,51 @@ export class UnidadesTurmas
   }
 
   fecharModal(): void {
-    if (!this.formularioTemAlteracoesNaoSalvas()) {
+    if (!(this.modalAberto && this.temAlteracoes)) {
       this.fecharModalSemConfirmacao();
       return;
     }
 
-    Alertas
-      .confirmarDescarte()
-      .then((confirmado: boolean) => {
-        this.ngZone.run(() => {
-          if (confirmado) {
-            this.fecharModalSemConfirmacao();
-          } else {
-            this.dispararTremorModal();
-          }
+    Alertas.confirmarDescarte().then((confirmado: boolean) => {
+      this.ngZone.run(() => {
+        if (confirmado) {
+          this.fecharModalSemConfirmacao();
+        } else {
+          this.dispararTremorModal();
+        }
 
-          this.cdr.detectChanges();
-        });
+        this.cdr.detectChanges();
       });
+    });
+  }
+
+  fecharModalTurma(): void {
+    if (!(this.modalTurmaAberto && this.temAlteracoesTurma)) {
+      this.fecharModalTurmaSemConfirmacao();
+      return;
+    }
+
+    Alertas.confirmarDescarte().then((confirmado: boolean) => {
+      this.ngZone.run(() => {
+        if (confirmado) {
+          this.fecharModalTurmaSemConfirmacao();
+        } else {
+          this.dispararTremorModalTurma();
+        }
+
+        this.cdr.detectChanges();
+      });
+    });
   }
 
   formularioTemAlteracoesNaoSalvas(): boolean {
-    if (!this.modalAberto) {
-      return false;
-    }
-
-    return this.temAlteracoes;
+    return (
+      (this.modalAberto && this.temAlteracoes) || (this.modalTurmaAberto && this.temAlteracoesTurma)
+    );
   }
 
-  @HostListener(
-    'window:beforeunload',
-    ['$event']
-  )
-  avisarAntesDeFechar(
-    event: BeforeUnloadEvent
-  ): void {
+  @HostListener('window:beforeunload', ['$event'])
+  avisarAntesDeFechar(event: BeforeUnloadEvent): void {
     if (this.formularioTemAlteracoesNaoSalvas()) {
       event.preventDefault();
       event.returnValue = '';
@@ -430,44 +757,33 @@ export class UnidadesTurmas
   }
 
   verificarErros(): void {
-    this.erros =
-      mapearErrosFormulario(
-        this.formUnidade,
-        this.mensagensCustomizadas
-      );
+    this.erros = mapearErrosFormulario(this.formUnidade, this.mensagensCustomizadas);
+  }
+
+  verificarErrosTurma(): void {
+    this.errosTurma = mapearErrosFormulario(this.formTurma, this.mensagensCustomizadasTurma);
   }
 
   aplicarMascaraTelefone(event: Event): void {
-    const input =
-      event.target as HTMLInputElement;
+    const input = event.target as HTMLInputElement;
 
-    this.formUnidade
-      .get('telefone')
-      ?.setValue(
-        formatarTelefone(input.value),
-        { emitEvent: false }
-      );
+    this.formUnidade.get('telefone')?.setValue(formatarTelefone(input.value), { emitEvent: false });
 
     this.verificarErros();
   }
 
   diaSelecionado(dia: string): boolean {
-    const atuais: string[] =
-      this.formUnidade.get('diasFuncionamento')?.value || [];
+    const atuais: string[] = this.formUnidade.get('diasFuncionamento')?.value || [];
 
     return atuais.includes(dia);
   }
 
   toggleDia(dia: string, event: Event): void {
-    const marcado =
-      (event.target as HTMLInputElement).checked;
+    const marcado = (event.target as HTMLInputElement).checked;
 
-    const atuais: string[] =
-      this.formUnidade.get('diasFuncionamento')?.value || [];
+    const atuais: string[] = this.formUnidade.get('diasFuncionamento')?.value || [];
 
-    const novos = marcado
-      ? [...atuais, dia]
-      : atuais.filter(d => d !== dia);
+    const novos = marcado ? [...atuais, dia] : atuais.filter((d) => d !== dia);
 
     const controle = this.formUnidade.get('diasFuncionamento');
     controle?.setValue(novos);
@@ -491,14 +807,8 @@ export class UnidadesTurmas
       return;
     }
 
-    if (
-      this.modoEdicao &&
-      !this.temAlteracoes
-    ) {
-      this.toastr.info(
-        'Nenhum dado foi alterado.',
-        'Aviso'
-      );
+    if (this.modoEdicao && !this.temAlteracoes) {
+      this.toastr.info('Nenhum dado foi alterado.', 'Aviso');
       return;
     }
 
@@ -512,12 +822,31 @@ export class UnidadesTurmas
     this.criarUnidade();
   }
 
-  executarAcao(
-    evento: {
-      tipo: string;
-      linha: Unidade;
+  salvarTurma(): void {
+    this.formTurma.markAllAsTouched();
+    this.checarHorariosTurma();
+    this.verificarErrosTurma();
+
+    if (this.formTurma.invalid || this.unidades.length === 0) {
+      return;
     }
-  ): void {
+
+    if (this.modoEdicaoTurma && !this.temAlteracoesTurma) {
+      this.toastr.info('Nenhum dado foi alterado.', 'Aviso');
+      return;
+    }
+
+    this.isLoadingTurma = true;
+
+    if (this.modoEdicaoTurma) {
+      this.atualizarTurma();
+      return;
+    }
+
+    this.criarTurma();
+  }
+
+  executarAcao(evento: { tipo: string; linha: Unidade }): void {
     if (evento.tipo === 'visualizar') {
       this.abrirVisualizacao(evento.linha);
       return;
@@ -533,6 +862,17 @@ export class UnidadesTurmas
     }
   }
 
+  executarAcaoTurma(evento: { tipo: string; linha: Turma }): void {
+    if (evento.tipo === 'editar') {
+      this.abrirEdicaoTurma(evento.linha);
+      return;
+    }
+
+    if (evento.tipo === 'excluir') {
+      this.deletarTurma(evento.linha);
+    }
+  }
+
   abrirVisualizacao(unidade: Unidade): void {
     this.unidadeVisualizacao = unidade;
     this.modalVisualizacaoAberto = true;
@@ -543,96 +883,91 @@ export class UnidadesTurmas
     this.unidadeVisualizacao = null;
   }
 
-  deletarUnidade(
-    unidade: Unidade
-  ): void {
-    Alertas
-      .confirmarExclusao()
-      .then((confirmado: boolean) => {
-        if (!confirmado) {
-          return;
-        }
+  deletarUnidade(unidade: Unidade): void {
+    Alertas.confirmarExclusao().then((confirmado: boolean) => {
+      if (!confirmado) {
+        return;
+      }
 
-        this.isLoading = true;
+      this.isLoading = true;
 
-        this.unidadeService
-          .deletar(unidade.id)
-          .subscribe({
-            next: () => {
-              this.isLoading = false;
-              this.carregarUnidades();
-              this.toastr.success(
-                'Unidade excluída com sucesso.',
-                'Sucesso'
-              );
-            },
-            error: () => {
-              this.isLoading = false;
-              this.toastr.error(
-                'Erro ao excluir unidade.',
-                'Erro'
-              );
-              this.cdr.detectChanges();
-            }
-          });
+      this.unidadeService.deletar(unidade.id).subscribe({
+        next: () => {
+          this.isLoading = false;
+          this.recarregarUnidades();
+          this.toastr.success('Unidade excluída com sucesso.', 'Sucesso');
+        },
+        error: () => {
+          this.isLoading = false;
+          this.toastr.error('Erro ao excluir unidade.', 'Erro');
+          this.cdr.detectChanges();
+        },
       });
+    });
+  }
+
+  deletarTurma(turma: Turma): void {
+    const mensagem =
+      `A turma de ${this.formatarPeriodo(turma.periodo)} ` +
+      `(${this.formatarHorario(turma.horaInicio)} às ${this.formatarHorario(turma.horaFim)}) ` +
+      `da unidade ${turma.unidade?.nome || '-'} será excluída.`;
+
+    Alertas.confirmarExclusao(mensagem).then((confirmado: boolean) => {
+      if (!confirmado) {
+        return;
+      }
+
+      this.isLoadingTurma = true;
+
+      this.turmaService.deletar(turma.id).subscribe({
+        next: () => {
+          this.isLoadingTurma = false;
+          this.carregarTurmas();
+          this.toastr.success('Turma excluída com sucesso.', 'Sucesso');
+        },
+        error: () => {
+          this.isLoadingTurma = false;
+          this.toastr.error('Erro ao excluir turma.', 'Erro');
+          this.cdr.detectChanges();
+        },
+      });
+    });
   }
 
   private criarUnidade(): void {
     const dto: CriarUnidadeDTO = this.montarDto();
 
-    this.unidadeService
-      .criar(dto)
-      .subscribe({
-        next: () => {
-          this.isLoading = false;
-          this.fecharModalSemConfirmacao();
-          this.carregarUnidades();
-          this.toastr.success(
-            'Unidade cadastrada com sucesso.',
-            'Sucesso'
-          );
-        },
-        error: (err: any) => {
-          this.isLoading = false;
-          this.toastr.error(
-            err.error?.message ||
-            'Erro ao cadastrar unidade.',
-            'Erro'
-          );
-          this.cdr.detectChanges();
-        }
-      });
+    this.unidadeService.criar(dto).subscribe({
+      next: () => {
+        this.isLoading = false;
+        this.fecharModalSemConfirmacao();
+        this.recarregarUnidades();
+        this.toastr.success('Unidade cadastrada com sucesso.', 'Sucesso');
+      },
+      error: (err: any) => {
+        this.isLoading = false;
+        this.toastr.error(err.error?.message || 'Erro ao cadastrar unidade.', 'Erro');
+        this.cdr.detectChanges();
+      },
+    });
   }
 
   private atualizarUnidade(): void {
     const dto: AtualizarUnidadeDTO = this.montarDto();
 
-    this.unidadeService
-      .atualizar(
-        this.unidadeSelecionadaId!,
-        dto
-      )
-      .subscribe({
-        next: () => {
-          this.isLoading = false;
-          this.fecharModalSemConfirmacao();
-          this.carregarUnidades();
-          this.toastr.success(
-            'Unidade atualizada com sucesso.',
-            'Sucesso'
-          );
-        },
-        error: (err: any) => {
-          this.isLoading = false;
-          this.toastr.error(
-            err.error?.message ||
-            'Erro ao atualizar unidade.',
-            'Erro'
-          );
-          this.cdr.detectChanges();
-        }
-      });
+    this.unidadeService.atualizar(this.unidadeSelecionadaId!, dto).subscribe({
+      next: () => {
+        this.isLoading = false;
+        this.fecharModalSemConfirmacao();
+        this.recarregarUnidades();
+        this.toastr.success('Unidade atualizada com sucesso.', 'Sucesso');
+      },
+      error: (err: any) => {
+        this.isLoading = false;
+        this.toastr.error(err.error?.message || 'Erro ao atualizar unidade.', 'Erro');
+        this.cdr.detectChanges();
+      },
+    });
   }
 
   private montarDto(): CriarUnidadeDTO {
@@ -649,8 +984,163 @@ export class UnidadesTurmas
       idadeMin: Number(valores.idadeMin),
       idadeMax: Number(valores.idadeMax),
       corHex: valores.corHex || this.corPadrao,
-      imagem: this.imagemSelecionada ?? undefined
+      imagem: this.imagemSelecionada ?? undefined,
     };
+  }
+
+  private criarTurma(): void {
+    const dto: CriarTurmaDTO = this.montarDtoTurma();
+
+    this.turmaService.criar(dto).subscribe({
+      next: () => {
+        this.isLoadingTurma = false;
+        this.fecharModalTurmaSemConfirmacao();
+        this.carregarTurmas();
+        this.toastr.success('Turma cadastrada com sucesso.', 'Sucesso');
+      },
+      error: (err: any) => {
+        this.isLoadingTurma = false;
+        this.tratarErroTurma(err, 'Erro ao cadastrar turma.');
+      },
+    });
+  }
+
+  private atualizarTurma(): void {
+    const dto: AtualizarTurmaDTO = this.montarDtoTurma();
+
+    this.turmaService.atualizar(this.turmaSelecionadaId!, dto).subscribe({
+      next: () => {
+        this.isLoadingTurma = false;
+        this.fecharModalTurmaSemConfirmacao();
+        this.carregarTurmas();
+        this.toastr.success('Turma atualizada com sucesso.', 'Sucesso');
+      },
+      error: (err: any) => {
+        this.isLoadingTurma = false;
+
+        if (err.status === 404) {
+          this.toastr.error('Esta turma não existe mais.', 'Erro');
+          this.fecharModalTurmaSemConfirmacao();
+          this.carregarTurmas();
+          return;
+        }
+
+        this.tratarErroTurma(err, 'Erro ao atualizar turma.');
+      },
+    });
+  }
+
+  private tratarErroTurma(err: any, mensagemPadrao: string): void {
+    if (err.status === 400 && err.error && typeof err.error === 'object' && !err.error.message) {
+      this.errosTurma = { ...this.errosTurma, ...err.error };
+      this.cdr.detectChanges();
+      return;
+    }
+
+    if (err.status === 409) {
+      this.toastr.error(
+        err.error?.message ||
+          'Esta unidade já possui uma turma nesse período ou com horário conflitante.',
+        'Conflito de horário',
+      );
+      this.cdr.detectChanges();
+      return;
+    }
+
+    this.toastr.error(err.error?.message || mensagemPadrao, 'Erro');
+    this.cdr.detectChanges();
+  }
+
+  private montarDtoTurma(): CriarTurmaDTO {
+    const valores = this.formTurma.value;
+
+    return {
+      periodo: valores.periodo,
+      horaInicio: valores.horaInicio,
+      horaFim: valores.horaFim,
+      unidadeId: Number(valores.unidadeId),
+    };
+  }
+
+  private checarHorariosTurma(): void {
+    const inicio = this.formTurma.get('horaInicio');
+    const fim = this.formTurma.get('horaFim');
+
+    if (!inicio || !fim) {
+      return;
+    }
+
+    if (inicio.value && fim.value && inicio.value >= fim.value) {
+      fim.setErrors({
+        ...(fim.errors || {}),
+        horarioInvalido: true,
+      });
+      return;
+    }
+
+    if (fim.hasError('horarioInvalido')) {
+      const { horarioInvalido, ...errosRestantes } = fim.errors || {};
+
+      fim.setErrors(Object.keys(errosRestantes).length ? errosRestantes : null);
+    }
+  }
+
+  private checarConflitoTurma(): void {
+    const periodoCtrl = this.formTurma.get('periodo');
+    const horaInicioCtrl = this.formTurma.get('horaInicio');
+    const horaFimCtrl = this.formTurma.get('horaFim');
+    const unidadeIdCtrl = this.formTurma.get('unidadeId');
+
+    if (!periodoCtrl || !horaInicioCtrl || !horaFimCtrl || !unidadeIdCtrl) {
+      return;
+    }
+
+    const periodo: Periodo = periodoCtrl.value;
+    const horaInicio: string = horaInicioCtrl.value;
+    const horaFim: string = horaFimCtrl.value;
+    const unidadeId = unidadeIdCtrl.value;
+
+    if (!periodo || !horaInicio || !horaFim || !unidadeId || horaFimCtrl.hasError('horarioInvalido')) {
+      this.definirErroControle(periodoCtrl, 'periodoConflito', false);
+      this.definirErroControle(horaFimCtrl, 'horarioConflito', false);
+      this.verificarErrosTurma();
+      return;
+    }
+
+    this.turmaService.listar(Number(unidadeId)).subscribe({
+      next: (turmasRecebidas) => {
+        // A API ignora o filtro unidadeId e sempre devolve todas as turmas
+        // (de todas as unidades), então o filtro é reforçado aqui.
+        const outrasTurmas = turmasRecebidas.filter(
+          (turma) =>
+            turma.unidade?.id === Number(unidadeId) &&
+            !(this.modoEdicaoTurma && turma.id === this.turmaSelecionadaId),
+        );
+
+        const mesmoPeriodo = outrasTurmas.some((turma) => turma.periodo === periodo);
+        const horarioSobreposto = outrasTurmas.some(
+          (turma) =>
+            turma.periodo !== periodo && horaInicio < turma.horaFim && turma.horaInicio < horaFim,
+        );
+
+        this.definirErroControle(periodoCtrl, 'periodoConflito', mesmoPeriodo);
+        this.definirErroControle(horaFimCtrl, 'horarioConflito', horarioSobreposto);
+        this.verificarErrosTurma();
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  private definirErroControle(controle: AbstractControl, chave: string, ativo: boolean): void {
+    const { [chave]: _valorAnterior, ...outrosErros } = controle.errors || {};
+
+    if (ativo) {
+      controle.setErrors({ ...outrosErros, [chave]: true });
+      controle.markAsTouched();
+      return;
+    }
+
+    controle.setErrors(Object.keys(outrosErros).length ? outrosErros : null);
   }
 
   private checarHorarios(): void {
@@ -661,29 +1151,18 @@ export class UnidadesTurmas
       return;
     }
 
-    if (
-      abertura.value &&
-      fechamento.value &&
-      abertura.value >= fechamento.value
-    ) {
+    if (abertura.value && fechamento.value && abertura.value >= fechamento.value) {
       fechamento.setErrors({
         ...(fechamento.errors || {}),
-        horarioInvalido: true
+        horarioInvalido: true,
       });
       return;
     }
 
     if (fechamento.hasError('horarioInvalido')) {
-      const {
-        horarioInvalido,
-        ...errosRestantes
-      } = fechamento.errors || {};
+      const { horarioInvalido, ...errosRestantes } = fechamento.errors || {};
 
-      fechamento.setErrors(
-        Object.keys(errosRestantes).length
-          ? errosRestantes
-          : null
-      );
+      fechamento.setErrors(Object.keys(errosRestantes).length ? errosRestantes : null);
     }
   }
 
@@ -702,22 +1181,15 @@ export class UnidadesTurmas
     ) {
       idadeMax.setErrors({
         ...(idadeMax.errors || {}),
-        idadeInvalida: true
+        idadeInvalida: true,
       });
       return;
     }
 
     if (idadeMax.hasError('idadeInvalida')) {
-      const {
-        idadeInvalida,
-        ...errosRestantes
-      } = idadeMax.errors || {};
+      const { idadeInvalida, ...errosRestantes } = idadeMax.errors || {};
 
-      idadeMax.setErrors(
-        Object.keys(errosRestantes).length
-          ? errosRestantes
-          : null
-      );
+      idadeMax.setErrors(Object.keys(errosRestantes).length ? errosRestantes : null);
     }
   }
 
@@ -739,25 +1211,23 @@ export class UnidadesTurmas
     }
 
     return this.ordenarDias(dias)
-      .map(dia => this.diasSemana.find(d => d.valor === dia)?.label || dia)
+      .map((dia) => this.diasSemana.find((d) => d.valor === dia)?.label || dia)
       .join(', ');
   }
 
   private separarDias(valor: string | null | undefined): string[] {
     return (valor || '')
       .split(';')
-      .map(d => d.trim())
+      .map((d) => d.trim())
       .filter(Boolean);
   }
 
   private ordenarDias(dias: string[]): string[] {
-    return this.diasSemana
-      .map(d => d.valor)
-      .filter(valor => dias.includes(valor));
+    return this.diasSemana.map((d) => d.valor).filter((valor) => dias.includes(valor));
   }
 
   private mesmoConjunto(a: string[], b: string[]): boolean {
-    return a.length === b.length && b.every(valor => a.includes(valor));
+    return a.length === b.length && b.every((valor) => a.includes(valor));
   }
 
   private paraInputHorario(valor: string | null | undefined): string {
@@ -786,7 +1256,7 @@ export class UnidadesTurmas
       idadeMin: '',
       idadeMax: '',
       corHex: this.corPadrao,
-      imagem: null
+      imagem: null,
     });
 
     this.formUnidade.markAsPristine();
@@ -797,6 +1267,33 @@ export class UnidadesTurmas
 
     setTimeout(() => {
       this.modalTremendo = false;
+      this.cdr.detectChanges();
+    }, 400);
+  }
+
+  private fecharModalTurmaSemConfirmacao(): void {
+    this.modalTurmaAberto = false;
+    this.modalTurmaTremendo = false;
+    this.isLoadingTurma = false;
+    this.turmaSelecionadaId = null;
+    this.errosTurma = {};
+    this.valoresOriginaisFormTurma = null;
+
+    this.formTurma.reset({
+      periodo: '',
+      horaInicio: '',
+      horaFim: '',
+      unidadeId: null,
+    });
+
+    this.formTurma.markAsPristine();
+  }
+
+  private dispararTremorModalTurma(): void {
+    this.modalTurmaTremendo = true;
+
+    setTimeout(() => {
+      this.modalTurmaTremendo = false;
       this.cdr.detectChanges();
     }, 400);
   }

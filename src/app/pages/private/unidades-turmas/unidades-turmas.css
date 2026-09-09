@@ -56,6 +56,47 @@ h1 {
   margin-top: 24px;
   margin-bottom: 24px;
   justify-content: flex-start;
+  align-items: center;
+}
+
+.filtro-unidade {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.filtro-unidade label {
+  font-family: var(--fonte-texto);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--input-color);
+}
+
+.filtro-unidade select {
+  font-family: var(--fonte-texto);
+  padding: 8px 12px;
+  border: 1px solid var(--input-border);
+  border-radius: var(--input-radius);
+  background-color: var(--branco);
+  color: var(--preto);
+  cursor: pointer;
+}
+
+.campo-unidade {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.campo-unidade .mat-mdc-form-field {
+  flex: 1;
+}
+
+.alerta-unidade {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
 .form-modal {
@@ -122,7 +163,7 @@ h1 {
   cursor: pointer;
 }
 
-.dias-funcionamento input[type="checkbox"] {
+.dias-funcionamento input[type='checkbox'] {
   width: 16px;
   height: 16px;
   accent-color: var(--primary-color);
@@ -149,7 +190,7 @@ h1 {
   gap: 12px;
 }
 
-.campo-cor input[type="color"] {
+.campo-cor input[type='color'] {
   width: 48px;
   height: 38px;
   padding: 2px;
@@ -259,8 +300,20 @@ h1 {
   animation: girar 0.7s linear infinite;
 }
 
-@media (max-width: 600px) {
+.campo-unidade .spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--input-border);
+  border-top-color: var(--primary-color);
+}
 
+@keyframes girar {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 600px) {
   .acoes-unidades,
   .acoes-unidades .btn-primary,
   .acoes-modal,
@@ -270,6 +323,11 @@ h1 {
 
   .acoes-modal {
     justify-content: space-between;
+  }
+
+  .filtro-unidade,
+  .filtro-unidade select {
+    width: 100%;
   }
 
   .form-row {
