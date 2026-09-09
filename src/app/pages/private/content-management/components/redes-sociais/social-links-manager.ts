@@ -3,6 +3,7 @@ import {
   Component,
   HostListener,
   NgZone,
+  OnDestroy,
   OnInit
 } from '@angular/core';
 
@@ -15,6 +16,9 @@ import {
   Validators
 } from '@angular/forms';
 
+import { ActivatedRoute, Router } from '@angular/router';
+import { Subscription } from 'rxjs';
+
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { ToastrService } from 'ngx-toastr';
@@ -26,6 +30,8 @@ import {
   TabelaColuna,
   TabelaLayout
 } from '@components/tabela-layout/tabela-layout';
+
+import { Paginacao } from '@components/paginacao/paginacao';
 
 import { ComponentComAlteracoesNaoSalvas } from 'src/app/shared/guards/can-deactivate.guard';
 
@@ -41,6 +47,13 @@ import {
   validarImagem
 } from 'src/app/shared/utils/form-validations';
 
+import {
+  CampoOrdenacao,
+  alternarOrdenacao,
+  analisarOrdenacao,
+  lerParametrosPagina
+} from 'src/app/shared/utils/paginacao-url';
+
 import { Alertas } from 'src/app/shared/utils/alerts';
 
 import { environment } from 'src/environments/environment';
@@ -55,6 +68,7 @@ const URL_PATTERN = /^https?:\/\/.+/i;
     ReactiveFormsModule,
     ModalLayout,
     TabelaLayout,
+    Paginacao,
     MatFormFieldModule,
     MatInputModule
   ],
@@ -62,7 +76,7 @@ const URL_PATTERN = /^https?:\/\/.+/i;
   styleUrls: ['./social-links-manager.css']
 })
 export class SocialLinksManager
-  implements OnInit, ComponentComAlteracoesNaoSalvas {
+  implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalvas {
 
   socialLinks: SocialLink[] = [];
 
@@ -86,11 +100,21 @@ export class SocialLinksManager
 
   modalTremendo = false;
 
+  pagina = 0;
+  tamanho = 10;
+  sort: string | undefined;
+  ordenacao: CampoOrdenacao | null = null;
+  totalElementos = 0;
+  totalPaginas = 0;
+
+  private routeSub?: Subscription;
+
   colunas: TabelaColuna<SocialLink>[] = [
     {
       chave: 'nome',
       titulo: 'Nome',
-      principalMobile: true
+      principalMobile: true,
+      ordenavel: true
     },
     {
       chave: 'url',
@@ -99,7 +123,8 @@ export class SocialLinksManager
     {
       chave: 'ativo',
       titulo: 'Exibição',
-      tipo: 'status'
+      tipo: 'status',
+      ordenavel: true
     }
   ];
 
@@ -137,7 +162,9 @@ export class SocialLinksManager
     private socialLinksService: SocialLinksService,
     private toastr: ToastrService,
     private cdr: ChangeDetectorRef,
-    private ngZone: NgZone
+    private ngZone: NgZone,
+    private route: ActivatedRoute,
+    private router: Router
   ) {
     this.form = this.fb.group({
       nome: [
@@ -170,24 +197,46 @@ export class SocialLinksManager
   }
 
   ngOnInit(): void {
-    this.carregarRedesSociais();
+    this.routeSub = this.route.queryParamMap.subscribe(params => {
+      const { pagina, tamanho, sort } = lerParametrosPagina(params);
+      this.pagina = pagina;
+      this.tamanho = tamanho;
+      this.sort = sort;
+      this.ordenacao = analisarOrdenacao(sort);
+      this.carregarRedesSociais();
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.routeSub?.unsubscribe();
   }
 
   /**
    * Carrega a lista somente quando realmente necessário.
    */
   carregarRedesSociais(): void {
+    if (this.isLoadingLista) {
+      return;
+    }
+
     this.isLoadingLista = true;
     this.loadError = false;
 
     this.socialLinksService
-      .listarTodas()
-      .then((dados: SocialLink[]) => {
+      .listarAdmin(this.pagina, this.tamanho, this.sort)
+      .then((resposta) => {
         this.ngZone.run(() => {
-          this.socialLinks = [...dados];
+          this.socialLinks = [...resposta.content];
+          this.totalElementos = resposta.page.totalElements;
+          this.totalPaginas = resposta.page.totalPages;
 
           this.isLoadingLista = false;
           this.loadError = false;
+
+          if (this.socialLinks.length === 0 && this.pagina > 0) {
+            this.irParaPagina(Math.max(0, resposta.page.totalPages - 1));
+            return;
+          }
 
           this.cdr.detectChanges();
         });
@@ -205,6 +254,26 @@ export class SocialLinksManager
           this.cdr.detectChanges();
         });
       });
+  }
+
+  irParaPagina(pagina: number): void {
+    this.navegar({ page: pagina });
+  }
+
+  mudarTamanhoPagina(tamanho: number): void {
+    this.navegar({ page: 0, size: tamanho });
+  }
+
+  ordenarPor(campo: string): void {
+    this.navegar({ page: 0, sort: alternarOrdenacao(this.ordenacao, campo) });
+  }
+
+  private navegar(queryParams: Record<string, any>): void {
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams,
+      queryParamsHandling: 'merge'
+    });
   }
 
   abrirModal(socialLink?: SocialLink): void {
@@ -524,25 +593,10 @@ export class SocialLinksManager
 
       if (this.modoEdicao) {
 
-        const atualizado =
-          await this.socialLinksService.update(
-            this.socialLinkSelecionadoId!,
-            input
-          );
-
-        /*
-         * Atualiza diretamente a linha alterada.
-         * Não precisamos chamar /todas novamente.
-         */
-        this.socialLinks =
-          this.socialLinks.map(item =>
-            item.id === atualizado.id
-              ? atualizado
-              : item
-          );
-
-        this.socialLinks =
-          [...this.socialLinks];
+        await this.socialLinksService.update(
+          this.socialLinkSelecionadoId!,
+          input
+        );
 
         this.toastr.success(
           'Rede social atualizada com sucesso.',
@@ -551,16 +605,7 @@ export class SocialLinksManager
 
       } else {
 
-        const criado =
-          await this.socialLinksService.create(input);
-
-        /*
-         * Adiciona a nova rede diretamente na tabela.
-         */
-        this.socialLinks = [
-          ...this.socialLinks,
-          criado
-        ];
+        await this.socialLinksService.create(input);
 
         this.toastr.success(
           'Rede social cadastrada com sucesso.',
@@ -568,12 +613,8 @@ export class SocialLinksManager
         );
       }
 
-      /*
-       * Agora podemos fechar o modal.
-       * Não existe mais um GET depois do salvamento
-       * que possa deixar a tela presa em loading.
-       */
       this.fecharModalSemConfirmacao();
+      this.carregarRedesSociais();
 
       this.cdr.detectChanges();
 
