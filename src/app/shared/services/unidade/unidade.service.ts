@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { AtualizarUnidadeDTO, CriarUnidadeDTO, Unidade } from '../../models/unidade.model';
+import { PaginaResposta } from '../../models/pagina.model';
 
 @Injectable({
   providedIn: 'root'
@@ -13,7 +14,8 @@ export class UnidadeService {
   constructor(private http: HttpClient) {}
 
   listarTodas(): Observable<Unidade[]> {
-    return this.http.get<Unidade[]>(`${this.apiUrl}/todas`);
+    return this.http.get<PaginaResposta<Unidade>>(`${this.apiUrl}/todas`)
+      .pipe(map(resposta => resposta.content));
   }
 
   buscarPorId(id: number): Observable<Unidade> {
