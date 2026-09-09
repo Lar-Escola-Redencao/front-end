@@ -33,7 +33,7 @@ export const routes: Routes = [
         canActivate: [guestGuard],
         loadComponent: () => import('./pages/public/login/login').then((m) => m.Login),
     },
-    { path: '**', redirectTo: 'login' }
+    { path: '**', redirectTo: 'entrar' }
 ];
 
 

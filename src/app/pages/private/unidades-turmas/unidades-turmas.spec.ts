@@ -1,7 +1,8 @@
 import { ComponentFixture, TestBed, fakeAsync, flushMicrotasks, tick } from '@angular/core/testing';
 import { provideAnimations } from '@angular/platform-browser/animations';
+import { ActivatedRoute, ParamMap, Router, convertToParamMap } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
-import { of, throwError } from 'rxjs';
+import { BehaviorSubject, of, throwError } from 'rxjs';
 import { vi } from 'vitest';
 
 import { UnidadesTurmas } from './unidades-turmas';
@@ -16,6 +17,7 @@ describe('UnidadesTurmas', () => {
 
   let unidadeService: {
     listarTodas: ReturnType<typeof vi.fn>;
+    listarPaginado: ReturnType<typeof vi.fn>;
     buscarPorId: ReturnType<typeof vi.fn>;
     criar: ReturnType<typeof vi.fn>;
     atualizar: ReturnType<typeof vi.fn>;
@@ -24,6 +26,7 @@ describe('UnidadesTurmas', () => {
 
   let turmaService: {
     listar: ReturnType<typeof vi.fn>;
+    listarPaginado: ReturnType<typeof vi.fn>;
     buscarPorId: ReturnType<typeof vi.fn>;
     criar: ReturnType<typeof vi.fn>;
     atualizar: ReturnType<typeof vi.fn>;
@@ -35,6 +38,33 @@ describe('UnidadesTurmas', () => {
     error: ReturnType<typeof vi.fn>;
     info: ReturnType<typeof vi.fn>;
   };
+
+  // Fake mínima de ActivatedRoute/Router: `navigate` funde os queryParams (removendo
+  // chaves com valor null, igual ao `queryParamsHandling: 'merge'` real) e reemite no
+  // BehaviorSubject, para exercitar o mesmo fluxo que o componente usa em produção.
+  let currentParams: Record<string, string>;
+  let paramMapSubject: BehaviorSubject<ParamMap>;
+  let router: { navigate: ReturnType<typeof vi.fn> };
+
+  function configurarRoteamentoFake(): void {
+    currentParams = {};
+    paramMapSubject = new BehaviorSubject<ParamMap>(convertToParamMap(currentParams));
+
+    router = {
+      navigate: vi.fn((_comandos: unknown[], extras?: { queryParams?: Record<string, unknown> }) => {
+        const queryParams = extras?.queryParams ?? {};
+        for (const [chave, valor] of Object.entries(queryParams)) {
+          if (valor === null || valor === undefined) {
+            delete currentParams[chave];
+          } else {
+            currentParams[chave] = String(valor);
+          }
+        }
+        paramMapSubject.next(convertToParamMap({ ...currentParams }));
+        return Promise.resolve(true);
+      }),
+    };
+  }
 
   const unidades: Unidade[] = [
     {
@@ -63,6 +93,9 @@ describe('UnidadesTurmas', () => {
   function configurarTestBed(): void {
     unidadeService = {
       listarTodas: vi.fn().mockReturnValue(of(unidades)),
+      listarPaginado: vi.fn().mockReturnValue(
+        of({ content: unidades, page: { size: 10, number: 0, totalElements: unidades.length, totalPages: 1 } }),
+      ),
       buscarPorId: vi.fn(),
       criar: vi.fn(),
       atualizar: vi.fn(),
@@ -71,6 +104,9 @@ describe('UnidadesTurmas', () => {
 
     turmaService = {
       listar: vi.fn().mockReturnValue(of([turma])),
+      listarPaginado: vi.fn().mockReturnValue(
+        of({ content: [turma], page: { size: 10, number: 0, totalElements: 1, totalPages: 1 } }),
+      ),
       buscarPorId: vi.fn(),
       criar: vi.fn(),
       atualizar: vi.fn(),
@@ -86,6 +122,7 @@ describe('UnidadesTurmas', () => {
 
   beforeEach(async () => {
     configurarTestBed();
+    configurarRoteamentoFake();
 
     await TestBed.configureTestingModule({
       imports: [UnidadesTurmas],
@@ -94,6 +131,8 @@ describe('UnidadesTurmas', () => {
         { provide: UnidadeService, useValue: unidadeService },
         { provide: TurmaService, useValue: turmaService },
         { provide: ToastrService, useValue: toastr },
+        { provide: ActivatedRoute, useValue: { queryParamMap: paramMapSubject.asObservable() } },
+        { provide: Router, useValue: router },
       ],
     }).compileComponents();
 
@@ -110,24 +149,33 @@ describe('UnidadesTurmas', () => {
     expect(component).toBeTruthy();
   });
 
-  it('carrega a lista de turmas ao iniciar', () => {
-    expect(turmaService.listar).toHaveBeenCalledWith(null);
+  it('carrega a tabela de unidades ao iniciar (aba padrão)', () => {
+    expect(unidadeService.listarPaginado).toHaveBeenCalledWith(0, 10);
+    expect(component.unidadesTabela).toEqual(unidades);
+  });
+
+  it('carrega a lista de turmas ao trocar para a aba turmas', () => {
+    component.mudarAba('turmas');
+
+    expect(turmaService.listarPaginado).toHaveBeenCalledWith(0, 10, null);
     expect(component.turmas).toEqual([turma]);
   });
 
-  it('refaz o Listar com o unidadeId ao trocar o filtro de unidade', () => {
+  it('refaz o listarPaginado com o unidadeId ao trocar o filtro de unidade', () => {
+    component.mudarAba('turmas');
     component.onFiltroUnidadeChange({ target: { value: '1' } } as unknown as Event);
 
     expect(component.unidadeFiltroId).toBe(1);
-    expect(turmaService.listar).toHaveBeenLastCalledWith(1);
+    expect(turmaService.listarPaginado).toHaveBeenLastCalledWith(0, 10, 1);
   });
 
   it('volta a listar sem unidadeId ao selecionar "Todas as unidades"', () => {
+    component.mudarAba('turmas');
     component.onFiltroUnidadeChange({ target: { value: '1' } } as unknown as Event);
     component.onFiltroUnidadeChange({ target: { value: '' } } as unknown as Event);
 
     expect(component.unidadeFiltroId).toBeNull();
-    expect(turmaService.listar).toHaveBeenLastCalledWith(null);
+    expect(turmaService.listarPaginado).toHaveBeenLastCalledWith(0, 10, null);
   });
 
   it('carrega as unidades e desmarca o estado de carregamento', () => {

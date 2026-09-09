@@ -10,6 +10,8 @@ import {
   Turma,
   TurmaBackend,
 } from '../../models/turma.model';
+import { PaginaResposta } from '../../models/pagina.model';
+import { construirHttpParams, TAMANHO_PAGINA_MAXIMO } from '../../utils/paginacao-url';
 
 @Injectable({
   providedIn: 'root',
@@ -19,16 +21,41 @@ export class TurmaService {
 
   constructor(private http: HttpClient) {}
 
+  // Lote único (limitado a TAMANHO_PAGINA_MAXIMO pelo back; unidadeId é ignorado
+  // pelo back) usado onde a tela precisa de todas as turmas de uma unidade de
+  // uma vez, como na checagem de conflito de horário.
   listar(unidadeId?: number | null): Observable<Turma[]> {
-    let params = new HttpParams();
+    let params = new HttpParams().set('page', 0).set('size', TAMANHO_PAGINA_MAXIMO);
 
     if (unidadeId !== undefined && unidadeId !== null) {
       params = params.set('unidadeId', unidadeId);
     }
 
     return this.http
-      .get<TurmaBackend[]>(`${this.apiUrl}/todas`, { params })
-      .pipe(map((turmas) => turmas.map((turma) => this.normalizarTurma(turma))));
+      .get<PaginaResposta<TurmaBackend>>(`${this.apiUrl}/todas`, { params })
+      .pipe(map((resposta) => resposta.content.map((turma) => this.normalizarTurma(turma))));
+  }
+
+  // Paginação de verdade (uma página por vez), usada pela tabela de turmas.
+  // O back ignora unidadeId (só pagina) — mandamos mesmo assim para o dia em
+  // que passar a filtrar; até lá, quem reforça o filtro é o componente.
+  listarPaginado(
+    pagina: number,
+    tamanho: number,
+    unidadeId?: number | null,
+  ): Observable<PaginaResposta<Turma>> {
+    let params = construirHttpParams({ pagina, tamanho });
+
+    if (unidadeId !== undefined && unidadeId !== null) {
+      params = params.set('unidadeId', unidadeId);
+    }
+
+    return this.http.get<PaginaResposta<TurmaBackend>>(`${this.apiUrl}/todas`, { params }).pipe(
+      map((resposta) => ({
+        content: resposta.content.map((turma) => this.normalizarTurma(turma)),
+        page: resposta.page,
+      })),
+    );
   }
 
   buscarPorId(id: number): Observable<Turma> {

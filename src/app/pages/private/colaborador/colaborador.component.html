@@ -11,11 +11,11 @@
         <mat-select
           [(ngModel)]="filtroPapel"
           (selectionChange)="aplicarFiltro()">
-          <mat-option value="">Todos os papéis</mat-option>
+          <mat-option [value]="''">Todos os papéis</mat-option>
           <mat-option
-            *ngFor="let papel of papeisDisponiveis"
-            [value]="papel">
-            {{ papel }}
+            *ngFor="let papel of papeis"
+            [value]="papel.id">
+            {{ obterNomePapel(papel) }}
           </mat-option>
         </mat-select>
       </mat-form-field>
@@ -23,12 +23,24 @@
 
     <app-tabela-layout
       [colunas]="colunas"
-      [dados]="colaboradoresFiltrados"
+      [dados]="colaboradores"
       [acoes]="acoesTabela"
-      [tamanhoPagina]="10"
-      [tamanhosPagina]="[5, 10, 25]"
+      [carregando]="carregandoLista"
+      [erro]="erroLista"
+      [ordenacao]="ordenacao"
       [mensagemVazia]="mensagemVazia"
-      (acao)="executarAcao($event)" />
+      (acao)="executarAcao($event)"
+      (ordenar)="ordenarPor($event)"
+      (tentarNovamente)="carregarColaboradores()" />
+
+    <app-paginacao
+      [paginaAtual]="pagina"
+      [totalPaginas]="totalPaginas"
+      [totalElementos]="totalElementos"
+      [tamanho]="tamanho"
+      [carregando]="carregandoLista"
+      (paginaChange)="irParaPagina($event)"
+      (tamanhoChange)="mudarTamanhoPagina($event)" />
     </div>
 </section>
 

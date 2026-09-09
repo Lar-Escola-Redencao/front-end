@@ -2,7 +2,9 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
-import { AtualizarEventoDTO, CriarEventoDTO, Evento } from 'src/app/shared/models/evento.model';
+import { AtualizarEventoDTO, CriarEventoDTO, Evento, TipoEvento } from 'src/app/shared/models/evento.model';
+import { PaginaResposta } from 'src/app/shared/models/pagina.model';
+import { construirHttpParams } from 'src/app/shared/utils/paginacao-url';
 
 @Injectable({
   providedIn: 'root'
@@ -12,8 +14,9 @@ export class EventoService {
 
   constructor(private http: HttpClient) { }
 
-  listarTodos(): Observable<Evento[]> {
-    return this.http.get<Evento[]>(`${this.apiUrl}/todos`);
+  listarTodos(pagina: number, tamanho: number, sort?: string, tipo?: TipoEvento | ''): Observable<PaginaResposta<Evento>> {
+    const params = construirHttpParams({ pagina, tamanho, sort, extras: { tipo: tipo || undefined } });
+    return this.http.get<PaginaResposta<Evento>>(`${this.apiUrl}/todos`, { params });
   }
 
   buscarPorId(id: number): Observable<Evento> {

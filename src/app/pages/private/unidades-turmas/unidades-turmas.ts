@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, HostListener, NgZone, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, HostListener, NgZone, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   AbstractControl,
@@ -8,6 +8,8 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
+import { Subscription } from 'rxjs';
 
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -15,6 +17,7 @@ import { MatInputModule } from '@angular/material/input';
 import { ToastrService } from 'ngx-toastr';
 
 import { ModalLayout } from '@components/modal-layout/modal-layout';
+import { Paginacao } from '@components/paginacao/paginacao';
 import { TabelaAcao, TabelaColuna, TabelaLayout } from '@components/tabela-layout/tabela-layout';
 
 import { ComponentComAlteracoesNaoSalvas } from 'src/app/shared/guards/can-deactivate.guard';
@@ -30,6 +33,7 @@ import { TurmaService } from 'src/app/shared/services/turma/turma.service';
 import { Alertas } from 'src/app/shared/utils/alerts';
 import { mapearErrosFormulario, validarImagem } from 'src/app/shared/utils/form-validations';
 import { formatarTelefone } from 'src/app/shared/utils/masks';
+import { lerParametrosPagina } from 'src/app/shared/utils/paginacao-url';
 import { environment } from 'src/environments/environment';
 
 type DiaSemana = { valor: string; label: string };
@@ -44,16 +48,32 @@ type OpcaoPeriodo = { valor: Periodo; label: string };
     ReactiveFormsModule,
     ModalLayout,
     TabelaLayout,
+    Paginacao,
     MatFormFieldModule,
     MatInputModule,
   ],
   templateUrl: './unidades-turmas.html',
   styleUrl: './unidades-turmas.css',
 })
-export class UnidadesTurmas implements OnInit, ComponentComAlteracoesNaoSalvas {
+export class UnidadesTurmas implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalvas {
   abaAtiva: 'turmas' | 'unidades' = 'unidades';
 
+  private routeSub?: Subscription;
+
+  // Paginação compartilhada: sempre descreve a lista da aba ativa no momento
+  // (igual à tela de Eventos), por isso é resetada para a página 0 ao trocar
+  // de aba ou de filtro.
+  pagina = 0;
+  tamanho = 10;
+  totalElementos = 0;
+  totalPaginas = 0;
+  carregandoLista = false;
+  erroLista = false;
+
+  // Lista completa (não paginada), usada nos selects de unidade do formulário
+  // de turma e do filtro — a tabela de unidades usa `unidadesTabela`.
   unidades: Unidade[] = [];
+  unidadesTabela: Unidade[] = [];
 
   modalAberto = false;
   modoEdicao = false;
@@ -96,9 +116,15 @@ export class UnidadesTurmas implements OnInit, ComponentComAlteracoesNaoSalvas {
     horarioFechamento: {
       horarioInvalido: 'O horário de fechamento deve ser depois da abertura.',
     },
+    idadeMin: {
+      max: 'Idade inválida',
+      min: 'Idade inválida'
+    },
     idadeMax: {
       idadeInvalida: 'A idade máxima não pode ser menor que a mínima.',
-    },
+      max: 'Idade inválida',
+      min: 'Idade inválida'
+    }
   };
 
   // ---------------------------------------------------------------
@@ -218,6 +244,8 @@ export class UnidadesTurmas implements OnInit, ComponentComAlteracoesNaoSalvas {
     private cdr: ChangeDetectorRef,
     private toastr: ToastrService,
     private ngZone: NgZone,
+    private route: ActivatedRoute,
+    private router: Router,
   ) {
     this.formTurma = this.fb.group({
       periodo: ['', Validators.required],
@@ -227,15 +255,50 @@ export class UnidadesTurmas implements OnInit, ComponentComAlteracoesNaoSalvas {
     });
 
     this.formUnidade = this.fb.group({
-      nome: ['', [Validators.required, Validators.maxLength(100)]],
-      endereco: ['', [Validators.required, Validators.maxLength(255)]],
-      telefone: ['', [Validators.required, Validators.minLength(14), Validators.maxLength(15)]],
-      email: ['', [Validators.required, Validators.email, Validators.maxLength(100)]],
-      diasFuncionamento: [[] as string[], Validators.required],
-      horarioAbertura: ['', Validators.required],
-      horarioFechamento: ['', Validators.required],
-      idadeMin: ['', [Validators.required, Validators.min(0)]],
-      idadeMax: ['', [Validators.required, Validators.min(0)]],
+      nome: [
+        '',
+        [Validators.required, Validators.maxLength(100)]
+      ],
+      endereco: [
+        '',
+        [Validators.required, Validators.maxLength(255)]
+      ],
+      telefone: [
+        '',
+        [
+          Validators.required,
+          Validators.minLength(14),
+          Validators.maxLength(15)
+        ]
+      ],
+      email: [
+        '',
+        [
+          Validators.required,
+          Validators.email,
+          Validators.maxLength(100)
+        ]
+      ],
+      diasFuncionamento: [
+        [] as string[],
+        Validators.required
+      ],
+      horarioAbertura: [
+        '',
+        Validators.required
+      ],
+      horarioFechamento: [
+        '',
+        Validators.required
+      ],
+      idadeMin: [
+        '',
+        [Validators.required, Validators.min(0), Validators.max(100)]
+      ],
+      idadeMax: [
+        '',
+        [Validators.required, Validators.min(0), Validators.max(100)]
+      ],
       corHex: [this.corPadrao],
       imagem: [null, [validarImagem()]],
     });
@@ -243,7 +306,20 @@ export class UnidadesTurmas implements OnInit, ComponentComAlteracoesNaoSalvas {
 
   ngOnInit(): void {
     this.carregarUnidades();
-    this.carregarTurmas();
+
+    this.routeSub = this.route.queryParamMap.subscribe((params) => {
+      const { pagina, tamanho } = lerParametrosPagina(params);
+      this.pagina = pagina;
+      this.tamanho = tamanho;
+
+      this.abaAtiva = params.get('aba') === 'turmas' ? 'turmas' : 'unidades';
+
+      const unidadeIdBruto = Number(params.get('unidadeId'));
+      this.unidadeFiltroId =
+        Number.isFinite(unidadeIdBruto) && unidadeIdBruto > 0 ? unidadeIdBruto : null;
+
+      this.carregarListaAtiva();
+    });
 
     this.formUnidade.get('horarioAbertura')?.valueChanges.subscribe(() => this.checarHorarios());
 
@@ -268,12 +344,44 @@ export class UnidadesTurmas implements OnInit, ComponentComAlteracoesNaoSalvas {
     this.formTurma.get('unidadeId')?.valueChanges.subscribe(() => this.checarConflitoTurma());
   }
 
+  ngOnDestroy(): void {
+    this.routeSub?.unsubscribe();
+  }
+
+  mudarAba(aba: 'unidades' | 'turmas'): void {
+    this.navegar({ aba, page: 0 });
+  }
+
+  private navegar(queryParams: Record<string, any>): void {
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams,
+      queryParamsHandling: 'merge',
+    });
+  }
+
+  private carregarListaAtiva(): void {
+    if (this.abaAtiva === 'unidades') {
+      this.carregarUnidadesTabela();
+    } else {
+      this.carregarTurmas();
+    }
+  }
+
   get mensagemVazia(): string {
     return 'Nenhuma unidade cadastrada ainda';
   }
 
   get mensagemVaziaTurmas(): string {
     return 'Nenhuma turma cadastrada ainda';
+  }
+
+  irParaPagina(pagina: number): void {
+    this.navegar({ page: pagina });
+  }
+
+  mudarTamanhoPagina(tamanho: number): void {
+    this.navegar({ page: 0, size: tamanho });
   }
 
   get temAlteracoes(): boolean {
@@ -302,6 +410,8 @@ export class UnidadesTurmas implements OnInit, ComponentComAlteracoesNaoSalvas {
     );
   }
 
+  // Lista completa, para os selects de unidade (form de turma e filtro) — não
+  // é a mesma requisição/paginação da tabela de unidades.
   carregarUnidades(): void {
     this.carregandoUnidades = true;
     this.erroCarregarUnidades = false;
@@ -329,6 +439,18 @@ export class UnidadesTurmas implements OnInit, ComponentComAlteracoesNaoSalvas {
     });
   }
 
+  // Depois de criar/editar/excluir uma unidade, a lista completa (selects)
+  // sempre precisa refletir a mudança; a tabela só é recarregada se for a aba
+  // visível no momento — senão sobrescreveria pagina/totalElementos/totalPaginas
+  // (estado compartilhado) com os números da tabela errada.
+  private recarregarUnidades(): void {
+    this.carregarUnidades();
+
+    if (this.abaAtiva === 'unidades') {
+      this.carregarUnidadesTabela();
+    }
+  }
+
   private atualizarDisponibilidadeUnidadeId(): void {
     const controle = this.formTurma.get('unidadeId');
 
@@ -343,16 +465,27 @@ export class UnidadesTurmas implements OnInit, ComponentComAlteracoesNaoSalvas {
     }
   }
 
-  carregarTurmas(): void {
-    this.turmaService.listar(this.unidadeFiltroId).subscribe({
-      next: (dados: Turma[]) => {
+  carregarUnidadesTabela(): void {
+    if (this.carregandoLista) {
+      return;
+    }
+
+    this.carregandoLista = true;
+    this.erroLista = false;
+
+    this.unidadeService.listarPaginado(this.pagina, this.tamanho).subscribe({
+      next: (resposta) => {
         this.ngZone.run(() => {
-          // A API ignora o filtro unidadeId e sempre devolve todas as turmas,
-          // então o filtro é reforçado aqui.
-          this.turmas =
-            this.unidadeFiltroId !== null
-              ? dados.filter((turma) => turma.unidade?.id === this.unidadeFiltroId)
-              : [...dados];
+          this.unidadesTabela = [...resposta.content];
+          this.totalElementos = resposta.page.totalElements;
+          this.totalPaginas = resposta.page.totalPages;
+          this.carregandoLista = false;
+
+          if (this.unidadesTabela.length === 0 && this.pagina > 0) {
+            this.irParaPagina(Math.max(0, resposta.page.totalPages - 1));
+            return;
+          }
+
           this.cdr.detectChanges();
         });
       },
@@ -360,17 +493,65 @@ export class UnidadesTurmas implements OnInit, ComponentComAlteracoesNaoSalvas {
       error: (err: any) => {
         console.error('Erro na API:', err);
 
-        this.toastr.error('Não foi possível carregar a lista de turmas.', 'Erro');
+        this.ngZone.run(() => {
+          this.carregandoLista = false;
+          this.erroLista = true;
+          this.toastr.error('Não foi possível carregar a lista de unidades.', 'Erro');
+          this.cdr.detectChanges();
+        });
+      },
+    });
+  }
 
-        this.cdr.detectChanges();
+  carregarTurmas(): void {
+    if (this.carregandoLista) {
+      return;
+    }
+
+    this.carregandoLista = true;
+    this.erroLista = false;
+
+    this.turmaService.listarPaginado(this.pagina, this.tamanho, this.unidadeFiltroId).subscribe({
+      next: (resposta) => {
+        this.ngZone.run(() => {
+          // O back ignora o filtro unidadeId nas turmas (só pagina), então ele é
+          // reforçado aqui — mas isso só é confiável dentro da página atual: se
+          // as turmas da unidade escolhida caírem em outra página, elas não
+          // aparecem até o back passar a filtrar de verdade.
+          this.turmas =
+            this.unidadeFiltroId !== null
+              ? resposta.content.filter((turma) => turma.unidade?.id === this.unidadeFiltroId)
+              : [...resposta.content];
+
+          this.totalElementos = resposta.page.totalElements;
+          this.totalPaginas = resposta.page.totalPages;
+          this.carregandoLista = false;
+
+          if (this.unidadeFiltroId === null && this.turmas.length === 0 && this.pagina > 0) {
+            this.irParaPagina(Math.max(0, resposta.page.totalPages - 1));
+            return;
+          }
+
+          this.cdr.detectChanges();
+        });
+      },
+
+      error: (err: any) => {
+        console.error('Erro na API:', err);
+
+        this.ngZone.run(() => {
+          this.carregandoLista = false;
+          this.erroLista = true;
+          this.toastr.error('Não foi possível carregar a lista de turmas.', 'Erro');
+          this.cdr.detectChanges();
+        });
       },
     });
   }
 
   onFiltroUnidadeChange(event: Event): void {
     const valor = (event.target as HTMLSelectElement).value;
-    this.unidadeFiltroId = valor ? Number(valor) : null;
-    this.carregarTurmas();
+    this.navegar({ page: 0, unidadeId: valor || null });
   }
 
   formatarPeriodo(valor: Periodo): string {
@@ -713,7 +894,7 @@ export class UnidadesTurmas implements OnInit, ComponentComAlteracoesNaoSalvas {
       this.unidadeService.deletar(unidade.id).subscribe({
         next: () => {
           this.isLoading = false;
-          this.carregarUnidades();
+          this.recarregarUnidades();
           this.toastr.success('Unidade excluída com sucesso.', 'Sucesso');
         },
         error: () => {
@@ -760,7 +941,7 @@ export class UnidadesTurmas implements OnInit, ComponentComAlteracoesNaoSalvas {
       next: () => {
         this.isLoading = false;
         this.fecharModalSemConfirmacao();
-        this.carregarUnidades();
+        this.recarregarUnidades();
         this.toastr.success('Unidade cadastrada com sucesso.', 'Sucesso');
       },
       error: (err: any) => {
@@ -778,7 +959,7 @@ export class UnidadesTurmas implements OnInit, ComponentComAlteracoesNaoSalvas {
       next: () => {
         this.isLoading = false;
         this.fecharModalSemConfirmacao();
-        this.carregarUnidades();
+        this.recarregarUnidades();
         this.toastr.success('Unidade atualizada com sucesso.', 'Sucesso');
       },
       error: (err: any) => {
