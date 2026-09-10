@@ -17,6 +17,10 @@ export class PrivateNavbar {
     this.menuVisivel = !this.menuVisivel;
   }
 
+  fecharMenu() {
+    this.menuVisivel = false;
+  }
+
   entrarNoPerfil() {
     console.log('Entra no perfil');
   }

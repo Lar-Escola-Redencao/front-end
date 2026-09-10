@@ -1,17 +1,5 @@
 <section class="transparencia-admin">
 
-  <div class="acoes-transparencia">
-
-    <button type="button" class="btn-primary" (click)="abrirModal('documento')">
-      Publicar novo documento
-    </button>
-
-    <button type="button" class="btn-primary" (click)="abrirModal('secao')">
-      Criar nova seção
-    </button>
-
-  </div>
-
   <div class="abas-container">
     <button type="button" class="aba-btn" [class.ativa]="abaAtiva === 'documentos'" (click)="mudarAba('documentos')">
       Documentos
@@ -22,6 +10,11 @@
   </div>
 
   @if (abaAtiva === 'documentos') {
+    <div class="acoes-transparencia">
+      <button type="button" class="btn-primary" (click)="abrirModal('documento')">
+        Publicar novo documento
+      </button>
+    </div>
     <app-tabela-layout [colunas]="colunasDocumentos" [dados]="documentos" [acoes]="acoesTabela"
       [carregando]="carregandoLista" [erro]="erroLista" [ordenacao]="ordenacao"
       [mensagemVazia]="mensagemVazia"
@@ -29,6 +22,11 @@
       (ordenar)="ordenarPor($event)"
       (tentarNovamente)="tentarNovamente()" />
   } @else {
+    <div class="acoes-transparencia"> 
+      <button type="button" class="btn-primary" (click)="abrirModal('secao')">
+        Criar nova seção
+      </button>
+    </div>
     <app-tabela-layout [colunas]="colunasSecoes" [dados]="secoes" [acoes]="acoesTabela"
       [carregando]="carregandoLista" [erro]="erroLista" [ordenacao]="ordenacao"
       [mensagemVazia]="mensagemVazia"

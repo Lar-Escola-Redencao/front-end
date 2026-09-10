@@ -45,28 +45,7 @@
   align-items: center;
 }
 
-.btn-custom {
-  background-color: var(--primary-color) !important;
-  color: var(--branco) !important;
-  font-family: var(--fonte-texto);
-  font-weight: bold;
-  padding: 10px 24px;
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  height: auto !important;
-  line-height: normal !important;
-}
 
-.btn-custom:hover {
-  background-color: var(--primary-hover-color) !important;
-}
-
-.btn-custom:active {
-  background-color: var(--primary-active-color) !important;
-}
 
 .menu-toggle {
   display: none;
@@ -113,9 +92,5 @@
     width: 50%;
     display: flex;
     justify-content: center;
-  }
-
-  .btn-custom {
-    width: 100%;
   }
 }
