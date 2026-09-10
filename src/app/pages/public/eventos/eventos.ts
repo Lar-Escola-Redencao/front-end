@@ -59,7 +59,10 @@ export class Eventos implements OnInit {
     this.carregando = true;
     this.eventoPublicoService.listarPublicos().subscribe({
       next: (dados) => {
-        this.eventos = dados;
+        this.eventos = dados.sort(
+          (eventoAtual, proximoEvento) =>
+            new Date(proximoEvento.dataEvento).getTime() - new Date(eventoAtual.dataEvento).getTime()
+        );
         this.aplicarFiltros();
         this.carregando = false;
         this.cdr.detectChanges();

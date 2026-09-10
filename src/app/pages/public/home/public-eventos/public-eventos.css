@@ -21,13 +21,15 @@
 }
 
 .grade-eventos {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   gap: 24px;
   margin-bottom: 24px;
 }
 
 .card-evento {
+  flex: 0 1 calc((100% - 24px) / 2);
   height: 260px;
   border-radius: 12px;
   background-size: cover;
@@ -153,7 +155,7 @@
 }
 
 @media (max-width: 640px) {
-  .grade-eventos {
-    grid-template-columns: 1fr;
+  .card-evento {
+    flex-basis: 100%;
   }
 }
