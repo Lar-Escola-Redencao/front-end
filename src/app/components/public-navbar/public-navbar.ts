@@ -1,11 +1,11 @@
 import { Component, signal } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 
 @Component({
   selector: 'app-public-navbar',
   standalone: true, 
-  imports: [MatButtonModule], 
+  imports: [MatButtonModule, RouterLink], 
   templateUrl: './public-navbar.html',
   styleUrl: './public-navbar.css',
 })
@@ -18,15 +18,21 @@ export class PublicNavbar {
     this.menuAberto.update(valor => !valor);
   }
 
+  fecharMenu() {
+    this.menuAberto.set(false);
+  }
+
   realizarLogin() {
     this.menuAberto.set(false);
     this.router.navigate(['/entrar']);
   }
 
-  scrollTo(sectionId: string) {
+  navegarParaHomeSection(sectionId: string) {
     this.menuAberto.set(false);
-    
-    if (this.router.url !== '/') {
+
+    const rotaAtual = this.router.url.split('?')[0].split('#')[0];
+
+    if (rotaAtual !== '/') {
       this.router.navigate(['/']).then(() => {
         setTimeout(() => this.executarScroll(sectionId), 100);
       });

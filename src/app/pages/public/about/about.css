@@ -1,11 +1,11 @@
-.home-main {
+.about-main {
   padding-top: 82px; 
   min-height: 100vh;
   display: flex;
   flex-direction: column;
 }
 
-.home-section {
+.about-section {
   scroll-margin-top: 82px;
   
   min-height: 50vh; 
@@ -17,14 +17,14 @@
   border-bottom: 1px dashed #ccc; 
 }
 
-.home-section p {
+.about-section p {
   font-family: var(--fonte-texto);
   font-size: 1.5rem;
   color: var(--input-color);
   font-weight: 700;
   text-transform: uppercase;
 }
-#parceiros {
+#conheca-osc, #parceiros {
   display: block; 
   min-height: auto;
 }
