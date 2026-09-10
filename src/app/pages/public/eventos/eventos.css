@@ -19,7 +19,7 @@
 .barra-busca {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   gap: 16px;
   margin-bottom: 30px;
@@ -63,6 +63,7 @@
   align-items: center;
   justify-content: center;
   gap: 4px;
+  min-height: 48px;
   padding: 0;
   border: 0;
   background: transparent;
@@ -81,6 +82,12 @@
   position: relative;
   display: flex;
   align-items: center;
+}
+
+.campo-grupo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .campo input,
@@ -106,14 +113,9 @@
   width: 220px;
 }
 
-.aviso-tamanho-minimo {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  margin-top: 4px;
+.error-text {
   font-size: 12px;
-  color: var(--primary-color);
-  white-space: nowrap;
+  color: var(--error-color);
 }
 
 .campo-data {

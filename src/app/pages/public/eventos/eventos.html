@@ -4,17 +4,19 @@
   <h1 class="titulo-pagina">Eventos</h1>
 
   <ng-template #camposFiltro>
-    <label class="campo campo-texto">
-      <input
-        type="text"
-        name="filtroTitulo"
-        placeholder="Busque por evento"
-        [(ngModel)]="filtroTitulo"
-      />
+    <div class="campo-grupo">
+      <label class="campo campo-texto">
+        <input
+          type="text"
+          name="filtroTitulo"
+          placeholder="Busque por evento"
+          [(ngModel)]="filtroTitulo"
+        />
+      </label>
       @if (tituloAbaixoDoMinimo) {
-        <span class="aviso-tamanho-minimo">Digite ao menos {{ tamanhoMinimoTitulo }} caracteres</span>
+        <span class="error-text">Digite ao menos {{ tamanhoMinimoTitulo }} caracteres</span>
       }
-    </label>
+    </div>
 
     <label class="campo campo-data">
       <span class="rotulo-data">Inicio</span>
@@ -41,8 +43,10 @@
         <option value="pago">Pago</option>
       </select>
     </label>
-    
-     @if (possuiFiltrosAplicados) {
+    <button type="submit" class="botao-buscar">
+      <span class="material-symbols-outlined">search</span>
+    </button>
+    @if (possuiFiltrosAplicados) {
       <button
         type="button"
         class="botao-limpar-filtros"
@@ -52,10 +56,6 @@
         Limpar filtros
       </button>
     }
-
-    <button type="submit" class="botao-buscar">
-      <span class="material-symbols-outlined">search</span>
-    </button>
   </ng-template>
 
   <button

@@ -17,6 +17,7 @@
   font-size: clamp(2rem, 4vw, 2.5rem);
   color: var(--preto);
   margin: 0;
+  text-align: center;
 }
 
 .grade-eventos {
@@ -106,7 +107,20 @@
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  margin: 0;
+  margin: 0 0 8px;
+}
+
+.card-valor {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: bold;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background-color: var(--primary-color);
+}
+
+.card-valor.gratuito {
+  background-color: #2f9e44;
 }
 
 .mensagem-vazia {

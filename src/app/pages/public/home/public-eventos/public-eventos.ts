@@ -54,4 +54,9 @@ export class PublicEventosComponent implements OnInit {
     const hora = new Intl.DateTimeFormat('pt-BR', { hour: '2-digit', minute: '2-digit' }).format(new Date(data));
     return hora.replace(':', 'h');
   }
+
+  formatarValor(evento: Evento): string {
+    if (!evento.valor) return 'Gratuito';
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(evento.valor);
+  }
 }
