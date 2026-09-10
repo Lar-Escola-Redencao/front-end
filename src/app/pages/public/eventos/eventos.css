@@ -106,6 +106,16 @@
   width: 220px;
 }
 
+.aviso-tamanho-minimo {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--primary-color);
+  white-space: nowrap;
+}
+
 .campo-data {
   width: 190px;
   height: 52px;
@@ -213,6 +223,23 @@
   overflow: hidden;
 }
 
+.card-evento.encerrado {
+  filter: grayscale(0.8);
+}
+
+.badge-encerrado {
+  display: inline-block;
+  margin-bottom: 8px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background-color: rgba(255, 255, 255, 0.2);
+  color: var(--branco);
+  font-size: 11px;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
 .card-overlay {
   height: 100%;
   display: flex;
@@ -222,6 +249,13 @@
   background: linear-gradient(
     to bottom,
     rgba(30, 30, 30, 0.6)
+  );
+}
+
+.card-evento.encerrado .card-overlay {
+  background: linear-gradient(
+    to bottom,
+    rgba(20, 20, 20, 0.75)
   );
 }
 

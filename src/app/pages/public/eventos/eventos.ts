@@ -43,6 +43,7 @@ export class Eventos implements OnInit {
   paginaAtual = 0;
   tamanhoPagina = 6;
   readonly tamanhosPagina = [6];
+  readonly tamanhoMinimoTitulo = 3;
   filtrosMobileAberto = false;
 
   constructor(
@@ -103,8 +104,14 @@ export class Eventos implements OnInit {
     }
   }
 
+  get tituloAbaixoDoMinimo(): boolean {
+    const tamanho = this.filtroTitulo.trim().length;
+    return tamanho > 0 && tamanho < this.tamanhoMinimoTitulo;
+  }
+
   aplicarFiltros(): void {
-    const titulo = this.filtroTitulo.trim().toLowerCase();
+    const tituloBruto = this.filtroTitulo.trim();
+    const titulo = tituloBruto.length >= this.tamanhoMinimoTitulo ? tituloBruto.toLowerCase() : '';
     const dataInicial = this.filtroDataInicial ? new Date(this.filtroDataInicial) : null;
     const dataFinal = this.filtroDataFinal ? new Date(this.filtroDataFinal) : null;
 
@@ -204,6 +211,10 @@ export class Eventos implements OnInit {
 
   ultimaPagina(): void {
     this.irParaPagina(this.totalPaginas - 1);
+  }
+
+  eventoEncerrado(evento: Evento): boolean {
+    return new Date(evento.dataEvento).getTime() < Date.now();
   }
 
   formatarDia(data: Date | string): string {

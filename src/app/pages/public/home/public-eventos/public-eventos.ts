@@ -23,11 +23,9 @@ export class PublicEventosComponent implements OnInit {
   ngOnInit(): void {
     this.eventoPublicoService.listarPublicos().subscribe({
       next: (eventos) => {
-        this.eventosDestaque = [...eventos]
-          .sort((a, b) =>
-            Math.abs(new Date(a.dataEvento).getTime() - Date.now()) -
-            Math.abs(new Date(b.dataEvento).getTime() - Date.now())
-          )
+        const agora = Date.now();
+        this.eventosDestaque = eventos
+          .filter(evento => new Date(evento.dataEvento).getTime() >= agora)
           .slice(0, this.quantidadeDestaque);
         this.carregando = false;
         this.cdr.detectChanges();

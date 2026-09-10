@@ -11,6 +11,9 @@
         placeholder="Busque por evento"
         [(ngModel)]="filtroTitulo"
       />
+      @if (tituloAbaixoDoMinimo) {
+        <span class="aviso-tamanho-minimo">Digite ao menos {{ tamanhoMinimoTitulo }} caracteres</span>
+      }
     </label>
 
     <label class="campo campo-data">
@@ -84,7 +87,11 @@
   } @else {
     <div class="grade-eventos">
       @for (evento of eventosPaginados; track evento.id) {
-        <article class="card-evento" [style.background-image]="'url(' + evento.imagem + ')'">
+        <article
+          class="card-evento"
+          [class.encerrado]="eventoEncerrado(evento)"
+          [style.background-image]="'url(' + evento.imagem + ')'"
+        >
           <div class="card-overlay">
             <div class="card-topo">
               <div class="card-data">
@@ -99,6 +106,9 @@
             </div>
 
             <div class="card-rodape">
+              @if (eventoEncerrado(evento)) {
+                <span class="badge-encerrado">Encerrado</span>
+              }
               <h2 class="card-titulo">{{ evento.titulo }}</h2>
               <p class="card-descricao">{{ evento.descricao }}</p>
               <span class="card-valor" [class.gratuito]="!evento.valor">{{ formatarValor(evento) }}</span>
