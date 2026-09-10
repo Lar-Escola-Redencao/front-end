@@ -5,6 +5,7 @@ import { environment } from 'src/environments/environment';
 import { Diretoria } from 'src/app/shared/models/diretoria.model';
 import { Partner } from 'src/app/shared/models/partner.model';
 import { PaginaResposta } from 'src/app/shared/models/pagina.model';
+import { SocialLink } from 'src/app/shared/models/social-link.model';
 
 @Injectable({ providedIn: 'root' })
 export class PublicContentService {
@@ -25,9 +26,19 @@ export class PublicContentService {
     );
   }
 
+  getRedesSociaisAtivas(): Observable<SocialLink[]> {
+    return this.http.get<SocialLink[]>(`${this.apiUrl}/rede-social/todas`).pipe(
+      map(redes => redes.filter(rede => rede.ativo)),
+      catchError(() => of([]))
+    );
+  }
+
   tratarUrlImagem(caminho: string | null | undefined): string {
     if (!caminho) return '';
     if (caminho.startsWith('http') || caminho.startsWith('data:')) {
+      return caminho;
+    }
+    if (caminho.startsWith('/images/')) {
       return caminho;
     }
     return `${this.apiUrl}${caminho.startsWith('/') ? '' : '/'}${caminho}`;

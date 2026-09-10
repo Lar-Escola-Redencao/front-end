@@ -1,0 +1,64 @@
+<footer class="public-footer">
+  <div class="footer-content">
+    <section class="footer-section footer-brand" aria-label="Lar Escola Reden&ccedil;&atilde;o">
+      <a class="footer-logo-link" href="#inicio" aria-label="Ir para o in&iacute;cio">
+        <img
+          class="footer-logo"
+          src="/images/logo_branca_texto.png"
+          alt="Lar Escola Reden&ccedil;&atilde;o"
+        >
+      </a>
+
+      <p class="footer-description">
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla eget luctus sem.
+      </p>
+
+      <nav class="social-links" aria-label="Redes sociais">
+        <a
+          *ngFor="let social of socialLinks"
+          class="social-link"
+          [href]="social.url"
+          target="_blank"
+          rel="noopener noreferrer"
+          [attr.aria-label]="social.nome"
+          [title]="social.nome"
+        >
+          <img
+            *ngIf="getSocialIconUrl(social)"
+            [src]="getSocialIconUrl(social)"
+            [alt]="social.nome"
+            (error)="onSocialIconError($event)"
+          >
+
+          <span [class.social-fallback-hidden]="getSocialIconUrl(social)">
+            {{ getSocialFallback(social) }}
+          </span>
+        </a>
+      </nav>
+    </section>
+
+    <div class="footer-section footer-main-links">
+      <nav class="footer-nav" aria-labelledby="footer-home-title">
+        <h2 id="footer-home-title">In&iacute;cio</h2>
+        <a *ngFor="let link of homeLinks" [href]="link.href">{{ link.label }}</a>
+      </nav>
+
+      <nav class="footer-help" aria-labelledby="footer-help-title">
+        <h2 id="footer-help-title">Como ajudar?</h2>
+        <a *ngFor="let link of helpLinks" [href]="link.href">{{ link.label }}</a>
+      </nav>
+    </div>
+
+    <div class="footer-section footer-osc">
+      <nav aria-labelledby="footer-osc-title">
+        <h2 id="footer-osc-title">Conhe&ccedil;a a OSC</h2>
+        <a *ngFor="let link of oscLinks" [href]="link.href">{{ link.label }}</a>
+      </nav>
+
+      <div class="footer-legal">
+        <p>Copyright &copy; 2026 Lar Escola Reden&ccedil;&atilde;o</p>
+        <a href="#politica-de-privacidade">Pol&iacute;tica de privacidade</a>
+      </div>
+    </div>
+  </div>
+</footer>
