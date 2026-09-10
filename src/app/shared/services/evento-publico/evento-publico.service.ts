@@ -54,7 +54,6 @@ export class EventoPublicoService {
       map(resposta =>
         this.extrairEventos(resposta)
           .map(evento => ({ ...evento, imagem: this.tratarImagem(evento.imagem) }))
-          .filter(evento => new Date(evento.dataEvento).getTime() >= Date.now())
           .sort((a, b) => new Date(a.dataEvento).getTime() - new Date(b.dataEvento).getTime())
       )
     );
