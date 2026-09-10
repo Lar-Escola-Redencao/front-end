@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 import { Home } from './pages/public/home/home';
-import { Dashboard } from './pages/private/dashboard/dashboard'; 
+import { Dashboard } from './pages/private/dashboard/dashboard';
 import { DashboardHome } from './pages/private/dashboard/dashboard-home/dashboard-home';
 import { ContentManagement } from './pages/private/content-management/content-management';
 import { ColaboradorComponent } from '@pages/private/colaborador/colaborador.component';
@@ -9,6 +9,7 @@ import { guestGuard } from './shared/guards/guest-guard';
 import { Usuario } from '@pages/private/usuario/usuario';
 import { Diario } from '@pages/private/diario/diario';
 import { UnidadesTurmas } from '@pages/private/unidades-turmas/unidades-turmas';
+import { Perfil } from '@pages/private/perfil/perfil';
 
 export const routes: Routes = [
     { path: '', component: Home},
@@ -25,7 +26,8 @@ export const routes: Routes = [
             { path: 'colaboradores', component: ColaboradorComponent},
             { path: 'usuarios', component: Usuario},
             { path: 'diario', component: Diario},
-            { path: 'unidades-turmas', component: UnidadesTurmas}
+            { path: 'unidades-turmas', component: UnidadesTurmas},
+            { path: 'perfil', component: Perfil}
         ]
     },
     {

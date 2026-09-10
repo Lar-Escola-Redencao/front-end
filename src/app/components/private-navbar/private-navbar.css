@@ -56,37 +56,71 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
+  position: relative;
 }
 
-
-.btn-custom .material-symbols-outlined {
-  font-size: 20px;
-}
-
-.btn-custom {
-  background-color: var(--branco) !important; 
-  color: var(--primary-color) !important; 
-  font-family: var(--fonte-texto, inherit);
-  font-weight: bold;
-  padding: 8px 12px; 
-  border-radius: 6px;
+.btn-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: var(--branco);
+  color: var(--primary-color);
+  border: none;
+  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  height: auto !important;
-  line-height: normal !important;
-  border: none;
-  cursor: pointer;
+  font-weight: bold;
+  font-size: 14px;
+  font-family: var(--fonte-texto, inherit);
+  letter-spacing: 0.5px;
   transition: background-color 0.2s ease;
 }
 
-.btn-custom:hover {
-  background-color: #f5f5f5 !important;
+.btn-avatar:hover {
+  background-color: #f5f5f5;
 }
 
-.btn-custom:active {
-  background-color: #e0e0e0 !important;
+.menu-usuario {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  background-color: var(--branco);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  min-width: 180px;
+  overflow: hidden;
+  z-index: 1100;
+  animation: fadeInDown 0.2s ease forwards;
+}
+
+.menu-usuario-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 16px;
+  background: none;
+  border: none;
+  color: #333;
+  font-family: var(--fonte-texto, inherit);
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.menu-usuario-item:hover {
+  background-color: #f5f5f5;
+}
+
+.menu-usuario-item .material-symbols-outlined {
+  font-size: 20px;
+}
+
+.menu-usuario-item--sair {
+  color: #e04b3a;
+  border-top: 1px solid #eee;
 }
 
 /* --- PAINEL DROPDOWN (CENTRAL DE GESTÃO) --- */
@@ -122,7 +156,7 @@
 
 /* Estilo de cada Card (Botão Quadrado) */
 .card-opcao {
-  background-color:  rgba(255, 255, 255, 0.70);
+  background-color: rgba(255, 255, 255, 0.70);
   color: var(--primary-color);
   text-decoration: none;
   border-radius: 12px;
@@ -179,7 +213,6 @@
 
 /* --- RESPONSIVIDADE MOBILE --- */
 @media (max-width: 1000px) {
-
   .logo-container img {
     margin: 0px 5px 0px 0px;
   }
@@ -187,10 +220,10 @@
   .dropdown-panel {
     padding: 0 12px 24px 12px;
   }
-  
+
   .painel-titulo {
     text-align: center;
-    margin-top: 16px; 
+    margin-top: 16px;
     margin-bottom: 24px;
   }
 
@@ -207,10 +240,6 @@
     width: 105px;
     height: 105px;
     padding: 5px;
-  }
-
-  .card-opcao:nth-child(5):nth-last-child(1) {
-    grid-column: auto; 
   }
 
   .card-opcao .material-symbols-outlined {

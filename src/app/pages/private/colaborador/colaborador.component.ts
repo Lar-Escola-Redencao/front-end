@@ -319,6 +319,7 @@ export class ColaboradorComponent
       .subscribe({
         next: (dados: Unidade[]) => {
           this.unidadesDisponiveis = dados;
+          this.cdr.detectChanges();
         },
         error: (err: any) => {
           console.error(
@@ -472,6 +473,7 @@ export class ColaboradorComponent
     this.atualizarValidadoresSenha();
     this.formColaborador.markAsPristine();
     this.modalAberto = true;
+    this.cdr.detectChanges();
   }
 
   abrirEdicao(colaborador: Colaborador): void {
@@ -508,6 +510,7 @@ export class ColaboradorComponent
     this.valoresOriginaisDoFormulario =
       this.formColaborador.getRawValue();
     this.modalAberto = true;
+    this.cdr.detectChanges();
   }
 
   fecharModal(): void {
