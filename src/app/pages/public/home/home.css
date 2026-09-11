@@ -24,7 +24,7 @@
   font-weight: 700;
   text-transform: uppercase;
 }
-#parceiros {
-  display: block; 
+#conheca-osc, #eventos, #parceiros {
+  display: block;
   min-height: auto;
 }

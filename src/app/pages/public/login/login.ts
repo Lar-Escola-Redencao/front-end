@@ -2,7 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, effect, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { PublicFooter } from '@components/public-footer/public-footer';
 
 import { PublicNavbar } from '@components/public-navbar/public-navbar';
@@ -12,7 +12,7 @@ const SESSION_EXPIRED_TOAST_MS = 6000;
 
 @Component({
   selector: 'app-login',
-  imports: [ReactiveFormsModule, PublicNavbar, PublicFooter],
+  imports: [ReactiveFormsModule, PublicNavbar, PublicFooter, RouterLink],
   templateUrl: './login.html',
   styleUrl: './login.css',
 })
@@ -81,10 +81,6 @@ export class Login {
         this.errorMessage.set(this.resolveErrorMessage(error));
       },
     });
-  }
-
-  protected toggleForgotHint(): void {
-    this.showForgotHint.update((value) => !value);
   }
 
   private resolveErrorMessage(error: unknown): string {
