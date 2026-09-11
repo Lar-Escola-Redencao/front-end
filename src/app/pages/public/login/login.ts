@@ -82,10 +82,6 @@ export class Login {
     });
   }
 
-  protected toggleForgotHint(): void {
-    this.showForgotHint.update((value) => !value);
-  }
-
   private resolveErrorMessage(error: unknown): string {
     if (error instanceof HttpErrorResponse) {
       if (error.status === 401 || error.status === 400) {
