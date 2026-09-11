@@ -13,13 +13,13 @@
 
   <div class="nav-content" [class.ativo]="menuAberto()">
     <ul class="nav-links">
-      <li><a style="cursor: pointer;" (click)="scrollTo('inicio')">Início</a></li>
-      <li><a style="cursor: pointer;" (click)="scrollTo('conheca-osc')">Conheça a OSC</a></li>
-      <li><a style="cursor: pointer;" (click)="scrollTo('como-ajudar')">Como ajudar?</a></li>
-      <li><a style="cursor: pointer;" (click)="scrollTo('unidades')">Unidades</a></li>
-      <li><a style="cursor: pointer;" (click)="scrollTo('eventos')">Eventos</a></li>
-      <li><a style="cursor: pointer;" (click)="scrollTo('parceiros')">Parceiros</a></li>
-      <li><a style="cursor: pointer;" (click)="scrollTo('transparencia')">Transparência</a></li>
+      <li><a (click)="scrollTo('inicio')">Início</a></li>
+      <li><a (click)="scrollTo('conheca-osc')">Conheça a OSC</a></li>
+      <li><a (click)="alternarMenu()">Como ajudar?</a></li>
+      <li><a (click)="scrollTo('unidades')">Unidades</a></li>
+      <li><a routerLink="/eventos" (click)="alternarMenu()">Eventos</a></li>
+      <li><a (click)="scrollTo('parceiros')">Parceiros</a></li>
+      <li><a (click)="alternarMenu()">Transparência</a></li>
     </ul>
 
     <div class="nav-action">

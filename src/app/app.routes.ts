@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { Home } from './pages/public/home/home';
+import { Eventos } from './pages/public/eventos/eventos';
 import { Dashboard } from './pages/private/dashboard/dashboard'; 
 import { DashboardHome } from './pages/private/dashboard/dashboard-home/dashboard-home';
 import { ContentManagement } from './pages/private/content-management/content-management';
@@ -12,6 +13,7 @@ import { UnidadesTurmas } from '@pages/private/unidades-turmas/unidades-turmas';
 
 export const routes: Routes = [
     { path: '', component: Home},
+    { path: 'eventos', component: Eventos},
     {
         path: 'dashboard',
         //loadComponent: () =>
