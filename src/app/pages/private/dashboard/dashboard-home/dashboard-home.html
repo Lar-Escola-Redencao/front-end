@@ -1,5 +1,55 @@
-<section class="dashboard-home">
-  <h1>Acesso interno</h1>
-  <p>Autenticado{{ user()?.sub ? ' como ' + user()?.sub : '' }}.</p>
-  <button type="button" (click)="logout()">Sair</button>
+<section class="dashboard-home" aria-labelledby="dashboard-home-title">
+  <div class="dashboard-home__content">
+    <div class="dashboard-home__intro">
+      <p class="dashboard-home__greeting">{{ greeting() }}</p>
+      <h1 id="dashboard-home-title">{{ userName() }}</h1>
+      <p class="dashboard-home__description">
+        <span class="dashboard-home__description-desktop">
+          Escolha uma opção no menu de navegação ou selecione abaixo para iniciarmos.
+        </span>
+        <span class="dashboard-home__description-mobile">
+          Escolha uma opção no menu de navegação para iniciarmos.
+        </span>
+      </p>
+    </div>
+
+    <nav class="grid-opcoes" aria-label="Atalhos do dashboard">
+      <a class="card-opcao" routerLink="/dashboard/diario" routerLinkActive="ativo">
+        <span class="material-symbols-outlined">assignment</span>
+        <span class="texto-link">Diário de turma</span>
+      </a>
+
+      <a class="card-opcao" routerLink="/dashboard/usuarios" routerLinkActive="ativo">
+        <span class="material-symbols-outlined">sentiment_excited</span>
+        <span class="texto-link">Usuários</span>
+      </a>
+
+      <a class="card-opcao" routerLink="/dashboard/colaboradores" routerLinkActive="ativo">
+        <span class="material-symbols-outlined">support_agent</span>
+        <span class="texto-link">Colaboradores</span>
+      </a>
+
+      <a class="card-opcao" routerLink="/dashboard/unidades-turmas" routerLinkActive="ativo">
+        <span class="material-symbols-outlined">family_group</span>
+        <span class="texto-link">Unidades e turmas</span>
+      </a>
+
+      <a class="card-opcao" routerLink="/dashboard/conteudo-publico" routerLinkActive="ativo">
+        <span class="material-symbols-outlined">captive_portal</span>
+        <span class="texto-link">Conteúdo público</span>
+      </a>
+    </nav>
+  </div>
+
+  <figure class="dashboard-home__art">
+    <img
+      src="/images/criancas-brincando.svg"
+      alt="Crianças brincando com carrinhos e blocos"
+    >
+    <figcaption>
+      <a href="https://storyset.com/home" target="_blank" rel="noopener noreferrer">
+        Home illustrations by Storyset
+      </a>
+    </figcaption>
+  </figure>
 </section>

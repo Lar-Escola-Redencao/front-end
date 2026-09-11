@@ -1,23 +1,220 @@
 .dashboard-home {
-  display: flex;
-  flex-direction: column;
+  width: min(100%, 1080px);
+  min-height: 80vh;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: minmax(440px, 440px) minmax(420px, 1fr);
+  padding: 0px 50px;
   align-items: center;
-  justify-content: center;
-  gap: 12px;
-  padding: 32px 24px;
-  text-align: center;
+  gap: 58px;
+}
+
+
+.dashboard-home__intro {
+  margin-bottom: 34px;
+}
+
+.dashboard-home__greeting {
+  margin: 0 0 4px;
+  color: var(--preto);
+  font-family: var(--fonte-texto);
+  font-size: 1rem;
+  font-weight: 800;
+  line-height: 1.2;
 }
 
 .dashboard-home h1 {
+  margin: 0 0 12px;
   color: var(--preto);
   font-family: var(--fonte-titulo);
-  font-size: clamp(2.5rem, 5vw, 4rem);
   line-height: 1;
+  letter-spacing: 0;
 }
 
-.dashboard-home p {
-  color: var(--input-color);
+.dashboard-home__description {
+  color: var(--preto);
   font-family: var(--fonte-texto);
   font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.15;
+}
+
+.dashboard-home__description-mobile {
+  display: none;
+}
+
+.grid-opcoes {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 16px;
+  max-width: 422px;
+}
+
+.card-opcao {
+  background-color: var(--branco);
+  color: var(--primary-color);
+  text-decoration: none;
+  border-radius: 12px;
+  width: 130px;
+  height: 120px;
+  padding: 16px 8px 8px 8px;
+  box-sizing: border-box;
+  font-family: var(--fonte-texto);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  transition: transform 0.2s, background-color 0.2s, box-shadow 0.2s;
+}
+
+.card-opcao .material-symbols-outlined {
+  color: var(--primary-color);
+  font-size: 60px;
+  line-height: 1;
+  margin-bottom: 8px;
+  font-variation-settings:
+    'FILL' 0,
+    'wght' 600,
+    'GRAD' 0,
+    'opsz' 48;
+}
+
+.card-opcao .texto-link {
+  color: var(--primary-color);
+  font-size: 13px;
   font-weight: 600;
+  line-height: 1.1;
+  text-align: center;
+  margin: 0;
+}
+
+.card-opcao:hover,
+.card-opcao:focus-visible {
+  color: var(--primary-hover-color);
+  transform: translateY(-2px);
+  box-shadow: var(--sombra-padrao);
+}
+
+.card-opcao:hover .material-symbols-outlined,
+.card-opcao:focus-visible .material-symbols-outlined,
+.card-opcao:hover .texto-link,
+.card-opcao:focus-visible .texto-link {
+  color: var(--primary-hover-color);
+}
+
+.card-opcao.ativo {
+  background-color: var(--branco);
+  box-shadow: var(--sombra-padrao);
+}
+
+.card-opcao:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 4px;
+}
+
+.dashboard-home__art {
+  min-width: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.dashboard-home__art img {
+  width: min(100%, 550px);
+  height: auto;
+  display: block;
+}
+
+.dashboard-home__art figcaption {
+  margin-top: 12px;
+  padding-right: 28px;
+  color: rgba(30, 30, 30, 0.28);
+  font-family: var(--fonte-texto);
+  font-size: 0.95rem;
+}
+
+.dashboard-home__art a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.dashboard-home__art a:hover,
+.dashboard-home__art a:focus-visible {
+  color: var(--primary-color);
+}
+
+@media (max-width: 1000px) {
+  .dashboard-home {
+    min-height: calc(100vh - 110px);
+    padding: 56px 54px 90px;
+    grid-template-columns: 1fr;
+    align-items: start;
+    gap: 28px;
+  }
+
+  .dashboard-home__intro {
+    margin-bottom: 0;
+  }
+
+  .dashboard-home h1 {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+  }
+
+  .dashboard-home__description {
+    max-width: 560px;
+    line-height: 1.25;
+  }
+
+  .dashboard-home__description-desktop,
+  .grid-opcoes {
+    display: none;
+  }
+
+  .dashboard-home__description-mobile {
+    display: inline;
+  }
+
+  .dashboard-home__art {
+    align-items: center;
+    width: 100%;
+    margin-top: 20px;
+  }
+
+  .dashboard-home__art img {
+    width: min(100%, 560px);
+  }
+
+  .dashboard-home__art figcaption {
+    align-self: flex-end;
+    padding-right: 12px;
+    font-size: 0.95rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .dashboard-home {
+    padding: 56px 40px 80px;
+  }
+
+  .dashboard-home__art {
+    margin-top: 28px;
+  }
+}
+
+@media (max-width: 420px) {
+  .dashboard-home {
+    padding-inline: 24px;
+  }
+
+  .dashboard-home__greeting {
+    font-size: 1.25rem;
+  }
+
+  .dashboard-home__description {
+    font-size: 1.12rem;
+  }
 }

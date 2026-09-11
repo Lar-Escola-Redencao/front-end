@@ -19,18 +19,19 @@ export class PublicFooter implements OnInit {
     { label: 'Unidades de atendimento', href: '#unidades' },
     { label: 'Eventos', href: '#eventos' },
     { label: 'Parceiros', href: '#parceiros' },
+    { label: 'Transparência', href: '#transparencia'},
   ];
 
   readonly helpLinks = [
-    { label: 'Doa\u00e7\u00e3o de nota fiscal', href: '#como-ajudar' },
-    { label: 'Doa\u00e7\u00e3o via PIX', href: '#como-ajudar' },
+    { label: 'Doação de nota fiscal', href: '#como-ajudar' },
+    { label: 'Doação via PIX', href: '#como-ajudar' },
   ];
 
   readonly oscLinks = [
     { label: 'Sobre', href: '#conheca-osc' },
-    { label: 'Nossa hist\u00f3ria', href: '#nossa-historia' },
-    { label: 'Lar Escola Reden\u00e7\u00e3o em n\u00fameros', href: '#numeros' },
-    { label: 'Composi\u00e7\u00e3o da diretoria', href: '#diretoria' },
+    { label: 'Nossa história', href: '#nossa-historia' },
+    { label: 'Lar Escola Redenção em números', href: '#numeros' },
+    { label: 'Composição da diretoria', href: '#diretoria' },
     { label: 'Unidades de atendimento', href: '#unidades' },
   ];
 
