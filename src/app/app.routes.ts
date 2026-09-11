@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { Home } from './pages/public/home/home';
+import { About } from './pages/public/about/about';
 import { Eventos } from './pages/public/eventos/eventos';
 import { Dashboard } from './pages/private/dashboard/dashboard'; 
 import { DashboardHome } from './pages/private/dashboard/dashboard-home/dashboard-home';
@@ -13,11 +14,10 @@ import { UnidadesTurmas } from '@pages/private/unidades-turmas/unidades-turmas';
 
 export const routes: Routes = [
     { path: '', component: Home},
+    { path: 'conheca-a-osc', component: About },
     { path: 'eventos', component: Eventos},
     {
         path: 'dashboard',
-        //loadComponent: () =>
-        //import('./features/backoffice-home/backoffice-home').then((m) => m.BackofficeHome),
         canActivate: [authGuard],
         component: Dashboard,
         children: [
@@ -44,57 +44,5 @@ export const routes: Routes = [
         path: 'transparencia',
         loadComponent: () => import('./pages/public/transparencia/transparencia').then((m) => m.Transparencia),
     },
-    { path: '**', redirectTo: 'entrar' }
+    { path: '**', redirectTo: '' }
 ];
-
-
-
-
-
-    /*import { EventoComponent } from './components/evento/evento.component';
-    import { canDeactivateGuard } from './guards/can-deactivate.guard';
-
-    export const routes: Routes = [
-    {
-        path: 'eventos',
-        component: EventoComponent,
-        canDeactivate: [canDeactivateGuard]
-    }*/
-
-
-    /*import { AdminLayout } from './core/layout/admin-layout/admin-layout';
-    import { DashboardPage } from './features/dashboard/dashboard-page';
-    import { PublicContentPage } from './features/public-content/public-content-page';
-    import { PlaceholderPage } from './features/placeholder/placeholder-page';
-
-    export const routes: Routes = [
-    {
-        path: '',
-        component: AdminLayout,
-        children: [
-        { path: '', component: DashboardPage },
-        { path: 'conteudo-publico', component: PublicContentPage },
-        {
-            path: 'diario-do-turno',
-            component: PlaceholderPage,
-            data: { title: 'Diário do turno' },
-        },
-        {
-            path: 'gerenciar-cadastros',
-            component: PlaceholderPage,
-            data: { title: 'Gerenciar cadastros' },
-        },
-        {
-            path: 'gerenciar-voluntarios',
-            component: PlaceholderPage,
-            data: { title: 'Gerenciar voluntários' },
-        },
-        {
-            path: 'gerenciar-unidades-e-turmas',
-            component: PlaceholderPage,
-            data: { title: 'Gerenciar unidades e turmas' },
-        },
-        { path: '**', redirectTo: '' },
-        ],
-    },
-    ];*/

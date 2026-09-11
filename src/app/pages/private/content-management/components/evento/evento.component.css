@@ -331,6 +331,10 @@
   object-fit: contain;
 }
 
+.form-row .error-text{
+  margin-top: 12px;
+}
+
 @media (max-width: 600px) {
   .acoes-eventos,
   .acoes-eventos .btn-primary,
@@ -361,9 +365,5 @@
 
   .form-row{
     gap: 12px;
-  }
-
-  .form-row .error-text{
-    margin-top: 12px;
   }
 }

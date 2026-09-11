@@ -2,6 +2,7 @@ import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
+import { PublicFooter } from '../../../components/public-footer/public-footer';
 import { PublicNavbar } from '../../../components/public-navbar/public-navbar';
 import { RecuperacaoSenhaService } from '../../../shared/services/auth/recuperacao-senha.service';
 
@@ -25,7 +26,7 @@ interface RecoveryStorage {
 @Component({
     selector: 'app-recuperar-senha',
     standalone: true,
-    imports: [RouterLink, ReactiveFormsModule, PublicNavbar],
+    imports: [RouterLink, ReactiveFormsModule, PublicNavbar, PublicFooter],
     templateUrl: './recuperar-senha.html',
     styleUrl: './recuperar-senha.css'
 })

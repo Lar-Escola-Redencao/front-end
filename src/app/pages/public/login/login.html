@@ -38,7 +38,7 @@
           </svg>
         </div>
         @if (form.controls.email.invalid && form.controls.email.touched) {
-          <p class="field-error">Informe um e-mail válido.</p>
+          <p class="error-text">Informe um e-mail válido.</p>
         }
 
         <div class="field">
@@ -57,7 +57,7 @@
           </svg>
         </div>
         @if (form.controls.password.invalid && form.controls.password.touched) {
-          <p class="field-error">Informe sua senha.</p>
+          <p class="error-text">Informe sua senha.</p>
         }
 
         <div class="row">
@@ -69,13 +69,12 @@
           <a routerLink="/recuperar-senha" class="link-button">Esqueci a senha</a>
         </div>
 
-        @if (errorMessage()) {
-          <p class="form-error" role="alert">{{ errorMessage() }}</p>
-        }
-
-        <button type="submit" class="submit" [disabled]="loading()">
+        <button type="submit" class="btn-primary" [disabled]="loading()">
           {{ loading() ? 'Entrando...' : 'Entrar' }}
         </button>
+                @if (errorMessage()) {
+          <p class="error-text" role="alert">{{ errorMessage() }}</p>
+        }
       </form>
 
       <p class="footer-note">
@@ -85,3 +84,4 @@
     </div>
   </main>
 </div>
+<app-public-footer></app-public-footer>
