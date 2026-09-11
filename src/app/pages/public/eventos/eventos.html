@@ -1,0 +1,173 @@
+<app-public-navbar></app-public-navbar>
+
+<main class="eventos-page">
+  <h1 class="titulo-pagina">Eventos</h1>
+
+  <ng-template #camposFiltro>
+    <div class="campo-grupo">
+      <label class="campo campo-texto">
+        <input
+          type="text"
+          name="filtroTitulo"
+          placeholder="Busque por evento"
+          [(ngModel)]="filtroTitulo"
+        />
+      </label>
+      @if (tituloAbaixoDoMinimo) {
+        <span class="error-text">Digite ao menos {{ tamanhoMinimoTitulo }} caracteres</span>
+      }
+    </div>
+
+    <label class="campo campo-data">
+      <span class="rotulo-data">Inicio</span>
+      <input
+        type="date"
+        name="filtroDataInicial"
+        [(ngModel)]="filtroDataInicial"
+      />
+    </label>
+
+    <label class="campo campo-data">
+      <span class="rotulo-data">Fim</span>
+      <input
+        type="date"
+        name="filtroDataFinal"
+        [(ngModel)]="filtroDataFinal"
+      />
+    </label>
+
+    <label class="campo campo-select">
+      <select name="filtroValor" [(ngModel)]="filtroValor">
+        <option value="todos">Gratuito ou pago</option>
+        <option value="gratuito">Gratuito</option>
+        <option value="pago">Pago</option>
+      </select>
+    </label>
+    <button type="submit" class="botao-buscar">
+      <span class="material-symbols-outlined">search</span>
+    </button>
+    @if (possuiFiltrosAplicados) {
+      <button
+        type="button"
+        class="botao-limpar-filtros"
+        (click)="limparFiltros()"
+      >
+        <span class="material-symbols-outlined">close</span>
+        Limpar filtros
+      </button>
+    }
+  </ng-template>
+
+  <button
+    type="button"
+    class="botao-filtros-mobile"
+    (click)="abrirFiltrosMobile()"
+    aria-label="Abrir filtros de eventos"
+  >
+    Filtros
+    <span class="material-symbols-outlined">filter_list</span>
+  </button>
+
+  <form class="barra-busca barra-busca-desktop" (ngSubmit)="buscar()">
+    <ng-container *ngTemplateOutlet="camposFiltro"></ng-container>
+  </form>
+
+  @if (filtrosMobileAberto) {
+    <app-modal-layout titulo="Filtrar eventos" (closed)="fecharFiltrosMobile()">
+      <form class="barra-busca barra-busca-mobile" (ngSubmit)="buscarMobile()">
+        <ng-container *ngTemplateOutlet="camposFiltro"></ng-container>
+      </form>
+    </app-modal-layout>
+  }
+
+  @if (carregando) {
+    <p class="mensagem-estado">Carregando eventos...</p>
+  } @else if (eventosFiltrados.length === 0) {
+    <p class="mensagem-estado">Nenhum evento encontrado para os filtros selecionados.</p>
+  } @else {
+    <div class="grade-eventos">
+      @for (evento of eventosPaginados; track evento.id) {
+        <article
+          class="card-evento"
+          [class.encerrado]="eventoEncerrado(evento)"
+          [style.background-image]="'url(' + evento.imagem + ')'"
+        >
+          <div class="card-overlay">
+            <div class="card-topo">
+              <div class="card-data">
+                <span class="dia">{{ formatarDia(evento.dataEvento) }}</span>
+                <span class="mes">{{ formatarMes(evento.dataEvento) }}</span>
+                <span class="ano">{{ formatarAno(evento.dataEvento) }}</span>
+              </div>
+              <div class="card-hora">
+                <span class="material-symbols-outlined">schedule</span>
+                {{ formatarHora(evento.dataEvento) }}
+              </div>
+            </div>
+
+            <div class="card-rodape">
+              @if (eventoEncerrado(evento)) {
+                <span class="badge-encerrado">Encerrado</span>
+              }
+              <h2 class="card-titulo">{{ evento.titulo }}</h2>
+              <p class="card-descricao">{{ evento.descricao }}</p>
+              <span class="card-valor" [class.gratuito]="!evento.valor">{{ formatarValor(evento) }}</span>
+            </div>
+          </div>
+        </article>
+      }
+    </div>
+
+    <nav class="paginacao" aria-label="Paginacao de eventos">
+      <span class="paginacao-registros">
+        Mostrando {{ inicioRegistros }}-{{ fimRegistros }} de {{ eventosFiltrados.length }} registros
+      </span>
+
+      <div class="paginacao-controles">
+        <button
+          type="button"
+          class="botao-pagina"
+          [disabled]="primeiraPaginaSelecionada"
+          (click)="primeiraPagina()"
+          aria-label="Primeira página"
+        >
+          <span class="material-symbols-outlined" aria-hidden="true">keyboard_double_arrow_left</span>
+        </button>
+
+        <button
+          type="button"
+          class="botao-pagina"
+          [disabled]="primeiraPaginaSelecionada"
+          (click)="paginaAnterior()"
+          aria-label="Página anterior"
+        >
+          <span class="material-symbols-outlined" aria-hidden="true">chevron_left</span>
+        </button>
+
+        <span class="paginacao-pagina">
+          Página {{ paginaAtual + 1 }} de {{ totalPaginas }}
+        </span>
+
+        <button
+          type="button"
+          class="botao-pagina"
+          [disabled]="ultimaPaginaSelecionada"
+          (click)="proximaPagina()"
+          aria-label="Próxima página"
+        >
+          <span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
+        </button>
+
+        <button
+          type="button"
+          class="botao-pagina"
+          [disabled]="ultimaPaginaSelecionada"
+          (click)="ultimaPagina()"
+          aria-label="Última página"
+        >
+          <span class="material-symbols-outlined" aria-hidden="true">keyboard_double_arrow_right</span>
+        </button>
+      </div>
+    </nav>
+  }
+</main>
