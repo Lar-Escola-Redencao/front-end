@@ -5,9 +5,6 @@
     </button>
 
     <mat-form-field appearance="outline" class="filtro-tipo">
-      <mat-label>
-        Categoria de evento
-      </mat-label>
       <mat-select placeholder="Todas as categorias" [(ngModel)]="filtroTipo" (selectionChange)="aplicarFiltro()">
         <mat-option value="">Todas as categorias</mat-option>
         <mat-option *ngFor="let tipo of tiposDisponiveis" [value]="tipo">
@@ -19,12 +16,24 @@
 
   <app-tabela-layout
     [colunas]="colunas"
-    [dados]="eventosFiltrados"
+    [dados]="eventos"
     [acoes]="acoesTabela"
-    [tamanhoPagina]="10"
-    [tamanhosPagina]="[5, 10, 25]"
+    [carregando]="carregandoLista"
+    [erro]="erroLista"
+    [ordenacao]="ordenacao"
     [mensagemVazia]="mensagemVazia"
-    (acao)="executarAcao($event)" />
+    (acao)="executarAcao($event)"
+    (ordenar)="ordenarPor($event)"
+    (tentarNovamente)="carregarEventos()" />
+
+  <app-paginacao
+    [paginaAtual]="pagina"
+    [totalPaginas]="totalPaginas"
+    [totalElementos]="totalElementos"
+    [tamanho]="tamanho"
+    [carregando]="carregandoLista"
+    (paginaChange)="irParaPagina($event)"
+    (tamanhoChange)="mudarTamanhoPagina($event)" />
 </section>
 
 @if (modalAberto) {

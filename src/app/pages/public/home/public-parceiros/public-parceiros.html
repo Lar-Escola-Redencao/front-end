@@ -1,0 +1,49 @@
+<section class="public-parceiros-section" *ngIf="!carregando">
+  <div class="container">
+    
+    <div class="parceiros-header">
+      <h2>Nossos parceiros</h2>
+    </div>
+
+    <div 
+      class="carousel-container" 
+      *ngIf="parceirosOriginal.length > 0; else semParceiros"
+      (mouseenter)="stopAutoPlay()" 
+      (mouseleave)="startAutoPlay()">
+      
+      <button
+        class="nav-btn prev-btn"
+        (click)="prev()"
+        [class.hidden]="parceirosOriginal.length <= 1"
+        aria-label="Anterior">
+        <span class="material-symbols-outlined">chevron_left</span>
+      </button>
+
+      <div class="carousel-track-wrapper">
+        <div class="carousel-track" [class.no-transition]="!isTransitioning" [style.transform]="trackTransform">
+          
+          <div class="parceiro-card" *ngFor="let parceiro of parceirosCarousel" [style.min-width]="(100 / itemsPerPage) + '%'">
+            <div class="logo-wrapper">
+              <img [src]="obterUrlImagem(parceiro.logo)" [alt]="parceiro.nome" loading="lazy" />
+            </div>
+            <span class="parceiro-nome">{{ parceiro.nome }}</span>
+          </div>
+
+        </div>
+      </div>
+
+      <button
+        class="nav-btn next-btn"
+        (click)="next()"
+        [class.hidden]="parceirosOriginal.length <= 1"
+        aria-label="Próximo">
+        <span class="material-symbols-outlined">chevron_right</span>
+      </button>
+    </div>
+
+    <ng-template #semParceiros>
+      <p class="mensagem-vazia">Nenhum parceiro cadastrado no momento.</p>
+    </ng-template>
+
+  </div>
+</section>

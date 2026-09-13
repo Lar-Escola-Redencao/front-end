@@ -2,6 +2,8 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { AtualizarDiretoriaDTO, CriarDiretoriaDTO, Diretoria } from '../../../models/diretoria.model';
+import { PaginaResposta } from '../../../models/pagina.model';
+import { construirHttpParams } from '../../../utils/paginacao-url';
 import { environment } from 'src/environments/environment';
 
 @Injectable({
@@ -12,8 +14,9 @@ export class DiretoriaService {
 
   constructor(private http: HttpClient) {}
 
-  listarTodos(): Observable<Diretoria[]> {
-    return this.http.get<Diretoria[]>(`${this.apiUrl}/todos`);
+  listarTodos(pagina: number, tamanho: number, sort?: string): Observable<PaginaResposta<Diretoria>> {
+    const params = construirHttpParams({ pagina, tamanho, sort });
+    return this.http.get<PaginaResposta<Diretoria>>(`${this.apiUrl}/todos`, { params });
   }
 
   buscarPorId(id: number): Observable<Diretoria> {
