@@ -5,9 +5,6 @@
     </button>
 
     <mat-form-field appearance="outline" class="filtro-tipo">
-      <mat-label>
-        Categoria de evento
-      </mat-label>
       <mat-select placeholder="Todas as categorias" [(ngModel)]="filtroTipo" (selectionChange)="aplicarFiltro()">
         <mat-option value="">Todas as categorias</mat-option>
         <mat-option *ngFor="let tipo of tiposDisponiveis" [value]="tipo">
