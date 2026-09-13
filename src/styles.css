@@ -268,7 +268,7 @@ body {
    ========================= */
 
 .btn-primary {
-  min-height: 45px;
+  min-height: 58px;
 
   padding: 0 28px;
 
@@ -282,6 +282,11 @@ body {
   color: var(--branco);
 
   cursor: pointer;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 
   font-family: var(--fonte-texto);
   font-size: 1rem;

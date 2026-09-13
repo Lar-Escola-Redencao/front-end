@@ -41,17 +41,20 @@
       <div class="acoes-unidades">
         <button type="button" class="btn-primary" (click)="abrirCadastroTurma()">Nova turma</button>
 
-        <div class="filtro-unidade">
-          <label for="filtroUnidade">Unidade</label>
-          <select id="filtroUnidade" (change)="onFiltroUnidadeChange($event)">
-            <option value="" [selected]="unidadeFiltroId === null">Todas as unidades</option>
+        <mat-form-field appearance="outline" class="filtro-unidade">
+          <mat-select
+            placeholder="Todas as unidades"
+            [(ngModel)]="unidadeFiltroId"
+            (selectionChange)="onFiltroUnidadeChange()"
+          >
+            <mat-option [value]="null">Todas as unidades</mat-option>
             @for (unidade of unidades; track unidade.id) {
-              <option [value]="unidade.id" [selected]="unidadeFiltroId === unidade.id">
+              <mat-option [value]="unidade.id">
                 {{ unidade.nome }}
-              </option>
+              </mat-option>
             }
-          </select>
-        </div>
+          </mat-select>
+        </mat-form-field>
       </div>
 
       <app-tabela-layout

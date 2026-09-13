@@ -13,6 +13,7 @@ import { Subscription } from 'rxjs';
 
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatOption, MatSelect } from '@angular/material/select';
 
 import { ToastrService } from 'ngx-toastr';
 
@@ -51,12 +52,14 @@ type OpcaoPeriodo = { valor: Periodo; label: string };
     Paginacao,
     MatFormFieldModule,
     MatInputModule,
+    MatSelect,
+    MatOption,
   ],
   templateUrl: './unidades-turmas.html',
   styleUrl: './unidades-turmas.css',
 })
 export class UnidadesTurmas implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalvas {
-  abaAtiva: 'turmas' | 'unidades' = 'unidades';
+  abaAtiva: 'turmas' | 'unidades' = 'turmas';
 
   private routeSub?: Subscription;
 
@@ -312,7 +315,7 @@ export class UnidadesTurmas implements OnInit, OnDestroy, ComponentComAlteracoes
       this.pagina = pagina;
       this.tamanho = tamanho;
 
-      this.abaAtiva = params.get('aba') === 'turmas' ? 'turmas' : 'unidades';
+      this.abaAtiva = params.get('aba') === 'unidades' ? 'unidades' : 'turmas';
 
       const unidadeIdBruto = Number(params.get('unidadeId'));
       this.unidadeFiltroId =
@@ -549,9 +552,8 @@ export class UnidadesTurmas implements OnInit, OnDestroy, ComponentComAlteracoes
     });
   }
 
-  onFiltroUnidadeChange(event: Event): void {
-    const valor = (event.target as HTMLSelectElement).value;
-    this.navegar({ page: 0, unidadeId: valor || null });
+  onFiltroUnidadeChange(): void {
+    this.navegar({ page: 0, unidadeId: this.unidadeFiltroId || null });
   }
 
   formatarPeriodo(valor: Periodo): string {

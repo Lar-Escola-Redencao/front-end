@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync, flushMicrotasks, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { ActivatedRoute, ParamMap, Router, convertToParamMap } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
@@ -149,30 +149,31 @@ describe('UnidadesTurmas', () => {
     expect(component).toBeTruthy();
   });
 
-  it('carrega a tabela de unidades ao iniciar (aba padrão)', () => {
-    expect(unidadeService.listarPaginado).toHaveBeenCalledWith(0, 10);
-    expect(component.unidadesTabela).toEqual(unidades);
-  });
-
-  it('carrega a lista de turmas ao trocar para a aba turmas', () => {
-    component.mudarAba('turmas');
-
+  it('carrega a lista de turmas ao iniciar (aba padrão)', () => {
     expect(turmaService.listarPaginado).toHaveBeenCalledWith(0, 10, null);
     expect(component.turmas).toEqual([turma]);
   });
 
+  it('carrega a tabela de unidades ao trocar para a aba unidades', () => {
+    component.mudarAba('unidades');
+
+    expect(unidadeService.listarPaginado).toHaveBeenCalledWith(0, 10);
+    expect(component.unidadesTabela).toEqual(unidades);
+  });
+
   it('refaz o listarPaginado com o unidadeId ao trocar o filtro de unidade', () => {
-    component.mudarAba('turmas');
-    component.onFiltroUnidadeChange({ target: { value: '1' } } as unknown as Event);
+    component.unidadeFiltroId = 1;
+    component.onFiltroUnidadeChange();
 
     expect(component.unidadeFiltroId).toBe(1);
     expect(turmaService.listarPaginado).toHaveBeenLastCalledWith(0, 10, 1);
   });
 
   it('volta a listar sem unidadeId ao selecionar "Todas as unidades"', () => {
-    component.mudarAba('turmas');
-    component.onFiltroUnidadeChange({ target: { value: '1' } } as unknown as Event);
-    component.onFiltroUnidadeChange({ target: { value: '' } } as unknown as Event);
+    component.unidadeFiltroId = 1;
+    component.onFiltroUnidadeChange();
+    component.unidadeFiltroId = null;
+    component.onFiltroUnidadeChange();
 
     expect(component.unidadeFiltroId).toBeNull();
     expect(turmaService.listarPaginado).toHaveBeenLastCalledWith(0, 10, null);
@@ -268,7 +269,7 @@ describe('UnidadesTurmas', () => {
     expect(component.formTurma.value.unidadeId).toBe(1);
   });
 
-  it('envia o payload com o unidadeId correto ao criar uma turma', fakeAsync(() => {
+  it('envia o payload com o unidadeId correto ao criar uma turma', () => {
     turmaService.criar.mockReturnValue(of(turma));
 
     component.abrirCadastroTurma();
@@ -280,8 +281,6 @@ describe('UnidadesTurmas', () => {
     });
 
     component.salvarTurma();
-    flushMicrotasks();
-    tick();
 
     expect(turmaService.criar).toHaveBeenCalledWith({
       periodo: 'TARDE',
@@ -290,7 +289,7 @@ describe('UnidadesTurmas', () => {
       unidadeId: 1,
     });
     expect(toastr.success).toHaveBeenCalledWith('Turma cadastrada com sucesso.', 'Sucesso');
-  }));
+  });
 
   it('bloqueia o salvamento quando não há unidades cadastradas', () => {
     unidadeService.listarTodas.mockReturnValue(of([]));
