@@ -39,7 +39,7 @@ describe('Auth', () => {
 
   it('loads a valid stored token as authenticated', () => {
     const token = buildToken({ sub: 'user-1', exp: Math.floor(Date.now() / 1000) + 3600 });
-    localStorage.setItem(TOKEN_KEY, token);
+    sessionStorage.setItem(TOKEN_KEY, token);
 
     const auth = createService();
 
@@ -49,12 +49,12 @@ describe('Auth', () => {
 
   it('drops an expired stored token and flags the session as expired', () => {
     const token = buildToken({ sub: 'user-1', exp: Math.floor(Date.now() / 1000) - 3600 });
-    localStorage.setItem(TOKEN_KEY, token);
+    sessionStorage.setItem(TOKEN_KEY, token);
 
     const auth = createService();
 
     expect(auth.isAuthenticated()).toBe(false);
-    expect(localStorage.getItem(TOKEN_KEY)).toBeNull();
+    expect(sessionStorage.getItem(TOKEN_KEY)).toBeNull();
     expect(auth.consumeExpiredSessionFlag()).toBe(true);
     // the flag is consumed, not sticky
     expect(auth.consumeExpiredSessionFlag()).toBe(false);
@@ -63,12 +63,12 @@ describe('Auth', () => {
   it('drops a tampered stored token (undecodable payload) and flags the session as expired', () => {
     const token = buildToken({ sub: 'user-1', exp: Math.floor(Date.now() / 1000) + 3600 });
     const [header, , signature] = token.split('.');
-    localStorage.setItem(TOKEN_KEY, `${header}.not-a-valid-payload!!!.${signature}`);
+    sessionStorage.setItem(TOKEN_KEY, `${header}.not-a-valid-payload!!!.${signature}`);
 
     const auth = createService();
 
     expect(auth.isAuthenticated()).toBe(false);
-    expect(localStorage.getItem(TOKEN_KEY)).toBeNull();
+    expect(sessionStorage.getItem(TOKEN_KEY)).toBeNull();
     expect(auth.consumeExpiredSessionFlag()).toBe(true);
   });
 
@@ -83,14 +83,10 @@ describe('Auth', () => {
     const auth = createService();
     const httpMock = TestBed.inject(HttpTestingController);
 
-    auth.login({ identifier: 'a@b.com', password: 'secret' }, false).subscribe();
+    auth.login({ email: 'a@b.com', password: 'secret' }, false).subscribe();
 
     const req = httpMock.expectOne(`${environment.apiUrl}/auth/login`);
-    expect(req.request.body).toEqual({
-      identificador: 'a@b.com',
-      senha: 'secret',
-      lembrarMe: false,
-    });
+    expect(req.request.body).toEqual({ email: 'a@b.com', senha: 'secret', lembrarMe: false });
     const token = buildToken({ sub: 'a@b.com', exp: Math.floor(Date.now() / 1000) + 3600 });
     req.flush({ token });
 
@@ -102,27 +98,23 @@ describe('Auth', () => {
 
   it('clears the token on logout', () => {
     const token = buildToken({ sub: 'user-1', exp: Math.floor(Date.now() / 1000) + 3600 });
-    localStorage.setItem(TOKEN_KEY, token);
+    sessionStorage.setItem(TOKEN_KEY, token);
     const auth = createService();
 
     auth.logout();
 
     expect(auth.isAuthenticated()).toBe(false);
-    expect(localStorage.getItem(TOKEN_KEY)).toBeNull();
+    expect(sessionStorage.getItem(TOKEN_KEY)).toBeNull();
   });
 
   it('sends lembrarMe=true to the backend when "Lembre de mim" was checked', () => {
     const auth = createService();
     const httpMock = TestBed.inject(HttpTestingController);
 
-    auth.login({ identifier: 'a@b.com', password: 'secret' }, true).subscribe();
+    auth.login({ email: 'a@b.com', password: 'secret' }, true).subscribe();
 
     const req = httpMock.expectOne(`${environment.apiUrl}/auth/login`);
-    expect(req.request.body).toEqual({
-      identificador: 'a@b.com',
-      senha: 'secret',
-      lembrarMe: true,
-    });
+    expect(req.request.body).toEqual({ email: 'a@b.com', senha: 'secret', lembrarMe: true });
     req.flush({ token: buildToken({ sub: 'a@b.com', exp: Math.floor(Date.now() / 1000) + 3600 }) });
 
     httpMock.verify();
@@ -131,7 +123,7 @@ describe('Auth', () => {
   it('logs out on its own the moment a stored token expires, even with no reload or API call', () => {
     vi.useFakeTimers();
     const token = buildToken({ sub: 'user-1', exp: Math.floor(Date.now() / 1000) + 4 });
-    localStorage.setItem(TOKEN_KEY, token);
+    sessionStorage.setItem(TOKEN_KEY, token);
     const auth = createService();
     const router = TestBed.inject(Router);
     const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
@@ -141,8 +133,8 @@ describe('Auth', () => {
     vi.advanceTimersByTime(4000);
 
     expect(auth.isAuthenticated()).toBe(false);
-    expect(localStorage.getItem(TOKEN_KEY)).toBeNull();
-    expect(navigateSpy).toHaveBeenCalledWith(['/entrar'], { queryParams: { reason: 'expired' } });
+    expect(sessionStorage.getItem(TOKEN_KEY)).toBeNull();
+    expect(navigateSpy).toHaveBeenCalledWith(['/login'], { queryParams: { reason: 'expired' } });
   });
 
   it('logs out on its own when a freshly-logged-in token expires', () => {
@@ -152,7 +144,7 @@ describe('Auth', () => {
     const router = TestBed.inject(Router);
     const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
 
-    auth.login({ identifier: 'a@b.com', password: 'secret' }, false).subscribe();
+    auth.login({ email: 'a@b.com', password: 'secret' }, false).subscribe();
     const req = httpMock.expectOne(`${environment.apiUrl}/auth/login`);
     const token = buildToken({ sub: 'a@b.com', exp: Math.floor(Date.now() / 1000) + 60 });
     req.flush({ token });
@@ -162,7 +154,7 @@ describe('Auth', () => {
     vi.advanceTimersByTime(60_000);
 
     expect(auth.isAuthenticated()).toBe(false);
-    expect(navigateSpy).toHaveBeenCalledWith(['/entrar'], { queryParams: { reason: 'expired' } });
+    expect(navigateSpy).toHaveBeenCalledWith(['/login'], { queryParams: { reason: 'expired' } });
 
     httpMock.verify();
   });
@@ -170,7 +162,7 @@ describe('Auth', () => {
   it('does not fire the expiry navigation after a manual logout', () => {
     vi.useFakeTimers();
     const token = buildToken({ sub: 'user-1', exp: Math.floor(Date.now() / 1000) + 4 });
-    localStorage.setItem(TOKEN_KEY, token);
+    sessionStorage.setItem(TOKEN_KEY, token);
     const auth = createService();
     const router = TestBed.inject(Router);
     const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);

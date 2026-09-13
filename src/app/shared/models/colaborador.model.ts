@@ -7,7 +7,6 @@ export interface Colaborador {
   telefone: string;
   idPapel: number;
   nomePapel: string;
-  unidades: { id: number, nome: string }[];
 }
 
 export interface CriarColaboradorDTO {
@@ -18,7 +17,6 @@ export interface CriarColaboradorDTO {
   endereco: string;
   telefone: string;
   idPapel: number;
-  idsUnidades: number[];
 }
 
 export interface AtualizarColaboradorDTO {
@@ -28,5 +26,4 @@ export interface AtualizarColaboradorDTO {
   endereco: string;
   telefone: string;
   idPapel: number;
-  idsUnidades: number[];
 }

@@ -4,7 +4,6 @@
 
 .acoes-social-links {
   display: flex;
-  align-items: flex-start;
   gap: 20px;
   flex-wrap: wrap;
   margin-bottom: 24px;

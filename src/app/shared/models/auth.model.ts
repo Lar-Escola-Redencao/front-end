@@ -1,14 +1,11 @@
 export interface LoginRequest {
-  identifier: string;
+  email: string;
   password: string;
 }
 
-/**
- * Wire shape expected by POST /api/auth/login. The backend accepts either an e-mail or a CPF in
- * `identificador` and resolves whichever one it is server-side.
- */
+/** Wire shape expected by POST /api/auth/login (backend field is `senha`, not `password`). */
 export interface LoginRequestDto {
-  identificador: string;
+  email: string;
   senha: string;
   lembrarMe: boolean;
 }
