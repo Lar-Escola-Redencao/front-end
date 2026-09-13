@@ -26,7 +26,7 @@
                 <p class="field-error">Informe um e-mail válido.</p>
                 }
 
-                <button type="submit" class="submit" [disabled]="loading()">
+                <button type="submit" class="btn-primary" [disabled]="loading()">
                     {{ loading() ? 'Enviando...' : 'Enviar código' }}
                 </button>
             </form>
@@ -50,7 +50,7 @@
                 }
             </div>
 
-            <button type="button" class="submit" (click)="avancarParaSenha()" [disabled]="!codigoCompleto() || loading()">
+            <button type="button" class="btn-primary" (click)="avancarParaSenha()" [disabled]="!codigoCompleto() || loading()">
                 {{ loading() ? 'Validando...' : 'Continuar' }}
             </button>
 
@@ -98,7 +98,7 @@
                 <p class="field-error">As senhas não coincidem.</p>
                 }
 
-                <button type="submit" class="submit" [disabled]="loading() || formSenha.invalid">
+                <button type="submit" class="btn-primary" [disabled]="loading() || formSenha.invalid">
                     {{ loading() ? 'Redefinindo...' : 'Redefinir Senha' }}
                 </button>
             </form>
@@ -113,7 +113,7 @@
                     Atualizada!</h2>
                 <p class="subtitle" style="margin-bottom: 2rem;">Sua senha foi redefinida com sucesso. Você já pode
                     acessar sua conta.</p>
-                <button routerLink="/entrar" class="submit">Ir para o Login</button>
+                <button routerLink="/entrar" class="btn-primary">Ir para o Login</button>
             </div>
             }
 

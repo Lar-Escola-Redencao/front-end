@@ -22,7 +22,7 @@
 
     @if (abaAtiva === 'unidades') {
       <div class="acoes-unidades">
-        <button type="button" class="btn-primary" (click)="abrirCadastro()">Nova unidade</button>
+        <button type="button" class="btn-primary btn-primary-thick" (click)="abrirCadastro()">Nova unidade</button>
       </div>
 
       <app-tabela-layout
@@ -38,8 +38,8 @@
     }
 
     @if (abaAtiva === 'turmas') {
-      <div class="acoes-unidades">
-        <button type="button" class="btn-primary" (click)="abrirCadastroTurma()">Nova turma</button>
+      <div class="acoes-unidades acoes-turmas">
+        <button type="button" class="btn-primary btn-primary-thick" (click)="abrirCadastroTurma()">Nova turma</button>
 
         <mat-form-field appearance="outline" class="filtro-unidade">
           <mat-select
@@ -139,21 +139,23 @@
       </div>
     </div>
 
-    <div class="dias-funcionamento-campo">
-      <label class="dias-funcionamento-label">Dias de funcionamento</label>
-      <div class="dias-funcionamento">
-        <label *ngFor="let dia of diasSemana">
-          <input
-            type="checkbox"
-            [checked]="diaSelecionado(dia.valor)"
-            (change)="toggleDia(dia.valor, $event)" />
-          {{ dia.label }}
-        </label>
+    <div>
+      <div class="dias-funcionamento-campo">
+        <label class="dias-funcionamento-label">Dias de funcionamento</label>
+        <div class="dias-funcionamento">
+          <label *ngFor="let dia of diasSemana">
+            <input
+              type="checkbox"
+              [checked]="diaSelecionado(dia.valor)"
+              (change)="toggleDia(dia.valor, $event)" />
+            {{ dia.label }}
+          </label>
+        </div>
       </div>
+      <span class="error-text" *ngIf="erros['diasFuncionamento']">
+        {{ erros['diasFuncionamento'] }}
+      </span>
     </div>
-    <span class="error-text" *ngIf="erros['diasFuncionamento']">
-      {{ erros['diasFuncionamento'] }}
-    </span>
 
     <div class="form-row">
       <div>
@@ -299,12 +301,15 @@
     <form class="form-modal" [formGroup]="formTurma" (ngSubmit)="salvarTurma()">
       <mat-form-field appearance="outline">
         <mat-label>Período</mat-label>
-        <select matNativeControl formControlName="periodo" (blur)="verificarErrosTurma()">
-          <option value="" disabled>Selecione um período</option>
+        <mat-select
+          formControlName="periodo"
+          (selectionChange)="verificarErrosTurma()"
+          (blur)="verificarErrosTurma()"
+        >
           @for (periodo of periodos; track periodo.valor) {
-            <option [value]="periodo.valor">{{ periodo.label }}</option>
+            <mat-option [value]="periodo.valor">{{ periodo.label }}</mat-option>
           }
-        </select>
+        </mat-select>
       </mat-form-field>
       <span class="error-text" *ngIf="errosTurma['periodo']">
         {{ errosTurma['periodo'] }}
@@ -342,16 +347,17 @@
           <mat-label>Unidade</mat-label>
 
           @if (carregandoUnidades) {
-            <select matNativeControl disabled>
-              <option>Carregando unidades...</option>
-            </select>
+            <mat-select disabled placeholder="Carregando unidades..."></mat-select>
           } @else {
-            <select matNativeControl formControlName="unidadeId" (blur)="verificarErrosTurma()">
-              <option [ngValue]="null" disabled>Selecione uma unidade</option>
+            <mat-select
+              formControlName="unidadeId"
+              (selectionChange)="verificarErrosTurma()"
+              (blur)="verificarErrosTurma()"
+            >
               @for (unidade of unidades; track unidade.id) {
-                <option [ngValue]="unidade.id">{{ unidade.nome }}</option>
+                <mat-option [value]="unidade.id">{{ unidade.nome }}</mat-option>
               }
-            </select>
+            </mat-select>
           }
         </mat-form-field>
 
