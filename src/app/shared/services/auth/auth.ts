@@ -45,13 +45,13 @@ export class Auth {
 
   login(credentials: LoginRequest, rememberMe: boolean): Observable<LoginResponse> {
     const payload: LoginRequestDto = {
-      email: credentials.email,
+      identificador: credentials.identifier,
       senha: credentials.password,
       lembrarMe: rememberMe,
     };
     return this.http.post<LoginResponse>(`${environment.apiUrl}/auth/login`, payload).pipe(
       tap((response) => {
-        this.tokenStorage.setToken(response.token, rememberMe);
+        this.tokenStorage.setToken(response.token);
         this.token.set(response.token);
         this.scheduleExpiry(response.token);
       }),
@@ -110,6 +110,6 @@ export class Auth {
     this.expiryTimer = undefined;
     this.tokenStorage.clear();
     this.token.set(null);
-    this.router.navigate(['/login'], { queryParams: { reason: 'expired' } });
+    this.router.navigate(['/entrar'], { queryParams: { reason: 'expired' } });
   }
 }
