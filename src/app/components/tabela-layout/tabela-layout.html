@@ -1,44 +1,16 @@
 <div class="tabela-container">
 
-  @if (erro) {
+  @if (dados.length > 0) {
 
-  <div class="tabela-erro">
-    <p>{{ mensagemErro }}</p>
-    <button type="button" class="botao-tentar-novamente" (click)="tentarNovamente.emit()">
-      Tentar novamente
-    </button>
-  </div>
-
-  } @else if (carregando && dados.length === 0) {
-
-  <div class="tabela-carregando">
-    <span class="spinner" aria-hidden="true"></span>
-    <p>Carregando...</p>
-  </div>
-
-  } @else if (dados.length > 0) {
-
-  <div class="tabela-wrapper" [class.tabela-wrapper--carregando]="carregando">
+  <div class="tabela-wrapper">
 
     <table class="tabela">
 
       <thead>
         <tr>
           @for (coluna of colunas; track coluna.chave) {
-          <th
-            [class.coluna-ordenavel]="coluna.ordenavel"
-            (click)="ordenarPor(coluna)"
-          >
+          <th>
             {{ coluna.titulo }}
-            @if (coluna.ordenavel) {
-              @if (direcaoOrdenacao(coluna) === 'asc') {
-                <span class="icone-ordenacao">▲</span>
-              } @else if (direcaoOrdenacao(coluna) === 'desc') {
-                <span class="icone-ordenacao">▼</span>
-              } @else {
-                <span class="icone-ordenacao icone-ordenacao--inativo">⇅</span>
-              }
-            }
           </th>
           }
           @if (acoes.length > 0) {
@@ -49,7 +21,7 @@
 
       <tbody>
 
-        @for (linha of dados; track $index) {
+        @for (linha of dadosPaginados; track $index) {
         <tr class="linha" [class.expandida]="linhaExpandida === $index">
 
           <!-- ================================================= -->
@@ -194,15 +166,23 @@
     </table>
   </div>
 
-  } @else {
+  <!-- ===================================================== -->
+  <!-- PAGINAÇÃO -->
+  <!-- ===================================================== -->
+
+  @if (exibirPaginacao) {
+  <mat-paginator [length]="dados.length" [pageSize]="tamanhoPagina" [pageSizeOptions]="tamanhosPagina"
+    (page)="alterarPagina($event)" showFirstLastButtons>
+  </mat-paginator>
+  }
+  }
 
   <!-- ======================================================= -->
   <!-- TABELA VAZIA -->
   <!-- ======================================================= -->
-
+  @else {
   <div class="tabela-vazia">
     {{ mensagemVazia }}
   </div>
-
   }
 </div>

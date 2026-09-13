@@ -1,42 +1,17 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, effect, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import {
-  AbstractControl,
-  FormControl,
-  FormGroup,
-  ReactiveFormsModule,
-  ValidationErrors,
-  Validators,
-} from '@angular/forms';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
 
 import { PublicNavbar } from '@components/public-navbar/public-navbar';
 import { Auth } from 'src/app/shared/services/auth/auth';
-import {
-  formatarCpf,
-  limparMascaraCpfSeVirouEmail,
-  pareceEmail,
-} from 'src/app/shared/utils/masks';
 
 const SESSION_EXPIRED_TOAST_MS = 6000;
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-/** Accepts either a full e-mail or an 11-digit CPF (mask characters ignored). */
-function identifierValidator(control: AbstractControl): ValidationErrors | null {
-  const value = (control.value ?? '').trim();
-  if (!value) {
-    return null;
-  }
-  if (pareceEmail(value)) {
-    return EMAIL_PATTERN.test(value) ? null : { identifier: true };
-  }
-  return value.replace(/\D/g, '').length === 11 ? null : { identifier: true };
-}
 
 @Component({
   selector: 'app-login',
-  imports: [ReactiveFormsModule, PublicNavbar, RouterLink],
+  imports: [ReactiveFormsModule, PublicNavbar],
   templateUrl: './login.html',
   styleUrl: './login.css',
 })
@@ -73,9 +48,9 @@ export class Login {
   }
 
   protected readonly form = new FormGroup({
-    identifier: new FormControl('', {
+    email: new FormControl('', {
       nonNullable: true,
-      validators: [Validators.required, identifierValidator],
+      validators: [Validators.required, Validators.email],
     }),
     password: new FormControl('', {
       nonNullable: true,
@@ -84,41 +59,18 @@ export class Login {
     remember: new FormControl(false, { nonNullable: true }),
   });
 
-  /**
-   * Applies the CPF mask live while the field looks numeric; the instant a letter or `@` shows
-   * up, masking stops and the raw text is left alone so the user can type an e-mail freely.
-   */
-  protected onIdentifierInput(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    if (pareceEmail(input.value)) {
-      const limpo = limparMascaraCpfSeVirouEmail(input.value);
-      if (limpo !== input.value) {
-        this.form.controls.identifier.setValue(limpo, { emitEvent: false });
-        input.value = limpo;
-      }
-      return;
-    }
-
-    const masked = formatarCpf(input.value);
-    this.form.controls.identifier.setValue(masked, { emitEvent: false });
-    input.value = masked;
-  }
-
   protected submit(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
     }
 
-    const { identifier, password, remember } = this.form.getRawValue();
-    const cleanedIdentifier = pareceEmail(identifier)
-      ? identifier.trim()
-      : identifier.replace(/\D/g, '');
+    const { email, password, remember } = this.form.getRawValue();
 
     this.loading.set(true);
     this.errorMessage.set(null);
 
-    this.auth.login({ identifier: cleanedIdentifier, password }, remember).subscribe({
+    this.auth.login({ email, password }, remember).subscribe({
       next: () => {
         const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl') ?? '/dashboard';
         this.router.navigateByUrl(returnUrl);
@@ -128,6 +80,10 @@ export class Login {
         this.errorMessage.set(this.resolveErrorMessage(error));
       },
     });
+  }
+
+  protected toggleForgotHint(): void {
+    this.showForgotHint.update((value) => !value);
   }
 
   private resolveErrorMessage(error: unknown): string {

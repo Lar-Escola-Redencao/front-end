@@ -3,7 +3,6 @@ import {
   Component,
   HostListener,
   NgZone,
-  OnDestroy,
   OnInit
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -15,14 +14,9 @@ import {
   Validators
 } from '@angular/forms';
 
-import { ActivatedRoute, Router } from '@angular/router';
-import { Subscription } from 'rxjs';
-
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatIconModule } from '@angular/material/icon';
 
 import { ToastrService } from 'ngx-toastr';
 
@@ -33,21 +27,12 @@ import {
   TabelaLayout
 } from '@components/tabela-layout/tabela-layout';
 
-import { Paginacao } from '@components/paginacao/paginacao';
-
 import { ComponentComAlteracoesNaoSalvas } from 'src/app/shared/guards/can-deactivate.guard';
 import { AtualizarColaboradorDTO, Colaborador, CriarColaboradorDTO } from 'src/app/shared/models/colaborador.model';
 import { ColaboradorService } from 'src/app/shared/services/colaborador/colaborador.service';
 import { PapelService } from 'src/app/shared/services/colaborador/papel.service';
-import { UnidadeService } from 'src/app/shared/services/colaborador/unidade.service';
 import { Alertas } from 'src/app/shared/utils/alerts';
 import { mapearErrosFormulario } from 'src/app/shared/utils/form-validations';
-import {
-  CampoOrdenacao,
-  alternarOrdenacao,
-  analisarOrdenacao,
-  lerParametrosPagina
-} from 'src/app/shared/utils/paginacao-url';
 import {
   formatarCpf,
   formatarTelefone
@@ -59,11 +44,6 @@ type Papel = {
   nomePapel?: string;
 };
 
-type Unidade = {
-  id: number;
-  nome: string;
-};
-
 @Component({
   selector: 'app-colaborador',
   standalone: true,
@@ -73,38 +53,21 @@ type Unidade = {
     ReactiveFormsModule,
     ModalLayout,
     TabelaLayout,
-    Paginacao,
     MatFormFieldModule,
     MatInputModule,
-    MatSelectModule,
-    MatChipsModule,
-    MatIconModule
+    MatSelectModule
   ],
   templateUrl: './colaborador.component.html',
   styleUrls: ['./colaborador.component.css']
 })
 export class ColaboradorComponent
-  implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalvas {
+  implements OnInit, ComponentComAlteracoesNaoSalvas {
 
   colaboradores: Colaborador[] = [];
+  colaboradoresFiltrados: Colaborador[] = [];
   papeisDisponiveis: string[] = [];
   papeis: Papel[] = [];
-
-  // Filtro por papel agora é feito no back-end (idPapel), não em memória.
-  filtroPapel: number | null = null;
-
-  unidadesDisponiveis: Unidade[] = [];
-
-  pagina = 0;
-  tamanho = 10;
-  sort: string | undefined;
-  ordenacao: CampoOrdenacao | null = null;
-  totalElementos = 0;
-  totalPaginas = 0;
-  carregandoLista = false;
-  erroLista = false;
-
-  private routeSub?: Subscription;
+  filtroPapel = '';
 
   modalAberto = false;
   modoEdicao = false;
@@ -116,6 +79,7 @@ export class ColaboradorComponent
   isLoading = false;
   modalTremendo = false;
   valoresOriginaisDoFormulario: any = null;
+
   private readonly senhaRegex =
     /^(?=.*[A-Z])(?=.*[0-9]).{6,}$/;
 
@@ -143,24 +107,19 @@ export class ColaboradorComponent
     {
       chave: 'nomeCompleto',
       titulo: 'Nome',
-      principalMobile: true,
-      ordenavel: true
+      principalMobile: true
     },
     {
       chave: 'email',
-      titulo: 'E-mail',
-      ordenavel: true
+      titulo: 'E-mail'
     },
     {
       chave: 'cpf',
-      titulo: 'CPF',
-      ordenavel: true
+      titulo: 'CPF'
     },
     {
       chave: 'nomePapel',
-      titulo: 'Papel',
-      ordenavel: true,
-      campoOrdenacao: 'papel.nomePapel'
+      titulo: 'Papel'
     }
   ];
 
@@ -180,13 +139,10 @@ export class ColaboradorComponent
   constructor(
     private colaboradorService: ColaboradorService,
     private papelService: PapelService,
-    private unidadeService: UnidadeService,
     private fb: FormBuilder,
     private cdr: ChangeDetectorRef,
     private toastr: ToastrService,
-    private ngZone: NgZone,
-    private route: ActivatedRoute,
-    private router: Router
+    private ngZone: NgZone
   ) {
     this.formColaborador = this.fb.group({
       nomeCompleto: [
@@ -235,35 +191,13 @@ export class ColaboradorComponent
       idPapel: [
         '',
         Validators.required
-      ],
-      idsUnidades: [
-        [],
-        Validators.required
       ]
     });
   }
 
   ngOnInit(): void {
     this.carregarPapeis();
-    this.carregarUnidades();
-
-    // A carga inicial de colaboradores acontece via queryParamMap abaixo
-    // (ele dispara mesmo sem parâmetros na URL na primeira emissão),
-    // então não chamamos carregarColaboradores() duas vezes aqui.
-    this.routeSub = this.route.queryParamMap.subscribe(params => {
-      const { pagina, tamanho, sort } = lerParametrosPagina(params);
-      this.pagina = pagina;
-      this.tamanho = tamanho;
-      this.sort = sort;
-      this.ordenacao = analisarOrdenacao(sort);
-
-      const papelBruto = Number(params.get('papel'));
-      this.filtroPapel = Number.isFinite(papelBruto) && papelBruto > 0
-        ? papelBruto
-        : null;
-
-      this.carregarColaboradores();
-    });
+    this.carregarColaboradores();
 
     this.formColaborador
       .get('senha')
@@ -276,14 +210,9 @@ export class ColaboradorComponent
       .subscribe(() => this.checarSenhasIguais());
   }
 
-  ngOnDestroy(): void {
-    this.routeSub?.unsubscribe();
-  }
-
   get mensagemVazia(): string {
-    const papelSelecionado = this.papeis.find(p => p.id === this.filtroPapel);
-    return papelSelecionado
-      ? `Nenhum colaborador com o papel ${this.obterNomePapel(papelSelecionado)} cadastrado ainda`
+    return this.filtroPapel
+      ? `Nenhum ${this.filtroPapel} cadastrado ainda`
       : 'Nenhum colaborador cadastrado ainda';
   }
 
@@ -299,30 +228,15 @@ export class ColaboradorComponent
   }
 
   carregarPapeis(): void {
-    this.papelService.listarTodos().subscribe({
-      next: (dados: Papel[]) => {
-        this.papeis = dados;
-        this.papeisDisponiveis = dados
-          .map((papel) => this.obterNomePapel(papel))
-          .filter((nome): nome is string => Boolean(nome));
-        this.cdr.detectChanges();
-      },
-      error: (err: any) => {
-        console.error('Erro ao carregar papéis da API:', err);
-      }
-    });
-  }
-
-  carregarUnidades(): void {
-    this.unidadeService
+    this.papelService
       .listarTodos()
       .subscribe({
-        next: (dados: Unidade[]) => {
-          this.unidadesDisponiveis = dados;
+        next: (dados: Papel[]) => {
+          this.papeis = dados;
         },
         error: (err: any) => {
           console.error(
-            'Erro ao carregar unidades da API:',
+            'Erro ao carregar papéis da API:',
             err
           );
         }
@@ -330,37 +244,51 @@ export class ColaboradorComponent
   }
 
   carregarColaboradores(): void {
-    if (this.carregandoLista) {
-      return;
-    }
-
-    this.carregandoLista = true;
-    this.erroLista = false;
-
-    const idPapel = this.filtroPapel ?? undefined;
-
     this.colaboradorService
-      .listarTodos(this.pagina, this.tamanho, this.sort, idPapel)
+      .listarTodos()
       .subscribe({
-        next: (resposta) => {
-          this.ngZone.run(() => {
-            this.colaboradores = [...resposta.content];
-            this.totalElementos = resposta.page.totalElements;
-            this.totalPaginas = resposta.page.totalPages;
+        next: (dados: Colaborador[]) => {
 
-            this.carregandoLista = false;
+          this.ngZone.run(() => {
+
+            this.colaboradores = [...dados];
+
+            this.papeisDisponiveis = [
+              ...new Set(
+                this.colaboradores
+                  .map(
+                    (colaborador: Colaborador) =>
+                      colaborador.nomePapel
+                  )
+                  .filter(
+                    (
+                      nomePapel: string | undefined
+                    ): nomePapel is string =>
+                      Boolean(nomePapel)
+                  )
+              )
+            ];
+
+            this.aplicarFiltro();
+
+            /*
+            * Força a tabela a receber uma nova referência
+            * dos dados.
+            */
+            this.colaboradoresFiltrados = [
+              ...this.colaboradoresFiltrados
+            ];
+
             this.cdr.detectChanges();
           });
         },
 
         error: (err: any) => {
+
           console.error(
             'Erro na API:',
             err
           );
-
-          this.carregandoLista = false;
-          this.erroLista = true;
 
           this.toastr.error(
             'Não foi possivel carregar a lista de usuarios.',
@@ -372,65 +300,13 @@ export class ColaboradorComponent
       });
   }
 
-  /** Atualiza a URL (?papel=id); o próprio queryParamMap.subscribe recarrega a lista. */
-  filtrarPorPapel(idPapel: number | null): void {
-    this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: { papel: idPapel || null, page: 0 },
-      queryParamsHandling: 'merge'
-    });
-  }
-
-  removerFiltroPapel(): void {
-    this.filtrarPorPapel(null);
-  }
-
-  ordenarPor(campo: string): void {
-    const novoSort = alternarOrdenacao(this.ordenacao, campo);
-    this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: { sort: novoSort },
-      queryParamsHandling: 'merge'
-    });
-  }
-
-  irParaPagina(novaPagina: number): void {
-    this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: { page: novaPagina },
-      queryParamsHandling: 'merge'
-    });
-  }
-
-  mudarTamanhoPagina(novoTamanho: number): void {
-    this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: { size: novoTamanho, page: 0 },
-      queryParamsHandling: 'merge'
-    });
-  }
-
-  isUnidadeSelecionada(id: number): boolean {
-    const selecionados: number[] = this.formColaborador.get('idsUnidades')?.value || [];
-    return selecionados.includes(id);
-  }
-
-  onUnidadeToggle(id: number, event: Event): void {
-    const checkbox = event.target as HTMLInputElement;
-    const selecionados: number[] = [...(this.formColaborador.get('idsUnidades')?.value || [])];
-
-    if (checkbox.checked && !selecionados.includes(id)) {
-      selecionados.push(id);
-    }
-
-    if (!checkbox.checked) {
-      const index = selecionados.indexOf(id);
-      if (index !== -1) selecionados.splice(index, 1);
-    }
-
-    this.formColaborador.patchValue({ idsUnidades: selecionados });
-    this.formColaborador.get('idsUnidades')?.markAsDirty();
-    this.formColaborador.markAsDirty();
+  aplicarFiltro(): void {
+    this.colaboradoresFiltrados = this.filtroPapel
+      ? this.colaboradores.filter(
+        colaborador =>
+          colaborador.nomePapel === this.filtroPapel
+      )
+      : this.colaboradores;
   }
 
   abrirCadastro(): void {
@@ -465,8 +341,7 @@ export class ColaboradorComponent
       cpf: '',
       endereco: '',
       telefone: '',
-      idPapel: '',
-      idsUnidades: []
+      idPapel: ''
     });
 
     this.atualizarValidadoresSenha();
@@ -499,8 +374,7 @@ export class ColaboradorComponent
       cpf: formatarCpf(colaborador.cpf),
       endereco: colaborador.endereco,
       telefone: formatarTelefone(colaborador.telefone),
-      idPapel: colaborador.idPapel,
-      idsUnidades: colaborador.unidades?.map(u => u.id) || []
+      idPapel: colaborador.idPapel
     });
 
     this.atualizarValidadoresSenha();
@@ -824,8 +698,7 @@ export class ColaboradorComponent
       cpf: '',
       endereco: '',
       telefone: '',
-      idPapel: '',
-      idsUnidades: []
+      idPapel: ''
     });
 
     this.formColaborador.markAsPristine();
