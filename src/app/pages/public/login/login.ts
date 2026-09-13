@@ -9,7 +9,7 @@ import {
   ValidationErrors,
   Validators,
 } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { PublicNavbar } from '@components/public-navbar/public-navbar';
 import { Auth } from 'src/app/shared/services/auth/auth';
@@ -36,7 +36,7 @@ function identifierValidator(control: AbstractControl): ValidationErrors | null 
 
 @Component({
   selector: 'app-login',
-  imports: [ReactiveFormsModule, PublicNavbar],
+  imports: [ReactiveFormsModule, PublicNavbar, RouterLink],
   templateUrl: './login.html',
   styleUrl: './login.css',
 })
@@ -128,10 +128,6 @@ export class Login {
         this.errorMessage.set(this.resolveErrorMessage(error));
       },
     });
-  }
-
-  protected toggleForgotHint(): void {
-    this.showForgotHint.update((value) => !value);
   }
 
   private resolveErrorMessage(error: unknown): string {

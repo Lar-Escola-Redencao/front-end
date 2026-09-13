@@ -14,9 +14,8 @@ export class UnidadeService {
   constructor(private http: HttpClient) {}
 
   listarTodas(): Observable<Unidade[]> {
-    return this.http
-      .get<PaginaResposta<Unidade>>(`${this.apiUrl}/todas?size=100`)
-      .pipe(map((resposta) => resposta.content));
+    return this.http.get<PaginaResposta<Unidade>>(`${this.apiUrl}/todas`)
+      .pipe(map(resposta => resposta.content));
   }
 
   buscarPorId(id: number): Observable<Unidade> {
