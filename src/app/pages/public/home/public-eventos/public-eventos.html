@@ -1,0 +1,44 @@
+<section class="public-eventos-section" *ngIf="!carregando">
+  <div class="container">
+    <div class="eventos-header">
+      <h2>Próximos eventos</h2>
+    </div>
+
+    <div class="grade-eventos" *ngIf="eventosDestaque.length > 0; else semEventos">
+      <article
+        class="card-evento"
+        *ngFor="let evento of eventosDestaque"
+        [style.background-image]="'url(' + evento.imagem + ')'"
+      >
+        <div class="card-overlay">
+          <div class="card-topo">
+            <div class="card-data">
+              <span class="dia">{{ formatarDia(evento.dataEvento) }}</span>
+              <span class="mes">{{ formatarMes(evento.dataEvento) }}</span>
+              <span class="ano">{{ formatarAno(evento.dataEvento) }}</span>
+            </div>
+            <div class="card-hora">
+              <span class="material-symbols-outlined">schedule</span>
+              {{ formatarHora(evento.dataEvento) }}
+            </div>
+          </div>
+
+          <div class="card-rodape">
+            <h3 class="card-titulo">{{ evento.titulo }}</h3>
+            <p class="card-descricao">{{ evento.descricao }}</p>
+            <span class="card-valor" [class.gratuito]="!evento.valor">{{ formatarValor(evento) }}</span>
+          </div>
+        </div>
+      </article>
+    </div>
+
+    <ng-template #semEventos>
+      <p class="mensagem-vazia">Nenhum evento próximo no momento.</p>
+    </ng-template>
+
+    <a class="link-todos-eventos" routerLink="/eventos">
+      Confira todos os eventos
+      <span class="material-symbols-outlined">arrow_forward</span>
+    </a>
+  </div>
+</section>

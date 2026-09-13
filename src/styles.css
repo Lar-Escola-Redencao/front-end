@@ -301,10 +301,16 @@ body {
   transform: translateY(1px);
 }
 
+.btn-primary:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+  box-shadow: none;
+}
+
 /* =========================
    SWITCH (ESTILO APPLE)
    ========================= */
-   
+
 .toggle-wrapper {
   display: flex;
   align-items: center;
@@ -333,7 +339,7 @@ body {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: #e5e5ea; 
+  background-color: #e5e5ea;
   transition: 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
   border-radius: 34px;
 }
