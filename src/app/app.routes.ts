@@ -10,6 +10,7 @@ import { guestGuard } from './shared/guards/guest-guard';
 import { Usuario } from '@pages/private/usuario/usuario';
 import { Diario } from '@pages/private/diario/diario';
 import { UnidadesTurmas } from '@pages/private/unidades-turmas/unidades-turmas';
+import { Perfil } from '@pages/private/perfil/perfil';
 
 export const routes: Routes = [
     { path: '', component: Home, canActivate: [guestGuard]},
@@ -27,7 +28,8 @@ export const routes: Routes = [
             { path: 'colaboradores', component: ColaboradorComponent},
             { path: 'usuarios', component: Usuario},
             { path: 'diario', component: Diario},
-            { path: 'unidades-turmas', component: UnidadesTurmas}
+            { path: 'unidades-turmas', component: UnidadesTurmas},
+            { path: 'perfil', component: Perfil}
         ]
     },
     {
