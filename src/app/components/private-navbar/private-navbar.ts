@@ -1,8 +1,10 @@
-import { Component, computed, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, HostListener, NgZone, OnInit, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { NgClass, NgIf } from '@angular/common';
-import { RouterLink, RouterLinkActive } from '@angular/router';
+import { Router, RouterLink, RouterLinkActive } from '@angular/router';
+
 import { Auth } from 'src/app/shared/services/auth/auth';
+import { PerfilService } from 'src/app/shared/services/colaborador/perfil.service';
 
 @Component({
   selector: 'app-private-navbar',
@@ -11,36 +13,81 @@ import { Auth } from 'src/app/shared/services/auth/auth';
   templateUrl: './private-navbar.html',
   styleUrl: './private-navbar.css'
 })
-export class PrivateNavbar {
+export class PrivateNavbar implements OnInit {
   private readonly auth = inject(Auth);
+  private readonly router = inject(Router);
+  private readonly perfilService = inject(PerfilService);
+  private readonly elementRef = inject(ElementRef);
+  private readonly cdr = inject(ChangeDetectorRef);
+  private readonly ngZone = inject(NgZone);
 
-  menuVisivel: boolean = false;
-  protected readonly user = this.auth.currentUser;
-  protected readonly userName = computed(() => {
-    const user = this.user();
-    const rawName = user?.name ?? user?.['nome'];
+  menuVisivel = false;
+  menuUsuarioAberto = false;
 
-    if (typeof rawName !== 'string' || !rawName.trim()) {
-      return '[user]';
-    }
+  nomeUsuario = '';
+  iniciaisUsuario = '';
 
-    return rawName
-      .replace(/[._-]+/g, ' ')
-      .trim()
-      .split(/\s+/)
-      .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
-      .join(' ');
-  });
+  ngOnInit(): void {
+    this.carregarUsuario();
+  }
 
-  alternarMenu() {
+  alternarMenu(): void {
     this.menuVisivel = !this.menuVisivel;
   }
 
   fecharMenu() {
     this.menuVisivel = false;
   }
+  alternarMenuUsuario(): void {
+    this.menuUsuarioAberto = !this.menuUsuarioAberto;
+  }
 
-  entrarNoPerfil() {
-    console.log('Entra no perfil');
+  @HostListener('document:click', ['$event'])
+  aoClicarFora(event: MouseEvent): void {
+    if (this.menuUsuarioAberto && !this.elementRef.nativeElement.contains(event.target)) {
+      this.menuUsuarioAberto = false;
+    }
+  }
+
+  irParaPerfil(): void {
+    this.menuUsuarioAberto = false;
+    this.router.navigateByUrl('/dashboard/perfil');
+  }
+
+  sair(): void {
+    this.menuUsuarioAberto = false;
+    this.auth.logout();
+    this.router.navigateByUrl('/');
+  }
+
+  private carregarUsuario(): void {
+    this.perfilService.buscarMeuPerfil().subscribe({
+      next: (perfil) => {
+        this.ngZone.run(() => {
+          this.nomeUsuario = perfil.nomeCompleto;
+          this.iniciaisUsuario = this.calcularIniciais(perfil.nomeCompleto);
+          this.cdr.detectChanges();
+        });
+      },
+      error: () => {
+        this.ngZone.run(() => {
+          this.iniciaisUsuario = '';
+          this.cdr.detectChanges();
+        });
+      }
+    });
+  }
+
+  private calcularIniciais(nomeCompleto: string): string {
+    const partes = nomeCompleto.trim().split(/\s+/).filter(Boolean);
+
+    if (partes.length === 0) {
+      return '';
+    }
+
+    const primeira = partes[0].charAt(0);
+    const ultima = partes.length > 1 ? partes[partes.length - 1].charAt(0) : '';
+
+    return (primeira + ultima).toUpperCase();
   }
 }
