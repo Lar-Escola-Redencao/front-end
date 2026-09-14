@@ -40,12 +40,22 @@
         <div class="field">
           <input
             id="password"
-            type="password"
+            [type]="mostrarSenha() ? 'text' : 'password'"
             formControlName="password"
             placeholder="Senha"
             autocomplete="current-password"
           />
-          <span class="material-symbols-outlined field-icon" aria-hidden="true">lock</span>
+          <button
+            type="button"
+            class="field-icon btn-icone-senha"
+            tabindex="-1"
+            (click)="alternarVisibilidadeSenha()"
+            [attr.aria-label]="mostrarSenha() ? 'Ocultar senha' : 'Mostrar senha'"
+          >
+            <span class="material-symbols-outlined" aria-hidden="true">
+              {{ mostrarSenha() ? 'visibility_off' : 'visibility' }}
+            </span>
+          </button>
         </div>
         @if (form.controls.password.invalid && form.controls.password.touched) {
           <p class="error-text">Informe sua senha.</p>

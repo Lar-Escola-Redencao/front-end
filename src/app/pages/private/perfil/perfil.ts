@@ -36,6 +36,10 @@ export class Perfil implements OnInit {
   erros: { [key: string]: string } = {};
 
   private valoresOriginais: any = null;
+  private readonly nomesPapel: Record<string, string> = {
+    ADMINISTRADOR: 'Administrador',
+    COLABORADOR: 'Colaborador'
+  };
 
   constructor(
     private perfilService: PerfilService,
@@ -59,6 +63,10 @@ export class Perfil implements OnInit {
 
   get nomesUnidades(): string {
     return this.perfil?.unidades?.map((u) => u.nome).join(', ') ?? '';
+  }
+
+  get nomePapelFormatado(): string {
+    return this.formatarTextoExibicao(this.perfil?.nomePapel);
   }
 
   carregarPerfil(): void {
@@ -158,5 +166,22 @@ export class Perfil implements OnInit {
           });
         }
       });
+  }
+
+  private formatarTextoExibicao(valor: string | null | undefined): string {
+    if (!valor) {
+      return '';
+    }
+
+    const textoMapeado = this.nomesPapel[valor];
+
+    if (textoMapeado) {
+      return textoMapeado;
+    }
+
+    return valor
+      .toLowerCase()
+      .replace(/_/g, ' ')
+      .replace(/\b\w/g, (letra) => letra.toUpperCase());
   }
 }

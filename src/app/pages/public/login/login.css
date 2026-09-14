@@ -108,9 +108,40 @@ form {
   right: 0.9rem;
   top: 50%;
   translate: 0 -50%;
+}
+
+span.field-icon {
   color: #9ca3af;
   font-size: 1.25rem;
   pointer-events: none;
+}
+
+.btn-icone-senha {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: #9ca3af;
+  cursor: pointer;
+}
+
+.btn-icone-senha .material-symbols-outlined {
+  font-size: 1.25rem;
+}
+
+.btn-icone-senha:hover,
+.btn-icone-senha:focus-visible {
+  color: var(--ink);
+}
+
+.btn-icone-senha:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 50%;
 }
 form{
   gap: 12px;

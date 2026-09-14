@@ -92,6 +92,7 @@ export class Transparencia implements OnInit, OnDestroy, ComponentComAlteracoesN
 
   colunasSecoes: TabelaColuna<Secao>[] = [
     { chave: 'titulo', titulo: 'Nome da Seção', principalMobile: true, ordenavel: true },
+    { chave: 'conteudo', titulo: 'Descrição', formatar: (valor) => String(valor || '').trim() || '-'},
     { chave: 'ativo', titulo: 'Exibição', tipo: 'status', ordenavel: true }
   ];
 
@@ -126,6 +127,7 @@ export class Transparencia implements OnInit, OnDestroy, ComponentComAlteracoesN
   ) {
     this.formSecao = this.fb.group({
       titulo: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(100)]],
+      conteudo: ['', [Validators.maxLength(500)]],
       ativo: [true]
     });
 
@@ -315,6 +317,7 @@ export class Transparencia implements OnInit, OnDestroy, ComponentComAlteracoesN
         this.secaoSelecionadaId = itemEdicao.id;
         this.formSecao.patchValue({
           titulo: itemEdicao.titulo,
+          conteudo: itemEdicao.conteudo ?? '',
           ativo: itemEdicao.ativo ?? true
         });
       } else {
@@ -322,6 +325,7 @@ export class Transparencia implements OnInit, OnDestroy, ComponentComAlteracoesN
         this.secaoSelecionadaId = null;
         this.formSecao.reset({
           titulo: '',
+          conteudo: '',
           ativo: true
         });
       }
@@ -439,6 +443,7 @@ export class Transparencia implements OnInit, OnDestroy, ComponentComAlteracoesN
           this.modalAberto = null;
           this.formSecao.reset({
             titulo: '',
+            conteudo: '',
             ativo: true
           });
           this.formDocumento.reset();
@@ -495,16 +500,20 @@ export class Transparencia implements OnInit, OnDestroy, ComponentComAlteracoesN
 
     request.subscribe({
       next: () => {
-        this.toastr.success(this.modoEdicao ? 'Seção atualizada!' : 'Seção criada!', 'Sucesso');
-        this.fecharModalSemConfirmacao();
-        this.cdr.detectChanges();
-        this.carregarListaAtiva();
-        this.carregarSecoesParaSelecao();
+        this.ngZone.run(() => {
+          this.toastr.success(this.modoEdicao ? 'Seção atualizada!' : 'Seção criada!', 'Sucesso');
+          this.fecharModalSemConfirmacao();
+          this.cdr.detectChanges();
+          this.carregarListaAtiva();
+          this.carregarSecoesParaSelecao();
+        });
       },
       error: (err) => {
-        this.isLoading = false;
-        this.toastr.error(err.error?.message || 'Erro ao salvar seção.', 'Erro');
-        this.cdr.detectChanges();
+        this.ngZone.run(() => {
+          this.isLoading = false;
+          this.toastr.error(err.error?.message || 'Erro ao salvar seção.', 'Erro');
+          this.cdr.detectChanges();
+        });
       }
     });
   }

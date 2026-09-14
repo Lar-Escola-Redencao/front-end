@@ -49,6 +49,7 @@ export class Login {
   protected readonly loading = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly showForgotHint = signal(false);
+  protected readonly mostrarSenha = signal(false);
 
   private readonly queryParams = toSignal(this.route.queryParamMap);
   private readonly sessionExpiredParam = computed(
@@ -71,6 +72,10 @@ export class Login {
 
   protected dismissSessionExpiredToast(): void {
     this.toastDismissed.set(true);
+  }
+
+  protected alternarVisibilidadeSenha(): void {
+    this.mostrarSenha.update((visivel) => !visivel);
   }
 
   protected readonly form = new FormGroup({
