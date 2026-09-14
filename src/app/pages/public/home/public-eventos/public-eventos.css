@@ -74,7 +74,6 @@
 .card-data .ano {
   font-size: 13px;
   font-weight: 600;
-  opacity: 0.9;
 }
 
 .card-hora {
@@ -115,7 +114,6 @@
 .card-valor {
   display: inline-block;
   font-size: 12px;
-  font-weight: bold;
   padding: 4px 10px;
   border-radius: 999px;
   background-color: var(--primary-color);

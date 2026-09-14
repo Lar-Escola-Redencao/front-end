@@ -111,9 +111,9 @@
     <span class="error-text" *ngIf="erros['endereco']">{{ erros['endereco'] }}</span>
 
 
-    <div class="form-group">
+    <div class="form-group parceiros-campo">
+      <label class="parceiros-label">Parceiros vinculados</label>
       <div class="parceiros-box">
-        <label>Parceiros vinculados</label>
         <div *ngIf="parceiros.length === 0" class="sem-parceiros">
           Nenhum parceiro disponível
         </div>

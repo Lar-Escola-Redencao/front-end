@@ -60,6 +60,17 @@
   font-weight: 600;
 }
 
+.parceiros-campo {
+  text-align: left;
+}
+
+.parceiros-campo > .parceiros-label {
+  font-family: var(--fonte-texto);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--input-color);
+}
+
 .parceiros-box {
   display: flex;
   flex-direction: column;
