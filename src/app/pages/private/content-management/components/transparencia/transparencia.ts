@@ -139,7 +139,7 @@ export class Transparencia implements OnInit, OnDestroy, ComponentComAlteracoesN
       ],
 
       secaoId: [
-        '',
+        null,
         Validators.required
       ],
 
@@ -335,7 +335,7 @@ export class Transparencia implements OnInit, OnDestroy, ComponentComAlteracoesN
       // Limpa estado anterior do formulário
       this.formDocumento.reset({
         titulo: '',
-        secaoId: '',
+        secaoId: null,
         arquivo: null
       });
 
@@ -387,7 +387,7 @@ export class Transparencia implements OnInit, OnDestroy, ComponentComAlteracoesN
 
         this.formDocumento.reset({
           titulo: '',
-          secaoId: '',
+          secaoId: null,
           arquivo: null
         });
 

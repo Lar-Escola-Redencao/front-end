@@ -10,6 +10,7 @@
         <mat-label>Papel de acesso</mat-label>
         <mat-select
           [value]="filtroPapel"
+          [canSelectNullableOptions]="true"
           (selectionChange)="filtrarPorPapel($event.value)">
           <mat-option [value]="null">Todos os papéis</mat-option>
           <mat-option
@@ -144,6 +145,7 @@
       <mat-label>Papel de acesso</mat-label>
       <mat-select
         formControlName="idPapel"
+        [canSelectNullableOptions]="false"
         (selectionChange)="verificarErros()"
         (blur)="verificarErros()">
         <mat-option

@@ -31,12 +31,7 @@
             autocomplete="username"
             (input)="onIdentifierInput($event)"
           />
-          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path
-              d="M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Zm0 2v.01L12 13l8-6.99V6H4Zm16 2.24-7.4 6.47a1 1 0 0 1-1.2 0L4 8.24V18h16V8.24Z"
-              fill="currentColor"
-            />
-          </svg>
+          <span class="material-symbols-outlined field-icon" aria-hidden="true">badge</span>
         </div>
         @if (form.controls.identifier.invalid && form.controls.identifier.touched) {
           <p class="error-text">Informe um e-mail ou CPF válido.</p>
@@ -50,12 +45,7 @@
             placeholder="Senha"
             autocomplete="current-password"
           />
-          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path
-              d="M12 2a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2h-1V7a5 5 0 0 0-5-5Zm0 2a3 3 0 0 1 3 3v3H9V7a3 3 0 0 1 3-3Z"
-              fill="currentColor"
-            />
-          </svg>
+          <span class="material-symbols-outlined field-icon" aria-hidden="true">lock</span>
         </div>
         @if (form.controls.password.invalid && form.controls.password.touched) {
           <p class="error-text">Informe sua senha.</p>

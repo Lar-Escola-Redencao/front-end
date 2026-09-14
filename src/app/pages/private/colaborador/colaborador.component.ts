@@ -118,6 +118,10 @@ export class ColaboradorComponent
   valoresOriginaisDoFormulario: any = null;
   private readonly senhaRegex =
     /^(?=.*[A-Z])(?=.*[0-9]).{6,}$/;
+  private readonly nomesPapel: Record<string, string> = {
+    ADMINISTRADOR: 'Administrador',
+    COLABORADOR: 'Colaborador'
+  };
 
   private readonly mensagensCustomizadas:
     Record<string, Record<string, string>> = {
@@ -159,6 +163,7 @@ export class ColaboradorComponent
     {
       chave: 'nomePapel',
       titulo: 'Papel',
+      formatar: (valor) => this.formatarTextoExibicao(String(valor || '')),
       ordenavel: true,
       campoOrdenacao: 'papel.nomePapel'
     }
@@ -233,7 +238,7 @@ export class ColaboradorComponent
         ]
       ],
       idPapel: [
-        '',
+        null,
         Validators.required
       ],
       idsUnidades: [
@@ -466,7 +471,7 @@ export class ColaboradorComponent
       cpf: '',
       endereco: '',
       telefone: '',
-      idPapel: '',
+      idPapel: null,
       idsUnidades: []
     });
 
@@ -685,7 +690,24 @@ export class ColaboradorComponent
   }
 
   obterNomePapel(papel: Papel): string {
-    return papel.nomePapel || papel.nome || '';
+    return this.formatarTextoExibicao(papel.nomePapel || papel.nome || '');
+  }
+
+  private formatarTextoExibicao(valor: string | null | undefined): string {
+    if (!valor) {
+      return '';
+    }
+
+    const textoMapeado = this.nomesPapel[valor];
+
+    if (textoMapeado) {
+      return textoMapeado;
+    }
+
+    return valor
+      .toLowerCase()
+      .replace(/_/g, ' ')
+      .replace(/\b\w/g, (letra) => letra.toUpperCase());
   }
 
   private criarColaborador(): void {
@@ -827,7 +849,7 @@ export class ColaboradorComponent
       cpf: '',
       endereco: '',
       telefone: '',
-      idPapel: '',
+      idPapel: null,
       idsUnidades: []
     });
 

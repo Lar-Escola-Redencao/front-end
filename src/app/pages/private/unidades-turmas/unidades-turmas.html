@@ -42,12 +42,13 @@
         <button type="button" class="btn-primary btn-primary-thick" (click)="abrirCadastroTurma()">Nova turma</button>
 
         <mat-form-field appearance="outline" class="filtro-unidade">
+          <mat-label>Turmas da unidade</mat-label>
           <mat-select
-            placeholder="Todas as unidades"
             [(ngModel)]="unidadeFiltroId"
+            [canSelectNullableOptions]="true"
             (selectionChange)="onFiltroUnidadeChange()"
           >
-            <mat-option [value]="null">Todas as unidades</mat-option>
+            <mat-option [value]="null">Todas</mat-option>
             @for (unidade of unidades; track unidade.id) {
               <mat-option [value]="unidade.id">
                 {{ unidade.nome }}
@@ -303,6 +304,7 @@
         <mat-label>Período</mat-label>
         <mat-select
           formControlName="periodo"
+          [canSelectNullableOptions]="false"
           (selectionChange)="verificarErrosTurma()"
           (blur)="verificarErrosTurma()"
         >
@@ -351,6 +353,7 @@
           } @else {
             <mat-select
               formControlName="unidadeId"
+              [canSelectNullableOptions]="false"
               (selectionChange)="verificarErrosTurma()"
               (blur)="verificarErrosTurma()"
             >

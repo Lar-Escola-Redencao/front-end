@@ -24,7 +24,18 @@
           
           <div class="parceiro-card" *ngFor="let parceiro of parceirosCarousel" [style.min-width]="(100 / itemsPerPage) + '%'">
             <div class="logo-wrapper">
-              <img [src]="obterUrlImagem(parceiro.logo)" [alt]="parceiro.nome" loading="lazy" />
+              <img
+                *ngIf="obterUrlImagem(parceiro.logo)"
+                [src]="obterUrlImagem(parceiro.logo)"
+                (error)="onImageError($event)"
+                [alt]="parceiro.nome"
+                loading="lazy" />
+              <span
+                class="material-symbols-outlined imagem-fallback"
+                [class.imagem-fallback-hidden]="obterUrlImagem(parceiro.logo)"
+                aria-hidden="true">
+                volunteer_activism
+              </span>
             </div>
             <span class="parceiro-nome">{{ parceiro.nome }}</span>
           </div>

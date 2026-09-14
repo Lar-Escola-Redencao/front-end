@@ -33,7 +33,18 @@
               [class.out-of-view-card]="isOutOfView(i)">
               
               <div class="foto-wrapper">
-                <img [src]="obterUrlImagem(membro.foto)" (error)="onImageError($event)" [alt]="membro.nome" loading="lazy" />
+                <img
+                  *ngIf="obterUrlImagem(membro.foto)"
+                  [src]="obterUrlImagem(membro.foto)"
+                  (error)="onImageError($event)"
+                  [alt]="membro.nome"
+                  loading="lazy" />
+                <span
+                  class="material-icons imagem-fallback"
+                  [class.imagem-fallback-hidden]="obterUrlImagem(membro.foto)"
+                  aria-hidden="true">
+                  person
+                </span>
               </div>
               <div class="info-wrapper">
                 <h3 class="nome">{{ membro.nome }}</h3>

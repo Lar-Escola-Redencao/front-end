@@ -93,6 +93,15 @@
   object-fit: contain;
 }
 
+.imagem-fallback {
+  color: #cccccc;
+  font-size: 4.5rem;
+}
+
+.imagem-fallback-hidden {
+  display: none;
+}
+
 .parceiro-nome {
   font-family: var(--fonte-texto);
   font-size: 0.9rem;

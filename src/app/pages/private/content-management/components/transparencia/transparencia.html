@@ -57,9 +57,19 @@
     <span class="error-text" *ngIf="errosDocumento['titulo']">{{ errosDocumento['titulo'] }}</span>
 
     <mat-form-field appearance="outline">
-      <mat-select formControlName="secaoId" placeholder="Seção*" (blur)="verificarErrosDocumento()">
-        @for (secao of secoesParaSelecao; track secao.id) {
-        <mat-option [value]="secao.id">{{ secao.titulo }}</mat-option>
+      <mat-label>Seção</mat-label>
+      <mat-select
+        formControlName="secaoId"
+        [canSelectNullableOptions]="false"
+        (selectionChange)="verificarErrosDocumento()"
+        (blur)="verificarErrosDocumento()">
+        @if (secoesParaSelecao.length === 0) {
+          <mat-option [value]="null" disabled>Nenhuma seção disponível</mat-option>
+        } @else {
+          <mat-option [value]="null">Selecione uma seção</mat-option>
+          @for (secao of secoesParaSelecao; track secao.id) {
+            <mat-option [value]="secao.id">{{ secao.titulo }}</mat-option>
+          }
         }
       </mat-select>
     </mat-form-field>

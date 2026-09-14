@@ -44,9 +44,14 @@ import { environment } from 'src/environments/environment';
 })
 export class EventoComponent implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalvas {
   readonly TipoEvento = TipoEvento;
+  private readonly nomesTipoEvento: Record<string, string> = {
+    ARRECADACAO: 'Arrecadação',
+    CULTURAL: 'Cultural',
+    COMEMORATIVO: 'Comemorativo'
+  };
 
   eventos: Evento[] = [];
-  filtroTipo = '';
+  filtroTipo: TipoEvento | null = null;
   tiposDisponiveis = Object.values(TipoEvento);
   parceiros: { id: number; nome: string; logo?: string }[] = [];
 
@@ -85,7 +90,12 @@ export class EventoComponent implements OnInit, OnDestroy, ComponentComAlteracoe
       formatar: (valor) => this.formatarDataTabela(valor),
       ordenavel: true
     },
-    { chave: 'tipoEvento', titulo: 'Tipo', ordenavel: true },
+    {
+      chave: 'tipoEvento',
+      titulo: 'Tipo',
+      formatar: (valor: TipoEvento) => this.formatarTextoExibicao(valor),
+      ordenavel: true
+    },
     {
       chave: 'valor',
       titulo: 'Valor',
@@ -115,7 +125,7 @@ export class EventoComponent implements OnInit, OnDestroy, ComponentComAlteracoe
       descricao: ['', [Validators.required, Validators.minLength(10), Validators.maxLength(500)]],
       dataEvento: ['', Validators.required],
       endereco: ['', [Validators.required, Validators.minLength(5), Validators.maxLength(150)]],
-      tipoEvento: ['', Validators.required],
+      tipoEvento: [null, Validators.required],
       valor: ['', [Validators.min(0)]],
       parceirosIds: [[]],
       imagem: [null, [Validators.required, validarImagem()]]
@@ -131,7 +141,7 @@ export class EventoComponent implements OnInit, OnDestroy, ComponentComAlteracoe
       this.tamanho = tamanho;
       this.sort = sort;
       this.ordenacao = analisarOrdenacao(sort);
-      this.filtroTipo = params.get('tipo') ?? '';
+      this.filtroTipo = (params.get('tipo') as TipoEvento | null) ?? null;
       this.carregarEventos();
     });
   }
@@ -142,8 +152,25 @@ export class EventoComponent implements OnInit, OnDestroy, ComponentComAlteracoe
 
   get mensagemVazia(): string {
     return this.filtroTipo
-      ? `Nenhum evento do tipo ${this.filtroTipo} cadastrado ainda`
+      ? `Nenhum evento do tipo ${this.formatarTextoExibicao(this.filtroTipo)} cadastrado ainda`
       : 'Nenhum evento cadastrado ainda';
+  }
+
+  formatarTextoExibicao(valor: string | null | undefined): string {
+    if (!valor) {
+      return '';
+    }
+
+    const textoMapeado = this.nomesTipoEvento[valor];
+
+    if (textoMapeado) {
+      return textoMapeado;
+    }
+
+    return valor
+      .toLowerCase()
+      .replace(/_/g, ' ')
+      .replace(/\b\w/g, (letra) => letra.toUpperCase());
   }
 
   carregarParceiros(): void {

@@ -9,7 +9,7 @@
     </button>
 
     <div class="logo-container">
-      <a routerLink="/dashboard">
+      <a routerLink="/dashboard" (click)="fecharMenu()">
         <img src="/images/logo_branca_texto.png" alt="Logo Lar Escola Redenção">
       </a>
     </div>
@@ -21,7 +21,7 @@
         (click)="alternarMenuUsuario()"
         [attr.aria-expanded]="menuUsuarioAberto"
         aria-label="Menu do usuário">
-        {{ iniciaisUsuario || '...' }}
+        {{ iniciaisUsuario() || '...' }}
       </button>
 
       <div class="menu-usuario" *ngIf="menuUsuarioAberto">

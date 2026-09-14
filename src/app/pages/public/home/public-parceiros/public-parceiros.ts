@@ -73,6 +73,12 @@ export class PublicParceirosComponent implements OnInit, OnDestroy {
     return this.publicContentService.tratarUrlImagem(caminho);
   }
 
+  onImageError(event: Event): void {
+    const img = event.target as HTMLImageElement;
+    img.style.display = 'none';
+    img.nextElementSibling?.classList.remove('imagem-fallback-hidden');
+  }
+
   startAutoPlay(): void {
     this.stopAutoPlay();
     if (this.parceirosOriginal.length > 1) {
