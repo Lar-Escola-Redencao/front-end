@@ -1,7 +1,12 @@
 <footer class="public-footer">
   <div class="footer-content">
     <section class="footer-section footer-brand" aria-label="Lar Escola Reden&ccedil;&atilde;o">
-      <a class="footer-logo-link" href="#inicio" aria-label="Ir para o in&iacute;cio">
+      <a
+        class="footer-logo-link"
+        role="link"
+        tabindex="0"
+        aria-label="Ir para o in&iacute;cio"
+        (click)="navegarParaHomeSection('inicio')">
         <img
           class="footer-logo"
           src="/images/logo_branca_texto.png"
@@ -40,19 +45,38 @@
     <div class="footer-section footer-main-links">
       <nav class="footer-nav" aria-labelledby="footer-home-title">
         <h2 id="footer-home-title">In&iacute;cio</h2>
-        <a *ngFor="let link of homeLinks" [href]="link.href">{{ link.label }}</a>
+        <a
+          *ngFor="let link of homeLinks"
+          [routerLink]="link.route || null"
+          (click)="link.sectionId && navegarParaHomeSection(link.sectionId)"
+        >
+          {{ link.label }}
+        </a>
       </nav>
 
       <nav class="footer-help" aria-labelledby="footer-help-title">
         <h2 id="footer-help-title">Como ajudar?</h2>
-        <a *ngFor="let link of helpLinks" [href]="link.href">{{ link.label }}</a>
+        <a
+          *ngFor="let link of helpLinks"
+          [routerLink]="link.route"
+          [fragment]="link.fragment"
+        >
+          {{ link.label }}
+        </a>
       </nav>
     </div>
 
     <div class="footer-section footer-osc">
       <nav aria-labelledby="footer-osc-title">
         <h2 id="footer-osc-title">Conhe&ccedil;a a OSC</h2>
-        <a *ngFor="let link of oscLinks" [href]="link.href">{{ link.label }}</a>
+        <a
+          *ngFor="let link of oscLinks"
+          role="link"
+          tabindex="0"
+          (click)="navegarParaOscSection(link.fragment!)"
+        >
+          {{ link.label }}
+        </a>
       </nav>
 
       <div class="footer-legal">

@@ -796,7 +796,7 @@ export class UnidadesTurmas implements OnInit, OnDestroy, ComponentComAlteracoes
   }
 
   formatarHorario(valor: string | null | undefined): string {
-    return valor ? valor.substring(0, 5) : '-';
+    return valor ? valor.substring(0, 5).replace(':', 'h') : '-';
   }
 
   salvar(): void {

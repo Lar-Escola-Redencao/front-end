@@ -33,6 +33,10 @@ export class PrivateNavbar implements OnInit {
     this.menuVisivel = !this.menuVisivel;
   }
 
+  abrirMenu(): void {
+    this.menuVisivel = true;
+  }
+
   fecharMenu() {
     this.menuVisivel = false;
   }

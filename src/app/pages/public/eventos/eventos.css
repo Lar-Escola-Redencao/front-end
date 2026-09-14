@@ -2,11 +2,12 @@
   max-width: 1200px;
   margin: 0 auto;
   padding: 110px 24px 64px;
+  min-height: 100vh;
 }
 
 .titulo-pagina {
   font-family: var(--fonte-titulo);
-  font-size: 40px;
+  font-size: 2rem;
   text-align: center;
   color: var(--preto);
   margin-bottom: 32px;
@@ -90,8 +91,7 @@
   gap: 6px;
 }
 
-.campo input,
-.campo select {
+.campo input {
   height: 48px;
   padding: 0 16px;
   border: 1px solid var(--input-border);
@@ -104,8 +104,7 @@
   transition: border-color 0.2s ease;
 }
 
-.campo input:focus,
-.campo select:focus {
+.campo input:focus {
   border-color: var(--primary-color);
 }
 
@@ -160,10 +159,50 @@
   border-color: transparent;
 }
 
-.campo-select select {
-  width: 170px;
-  appearance: none;
-  cursor: pointer;
+.campo-select {
+  width: 200px;
+  font-family: var(--fonte-texto);
+}
+
+.campo-select ::ng-deep .mat-mdc-text-field-wrapper {
+  height: 48px;
+  background-color: var(--branco);
+  border-radius: var(--input-radius);
+}
+
+.campo-select ::ng-deep .mat-mdc-form-field-flex {
+  height: 48px;
+  align-items: center;
+}
+
+.campo-select ::ng-deep .mat-mdc-form-field-infix {
+  min-height: 48px;
+  padding-top: 18px;
+  padding-bottom: 0;
+}
+
+.campo-select ::ng-deep .mat-mdc-select-value,
+.campo-select ::ng-deep .mat-mdc-floating-label {
+  font-family: var(--fonte-texto);
+}
+
+.campo-select ::ng-deep .mat-mdc-form-field-subscript-wrapper {
+  display: none;
+}
+
+::ng-deep .eventos-select-panel {
+  border-radius: 8px;
+  padding: 6px;
+}
+
+::ng-deep .eventos-select-panel .mat-mdc-option {
+  min-height: 42px;
+  border-radius: 6px;
+  font-family: var(--fonte-texto);
+}
+
+::ng-deep .eventos-select-panel .mat-mdc-option:hover:not(.mdc-list-item--disabled) {
+  background-color: rgba(198, 24, 31, 0.08);
 }
 
 .botao-buscar {
@@ -418,7 +457,7 @@
 
   .campo-texto input,
   .campo-data,
-  .campo-select select,
+  .campo-select,
   .botao-buscar {
     width: 100%;
   }

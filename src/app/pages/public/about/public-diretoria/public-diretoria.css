@@ -15,7 +15,7 @@
 
 .diretoria-header h2 {
   font-family: var(--fonte-titulo);
-  font-size: clamp(2rem, 4vw, 2.5rem);
+  font-size: 2rem;
   color: var(--preto);
   margin: 0;
 }

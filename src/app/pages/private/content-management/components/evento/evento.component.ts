@@ -457,16 +457,23 @@ export class EventoComponent implements OnInit, OnDestroy, ComponentComAlteracoe
     }).format(valor);
   }
 
-  private formatarDataTabela(data: Date | string): string {
+  formatarDataTabela(data: Date | string): string {
     if (!data) return '-';
 
-    return new Intl.DateTimeFormat('pt-BR', {
+    const dataFormatada = new Intl.DateTimeFormat('pt-BR', {
       day: '2-digit',
       month: '2-digit',
-      year: 'numeric',
+      year: 'numeric'
+    }).format(new Date(data));
+
+    const horaFormatada = new Intl.DateTimeFormat('pt-BR', {
       hour: '2-digit',
       minute: '2-digit'
-    }).format(new Date(data));
+    })
+      .format(new Date(data))
+      .replace(':', 'h');
+
+    return `${dataFormatada} às ${horaFormatada}`;
   }
 
   formatarDataParaInput(data: Date | string): string {

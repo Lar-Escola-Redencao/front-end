@@ -193,7 +193,7 @@
 
       <p class="preview-data-local">
         <span class="material-symbols-outlined">calendar_today</span>
-        {{ eventoVisualizacao.dataEvento | date:'dd/MM/yyyy HH:mm' }}<br />
+        {{ formatarDataTabela(eventoVisualizacao.dataEvento) }}<br />
         <span class="material-symbols-outlined">location_on</span>
         {{ eventoVisualizacao.endereco }}
       </p>

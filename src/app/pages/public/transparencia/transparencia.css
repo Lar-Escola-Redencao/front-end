@@ -8,6 +8,7 @@
   max-width: 960px;
   margin: 0 auto;
   padding: 112px 24px 64px;
+  min-height: 100vh;
 }
 
 .page-header {
