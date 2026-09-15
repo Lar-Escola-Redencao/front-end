@@ -12,6 +12,13 @@
   box-sizing: border-box;
 }
 
+.navbar-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: transparent;
+  z-index: 999;
+}
+
 .logo-container img {
   height: 50px;
   width: auto;
@@ -56,6 +63,10 @@
 }
 
 @media (max-width: 1000px) {
+  .navbar {
+    cursor: pointer;
+  }
+
   .menu-toggle {
     display: block;
   }

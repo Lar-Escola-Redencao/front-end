@@ -1,17 +1,19 @@
-<nav class="navbar">
+<div class="navbar-overlay" *ngIf="menuAberto()" (click)="fecharMenu()"></div>
+
+<nav class="navbar" (click)="abrirMenuMobile()">
   <div class="logo-container">
-    <a style="cursor: pointer;" (click)="navegarParaHomeSection('inicio')">
+    <a style="cursor: pointer;" (click)="$event.stopPropagation(); navegarParaHomeSection('inicio')">
       <img src="/images/logo_colorida_texto.png" alt="Logo Lar Escola Reden&ccedil;&atilde;o">
     </a>
   </div>
 
-  <button class="menu-toggle" (click)="alternarMenu()" aria-label="Abrir menu">
+  <button class="menu-toggle" (click)="$event.stopPropagation(); alternarMenu()" aria-label="Abrir menu">
     <span class="material-symbols-outlined">
       {{ menuAberto() ? 'close' : 'menu' }}
     </span>
   </button>
 
-  <div class="nav-content" [class.ativo]="menuAberto()">
+  <div class="nav-content" [class.ativo]="menuAberto()" (click)="$event.stopPropagation()">
     <ul class="nav-links">
       <li><a (click)="navegarParaHomeSection('inicio')">Início</a></li>
       <li><a (click)="navegarParaHomeSection('unidades')">Unidades</a></li>
