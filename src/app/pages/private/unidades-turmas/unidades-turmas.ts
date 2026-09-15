@@ -251,7 +251,7 @@ export class UnidadesTurmas implements OnInit, OnDestroy, ComponentComAlteracoes
     private router: Router,
   ) {
     this.formTurma = this.fb.group({
-      periodo: ['', Validators.required],
+      periodo: [null, Validators.required],
       horaInicio: ['', Validators.required],
       horaFim: ['', Validators.required],
       unidadeId: [null, Validators.required],
@@ -627,7 +627,7 @@ export class UnidadesTurmas implements OnInit, OnDestroy, ComponentComAlteracoes
     this.valoresOriginaisFormTurma = null;
 
     this.formTurma.reset({
-      periodo: '',
+      periodo: null,
       horaInicio: '',
       horaFim: '',
       unidadeId: null,
@@ -796,7 +796,7 @@ export class UnidadesTurmas implements OnInit, OnDestroy, ComponentComAlteracoes
   }
 
   formatarHorario(valor: string | null | undefined): string {
-    return valor ? valor.substring(0, 5) : '-';
+    return valor ? valor.substring(0, 5).replace(':', 'h') : '-';
   }
 
   salvar(): void {
@@ -1282,7 +1282,7 @@ export class UnidadesTurmas implements OnInit, OnDestroy, ComponentComAlteracoes
     this.valoresOriginaisFormTurma = null;
 
     this.formTurma.reset({
-      periodo: '',
+      periodo: null,
       horaInicio: '',
       horaFim: '',
       unidadeId: null,

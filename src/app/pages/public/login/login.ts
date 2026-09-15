@@ -10,6 +10,7 @@ import {
   Validators,
 } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { PublicFooter } from '@components/public-footer/public-footer';
 
 import { PublicNavbar } from '@components/public-navbar/public-navbar';
 import { Auth } from 'src/app/shared/services/auth/auth';
@@ -36,7 +37,7 @@ function identifierValidator(control: AbstractControl): ValidationErrors | null 
 
 @Component({
   selector: 'app-login',
-  imports: [ReactiveFormsModule, PublicNavbar, RouterLink],
+  imports: [ReactiveFormsModule, PublicNavbar, PublicFooter, RouterLink],
   templateUrl: './login.html',
   styleUrl: './login.css',
 })
@@ -48,6 +49,7 @@ export class Login {
   protected readonly loading = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly showForgotHint = signal(false);
+  protected readonly mostrarSenha = signal(false);
 
   private readonly queryParams = toSignal(this.route.queryParamMap);
   private readonly sessionExpiredParam = computed(
@@ -70,6 +72,10 @@ export class Login {
 
   protected dismissSessionExpiredToast(): void {
     this.toastDismissed.set(true);
+  }
+
+  protected alternarVisibilidadeSenha(): void {
+    this.mostrarSenha.update((visivel) => !visivel);
   }
 
   protected readonly form = new FormGroup({

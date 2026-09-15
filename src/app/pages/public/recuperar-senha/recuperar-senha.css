@@ -14,22 +14,26 @@
 .layout {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  min-height: calc(100dvh - 82px);
+  min-height: 100vh;
 }
 
 .illustration {
-  background: var(--accent);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  background-color: var(--primary-color);
+  position: relative;
+  overflow: hidden;
 }
 
-.illustration::after {
-  content: '';
-  width: 50%;
-  height: 50%;
-  background: url('/images/logo_branca_texto.png') center / contain no-repeat;
-  opacity: 0.9;
+.illustration::before {
+  content: "";
+  position: absolute;
+  height: 85vh;
+  aspect-ratio: 1 / 1;
+  background: url('/images/branco_vetorizado.svg') center / contain no-repeat;
+  left: -5vw;
+  bottom: -10vh;
+  transform: rotate(30deg);
+  opacity: 0.3;
+  pointer-events: none;
 }
 
 .form-panel {

@@ -1,6 +1,6 @@
 .perfil-page {
   min-height: calc(100vh - 130px);
-  padding: 32px 24px 48px;
+  padding: 0px 24px 48px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -14,7 +14,7 @@
 
 .conteudo {
   width: min(100%, 640px);
-  margin-top: 40px;
+  margin-top: 20px;
   display: flex;
   flex-direction: column;
   gap: 24px;
@@ -137,8 +137,12 @@
   }
 }
 
+.form-perfil {
+  --perfil-campo-desabilitado-bg: #eeeeee;
+}
+
 .form-perfil ::ng-deep .mat-form-field-disabled .mat-mdc-text-field-wrapper {
-  background-color: #eeeeee !important;
+  background-color: var(--perfil-campo-desabilitado-bg) !important;
 }
 
 .form-perfil ::ng-deep .mat-form-field-disabled .mat-mdc-input-element {
@@ -146,6 +150,17 @@
   -webkit-text-fill-color: var(--input-color) !important;
 }
 
+.form-perfil ::ng-deep .mat-form-field-disabled .mat-mdc-form-field-infix {
+  z-index: 1;
+}
+
 .form-perfil ::ng-deep .mat-form-field-disabled .mat-mdc-floating-label {
+  padding: 0 4px;
+  background-color: var(--perfil-campo-desabilitado-bg) !important;
   color: var(--input-color) !important;
+  z-index: 2;
+}
+
+.form-perfil ::ng-deep .mat-form-field-disabled .mdc-notched-outline__notch {
+  background-color: transparent !important;
 }

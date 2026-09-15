@@ -8,6 +8,7 @@ import { construirHttpParams } from 'src/app/shared/utils/paginacao-url';
 export interface Secao {
   id: number;
   titulo: string;
+  conteudo?: string;
   ativo: boolean;
 }
 
@@ -21,10 +22,12 @@ export interface DocumentoAdmin {
 
 export interface CriarSecaoDTO {
   titulo: string;
+  conteudo?: string;
 }
 
 export interface AtualizarSecaoDTO {
   titulo: string;
+  conteudo?: string;
   ativo: boolean;
 }
 
@@ -73,6 +76,7 @@ export class TransparenciaService {
   criarSecao(dto: CriarSecaoDTO): Observable<Secao> {
     const formData = new FormData();
     formData.append('titulo', dto.titulo);
+    formData.append('conteudo', dto.conteudo ?? '');
     return this.http.post<Secao>(`${this.apiUrl}/criar-secao`, formData);
   }
 
@@ -80,6 +84,7 @@ export class TransparenciaService {
     const formData = new FormData();
 
     formData.append('titulo', dto.titulo);
+    formData.append('conteudo', dto.conteudo ?? '');
     formData.append('ativo', dto.ativo.toString());
 
     return this.http.put<Secao>(

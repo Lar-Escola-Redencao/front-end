@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, ElementRef, HostListener, NgZone, OnInit, inject } from '@angular/core';
+import { Component, ElementRef, HostListener, OnInit, computed, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { NgClass, NgIf } from '@angular/common';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
@@ -18,14 +18,12 @@ export class PrivateNavbar implements OnInit {
   private readonly router = inject(Router);
   private readonly perfilService = inject(PerfilService);
   private readonly elementRef = inject(ElementRef);
-  private readonly cdr = inject(ChangeDetectorRef);
-  private readonly ngZone = inject(NgZone);
 
   menuVisivel = false;
   menuUsuarioAberto = false;
 
-  nomeUsuario = '';
-  iniciaisUsuario = '';
+  protected readonly nomeUsuario = computed(() => this.perfilService.perfilAtual()?.nomeCompleto ?? '');
+  protected readonly iniciaisUsuario = computed(() => this.calcularIniciais(this.nomeUsuario()));
 
   ngOnInit(): void {
     this.carregarUsuario();
@@ -35,6 +33,13 @@ export class PrivateNavbar implements OnInit {
     this.menuVisivel = !this.menuVisivel;
   }
 
+  abrirMenu(): void {
+    this.menuVisivel = true;
+  }
+
+  fecharMenu() {
+    this.menuVisivel = false;
+  }
   alternarMenuUsuario(): void {
     this.menuUsuarioAberto = !this.menuUsuarioAberto;
   }
@@ -59,19 +64,7 @@ export class PrivateNavbar implements OnInit {
 
   private carregarUsuario(): void {
     this.perfilService.buscarMeuPerfil().subscribe({
-      next: (perfil) => {
-        this.ngZone.run(() => {
-          this.nomeUsuario = perfil.nomeCompleto;
-          this.iniciaisUsuario = this.calcularIniciais(perfil.nomeCompleto);
-          this.cdr.detectChanges();
-        });
-      },
-      error: () => {
-        this.ngZone.run(() => {
-          this.iniciaisUsuario = '';
-          this.cdr.detectChanges();
-        });
-      }
+      error: () => {}
     });
   }
 

@@ -36,13 +36,17 @@
       />
     </label>
 
-    <label class="campo campo-select">
-      <select name="filtroValor" [(ngModel)]="filtroValor">
-        <option value="todos">Gratuito ou pago</option>
-        <option value="gratuito">Gratuito</option>
-        <option value="pago">Pago</option>
-      </select>
-    </label>
+    <mat-form-field appearance="outline" class="campo-select">
+      <mat-label>Valor</mat-label>
+      <mat-select
+        name="filtroValor"
+        [(ngModel)]="filtroValor"
+        panelClass="eventos-select-panel">
+        <mat-option value="todos">Gratuito ou pago</mat-option>
+        <mat-option value="gratuito">Gratuito</mat-option>
+        <mat-option value="pago">Pago</mat-option>
+      </mat-select>
+    </mat-form-field>
     <button type="submit" class="botao-buscar">
       <span class="material-symbols-outlined">search</span>
     </button>
@@ -171,3 +175,5 @@
     </nav>
   }
 </main>
+
+<app-public-footer></app-public-footer>

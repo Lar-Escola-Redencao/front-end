@@ -2,7 +2,7 @@
   <h1>Colaboradores</h1>
   <div class="conteudo">
     <div class="acoes-colaboradores">
-      <button type="button" class="btn-primary" (click)="abrirCadastro()">
+      <button type="button" class="btn-primary btn-primary-thick" (click)="abrirCadastro()">
         Novo colaborador
       </button>
 
@@ -10,6 +10,7 @@
         <mat-label>Papel de acesso</mat-label>
         <mat-select
           [value]="filtroPapel"
+          [canSelectNullableOptions]="true"
           (selectionChange)="filtrarPorPapel($event.value)">
           <mat-option [value]="null">Todos os papéis</mat-option>
           <mat-option
@@ -144,6 +145,7 @@
       <mat-label>Papel de acesso</mat-label>
       <mat-select
         formControlName="idPapel"
+        [canSelectNullableOptions]="false"
         (selectionChange)="verificarErros()"
         (blur)="verificarErros()">
         <mat-option
@@ -158,8 +160,8 @@
     </span>
 
     <div class="form-group">
+      <label class="unidades-label">Unidades vinculadas</label>
       <div class="unidades-box">
-        <label id="unidade-header">Unidades vinculadas</label>
         <div *ngIf="unidadesDisponiveis.length === 0" class="sem-unidades">
           Nenhuma unidade disponível
         </div>
@@ -197,9 +199,6 @@
             </span>
           </button>
         </mat-form-field>
-        <span class="hint-text">
-          Min. 6 caracteres, 1 maiuscula e 1 numero.
-        </span>
         <span class="error-text" *ngIf="erros['senha']">
           {{ erros['senha'] }}
         </span>
@@ -230,6 +229,9 @@
         </span>
       </div>
     </div>
+    <span class="hint-text">
+      Mínimo de 6 caracteres, 1 letra maiúscula e 1 número
+    </span>
     }
 
     <div class="acoes-modal">

@@ -12,6 +12,7 @@ import { ModalLayout } from '@components/modal-layout/modal-layout';
 import { PublicNavbar } from '@components/public-navbar/public-navbar';
 import { Evento } from 'src/app/shared/models/evento.model';
 import { EventoPublicoService } from 'src/app/shared/services/evento-publico/evento-publico.service';
+import { PublicFooter } from '@components/public-footer/public-footer';
 
 type FiltroValor = 'todos' | 'gratuito' | 'pago';
 
@@ -24,7 +25,8 @@ type FiltroValor = 'todos' | 'gratuito' | 'pago';
     MatFormFieldModule,
     MatSelectModule,
     ModalLayout,
-    PublicNavbar
+    PublicNavbar,
+    PublicFooter
   ],
   templateUrl: './eventos.html',
   styleUrl: './eventos.css'

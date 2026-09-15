@@ -16,14 +16,14 @@ import { DiretoriaComponent } from './components/diretoria/diretoria.component';
   styleUrl: './content-management.css'
 })
 export class ContentManagement implements OnInit {
-  secaoSelecionada: string = '';
+  secaoSelecionada: string = 'evento';
   private secoesPermitidas = ['diretoria', 'evento', 'parceiro', 'redes-sociais', 'transparencia'];
 
   constructor(private route: ActivatedRoute, private router: Router) {}
 
   ngOnInit() {
     this.route.paramMap.subscribe(parametros => {
-      const secao = parametros.get('secao') ?? '';
+      const secao = parametros.get('secao') ?? 'evento';
       if (secao && !this.secoesPermitidas.includes(secao)) {
         this.router.navigate(['/dashboard/conteudo-publico'], { replaceUrl: true });
         return;

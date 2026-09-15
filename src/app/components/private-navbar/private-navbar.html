@@ -1,13 +1,15 @@
+<div class="navbar-overlay" *ngIf="menuVisivel" (click)="fecharMenu()"></div>
+
 <nav class="navbar" [ngClass]="{'expandido': menuVisivel}">
-  <div class="navbar-header">
-    <button class="btn-menu" (click)="alternarMenu()" aria-label="Menu">
+  <div class="navbar-header" (click)="abrirMenu()">
+    <button class="btn-menu" (click)="$event.stopPropagation(); alternarMenu()" aria-label="Menu">
       <span class="material-symbols-outlined">
         {{ menuVisivel ? 'close' : 'menu' }}
       </span>
     </button>
 
     <div class="logo-container">
-      <a routerLink="/dashboard">
+      <a routerLink="/dashboard" (click)="$event.stopPropagation(); fecharMenu()">
         <img src="/images/logo_branca_texto.png" alt="Logo Lar Escola Redenção">
       </a>
     </div>
@@ -16,13 +18,13 @@
       <button
         type="button"
         class="btn-avatar"
-        (click)="alternarMenuUsuario()"
+        (click)="$event.stopPropagation(); alternarMenuUsuario()"
         [attr.aria-expanded]="menuUsuarioAberto"
         aria-label="Menu do usuário">
-        {{ iniciaisUsuario || '...' }}
+        {{ iniciaisUsuario() || '...' }}
       </button>
 
-      <div class="menu-usuario" *ngIf="menuUsuarioAberto">
+      <div class="menu-usuario" *ngIf="menuUsuarioAberto" (click)="$event.stopPropagation()">
         <button type="button" class="menu-usuario-item" (click)="irParaPerfil()">
           <span class="material-symbols-outlined">person</span>
           <span>Meu perfil</span>
@@ -40,25 +42,29 @@
     <div class="painel-content">
       <h3 class="painel-titulo">CENTRAL DE GESTÃO</h3>
       <div class="grid-opcoes">
-        <a class="card-opcao" routerLink="/dashboard/diario" routerLinkActive="ativo" (click)="alternarMenu()">
+        <a class="card-opcao" routerLink="/dashboard/diario" routerLinkActive="ativo" (click)="fecharMenu()">
           <span class="material-symbols-outlined">assignment</span>
           <span class="texto-link">Diário de turma</span>
         </a>
-        <a class="card-opcao" routerLink="/dashboard/usuarios" routerLinkActive="ativo" (click)="alternarMenu()">
+        
+        <a class="card-opcao" routerLink="/dashboard/usuarios" routerLinkActive="ativo" (click)="fecharMenu()">
           <span class="material-symbols-outlined">sentiment_excited</span>
-          <span class="texto-link">Gerenciar usuários</span>
+          <span class="texto-link">Usuários</span>
         </a>
-        <a class="card-opcao" routerLink="/dashboard/colaboradores" routerLinkActive="ativo" (click)="alternarMenu()">
+        
+        <a class="card-opcao" routerLink="/dashboard/colaboradores" routerLinkActive="ativo" (click)="fecharMenu()">
           <span class="material-symbols-outlined">support_agent</span>
-          <span class="texto-link">Gerenciar colaboradores</span>
+          <span class="texto-link">Colaboradores</span>
         </a>
-        <a class="card-opcao" routerLink="/dashboard/unidades-turmas" routerLinkActive="ativo" (click)="alternarMenu()">
+        
+        <a class="card-opcao" routerLink="/dashboard/unidades-turmas" routerLinkActive="ativo" (click)="fecharMenu()">
           <span class="material-symbols-outlined">family_group</span>
-          <span class="texto-link">Gerenciar unidades e turmas</span>
+          <span class="texto-link">Unidades e turmas</span>
         </a>
-        <a class="card-opcao" routerLink="/dashboard/conteudo-publico" routerLinkActive="ativo" (click)="alternarMenu()">
+        
+        <a class="card-opcao" routerLink="/dashboard/conteudo-publico" routerLinkActive="ativo" (click)="fecharMenu()">
           <span class="material-symbols-outlined">captive_portal</span>
-          <span class="texto-link">Gerenciar conteúdo público</span>
+          <span class="texto-link">Conteúdo público</span>
         </a>
       </div>
     </div>

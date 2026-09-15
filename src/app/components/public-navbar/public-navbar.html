@@ -1,28 +1,30 @@
-<nav class="navbar">
+<div class="navbar-overlay" *ngIf="menuAberto()" (click)="fecharMenu()"></div>
+
+<nav class="navbar" (click)="abrirMenuMobile()">
   <div class="logo-container">
-    <a style="cursor: pointer;" (click)="scrollTo('inicio')">
-      <img src="/images/logo_colorida_texto.png" alt="Logo Lar Escola Redenção">
+    <a style="cursor: pointer;" (click)="$event.stopPropagation(); navegarParaHomeSection('inicio')">
+      <img src="/images/logo_colorida_texto.png" alt="Logo Lar Escola Reden&ccedil;&atilde;o">
     </a>
   </div>
 
-  <button class="menu-toggle" (click)="alternarMenu()" aria-label="Abrir menu">
+  <button class="menu-toggle" (click)="$event.stopPropagation(); alternarMenu()" aria-label="Abrir menu">
     <span class="material-symbols-outlined">
       {{ menuAberto() ? 'close' : 'menu' }}
     </span>
   </button>
 
-  <div class="nav-content" [class.ativo]="menuAberto()">
+  <div class="nav-content" [class.ativo]="menuAberto()" (click)="$event.stopPropagation()">
     <ul class="nav-links">
-      <li><a (click)="scrollTo('inicio')">Início</a></li>
-      <li><a (click)="scrollTo('conheca-osc')">Conheça a OSC</a></li>
-      <li><a (click)="alternarMenu()">Como ajudar?</a></li>
-      <li><a (click)="scrollTo('unidades')">Unidades</a></li>
-      <li><a routerLink="/eventos" (click)="alternarMenu()">Eventos</a></li>
-      <li><a (click)="scrollTo('parceiros')">Parceiros</a></li>
-      <li><a routerLink="/transparencia" (click)="alternarMenu()">Transparência</a></li>
+      <li><a (click)="navegarParaHomeSection('inicio')">Início</a></li>
+      <li><a (click)="navegarParaHomeSection('unidades')">Unidades</a></li>
+      <li><a (click)="navegarParaHomeSection('parceiros')">Parceiros</a></li>
+      <li><a routerLink="/conheca-a-osc" (click)="fecharMenu()">Conheça a OSC</a></li>
+      <li><a routerLink="/como-ajudar" (click)="fecharMenu()">Como ajudar?</a></li>
+      <li><a routerLink="/eventos" (click)="fecharMenu()">Eventos</a></li>
+      <li><a routerLink="/transparencia" (click)="fecharMenu()">Transparência</a></li>
     </ul>
     <div class="nav-action">
-      <button mat-flat-button class="btn-custom" (click)="realizarLogin()">
+      <button type="button" class="btn-primary" (click)="realizarLogin()">
         <span class="material-icons">person</span>
         <span>Entrar</span>
       </button>

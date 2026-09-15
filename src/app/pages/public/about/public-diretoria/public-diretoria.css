@@ -15,7 +15,7 @@
 
 .diretoria-header h2 {
   font-family: var(--fonte-titulo);
-  font-size: clamp(2rem, 4vw, 2.5rem);
+  font-size: 2rem;
   color: var(--preto);
   margin: 0;
 }
@@ -94,6 +94,9 @@
 .foto-wrapper {
   width: 100%;
   height: 260px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background-color: #f0f0f0;
 }
 
@@ -101,6 +104,15 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+.imagem-fallback {
+  color: #cccccc;
+  font-size: 5rem;
+}
+
+.imagem-fallback-hidden {
+  display: none;
 }
 
 .info-wrapper {

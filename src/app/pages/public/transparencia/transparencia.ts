@@ -1,4 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
+import { PublicFooter } from '@components/public-footer/public-footer';
 
 import { PublicNavbar } from '@components/public-navbar/public-navbar';
 import { Secao, Documento } from 'src/app/shared/models/transparencia.model';
@@ -7,7 +8,7 @@ import { TransparenciaPublicaService } from 'src/app/shared/services/transparenc
 @Component({
   selector: 'app-transparencia',
   standalone: true,
-  imports: [PublicNavbar],
+  imports: [PublicNavbar, PublicFooter],
   templateUrl: './transparencia.html',
   styleUrl: './transparencia.css',
 })

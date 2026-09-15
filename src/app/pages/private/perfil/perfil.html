@@ -1,6 +1,4 @@
 <section class="perfil-page">
-  <h1>Meu perfil</h1>
-
   @if (carregando) {
     <p class="estado-info">Carregando seus dados...</p>
   } @else if (erroCarregar) {
@@ -10,39 +8,10 @@
     </div>
   } @else {
     <div class="conteudo">
-
-      <!-- Dados somente leitura -->
-      <div class="cartao">
-        <div class="cartao-cabecalho">
-          <h2>Informações da conta</h2>
-          <p class="hint-text">Esses dados só podem ser alterados por um administrador.</p>
-        </div>
-        <div class="cartao-corpo">
-          <div class="somente-leitura">
-            <div>
-              <span class="rotulo">E-mail</span>
-              <span class="valor">{{ perfil?.email }}</span>
-            </div>
-            <div>
-              <span class="rotulo">CPF</span>
-              <span class="valor">{{ perfil?.cpf }}</span>
-            </div>
-            <div>
-              <span class="rotulo">Papel de acesso</span>
-              <span class="valor">{{ perfil?.nomePapel }}</span>
-            </div>
-            <div>
-              <span class="rotulo">Unidades</span>
-              <span class="valor">{{ nomesUnidades || '—' }}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
       <!-- Dados editáveis -->
       <div class="cartao">
         <div class="cartao-cabecalho">
-          <h2>Dados pessoais</h2>
+          <h2>Meus dados pessoais</h2>
         </div>
         <div class="cartao-corpo">
           <form class="form-perfil" [formGroup]="formDados" (ngSubmit)="salvar()">
@@ -108,6 +77,33 @@
         </div>
       </div>
 
+            <!-- Dados somente leitura -->
+      <div class="cartao">
+        <div class="cartao-cabecalho">
+          <h2>Informações da conta</h2>
+          <p class="hint-text">Esses dados só podem ser alterados por um administrador.</p>
+        </div>
+        <div class="cartao-corpo">
+          <div class="somente-leitura">
+            <div>
+              <span class="rotulo">E-mail</span>
+              <span class="valor">{{ perfil?.email }}</span>
+            </div>
+            <div>
+              <span class="rotulo">CPF</span>
+              <span class="valor">{{ perfil?.cpf }}</span>
+            </div>
+            <div>
+              <span class="rotulo">Papel de acesso</span>
+              <span class="valor">{{ nomePapelFormatado }}</span>
+            </div>
+            <div>
+              <span class="rotulo">Unidades</span>
+              <span class="valor">{{ nomesUnidades || '—' }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   }
 </section>
