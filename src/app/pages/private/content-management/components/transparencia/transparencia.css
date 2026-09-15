@@ -4,6 +4,7 @@
 
 .acoes-transparencia {
   display: flex;
+  align-items: flex-start;
   gap: 20px;
   flex-wrap: wrap;
   margin-bottom: 24px;
@@ -131,7 +132,6 @@
 .abas-container {
   display: flex;
   gap: 8px;
-  margin-top: 24px;
   margin-bottom: 16px;
   border-bottom: 1px solid #ddd;
 }

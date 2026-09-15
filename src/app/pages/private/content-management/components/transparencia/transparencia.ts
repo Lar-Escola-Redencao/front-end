@@ -1,6 +1,8 @@
-import { Component, OnInit, ChangeDetectorRef, HostListener, NgZone } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef, HostListener, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
 import {
   mapearErrosFormulario,
@@ -15,21 +17,23 @@ import {
   TabelaColuna,
   TabelaAcao
 } from '@components/tabela-layout/tabela-layout';
+import { Paginacao } from '@components/paginacao/paginacao';
 
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatOption, MatSelect } from '@angular/material/select';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
-import { TransparenciaService } from './transparencia.service';
+import { DocumentoAdmin, Secao, TransparenciaService } from './transparencia.service';
+import {
+  CampoOrdenacao,
+  TAMANHO_PAGINA_MAXIMO,
+  alternarOrdenacao,
+  analisarOrdenacao,
+  lerParametrosPagina
+} from 'src/app/shared/utils/paginacao-url';
 
-interface DocumentoTransparencia {
-  id?: number;
-  titulo: string;
-  secao: string;
-  secaoId?: number;
-  arquivo?: string;
+interface DocumentoExibicao extends DocumentoAdmin {
   tipo: string;
-  dataAtualizacao: string;
 }
 
 @Component({
@@ -40,6 +44,7 @@ interface DocumentoTransparencia {
     ReactiveFormsModule,
     ModalLayout,
     TabelaLayout,
+    Paginacao,
     MatFormFieldModule,
     MatInputModule,
     MatSelect,
@@ -49,7 +54,7 @@ interface DocumentoTransparencia {
   templateUrl: './transparencia.html',
   styleUrl: './transparencia.css',
 })
-export class Transparencia implements OnInit, ComponentComAlteracoesNaoSalvas {
+export class Transparencia implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalvas {
 
   // Controle de abas
   abaAtiva: 'documentos' | 'secoes' = 'documentos';
@@ -60,19 +65,35 @@ export class Transparencia implements OnInit, ComponentComAlteracoesNaoSalvas {
   isLoading = false;
   modalTremendo = false;
 
-  // --- TABELAS ---
-  documentos: DocumentoTransparencia[] = [];
+  // --- PAGINAÇÃO (compartilhada pela aba ativa) ---
+  pagina = 0;
+  tamanho = 10;
+  sort: string | undefined;
+  ordenacao: CampoOrdenacao | null = null;
+  totalElementos = 0;
+  totalPaginas = 0;
+  carregandoLista = false;
+  erroLista = false;
 
-  colunasDocumentos: TabelaColuna<DocumentoTransparencia>[] = [
-    { chave: 'titulo', titulo: 'Documento', principalMobile: true },
-    { chave: 'secao', titulo: 'Seção' },
-    { chave: 'arquivo', titulo: 'Documento', tipo: 'documento'},
+  private routeSub?: Subscription;
+
+  // --- TABELAS ---
+  documentos: DocumentoExibicao[] = [];
+
+  /** Lista completa de seções (não paginada), usada só pelo <select> do modal de documento. */
+  secoesParaSelecao: Secao[] = [];
+
+  colunasDocumentos: TabelaColuna<DocumentoExibicao>[] = [
+    { chave: 'titulo', titulo: 'Documento', principalMobile: true, ordenavel: true },
+    { chave: 'secaoTitulo', titulo: 'Seção', ordenavel: true, campoOrdenacao: 'secao.titulo' },
+    { chave: 'arquivo', titulo: 'Documento', tipo: 'documento' },
     { chave: 'tipo', titulo: 'Tipo' }
   ];
 
-  colunasSecoes: TabelaColuna<any>[] = [
-    { chave: 'titulo', titulo: 'Nome da Seção', principalMobile: true },
-    { chave: 'ativo', titulo: 'Exibição', tipo: 'status' }
+  colunasSecoes: TabelaColuna<Secao>[] = [
+    { chave: 'titulo', titulo: 'Nome da Seção', principalMobile: true, ordenavel: true },
+    { chave: 'conteudo', titulo: 'Descrição', formatar: (valor) => String(valor || '').trim() || '-'},
+    { chave: 'ativo', titulo: 'Exibição', tipo: 'status', ordenavel: true }
   ];
 
   acoesTabela: TabelaAcao<any>[] = [
@@ -88,7 +109,7 @@ export class Transparencia implements OnInit, ComponentComAlteracoesNaoSalvas {
   errosDocumento: { [key: string]: string } = {};
 
   // --- LÓGICA DE SEÇÃO ---
-  secoes: any[] = [];
+  secoes: Secao[] = [];
   secaoSelecionadaId: number | null = null;
   formSecao: FormGroup;
   valoresOriginaisSecao: any = null;
@@ -100,10 +121,13 @@ export class Transparencia implements OnInit, ComponentComAlteracoesNaoSalvas {
     private transparenciaService: TransparenciaService,
     private toastr: ToastrService,
     private cdr: ChangeDetectorRef,
-    private ngZone: NgZone
+    private ngZone: NgZone,
+    private route: ActivatedRoute,
+    private router: Router
   ) {
     this.formSecao = this.fb.group({
       titulo: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(100)]],
+      conteudo: ['', [Validators.maxLength(500)]],
       ativo: [true]
     });
 
@@ -117,7 +141,7 @@ export class Transparencia implements OnInit, ComponentComAlteracoesNaoSalvas {
       ],
 
       secaoId: [
-        '',
+        null,
         Validators.required
       ],
 
@@ -132,46 +156,153 @@ export class Transparencia implements OnInit, ComponentComAlteracoesNaoSalvas {
   }
 
   ngOnInit(): void {
-    this.carregarSecoes();
+    this.carregarSecoesParaSelecao();
+
+    this.routeSub = this.route.queryParamMap.subscribe(params => {
+      const { pagina, tamanho, sort } = lerParametrosPagina(params);
+      this.pagina = pagina;
+      this.tamanho = tamanho;
+      this.sort = sort;
+      this.ordenacao = analisarOrdenacao(sort);
+      this.abaAtiva = params.get('aba') === 'secoes' ? 'secoes' : 'documentos';
+
+      this.carregarListaAtiva();
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.routeSub?.unsubscribe();
+  }
+
+  mudarAba(aba: 'documentos' | 'secoes'): void {
+    if (aba === this.abaAtiva) {
+      return;
+    }
+
+    this.navegar({ aba, page: 0, sort: null });
+  }
+
+  get mensagemVazia(): string {
+    return this.abaAtiva === 'documentos'
+      ? 'Nenhum documento cadastrado.'
+      : 'Nenhuma seção cadastrada.';
+  }
+
+  tentarNovamente(): void {
+    this.carregarListaAtiva();
   }
 
   // --- BUSCAS E ATUALIZAÇÕES DE LISTAGEM ---
-  carregarSecoes(): void {
-    this.transparenciaService.listarSecoes().subscribe({
-      next: (dados: any) => {
-        this.secoes = dados;
-        this.atualizarTabelaDocumentos();
+  private carregarListaAtiva(): void {
+    if (this.abaAtiva === 'secoes') {
+      this.carregarSecoes();
+    } else {
+      this.carregarDocumentos();
+    }
+  }
+
+  carregarDocumentos(): void {
+    if (this.carregandoLista) {
+      return;
+    }
+
+    this.carregandoLista = true;
+    this.erroLista = false;
+
+    this.transparenciaService.listarDocumentosAdmin(this.pagina, this.tamanho, this.sort).subscribe({
+      next: (resposta) => {
+        this.documentos = resposta.content.map(doc => this.mapearDocumento(doc));
+        this.totalElementos = resposta.page.totalElements;
+        this.totalPaginas = resposta.page.totalPages;
+        this.carregandoLista = false;
+
+        if (this.documentos.length === 0 && this.pagina > 0) {
+          this.irParaPagina(Math.max(0, resposta.page.totalPages - 1));
+          return;
+        }
+
         this.cdr.detectChanges();
       },
       error: () => {
+        this.carregandoLista = false;
+        this.erroLista = true;
+        this.toastr.error('Erro ao carregar documentos.', 'Erro');
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  carregarSecoes(): void {
+    if (this.carregandoLista) {
+      return;
+    }
+
+    this.carregandoLista = true;
+    this.erroLista = false;
+
+    this.transparenciaService.listarSecoesAdmin(this.pagina, this.tamanho, this.sort).subscribe({
+      next: (resposta) => {
+        this.secoes = resposta.content;
+        this.totalElementos = resposta.page.totalElements;
+        this.totalPaginas = resposta.page.totalPages;
+        this.carregandoLista = false;
+
+        if (this.secoes.length === 0 && this.pagina > 0) {
+          this.irParaPagina(Math.max(0, resposta.page.totalPages - 1));
+          return;
+        }
+
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.carregandoLista = false;
+        this.erroLista = true;
         this.toastr.error('Erro ao carregar seções.', 'Erro');
         this.cdr.detectChanges();
       }
     });
   }
 
-  atualizarTabelaDocumentos(): void {
-    const novosDocumentos: DocumentoTransparencia[] = [];
-
-    this.secoes.forEach(secao => {
-      if (secao.documentos && Array.isArray(secao.documentos)) {
-        secao.documentos.forEach((doc: any) => {
-          novosDocumentos.push({
-            id: doc.id,
-            titulo: doc.titulo,
-            secao: secao.titulo,
-            secaoId: secao.id,
-            arquivo: doc.arquivo,
-            tipo: doc.arquivo
-              ? doc.arquivo.split('.').pop()?.toUpperCase() ?? 'N/A'
-              : 'N/A',
-            dataAtualizacao: '-'
-          });
-        });
+  /** Lista completa (uma única página grande), pro <select> do modal de documento. */
+  carregarSecoesParaSelecao(): void {
+    this.transparenciaService.listarSecoesAdmin(0, TAMANHO_PAGINA_MAXIMO).subscribe({
+      next: (resposta) => {
+        this.secoesParaSelecao = resposta.content;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.toastr.error('Erro ao carregar seções.', 'Erro');
       }
     });
+  }
 
-    this.documentos = novosDocumentos;
+  private mapearDocumento(doc: DocumentoAdmin): DocumentoExibicao {
+    return {
+      ...doc,
+      tipo: doc.arquivo
+        ? doc.arquivo.split('.').pop()?.toUpperCase() ?? 'N/A'
+        : 'N/A'
+    };
+  }
+
+  irParaPagina(pagina: number): void {
+    this.navegar({ page: pagina });
+  }
+
+  mudarTamanhoPagina(tamanho: number): void {
+    this.navegar({ page: 0, size: tamanho });
+  }
+
+  ordenarPor(campo: string): void {
+    this.navegar({ page: 0, sort: alternarOrdenacao(this.ordenacao, campo) });
+  }
+
+  private navegar(queryParams: Record<string, any>): void {
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams,
+      queryParamsHandling: 'merge'
+    });
   }
 
   // --- CONTROLE DE MODAL, GUARDS E ALERTAS ---
@@ -186,6 +317,7 @@ export class Transparencia implements OnInit, ComponentComAlteracoesNaoSalvas {
         this.secaoSelecionadaId = itemEdicao.id;
         this.formSecao.patchValue({
           titulo: itemEdicao.titulo,
+          conteudo: itemEdicao.conteudo ?? '',
           ativo: itemEdicao.ativo ?? true
         });
       } else {
@@ -193,6 +325,7 @@ export class Transparencia implements OnInit, ComponentComAlteracoesNaoSalvas {
         this.secaoSelecionadaId = null;
         this.formSecao.reset({
           titulo: '',
+          conteudo: '',
           ativo: true
         });
       }
@@ -206,7 +339,7 @@ export class Transparencia implements OnInit, ComponentComAlteracoesNaoSalvas {
       // Limpa estado anterior do formulário
       this.formDocumento.reset({
         titulo: '',
-        secaoId: '',
+        secaoId: null,
         arquivo: null
       });
 
@@ -258,7 +391,7 @@ export class Transparencia implements OnInit, ComponentComAlteracoesNaoSalvas {
 
         this.formDocumento.reset({
           titulo: '',
-          secaoId: '',
+          secaoId: null,
           arquivo: null
         });
 
@@ -310,6 +443,7 @@ export class Transparencia implements OnInit, ComponentComAlteracoesNaoSalvas {
           this.modalAberto = null;
           this.formSecao.reset({
             titulo: '',
+            conteudo: '',
             ativo: true
           });
           this.formDocumento.reset();
@@ -366,15 +500,20 @@ export class Transparencia implements OnInit, ComponentComAlteracoesNaoSalvas {
 
     request.subscribe({
       next: () => {
-        this.toastr.success(this.modoEdicao ? 'Seção atualizada!' : 'Seção criada!', 'Sucesso');
-        this.fecharModalSemConfirmacao();
-        this.cdr.detectChanges();
-        this.carregarSecoes();
+        this.ngZone.run(() => {
+          this.toastr.success(this.modoEdicao ? 'Seção atualizada!' : 'Seção criada!', 'Sucesso');
+          this.fecharModalSemConfirmacao();
+          this.cdr.detectChanges();
+          this.carregarListaAtiva();
+          this.carregarSecoesParaSelecao();
+        });
       },
       error: (err) => {
-        this.isLoading = false;
-        this.toastr.error(err.error?.message || 'Erro ao salvar seção.', 'Erro');
-        this.cdr.detectChanges();
+        this.ngZone.run(() => {
+          this.isLoading = false;
+          this.toastr.error(err.error?.message || 'Erro ao salvar seção.', 'Erro');
+          this.cdr.detectChanges();
+        });
       }
     });
   }
@@ -428,7 +567,7 @@ export class Transparencia implements OnInit, ComponentComAlteracoesNaoSalvas {
         this.toastr.success(this.modoEdicao ? 'Documento atualizado!' : 'Documento salvo!', 'Sucesso');
         this.fecharModalSemConfirmacao();
         this.cdr.detectChanges();
-        this.carregarSecoes();
+        this.carregarListaAtiva();
       },
       error: (err: any) => {
         this.isLoading = false;
@@ -457,7 +596,10 @@ export class Transparencia implements OnInit, ComponentComAlteracoesNaoSalvas {
         request.subscribe({
           next: () => {
             this.toastr.success('Item excluído com sucesso!', 'Sucesso');
-            this.carregarSecoes();
+            this.carregarListaAtiva();
+            if (isSecao) {
+              this.carregarSecoesParaSelecao();
+            }
           },
           error: () => {
             this.toastr.error('Erro ao excluir item.', 'Erro');

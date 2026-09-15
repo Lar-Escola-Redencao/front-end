@@ -1,16 +1,25 @@
-import { Component, OnInit, HostListener, ChangeDetectorRef, NgZone } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener, ChangeDetectorRef, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatOption, MatSelect } from '@angular/material/select';
 import { ToastrService } from 'ngx-toastr';
 import { ModalLayout } from '@components/modal-layout/modal-layout';
+import { Paginacao } from '@components/paginacao/paginacao';
 import { TabelaAcao, TabelaColuna, TabelaLayout } from '@components/tabela-layout/tabela-layout';
 import { ComponentComAlteracoesNaoSalvas } from 'src/app/shared/guards/can-deactivate.guard';
 import { AtualizarEventoDTO, CriarEventoDTO, Evento, TipoEvento } from 'src/app/shared/models/evento.model';
 import { Alertas } from 'src/app/shared/utils/alerts';
 import { mapearErrosFormulario, validarImagem } from 'src/app/shared/utils/form-validations';
+import {
+  CampoOrdenacao,
+  alternarOrdenacao,
+  analisarOrdenacao,
+  lerParametrosPagina
+} from 'src/app/shared/utils/paginacao-url';
 import { EventoService } from 'src/app/shared/services/content-management/evento/evento.service';
 import { ParceiroService } from 'src/app/shared/services/content-management/evento/parceiro.service';
 import { environment } from 'src/environments/environment';
@@ -24,6 +33,7 @@ import { environment } from 'src/environments/environment';
     ReactiveFormsModule,
     ModalLayout,
     TabelaLayout,
+    Paginacao,
     MatFormFieldModule,
     MatInputModule,
     MatSelect,
@@ -32,14 +42,29 @@ import { environment } from 'src/environments/environment';
   templateUrl: './evento.component.html',
   styleUrls: ['./evento.component.css']
 })
-export class EventoComponent implements OnInit, ComponentComAlteracoesNaoSalvas {
+export class EventoComponent implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalvas {
   readonly TipoEvento = TipoEvento;
+  private readonly nomesTipoEvento: Record<string, string> = {
+    ARRECADACAO: 'Arrecadação',
+    CULTURAL: 'Cultural',
+    COMEMORATIVO: 'Comemorativo'
+  };
 
   eventos: Evento[] = [];
-  eventosFiltrados: Evento[] = [];
-  filtroTipo = '';
+  filtroTipo: TipoEvento | null = null;
   tiposDisponiveis = Object.values(TipoEvento);
   parceiros: { id: number; nome: string; logo?: string }[] = [];
+
+  pagina = 0;
+  tamanho = 10;
+  sort: string | undefined;
+  ordenacao: CampoOrdenacao | null = null;
+  totalElementos = 0;
+  totalPaginas = 0;
+  carregandoLista = false;
+  erroLista = false;
+
+  private routeSub?: Subscription;
 
   modalAberto = false;
   modoEdicao = false;
@@ -58,17 +83,24 @@ export class EventoComponent implements OnInit, ComponentComAlteracoesNaoSalvas 
   eventoVisualizacao: Evento | null = null;
 
   colunas: TabelaColuna<Evento>[] = [
-    { chave: 'titulo', titulo: 'Titulo', principalMobile: true },
+    { chave: 'titulo', titulo: 'Titulo', principalMobile: true, ordenavel: true },
     {
       chave: 'dataEvento',
       titulo: 'Data',
-      formatar: (valor) => this.formatarDataTabela(valor)
+      formatar: (valor) => this.formatarDataTabela(valor),
+      ordenavel: true
     },
-    { chave: 'tipoEvento', titulo: 'Tipo' },
+    {
+      chave: 'tipoEvento',
+      titulo: 'Tipo',
+      formatar: (valor: TipoEvento) => this.formatarTextoExibicao(valor),
+      ordenavel: true
+    },
     {
       chave: 'valor',
       titulo: 'Valor',
-      formatar: (valor) => valor ? this.formatarMoeda(valor) : 'Gratuito'
+      formatar: (valor) => valor ? this.formatarMoeda(valor) : 'Gratuito',
+      ordenavel: true
     }
   ];
 
@@ -84,14 +116,16 @@ export class EventoComponent implements OnInit, ComponentComAlteracoesNaoSalvas 
     private fb: FormBuilder,
     private toastr: ToastrService,
     private cdr: ChangeDetectorRef,
-    private ngZone: NgZone
+    private ngZone: NgZone,
+    private route: ActivatedRoute,
+    private router: Router
   ) {
     this.formEvento = this.fb.group({
       titulo: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(150)]],
       descricao: ['', [Validators.required, Validators.minLength(10), Validators.maxLength(500)]],
       dataEvento: ['', Validators.required],
       endereco: ['', [Validators.required, Validators.minLength(5), Validators.maxLength(150)]],
-      tipoEvento: ['', Validators.required],
+      tipoEvento: [null, Validators.required],
       valor: ['', [Validators.min(0)]],
       parceirosIds: [[]],
       imagem: [null, [Validators.required, validarImagem()]]
@@ -100,13 +134,43 @@ export class EventoComponent implements OnInit, ComponentComAlteracoesNaoSalvas 
 
   ngOnInit(): void {
     this.carregarParceiros();
-    this.carregarEventos();
+
+    this.routeSub = this.route.queryParamMap.subscribe(params => {
+      const { pagina, tamanho, sort } = lerParametrosPagina(params);
+      this.pagina = pagina;
+      this.tamanho = tamanho;
+      this.sort = sort;
+      this.ordenacao = analisarOrdenacao(sort);
+      this.filtroTipo = (params.get('tipo') as TipoEvento | null) ?? null;
+      this.carregarEventos();
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.routeSub?.unsubscribe();
   }
 
   get mensagemVazia(): string {
     return this.filtroTipo
-      ? `Nenhum evento do tipo ${this.filtroTipo} cadastrado ainda`
+      ? `Nenhum evento do tipo ${this.formatarTextoExibicao(this.filtroTipo)} cadastrado ainda`
       : 'Nenhum evento cadastrado ainda';
+  }
+
+  formatarTextoExibicao(valor: string | null | undefined): string {
+    if (!valor) {
+      return '';
+    }
+
+    const textoMapeado = this.nomesTipoEvento[valor];
+
+    if (textoMapeado) {
+      return textoMapeado;
+    }
+
+    return valor
+      .toLowerCase()
+      .replace(/_/g, ' ')
+      .replace(/\b\w/g, (letra) => letra.toUpperCase());
   }
 
   carregarParceiros(): void {
@@ -122,18 +186,27 @@ export class EventoComponent implements OnInit, ComponentComAlteracoesNaoSalvas 
   }
 
   carregarEventos(): void {
-    this.eventoService.listarTodos().subscribe({
-      next: (dados) => {
-        this.ngZone.run(() => {
-          this.eventos = [...(dados || [])];
+    if (this.carregandoLista) {
+      return;
+    }
 
-          this.eventosFiltrados = this.filtroTipo
-            ? this.eventos.filter(e =>
-                e.tipoEvento &&
-                String(e.tipoEvento).toUpperCase() ===
-                String(this.filtroTipo).toUpperCase()
-              )
-            : [...this.eventos];
+    this.carregandoLista = true;
+    this.erroLista = false;
+
+    const tipo = this.filtroTipo ? (this.filtroTipo as TipoEvento) : undefined;
+
+    this.eventoService.listarTodos(this.pagina, this.tamanho, this.sort, tipo).subscribe({
+      next: (resposta) => {
+        this.ngZone.run(() => {
+          this.eventos = [...resposta.content];
+          this.totalElementos = resposta.page.totalElements;
+          this.totalPaginas = resposta.page.totalPages;
+          this.carregandoLista = false;
+
+          if (this.eventos.length === 0 && this.pagina > 0) {
+            this.irParaPagina(Math.max(0, resposta.page.totalPages - 1));
+            return;
+          }
 
           this.cdr.detectChanges();
         });
@@ -141,6 +214,9 @@ export class EventoComponent implements OnInit, ComponentComAlteracoesNaoSalvas 
 
       error: () => {
         this.ngZone.run(() => {
+          this.carregandoLista = false;
+          this.erroLista = true;
+
           this.toastr.error(
             'Não foi possivel carregar a lista de eventos.',
             'Erro'
@@ -153,12 +229,27 @@ export class EventoComponent implements OnInit, ComponentComAlteracoesNaoSalvas 
   }
 
   aplicarFiltro(): void {
-    this.eventosFiltrados = this.filtroTipo
-      ? this.eventos.filter(e =>
-          e.tipoEvento &&
-          String(e.tipoEvento).toUpperCase() === String(this.filtroTipo).toUpperCase()
-        )
-      : [...this.eventos];
+    this.navegar({ page: 0, tipo: this.filtroTipo || null });
+  }
+
+  irParaPagina(pagina: number): void {
+    this.navegar({ page: pagina });
+  }
+
+  mudarTamanhoPagina(tamanho: number): void {
+    this.navegar({ page: 0, size: tamanho });
+  }
+
+  ordenarPor(campo: string): void {
+    this.navegar({ page: 0, sort: alternarOrdenacao(this.ordenacao, campo) });
+  }
+
+  private navegar(queryParams: Record<string, any>): void {
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams,
+      queryParamsHandling: 'merge'
+    });
   }
 
   tratarImagem(caminho: string | null | undefined): string {
@@ -366,16 +457,23 @@ export class EventoComponent implements OnInit, ComponentComAlteracoesNaoSalvas 
     }).format(valor);
   }
 
-  private formatarDataTabela(data: Date | string): string {
+  formatarDataTabela(data: Date | string): string {
     if (!data) return '-';
 
-    return new Intl.DateTimeFormat('pt-BR', {
+    const dataFormatada = new Intl.DateTimeFormat('pt-BR', {
       day: '2-digit',
       month: '2-digit',
-      year: 'numeric',
+      year: 'numeric'
+    }).format(new Date(data));
+
+    const horaFormatada = new Intl.DateTimeFormat('pt-BR', {
       hour: '2-digit',
       minute: '2-digit'
-    }).format(new Date(data));
+    })
+      .format(new Date(data))
+      .replace(':', 'h');
+
+    return `${dataFormatada} às ${horaFormatada}`;
   }
 
   formatarDataParaInput(data: Date | string): string {

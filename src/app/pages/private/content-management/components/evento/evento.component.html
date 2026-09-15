@@ -1,17 +1,18 @@
 <section class="eventos-admin">
   <div class="acoes-eventos">
-    <button type="button" class="btn-primary" (click)="abrirCadastro()">
+    <button type="button" class="btn-primary btn-primary-thick" (click)="abrirCadastro()">
       Novo evento
     </button>
 
     <mat-form-field appearance="outline" class="filtro-tipo">
-      <mat-label>
-        Categoria de evento
-      </mat-label>
-      <mat-select placeholder="Todas as categorias" [(ngModel)]="filtroTipo" (selectionChange)="aplicarFiltro()">
-        <mat-option value="">Todas as categorias</mat-option>
+      <mat-label>Categoria</mat-label>
+      <mat-select
+        [(ngModel)]="filtroTipo"
+        [canSelectNullableOptions]="true"
+        (selectionChange)="aplicarFiltro()">
+        <mat-option [value]="null">Todos os eventos</mat-option>
         <mat-option *ngFor="let tipo of tiposDisponiveis" [value]="tipo">
-          {{ tipo }}
+          {{ formatarTextoExibicao(tipo) }}
         </mat-option>
       </mat-select>
     </mat-form-field>
@@ -19,12 +20,24 @@
 
   <app-tabela-layout
     [colunas]="colunas"
-    [dados]="eventosFiltrados"
+    [dados]="eventos"
     [acoes]="acoesTabela"
-    [tamanhoPagina]="10"
-    [tamanhosPagina]="[5, 10, 25]"
+    [carregando]="carregandoLista"
+    [erro]="erroLista"
+    [ordenacao]="ordenacao"
     [mensagemVazia]="mensagemVazia"
-    (acao)="executarAcao($event)" />
+    (acao)="executarAcao($event)"
+    (ordenar)="ordenarPor($event)"
+    (tentarNovamente)="carregarEventos()" />
+
+  <app-paginacao
+    [paginaAtual]="pagina"
+    [totalPaginas]="totalPaginas"
+    [totalElementos]="totalElementos"
+    [tamanho]="tamanho"
+    [carregando]="carregandoLista"
+    (paginaChange)="irParaPagina($event)"
+    (tamanhoChange)="mudarTamanhoPagina($event)" />
 </section>
 
 @if (modalAberto) {
@@ -34,6 +47,26 @@
   (closed)="fecharModal()">
 
   <form class="form-modal" [formGroup]="formEvento" (ngSubmit)="salvar()">
+
+    <div>
+      <mat-form-field appearance="outline">
+        <mat-label>
+          Categoria de evento
+        </mat-label>
+        <mat-select
+          formControlName="tipoEvento"
+          [canSelectNullableOptions]="false"
+          (selectionChange)="verificarErros()"
+          (blur)="verificarErros()">
+          <mat-option [value]="null">Selecione uma categoria</mat-option>
+          <mat-option [value]="TipoEvento.ARRECADACAO">Arrecadação</mat-option>
+          <mat-option [value]="TipoEvento.CULTURAL">Cultural</mat-option>
+          <mat-option [value]="TipoEvento.COMEMORATIVO">Comemorativo</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+    <span class="error-text" *ngIf="erros['tipoEvento']">{{ erros['tipoEvento'] }}</span>
+
     <mat-form-field appearance="outline">
       <mat-label>Título do evento</mat-label>
       <input matInput formControlName="titulo" (blur)="verificarErros()" maxlength="150" />
@@ -54,30 +87,6 @@
       </mat-form-field>
       <span class="error-text" *ngIf="erros['dataEvento']">{{ erros['dataEvento'] }}</span>
       </div>
-
-      <div>
-      <mat-form-field appearance="outline">
-        <mat-label>
-          Categoria de evento
-        </mat-label>
-        <mat-select formControlName="tipoEvento"(blur)="verificarErros()">
-          <mat-option [value]="TipoEvento.ARRECADACAO">Arrecadação</mat-option>
-          <mat-option [value]="TipoEvento.CULTURAL">Cultural</mat-option>
-          <mat-option [value]="TipoEvento.COMEMORATIVO">Comemorativo</mat-option>
-        </mat-select>
-      </mat-form-field>
-      <span class="error-text" *ngIf="erros['tipoEvento']">{{ erros['tipoEvento'] }}</span>
-      </div>
-    </div>
-    
-    <div class="form-row form-row-endereco-valor">
-      <div>
-        <mat-form-field appearance="outline" class="form-group-endereco">
-          <mat-label>Endereço</mat-label>
-          <input matInput formControlName="endereco" (blur)="verificarErros()" maxlength="150" />
-        </mat-form-field>
-        <span class="error-text" *ngIf="erros['endereco']">{{ erros['endereco'] }}</span>
-      </div>
       <div>
         <mat-form-field appearance="outline" class="form-group-valor">
           <mat-label>Valor (opcional)</mat-label>
@@ -92,10 +101,19 @@
         <span class="error-text" *ngIf="erros['valor']">{{ erros['valor'] }}</span>
       </div>
     </div>
+    
+    <div>
+      <mat-form-field appearance="outline" class="form-group-endereco">
+        <mat-label>Endereço</mat-label>
+        <input matInput formControlName="endereco" (blur)="verificarErros()" maxlength="150" />
+      </mat-form-field>
+    </div>
+    <span class="error-text" *ngIf="erros['endereco']">{{ erros['endereco'] }}</span>
 
-    <div class="form-group">
+
+    <div class="form-group parceiros-campo">
+      <label class="parceiros-label">Parceiros vinculados</label>
       <div class="parceiros-box">
-        <label>Parceiros vinculados</label>
         <div *ngIf="parceiros.length === 0" class="sem-parceiros">
           Nenhum parceiro disponível
         </div>
@@ -170,12 +188,12 @@
     </div>
 
     <div class="preview-info">
-      <div class="tag-tipo">{{ eventoVisualizacao.tipoEvento }}</div>
+      <div class="tag-tipo">{{ formatarTextoExibicao(eventoVisualizacao.tipoEvento) }}</div>
       <h2>{{ eventoVisualizacao.titulo }}</h2>
 
       <p class="preview-data-local">
         <span class="material-symbols-outlined">calendar_today</span>
-        {{ eventoVisualizacao.dataEvento | date:'dd/MM/yyyy HH:mm' }}<br />
+        {{ formatarDataTabela(eventoVisualizacao.dataEvento) }}<br />
         <span class="material-symbols-outlined">location_on</span>
         {{ eventoVisualizacao.endereco }}
       </p>

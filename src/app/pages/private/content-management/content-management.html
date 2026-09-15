@@ -3,13 +3,13 @@
     <h1>Conteúdo público</h1>
 
     <mat-form-field appearance="outline" class="seletor-secao">
+      <mat-label>Visualizando</mat-label>
       <mat-select
         [value]="secaoSelecionada"
-        placeholder="Escolha uma página"
         (selectionChange)="mudarSecao($event.value)"
       >
-        <mat-option value="diretoria">Diretoria</mat-option>
         <mat-option value="evento">Eventos</mat-option>
+        <mat-option value="diretoria">Diretoria</mat-option>
         <mat-option value="parceiro">Parceiros</mat-option>
         <mat-option value="redes-sociais">Redes Sociais</mat-option>
         <mat-option value="transparencia">Transparência</mat-option>
