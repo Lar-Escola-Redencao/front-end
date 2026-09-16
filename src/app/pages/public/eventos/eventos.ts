@@ -247,6 +247,10 @@ export class Eventos implements OnInit {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(evento.valor);
   }
 
+  obterUrlImagem(caminho: string | null | undefined): string {
+    return this.eventoPublicoService.tratarImagem(caminho);
+  }
+
   private atualizarPagina(): void {
     const inicio = this.paginaAtual * this.tamanhoPagina;
     const fim = inicio + this.tamanhoPagina;

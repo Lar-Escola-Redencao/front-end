@@ -1,10 +1,12 @@
 <app-public-navbar></app-public-navbar>
 
 <main class="evento-detalhe-page">
+  @if (!carregando) {
   <a class="link-voltar" routerLink="/eventos">
     <span class="material-symbols-outlined">arrow_back</span>
     Voltar para "Eventos"
   </a>
+  }
 
   @if (carregando) {
     <p class="mensagem-estado">Carregando evento...</p>
@@ -70,7 +72,7 @@
         </div>
 
         <p class="evento-meta">
-          <span class="material-symbols-outlined">calendar_today</span>
+          <span class="material-symbols-outlined">calendar_clock</span>
           {{ formatarData(evento.dataEvento) }}
         </p>
 
@@ -85,16 +87,61 @@
             <p>{{ evento.comentarioPosEvento }}</p>
           </div>
         }
+        @if (parceiros.length > 0) {
+          <section class="evento-parceiros">
+            <h2>Parceiros</h2>
+
+            <div class="evento-parceiros-carrossel" [class.sem-scroll]="!possuiCarrosselParceiros">
+              <div class="evento-parceiros-janela">
+                <div
+                  class="evento-parceiros-trilho"
+                  [class.sem-transicao]="!parceirosEmTransicao"
+                  [style.transform]="parceiroTrackTransform"
+                >
+                  @for (parceiro of parceirosCarousel; track parceiro.id + '-' + $index) {
+                    <div
+                      class="evento-parceiro-card"
+                      [style.flex-basis.%]="possuiCarrosselParceiros ? 100 / parceirosPorPagina : null"
+                      [style.min-width.%]="possuiCarrosselParceiros ? 100 / parceirosPorPagina : null"
+                    >
+                      <div class="evento-parceiro-logo">
+                        <img
+                          *ngIf="obterUrlImagem(parceiro.logo)"
+                          [src]="obterUrlImagem(parceiro.logo)"
+                          [alt]="parceiro.nome"
+                          loading="lazy"
+                          (error)="onParceiroImageError($event)"
+                        />
+                        <span
+                          class="material-symbols-outlined imagem-fallback"
+                          [class.imagem-fallback-hidden]="obterUrlImagem(parceiro.logo)"
+                          aria-hidden="true"
+                        >
+                          volunteer_activism
+                        </span>
+                      </div>
+                      <span class="evento-parceiro-nome">{{ parceiro.nome }}</span>
+                    </div>
+                  }
+                </div>
+              </div>
+
+              @if (possuiCarrosselParceiros) {
+                <button
+                  type="button"
+                  class="evento-parceiros-seta"
+                  (click)="proximoParceiro()"
+                  [disabled]="parceirosAnimando"
+                  aria-label="Proximos parceiros"
+                >
+                  <span class="material-symbols-outlined">chevron_right</span>
+                </button>
+              }
+            </div>
+          </section>
+        }
       </div>
     </div>
-
-    @if (evento.parceiros.length > 0) {
-      <app-public-parceiros
-        class="evento-parceiros-secao"
-        titulo="Parceiros deste evento"
-        [parceiros]="evento.parceiros"
-      ></app-public-parceiros>
-    }
   }
 </main>
 
