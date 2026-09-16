@@ -1,0 +1,192 @@
+<app-public-navbar></app-public-navbar>
+
+<main class="evento-detalhe-page">
+  @if (!carregando) {
+  <a class="link-voltar" routerLink="/eventos">
+    <span class="material-symbols-outlined">arrow_back</span>
+    Voltar para "Eventos"
+  </a>
+  }
+
+  @if (carregando) {
+    <p class="mensagem-estado">Carregando evento...</p>
+  } @else if (naoEncontrado || !evento) {
+    <p class="mensagem-estado">Evento não encontrado.</p>
+  } @else {
+    <div class="evento-conteudo">
+      <div class="evento-galeria">
+        <button
+          type="button"
+          class="imagem-principal-wrapper"
+          (click)="abrirLightbox()"
+          [attr.aria-label]="'Ampliar imagem do evento ' + evento.titulo"
+        >
+          @if (midiaAtual) {
+            <img class="imagem-principal" [src]="midiaAtual" [alt]="evento.titulo" />
+            <span class="imagem-principal-hint material-symbols-outlined" aria-hidden="true">zoom_in</span>
+          } @else {
+            <span class="imagem-principal-placeholder material-symbols-outlined" aria-hidden="true">image</span>
+          }
+        </button>
+
+        @if (possuiCarrossel) {
+          <div class="carrossel-controles">
+            <button type="button" class="carrossel-seta" (click)="midiaAnterior()" aria-label="Mídia anterior">
+              <span class="material-symbols-outlined">chevron_left</span>
+            </button>
+
+            <div class="miniaturas">
+              @for (midia of midias; track $index) {
+                <button
+                  type="button"
+                  class="miniatura"
+                  [class.ativa]="$index === indiceMidiaAtual"
+                  (click)="selecionarMidia($index)"
+                  [attr.aria-label]="'Ver mídia ' + ($index + 1)"
+                >
+                  <img [src]="midia" alt="" aria-hidden="true" />
+                </button>
+              }
+            </div>
+
+            <button type="button" class="carrossel-seta" (click)="proximaMidia()" aria-label="Próxima mídia">
+              <span class="material-symbols-outlined">chevron_right</span>
+            </button>
+          </div>
+        }
+      </div>
+
+      <div class="evento-info">
+        <div class="evento-titulo-linha">
+          <h1 class="evento-titulo">{{ evento.titulo }}</h1>
+          @if (eventoEncerrado()) {
+            <span class="badge-encerrado">Encerrado</span>
+          }
+        </div>
+
+        <p class="evento-descricao">{{ evento.descricao }}</p>
+
+        <div class="evento-badges">
+          <span class="badge-valor" [class.gratuito]="!evento.valor">{{ formatarValor() }}</span>
+          <span class="badge-tipo">{{ formatarTipo(evento.tipoEvento) }}</span>
+        </div>
+
+        <p class="evento-meta">
+          <span class="material-symbols-outlined">calendar_clock</span>
+          {{ formatarData(evento.dataEvento) }}
+        </p>
+
+        <p class="evento-meta">
+          <span class="material-symbols-outlined">location_on</span>
+          {{ evento.endereco }}
+        </p>
+
+        @if (evento.comentarioPosEvento) {
+          <div class="evento-nota-pos">
+            <h3>Observações da instituição após encerramento</h3>
+            <p>{{ evento.comentarioPosEvento }}</p>
+          </div>
+        }
+        @if (parceiros.length > 0) {
+          <section class="evento-parceiros">
+            <h2>{{ parceiros.length === 1 ? 'Parceiro' : 'Parceiros' }}</h2>
+
+            <div class="evento-parceiros-carrossel" [class.sem-scroll]="!possuiCarrosselParceiros">
+              @if (possuiCarrosselParceiros) {
+                <button
+                  type="button"
+                  class="evento-parceiros-seta evento-parceiros-seta-anterior apenas-mobile"
+                  (click)="parceiroAnterior()"
+                  [disabled]="parceirosAnimando"
+                  aria-label="Parceiros anteriores"
+                >
+                  <span class="material-symbols-outlined">chevron_left</span>
+                </button>
+              }
+
+              <div class="evento-parceiros-janela">
+                <div
+                  class="evento-parceiros-trilho"
+                  [class.sem-transicao]="!parceirosEmTransicao"
+                  [style.transform]="parceiroTrackTransform"
+                >
+                  @for (parceiro of parceirosCarousel; track parceiro.id + '-' + $index) {
+                    <div
+                      class="evento-parceiro-card"
+                      [style.flex-basis.%]="possuiCarrosselParceiros ? 100 / parceirosPorPagina : null"
+                      [style.min-width.%]="possuiCarrosselParceiros ? 100 / parceirosPorPagina : null"
+                    >
+                      <div class="evento-parceiro-logo">
+                        <img
+                          *ngIf="obterUrlImagem(parceiro.logo)"
+                          [src]="obterUrlImagem(parceiro.logo)"
+                          [alt]="parceiro.nome"
+                          loading="lazy"
+                          (error)="onParceiroImageError($event)"
+                        />
+                        <span
+                          class="material-symbols-outlined imagem-fallback"
+                          [class.imagem-fallback-hidden]="obterUrlImagem(parceiro.logo)"
+                          aria-hidden="true"
+                        >
+                          volunteer_activism
+                        </span>
+                      </div>
+                      <span class="evento-parceiro-nome">{{ parceiro.nome }}</span>
+                    </div>
+                  }
+                </div>
+              </div>
+
+              @if (possuiCarrosselParceiros) {
+                <button
+                  type="button"
+                  class="evento-parceiros-seta"
+                  (click)="proximoParceiro()"
+                  [disabled]="parceirosAnimando"
+                  aria-label="Proximos parceiros"
+                >
+                  <span class="material-symbols-outlined">chevron_right</span>
+                </button>
+              }
+            </div>
+          </section>
+        }
+      </div>
+    </div>
+  }
+</main>
+
+@if (lightboxAberto && midiaAtual) {
+  <div class="lightbox" (click)="fecharLightbox()">
+    <button type="button" class="lightbox-fechar" (click)="fecharLightbox()" aria-label="Fechar imagem ampliada">
+      <span class="material-symbols-outlined">close</span>
+    </button>
+
+    @if (possuiCarrossel) {
+      <button
+        type="button"
+        class="lightbox-seta lightbox-seta-anterior"
+        (click)="midiaAnterior(); $event.stopPropagation()"
+        aria-label="Mídia anterior"
+      >
+        <span class="material-symbols-outlined">chevron_left</span>
+      </button>
+    }
+
+    <img class="lightbox-imagem" [src]="midiaAtual" [alt]="evento!.titulo" (click)="$event.stopPropagation()" />
+
+    @if (possuiCarrossel) {
+      <button
+        type="button"
+        class="lightbox-seta lightbox-seta-proxima"
+        (click)="proximaMidia(); $event.stopPropagation()"
+        aria-label="Próxima mídia"
+      >
+        <span class="material-symbols-outlined">chevron_right</span>
+      </button>
+    }
+  </div>
+}
+
+<app-public-footer></app-public-footer>

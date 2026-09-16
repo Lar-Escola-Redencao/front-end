@@ -1,7 +1,12 @@
-import { Component, OnInit, OnDestroy, HostListener, inject, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, OnChanges, Input, HostListener, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Partner } from 'src/app/shared/models/partner.model';
 import { PublicContentService } from 'src/app/shared/services/public-content/public-content.service';
+
+export interface ParceiroExibicao {
+  id: number;
+  nome: string;
+  logo: string;
+}
 
 @Component({
   selector: 'app-public-parceiros',
@@ -10,12 +15,24 @@ import { PublicContentService } from 'src/app/shared/services/public-content/pub
   templateUrl: './public-parceiros.html',
   styleUrl: './public-parceiros.css'
 })
-export class PublicParceirosComponent implements OnInit, OnDestroy {
+export class PublicParceirosComponent implements OnInit, OnChanges, OnDestroy {
   private readonly publicContentService = inject(PublicContentService);
   private readonly cdr = inject(ChangeDetectorRef);
-  
-  parceirosOriginal: Partner[] = [];
-  parceirosCarousel: Partner[] = [];
+
+  /** Título exibido acima do carrossel. */
+  @Input() titulo = 'Nossos parceiros';
+
+  /**
+   * Lista de parceiros a exibir. Quando informada, o componente usa exatamente
+   * esses parceiros (sem buscar nem filtrar por `ativo`) — usado, por exemplo,
+   * na tela de detalhe do evento, onde parceiros inativos também devem aparecer
+   * para preservar o histórico institucional. Quando omitida, o componente busca
+   * os parceiros ativos cadastrados no site (comportamento da home).
+   */
+  @Input() parceiros: ParceiroExibicao[] | null = null;
+
+  parceirosOriginal: ParceiroExibicao[] = [];
+  parceirosCarousel: ParceiroExibicao[] = [];
   carregando = true;
 
   currentIndex = 0;
@@ -27,25 +44,27 @@ export class PublicParceirosComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.atualizarItemsPerPage();
+
+    if (this.parceiros) {
+      this.definirParceiros(this.parceiros);
+      return;
+    }
+
     this.publicContentService.getParceirosAtivos().subscribe({
       next: (dados) => {
-        this.parceirosOriginal = dados;
-        if (dados.length > 1) {
-          this.parceirosCarousel = [...dados, ...dados, ...dados, ...dados, ...dados];
-          this.currentIndex = dados.length * 2;
-        } else {
-          this.parceirosCarousel = [...dados];
-          this.currentIndex = 0;
-        }
-        this.carregando = false;
-        this.cdr.detectChanges();
-        this.startAutoPlay();
+        this.definirParceiros(dados);
       },
       error: () => {
         this.carregando = false;
         this.cdr.detectChanges();
       }
     });
+  }
+
+  ngOnChanges(): void {
+    if (this.parceiros) {
+      this.definirParceiros(this.parceiros);
+    }
   }
 
   ngOnDestroy(): void {
@@ -67,6 +86,20 @@ export class PublicParceirosComponent implements OnInit, OnDestroy {
     } else {
       this.itemsPerPage = 3;
     }
+  }
+
+  private definirParceiros(dados: ParceiroExibicao[]): void {
+    this.parceirosOriginal = dados;
+    if (dados.length > 1) {
+      this.parceirosCarousel = [...dados, ...dados, ...dados, ...dados, ...dados];
+      this.currentIndex = dados.length * 2;
+    } else {
+      this.parceirosCarousel = [...dados];
+      this.currentIndex = 0;
+    }
+    this.carregando = false;
+    this.cdr.detectChanges();
+    this.startAutoPlay();
   }
 
   obterUrlImagem(caminho: string | null | undefined): string {
@@ -99,7 +132,7 @@ export class PublicParceirosComponent implements OnInit, OnDestroy {
     if (this.parceirosOriginal.length <= 1 || this.isAnimating) return;
     this.isAnimating = true;
     this.currentIndex++;
-    
+
     setTimeout(() => {
       if (this.currentIndex >= this.parceirosOriginal.length * 3) {
         this.resetPosition(this.currentIndex - this.parceirosOriginal.length);
@@ -113,7 +146,7 @@ export class PublicParceirosComponent implements OnInit, OnDestroy {
     if (this.parceirosOriginal.length <= 1 || this.isAnimating) return;
     this.isAnimating = true;
     this.currentIndex--;
-    
+
     setTimeout(() => {
       if (this.currentIndex <= this.parceirosOriginal.length) {
         this.resetPosition(this.currentIndex + this.parceirosOriginal.length);
