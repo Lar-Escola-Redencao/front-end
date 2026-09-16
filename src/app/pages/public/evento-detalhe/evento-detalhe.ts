@@ -164,6 +164,32 @@ export class EventoDetalhe implements OnInit, OnDestroy {
     }, 500);
   }
 
+  parceiroAnterior(): void {
+    if (!this.possuiCarrosselParceiros || this.parceirosAnimando) return;
+    this.parceirosAnimando = true;
+    this.indiceParceiroAtual--;
+
+    if (this.indiceParceiroAtual < this.parceiros.length) {
+      setTimeout(() => {
+        this.parceirosEmTransicao = false;
+        this.indiceParceiroAtual = this.parceiros.length * 2 - 1;
+        this.cdr.detectChanges();
+
+        setTimeout(() => {
+          this.parceirosEmTransicao = true;
+          this.parceirosAnimando = false;
+          this.cdr.detectChanges();
+        }, 30);
+      }, 500);
+      return;
+    }
+
+    setTimeout(() => {
+      this.parceirosAnimando = false;
+      this.cdr.detectChanges();
+    }, 500);
+  }
+
   iniciarAutoPlayParceiros(): void {
     this.pararAutoPlayParceiros();
     if (!this.possuiCarrosselParceiros) {

@@ -410,6 +410,10 @@
   font-weight: 300;
 }
 
+.apenas-mobile {
+  display: none;
+}
+
 /* =========================
    LIGHTBOX
    ========================= */
@@ -556,32 +560,42 @@
 
   .evento-parceiros h2 {
     font-size: 16px;
-    margin-bottom: 12px;
+    margin-bottom: 24px;
+    text-align: center;
   }
 
   .evento-parceiros-carrossel {
     gap: 6px;
+    justify-content: center;
   }
 
   .evento-parceiros-janela {
-    width: calc(100% - 34px);
+    width: min(calc(100% - 68px), 360px);
   }
 
   .evento-parceiro-card {
-    padding: 0 6px 0 0;
+    align-items: center;
+    padding: 0 6px;
   }
 
   .evento-parceiro-logo {
-    height: 68px;
+    width: 92px;
+    height: 92px;
+    justify-content: center;
   }
 
   .evento-parceiro-nome {
+    width: 92px;
     font-size: 11px;
   }
 
   .evento-parceiros-seta {
     width: 28px;
     height: 28px;
+  }
+
+  .apenas-mobile {
+    display: flex;
   }
 
   .evento-parceiros-seta .material-symbols-outlined {
@@ -596,27 +610,28 @@
 
 @media (max-width: 360px) {
   .evento-parceiros-carrossel {
-    width: fit-content;
+    width: 100%;
+    justify-content: center;
     gap: 4px;
   }
 
   .evento-parceiros-janela {
-    width: 86px;
-    flex: 0 0 86px;
+    width: 104px;
+    flex: 0 0 104px;
   }
 
   .evento-parceiro-card {
     gap: 6px;
-    padding: 0;
+    padding: 0 6px;
   }
 
   .evento-parceiro-logo,
   .evento-parceiro-nome {
-    width: 72px;
+    width: 92px;
   }
 
   .evento-parceiro-logo {
-    height: 72px;
+    height: 92px;
   }
 
   .evento-parceiros-seta {
