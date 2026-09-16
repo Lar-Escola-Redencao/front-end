@@ -262,6 +262,7 @@
   background-position: center;
   box-shadow: var(--sombra-padrao);
   overflow: hidden;
+  cursor: pointer;
 }
 
 .card-evento.encerrado {

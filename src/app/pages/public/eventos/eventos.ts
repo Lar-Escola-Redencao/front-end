@@ -5,6 +5,7 @@ import {
   OnInit
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
@@ -21,6 +22,7 @@ type FiltroValor = 'todos' | 'gratuito' | 'pago';
   standalone: true,
   imports: [
     CommonModule,
+    RouterLink,
     FormsModule,
     MatFormFieldModule,
     MatSelectModule,

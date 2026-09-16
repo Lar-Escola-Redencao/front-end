@@ -24,7 +24,7 @@ export class EventoPublicoService {
 
   constructor(private http: HttpClient) {}
 
-  private tratarImagem(caminho: string | null | undefined): string {
+  tratarImagem(caminho: string | null | undefined): string {
     if (!caminho) return '';
     if (
       caminho.startsWith('http://') ||
@@ -56,6 +56,21 @@ export class EventoPublicoService {
           .map(evento => ({ ...evento, imagem: this.tratarImagem(evento.imagem) }))
           .sort((a, b) => new Date(a.dataEvento).getTime() - new Date(b.dataEvento).getTime())
       )
+    );
+  }
+
+  buscarPorId(id: number): Observable<Evento> {
+    return this.http.get<Evento>(`${this.apiUrl}/${id}`).pipe(
+      map(evento => ({
+        ...evento,
+        imagem: this.tratarImagem(evento.imagem),
+        // TODO: `midiaEvento` ainda não é retornado pelo back-end (ver evento.model.ts).
+        midiaEvento: (evento.midiaEvento ?? []).map(midia => this.tratarImagem(midia)),
+        parceiros: (evento.parceiros ?? []).map(parceiro => ({
+          ...parceiro,
+          logo: this.tratarImagem(parceiro.logo)
+        }))
+      }))
     );
   }
 
