@@ -1,0 +1,311 @@
+h1 {
+  font-family: var(--fonte-titulo);
+}
+
+.assistidos-admin {
+  min-height: calc(100vh - 130px);
+  padding: 32px 24px 48px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: var(--branco);
+}
+
+.conteudo {
+  width: min(100%, 1000px);
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
+}
+
+.acoes-assistidos {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+  justify-content: flex-start;
+}
+
+.form-modal {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.form-modal .mat-mdc-form-field {
+  width: 100%;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  width: 100%;
+}
+
+.form-row > div {
+  min-width: 0;
+  width: 100%;
+}
+
+.etapa-container {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* etapas do cadastro */
+
+.stepper-indicador {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 40px;
+  padding: 0;
+}
+
+.step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+  z-index: 2;
+}
+
+.step-numero {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: #e0e0e0;
+  color: #757575;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--fonte-texto);
+  font-weight: 700;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+}
+
+.step-texto {
+  font-family: var(--fonte-texto);
+  font-size: 0.8rem;
+  color: #a0a0a0;
+  font-weight: 500;
+  position: absolute;
+  top: 40px;
+  white-space: nowrap;
+  transition: color 0.3s ease;
+}
+
+.step.ativo .step-numero {
+  background-color: var(--primary-color);
+  color: var(--branco);
+}
+
+.step.ativo .step-texto {
+  color: var(--primary-color);
+  font-weight: 600;
+}
+
+.step-linha {
+  flex: 0 1 70px;
+  height: 2px;
+  background-color: #e0e0e0;
+  transform: translateY(-10px);
+  transition: background-color 0.3s ease;
+}
+
+.step-linha.ativo {
+  background-color: var(--primary-color);
+}
+
+
+/* cards contato */
+.contato-card {
+  border: 1px solid var(--input-border);
+  border-radius: var(--input-radius);
+  margin-bottom: 6px;
+  background: var(--branco);
+  overflow: hidden;
+  transition: box-shadow 0.2s;
+}
+
+.contato-resumo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  cursor: pointer;
+  background-color: #fcfcfc;
+  transition: background-color 0.2s;
+}
+
+.contato-resumo:hover {
+  background-color: #f5f5f5;
+}
+
+.resumo-texto {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+}
+
+.resumo-texto strong {
+  font-family: var(--fonte-texto);
+  font-size: 0.9rem;
+  color: var(--preto);
+}
+
+.resumo-texto span {
+  font-family: var(--fonte-texto);
+  font-size: 0.85rem;
+  color: var(--input-color);
+}
+
+.contato-resumo mat-icon {
+  color: var(--primary-color);
+  font-size: 20px;
+}
+
+.contato-detalhe {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.detalhe-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.detalhe-header h4 {
+  font-family: var(--fonte-texto);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--preto);
+  margin: 0;
+}
+
+.btn-remover-icon {
+  background: none;
+  border: none;
+  color: var(--error-color);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border-radius: 4px;
+}
+.btn-remover-icon:hover {
+  background-color: #fee2e2;
+}
+
+.btn-add-contato {
+  background: none;
+  border: none;
+  color: var(--input-color);
+  font-weight: 600;
+  font-family: var(--fonte-texto);
+  font-size: 0.9rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 0;
+  margin-bottom: 12px;
+  transition: color 0.2s;
+}
+
+.btn-add-contato:hover {
+  color: var(--primary-color);
+}
+.btn-add-contato mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}
+
+/* ações do modal */
+
+.acoes-modal {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 16px;
+}
+
+.btn-cancelar {
+  border: 0;
+  background: transparent;
+  color: var(--input-color);
+  cursor: pointer;
+  font-family: var(--fonte-texto);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+@media (max-width: 600px) {
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+}
+
+/* responsividade */
+
+@media (max-width: 600px) {
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .stepper-indicador {
+    gap: 2px;
+  }
+
+  .step-linha {
+    flex: 0 1 30px;
+  }
+
+  .step-texto {
+    font-size: 0.65rem;
+    top: 36px;
+  }
+
+  .resumo-texto span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 160px;
+  }
+
+  .acoes-modal {
+    flex-direction: column-reverse;
+    gap: 12px;
+  }
+
+  .acoes-modal button {
+    width: 100%;
+  }
+
+  .acoes-assistidos,
+  .acoes-assistidos .btn-primary {
+    width: 100%;
+  }
+}
