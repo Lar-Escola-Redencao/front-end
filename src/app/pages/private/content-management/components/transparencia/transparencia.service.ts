@@ -1,128 +1,76 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { environment } from 'src/environments/environment';
 import { PaginaResposta } from 'src/app/shared/models/pagina.model';
-import { construirHttpParams } from 'src/app/shared/utils/paginacao-url';
+import {
+  AtualizarSecaoDTO,
+  CriarSecaoDTO,
+  Documento,
+  DocumentoAdmin,
+  ID_PAGINA_TRANSPARENCIA,
+  Pagina,
+  PaginaCmsService,
+  Secao,
+} from 'src/app/shared/services/pagina/pagina-cms.service';
 
-export interface Secao {
-  id: number;
-  titulo: string;
-  conteudo?: string;
-  ativo: boolean;
-}
+export type { Secao, DocumentoAdmin, CriarSecaoDTO, AtualizarSecaoDTO, Documento, Pagina };
 
-export interface DocumentoAdmin {
-  id: number;
-  titulo: string;
-  arquivo: string;
-  secaoId: number;
-  secaoTitulo: string;
-}
-
-export interface CriarSecaoDTO {
-  titulo: string;
-  conteudo?: string;
-}
-
-export interface AtualizarSecaoDTO {
-  titulo: string;
-  conteudo?: string;
-  ativo: boolean;
-}
-
-export interface Documento {
-  id: number;
-  titulo: string;
-  arquivo: string;
-}
-
-export interface Pagina {
-  // Ajuste os campos conforme a sua entidade Pagina no backend, se necessário
-  [key: string]: any;
-}
-
+/**
+ * Delegador fino pro PaginaCmsService, fixando idPagina = 1 (Transparência).
+ * A assinatura pública é a mesma de antes da migração pra /paginas, então
+ * transparencia.ts e transparencia.html não precisam mudar.
+ */
 @Injectable({ providedIn: 'root' })
 export class TransparenciaService {
-  private apiUrl = `${environment.apiUrl}/transparencia`;
-
-  constructor(private http: HttpClient) { }
+  constructor(private paginaCmsService: PaginaCmsService) {}
 
   obterPagina(): Observable<Pagina> {
-    return this.http.get<Pagina>(`${this.apiUrl}`);
+    return this.paginaCmsService.obterPagina(ID_PAGINA_TRANSPARENCIA);
   }
 
   /** Rota pública, sem paginação — hoje não é usada pela tela admin. */
   listarSecoes(): Observable<Secao[]> {
-    return this.http.get<Secao[]>(`${this.apiUrl}/secoes`);
+    return this.paginaCmsService.listarSecoes(ID_PAGINA_TRANSPARENCIA);
   }
 
   /** Rota autenticada e paginada, usada pela tabela de seções da tela admin. */
   listarSecoesAdmin(pagina: number, tamanho: number, sort?: string): Observable<PaginaResposta<Secao>> {
-    const params = construirHttpParams({ pagina, tamanho, sort });
-    return this.http.get<PaginaResposta<Secao>>(`${this.apiUrl}/secoes/admin`, { params });
+    return this.paginaCmsService.listarSecoesAdmin(ID_PAGINA_TRANSPARENCIA, pagina, tamanho, sort);
   }
 
   /** Rota autenticada e paginada, usada pela tabela de documentos da tela admin. */
   listarDocumentosAdmin(pagina: number, tamanho: number, sort?: string): Observable<PaginaResposta<DocumentoAdmin>> {
-    const params = construirHttpParams({ pagina, tamanho, sort });
-    return this.http.get<PaginaResposta<DocumentoAdmin>>(`${this.apiUrl}/documentos/admin`, { params });
+    return this.paginaCmsService.listarDocumentosAdmin(ID_PAGINA_TRANSPARENCIA, pagina, tamanho, sort);
   }
 
   buscarSecao(id: number): Observable<Secao> {
-    return this.http.get<Secao>(`${this.apiUrl}/secao/${id}`);
+    return this.paginaCmsService.buscarSecao(id);
   }
 
   criarSecao(dto: CriarSecaoDTO): Observable<Secao> {
-    const formData = new FormData();
-    formData.append('titulo', dto.titulo);
-    formData.append('conteudo', dto.conteudo ?? '');
-    return this.http.post<Secao>(`${this.apiUrl}/criar-secao`, formData);
+    return this.paginaCmsService.criarSecao(ID_PAGINA_TRANSPARENCIA, dto);
   }
 
   atualizarSecao(id: number, dto: AtualizarSecaoDTO): Observable<Secao> {
-    const formData = new FormData();
-
-    formData.append('titulo', dto.titulo);
-    formData.append('conteudo', dto.conteudo ?? '');
-    formData.append('ativo', dto.ativo.toString());
-
-    return this.http.put<Secao>(
-      `${this.apiUrl}/secao/${id}`,
-      formData
-    );
+    return this.paginaCmsService.atualizarSecao(id, dto);
   }
 
   deletarSecao(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/secao/${id}`);
+    return this.paginaCmsService.deletarSecao(id);
   }
 
   adicionarDocumento(secaoId: number, titulo: string, arquivo: File): Observable<Documento> {
-    const formData = new FormData();
-    formData.append('titulo', titulo);
-    formData.append('arquivo', arquivo);
-    return this.http.post<Documento>(`${this.apiUrl}/secao/${secaoId}/upload-documento`, formData);
+    return this.paginaCmsService.adicionarDocumento(secaoId, titulo, arquivo);
   }
 
   atualizarDocumento(id: number, secaoId: number, titulo: string, arquivo?: File): Observable<Documento> {
-    const formData = new FormData();
-    formData.append('secaoId', secaoId.toString());
-    formData.append('titulo', titulo);
-
-    if (arquivo) {
-      formData.append('arquivo', arquivo);
-    }
-
-    return this.http.put<Documento>(`${this.apiUrl}/documento/${id}`, formData);
+    return this.paginaCmsService.atualizarDocumento(id, secaoId, titulo, arquivo);
   }
 
   baixarDocumento(id: number): Observable<Blob> {
-    return this.http.get(`${this.apiUrl}/documento/${id}/download`, {
-      responseType: 'blob'
-    });
+    return this.paginaCmsService.baixarDocumento(id);
   }
 
   deletarDocumento(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/documento/${id}`);
+    return this.paginaCmsService.deletarDocumento(id);
   }
 }

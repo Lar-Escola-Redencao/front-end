@@ -1,0 +1,215 @@
+.sobre-admin {
+  width: 100%;
+}
+
+.abas-container {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid #ddd;
+}
+
+.aba-btn {
+  font-family: var(--fonte-texto);
+  padding: 12px 24px;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--input-border);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.aba-btn:hover {
+  color: var(--primary-color);
+}
+
+.aba-btn.ativa {
+  color: var(--primary-color);
+  border-bottom-color: var(--primary-color);
+}
+
+/* ---------------------------------------------------------------- */
+/* FORMULÁRIOS (Aba 1 e modal da Aba 3) */
+/* ---------------------------------------------------------------- */
+
+.form-modal {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.form-modal .mat-mdc-form-field {
+  width: 100%;
+}
+
+.form-texto {
+  max-width: 640px;
+}
+
+.campo-textarea {
+  min-height: 116px;
+}
+
+.campo-textarea ::ng-deep .mat-mdc-text-field-wrapper {
+  height: 116px;
+}
+
+.campo-textarea textarea {
+  resize: none;
+}
+
+.acoes-modal {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 28px;
+  margin-top: 4px;
+}
+
+.btn-cancelar {
+  border: 0;
+  background: transparent;
+  color: var(--input-color);
+  cursor: pointer;
+  font-family: var(--fonte-texto);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.btn-primary-thick {
+  padding-top: 14px;
+  padding-bottom: 14px;
+  font-weight: 700;
+}
+
+.acoes-historia {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 16px;
+}
+
+/* ---------------------------------------------------------------- */
+/* ESTADOS DE CARREGAMENTO/ERRO (Abas 1 e 2, sem TabelaLayout) */
+/* ---------------------------------------------------------------- */
+
+.estado-pagina {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 40px 0;
+  color: var(--input-color);
+  font-family: var(--fonte-texto);
+}
+
+.estado-pagina-erro {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.botao-tentar-novamente {
+  border: 1px solid var(--primary-color);
+  background: transparent;
+  color: var(--primary-color);
+  border-radius: var(--input-radius);
+  padding: 8px 16px;
+  font-family: var(--fonte-texto);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.botao-tentar-novamente:hover {
+  background: var(--primary-color);
+  color: var(--branco);
+}
+
+/* ---------------------------------------------------------------- */
+/* ABA 2 — GRADE DE 10 SLOTS DO CARROSSEL */
+/* ---------------------------------------------------------------- */
+
+.grade-carrossel {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 16px;
+}
+
+.slot-carrossel {
+  position: relative;
+}
+
+.upload-arquivo-slot {
+  position: relative;
+  min-height: 160px;
+  overflow: hidden;
+}
+
+.slot-carrossel-imagem {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: var(--input-radius);
+}
+
+.slot-carrossel-imagem + .upload-arquivo-texto {
+  position: relative;
+  z-index: 1;
+  background: rgba(0, 0, 0, 0.55);
+  color: var(--branco);
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.slot-carrossel-carregando .upload-arquivo-slot {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+/* ---------------------------------------------------------------- */
+/* SPINNER (botões de salvar) */
+/* ---------------------------------------------------------------- */
+
+.spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-top-color: var(--branco);
+  border-radius: 50%;
+  display: inline-block;
+  animation: girar 0.7s linear infinite;
+}
+
+.spinner-escuro {
+  border: 2px solid var(--input-border);
+  border-top-color: var(--primary-color);
+}
+
+@keyframes girar {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 600px) {
+  .acoes-modal,
+  .acoes-modal .btn-primary {
+    width: 100%;
+  }
+
+  .acoes-modal {
+    justify-content: space-between;
+  }
+
+  .acoes-historia,
+  .acoes-historia .btn-primary {
+    width: 100%;
+  }
+
+  .grade-carrossel {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

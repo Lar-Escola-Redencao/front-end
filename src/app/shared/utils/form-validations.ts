@@ -38,7 +38,10 @@ const MENSAGENS_GENERICAS: Record<string, (err: any) => string> = {
     'Formato de arquivo inválido.',
 
   tamanhoArquivoExcedido: (err) =>
-    `O arquivo deve ter no máximo ${err.tamanhoMaximoMB}MB.`
+    `O arquivo deve ter no máximo ${err.tamanhoMaximoMB}MB.`,
+
+  anoInvalido: () =>
+    'O título deve ser um ano com 4 dígitos (ex.: 2015).'
 
 };
 
@@ -228,6 +231,46 @@ export function validarDocumento(): ValidatorFn {
     ],
     TAMANHO_MAXIMO_ARQUIVO_BYTES
   );
+}
+
+
+// =========================================================
+// VALIDAÇÃO DE ANO
+// =========================================================
+
+/**
+ * Ano mínimo aceito pro título de um bloco de "Nossa História".
+ */
+export const ANO_MINIMO = 1900;
+
+/**
+ * Valida que o título é um ano com 4 dígitos, dentro de uma faixa razoável
+ * (de ANO_MINIMO até o ano que vem). É esse ano que ordena a linha do
+ * tempo pública, então não aceita texto livre tipo "2015 - fundação".
+ *
+ * Campo vazio não é responsabilidade deste validator.
+ */
+export function validarAno(): ValidatorFn {
+  return (control: AbstractControl) => {
+    const valor = String(control.value ?? '').trim();
+
+    if (!valor) {
+      return null;
+    }
+
+    if (!/^\d{4}$/.test(valor)) {
+      return { anoInvalido: { valor } };
+    }
+
+    const ano = Number(valor);
+    const anoMaximo = new Date().getFullYear() + 1;
+
+    if (ano < ANO_MINIMO || ano > anoMaximo) {
+      return { anoInvalido: { valor, anoMinimo: ANO_MINIMO, anoMaximo } };
+    }
+
+    return null;
+  };
 }
 
 
