@@ -38,12 +38,14 @@ import {
 import { Paginacao } from '@components/paginacao/paginacao';
 
 import { ComponentComAlteracoesNaoSalvas } from 'src/app/shared/guards/can-deactivate.guard';
-import { AssistidoService, ContatoService } from 'src/app/shared/services/assistido/assistido.service';
+import { AssistidoService } from 'src/app/shared/services/assistido/assistido.service';
+import { ContatoService } from 'src/app/shared/services/contato/contato.service';
 import { AssistidoResponseDTO, CriarAssistidoDTO } from 'src/app/shared/models/assistido.model';
 import { ContatoListagemDTO } from 'src/app/shared/models/contato.model';
 import { Alertas } from 'src/app/shared/utils/alerts';
 import { mapearErrosFormulario } from 'src/app/shared/utils/form-validations';
 import { formatarCpf, formatarTelefone } from 'src/app/shared/utils/masks';
+
 import {
   CampoOrdenacao,
   alternarOrdenacao,
@@ -86,7 +88,14 @@ export class AssistidoComponent implements OnInit, OnDestroy, ComponentComAltera
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
+  // =========================================================
+  // LISTAGEM, ABAS E PAGINAÇÃO
+  // =========================================================
+  abaAtiva: 'assistidos' | 'contatos' = 'assistidos';
+  todosAssistidos: AssistidoResponseDTO[] = [];
   assistidos: AssistidoResponseDTO[] = [];
+  contatos: ContatoListagemDTO[] = [];
+
   pagina = 0;
   tamanho = 10;
   sort: string | undefined;
@@ -97,6 +106,9 @@ export class AssistidoComponent implements OnInit, OnDestroy, ComponentComAltera
   erroLista = false;
   private routeSub?: Subscription;
 
+  // =========================================================
+  // MODAIS E CONTROLES
+  // =========================================================
   modalAberto = false;
   modoEdicao = false;
   modalTremendo = false;
@@ -105,6 +117,23 @@ export class AssistidoComponent implements OnInit, OnDestroy, ComponentComAltera
   etapaModal = 1;
   contatoExpandidoIndex = 0;
   assistidoSelecionadoId: number | null = null;
+
+  // Modal Rápido de Contato
+  modalContatoAberto = false;
+  contatoEmEdicaoId: number | null = null;
+  formEdicaoContato = this.fb.group({
+    nomeCompleto: ['', Validators.required],
+    telefone: ['', [Validators.required, Validators.minLength(14)]],
+    email: ['', Validators.email],
+    endereco: ['']
+  });
+
+  // Modais de Preview
+  modalPreviewAssistidoAberto = false;
+  assistidoPreview: any = null;
+
+  modalPreviewContatoAberto = false;
+  contatoPreview: any = null;
 
   formAssistido!: FormGroup;
   erros: { [key: string]: string } = {};
@@ -129,6 +158,9 @@ export class AssistidoComponent implements OnInit, OnDestroy, ComponentComAltera
     { label: 'Outro', value: 'OUTRO' }
   ];
 
+  // =========================================================
+  // COLUNAS E AÇÕES DAS TABELAS
+  // =========================================================
   colunas: TabelaColuna<AssistidoResponseDTO>[] = [
     { chave: 'nomeCompleto', titulo: 'Nome do Assistido', principalMobile: true, ordenavel: true },
     { chave: 'cpf', titulo: 'CPF/Documento', formatar: (v, linha) => v || linha.documentoAuxiliar || '-' },
@@ -136,16 +168,31 @@ export class AssistidoComponent implements OnInit, OnDestroy, ComponentComAltera
       chave: 'dataNascimento',
       titulo: 'Data de Nascimento',
       formatar: (valor) => valor ? new Date(valor).toLocaleDateString('pt-BR') : '-'
-    }
+    },
+    { titulo: 'Turma', chave: 'nomeTurma' as keyof AssistidoResponseDTO }
   ];
 
   acoesTabela: TabelaAcao<AssistidoResponseDTO>[] = [
+    { icone: 'visibility', tooltip: 'Visualizar detalhes', acao: 'ver' },
     { icone: 'edit', tooltip: 'Editar', acao: 'editar' },
     { icone: 'delete', tooltip: 'Excluir', acao: 'excluir' }
   ];
 
-  todosAssistidos: AssistidoResponseDTO[] = []; // <-- ADICIONAR ISTO
+  colunasContatos: TabelaColuna<ContatoListagemDTO>[] = [
+    { chave: 'nomeCompleto', titulo: 'Nome do Responsável', principalMobile: true, ordenavel: true },
+    { chave: 'telefone', titulo: 'Telefone', formatar: (v) => formatarTelefone(v) },
+    { chave: 'quantidadeVinculos', titulo: 'Vínculos Ativos' }
+  ];
 
+  acoesTabelaContatos: TabelaAcao<ContatoListagemDTO>[] = [
+    { icone: 'visibility', tooltip: 'Visualizar detalhes', acao: 'ver' },
+    { icone: 'edit', tooltip: 'Editar contato', acao: 'editar_contato' },
+    { icone: 'delete', tooltip: 'Excluir', acao: 'excluir_contato' }
+  ];
+
+  // =========================================================
+  // CICLO DE VIDA E ABAS
+  // =========================================================
   ngOnInit(): void {
     this.iniciarFormulario();
     this.carregarUnidades();
@@ -157,17 +204,31 @@ export class AssistidoComponent implements OnInit, OnDestroy, ComponentComAltera
       this.sort = sort;
       this.ordenacao = analisarOrdenacao(sort);
 
-      // Paginação local: se já tem os dados em memória, apenas reorganiza
-      if (this.todosAssistidos.length === 0 && !this.carregandoLista) {
-         this.carregarAssistidos();
+      this.abaAtiva = params.get('aba') === 'contatos' ? 'contatos' : 'assistidos';
+
+      if (this.abaAtiva === 'assistidos') {
+        if (this.todosAssistidos.length === 0 && !this.carregandoLista) {
+           this.carregarAssistidos();
+        } else {
+           this.aplicarPaginacao();
+        }
       } else {
-         this.aplicarPaginacao();
+        this.carregarContatos();
       }
     });
   }
 
   ngOnDestroy(): void {
     this.routeSub?.unsubscribe();
+  }
+
+  mudarAba(aba: 'assistidos' | 'contatos') {
+    if (this.abaAtiva === aba) return;
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { aba: aba, page: 0, sort: null },
+      queryParamsHandling: 'merge'
+    });
   }
 
   carregarAssistidos(): void {
@@ -189,6 +250,32 @@ export class AssistidoComponent implements OnInit, OnDestroy, ComponentComAltera
           this.carregandoLista = false;
           this.erroLista = true;
           this.toastr.error('Erro ao carregar a lista de assistidos.', 'Erro');
+          this.cdr.detectChanges();
+        });
+      }
+    });
+  }
+
+  carregarContatos(): void {
+    if (this.carregandoLista) return;
+    this.carregandoLista = true;
+    this.erroLista = false;
+
+    this.contatoService.listarContatos(this.pagina, this.tamanho, this.sort).subscribe({
+      next: (resposta) => {
+        this.ngZone.run(() => {
+          this.contatos = resposta.content;
+          this.totalElementos = resposta.page.totalElements;
+          this.totalPaginas = resposta.page.totalPages;
+          this.carregandoLista = false;
+          this.cdr.detectChanges();
+        });
+      },
+      error: () => {
+        this.ngZone.run(() => {
+          this.carregandoLista = false;
+          this.erroLista = true;
+          this.toastr.error('Erro ao carregar a lista de contatos.', 'Erro');
           this.cdr.detectChanges();
         });
       }
@@ -236,7 +323,7 @@ export class AssistidoComponent implements OnInit, OnDestroy, ComponentComAltera
     if (idUnidade) {
       this.turmaService.listar(idUnidade).subscribe(turmas => {
         this.turmasDisponiveis = turmas.filter(t => t.unidade.id === idUnidade);
-        turmaCtrl?.enable(); // Libera o campo após carregar as turmas
+        turmaCtrl?.enable();
       });
     }
   }
@@ -251,7 +338,7 @@ export class AssistidoComponent implements OnInit, OnDestroy, ComponentComAltera
       tipoDocumento: [''],
       documentoAuxiliar: [''],
       idUnidade: [null, Validators.required],
-      idTurma: [{ value: null, disabled: true }, Validators.required], // <--- INICIA DESABILITADO
+      idTurma: [{ value: null, disabled: true }, Validators.required],
       contatos: this.fb.array([])
     });
 
@@ -327,7 +414,6 @@ export class AssistidoComponent implements OnInit, OnDestroy, ComponentComAltera
           idUnidade: dadosCompletos.idUnidade || null
         });
 
-        // Se o back-end enviou a unidade, carregamos as turmas dela e preenchemos o idTurma
         if (dadosCompletos.idUnidade) {
           const turmaCtrl = this.formAssistido.get('idTurma');
           this.turmaService.listar(dadosCompletos.idUnidade).subscribe(turmas => {
@@ -368,6 +454,64 @@ export class AssistidoComponent implements OnInit, OnDestroy, ComponentComAltera
         this.fecharModalSemConfirmacao();
       }
     });
+  }
+
+  abrirPreviewAssistido(assistidoLista: AssistidoResponseDTO) {
+    this.isLoading = true;
+    this.assistidoService.buscarPorId(assistidoLista.id).subscribe({
+      next: (dadosCompletos) => {
+        this.ngZone.run(() => {
+          this.assistidoPreview = dadosCompletos;
+          this.isLoading = false;
+          this.modalPreviewAssistidoAberto = true;
+          this.cdr.detectChanges();
+        });
+      },
+      error: () => {
+        this.toastr.error('Erro ao carregar detalhes do assistido.');
+        this.isLoading = false;
+      }
+    });
+  }
+
+  fecharPreviewAssistido() {
+    this.modalPreviewAssistidoAberto = false;
+    this.assistidoPreview = null;
+  }
+
+  abrirPreviewContato(contato: ContatoListagemDTO) {
+    let nomesVinculados: string[] = [];
+
+    // Usando 'this.assistidos' e tipando explicitamente os parâmetros
+    if (this.assistidos && this.assistidos.length > 0) {
+      nomesVinculados = this.assistidos
+        .filter((ass: AssistidoResponseDTO) => ass.contatos?.some((c: any) => c.nomeCompleto === contato.nomeCompleto))
+        .map((ass: AssistidoResponseDTO) => ass.nomeCompleto);
+    }
+
+    this.contatoPreview = {
+      ...contato,
+      email: contato.email || 'Não informado',
+      endereco: (contato as any).endereco || 'Não informado',
+
+      assistidosVinculados: nomesVinculados.length > 0
+        ? nomesVinculados
+        : ['Nomes indisponíveis (Aguardando API)']
+    };
+
+    this.modalPreviewContatoAberto = true;
+  }
+
+  fecharPreviewContato() {
+    this.modalPreviewContatoAberto = false;
+    this.contatoPreview = null;
+  }
+
+  // Atalho para ir direto do preview para a edição
+  editarDoPreviewAssistido() {
+    const assistido = { ...this.assistidoPreview };
+    this.fecharPreviewAssistido();
+    this.abrirEdicao(assistido);
   }
 
   fecharModal() {
@@ -510,7 +654,7 @@ export class AssistidoComponent implements OnInit, OnDestroy, ComponentComAltera
       telefone: formatarTelefone(contato.telefone),
       email: contato.email,
       endereco: contato.endereco
-    }, { emitEvent: false }); // CORREÇÃO: Impede que o preenchimento automático apague o ID
+    }, { emitEvent: false });
 
     this.opcoesAutocomplete[index] = [];
   }
@@ -531,6 +675,16 @@ export class AssistidoComponent implements OnInit, OnDestroy, ComponentComAltera
   aplicarMascaraTelefoneContato(index: number, event: Event) {
     const input = event.target as HTMLInputElement;
     this.contatosArray.at(index).get('telefone')?.setValue(formatarTelefone(input.value), { emitEvent: false });
+  }
+
+  formatarDocumentoPreview(assistido: any): string {
+    if (assistido.cpf) {
+      return formatarCpf(assistido.cpf);
+    }
+    if (assistido.documentoAuxiliar) {
+      return `${assistido.documentoAuxiliar} (${assistido.tipoDocumento || 'Outro'})`;
+    }
+    return 'Não informado';
   }
 
   // =========================================================
@@ -568,17 +722,13 @@ export class AssistidoComponent implements OnInit, OnDestroy, ComponentComAltera
 
     const dados = this.formAssistido.getRawValue();
 
-    // =========================================================
-    // VALIDAÇÃO FRONT-END: IMPEDE CONTATOS DUPLICADOS
-    // =========================================================
     const contatos = dados.contatos || [];
     const telefones = contatos.map((c: any) => c.telefone?.replace(/\D/g, '')).filter((t: string) => !!t);
     const ids = contatos.map((c: any) => c.id).filter((id: any) => id !== null);
 
-    // Verifica se há telefones repetidos ou IDs repetidos na lista
     if (new Set(telefones).size !== telefones.length || (ids.length > 0 && new Set(ids).size !== ids.length)) {
       this.toastr.warning('Não é possível adicionar o mesmo contato mais do que uma vez.', 'Contatos duplicados');
-      return; // Para o envio aqui
+      return;
     }
 
     this.isLoading = true;
@@ -623,20 +773,17 @@ export class AssistidoComponent implements OnInit, OnDestroy, ComponentComAltera
         }
       });
     } else {
-      // O código que do assistidoService.criar(dto)... else {
       this.assistidoService.criar(dto).subscribe({
         next: () => {
-          // NgZone força o Angular a atualizar a interface imediatamente
           this.ngZone.run(() => {
             this.isLoading = false;
             this.toastr.success('Assistido cadastrado com sucesso!', 'Sucesso');
             this.fecharModalSemConfirmacao();
-            this.todosAssistidos = []; // Limpa para forçar recarga
+            this.todosAssistidos = [];
             this.carregarAssistidos();
           });
         },
         error: (err: any) => {
-          // NgZone corrige o "travamento" do botão
           this.ngZone.run(() => {
             this.isLoading = false;
             const msgErro = err.error?.message || err.error?.detail || 'Erro ao cadastrar assistido.';
@@ -651,9 +798,69 @@ export class AssistidoComponent implements OnInit, OnDestroy, ComponentComAltera
   // =========================================================
   // AÇÕES DA TABELA E NAVEGAÇÃO
   // =========================================================
-  executarAcao(evento: { tipo: string; linha: AssistidoResponseDTO }) {
+  executarAcao(evento: { tipo: string; linha: any }) {
+    if (evento.tipo === 'ver' || evento.tipo === 'visualizar') {
+      if (this.abaAtiva === 'assistidos') {
+        this.abrirPreviewAssistido(evento.linha);
+      } else {
+        this.abrirPreviewContato(evento.linha);
+      }
+    }
     if (evento.tipo === 'editar') this.abrirEdicao(evento.linha);
     if (evento.tipo === 'excluir') this.excluirAssistido(evento.linha);
+
+    if (evento.tipo === 'editar_contato') this.abrirEdicaoContato(evento.linha);
+    if (evento.tipo === 'excluir_contato') this.excluirContato(evento.linha);
+  }
+
+  abrirEdicaoContato(contato: ContatoListagemDTO) {
+    this.contatoEmEdicaoId = contato.id;
+    this.formEdicaoContato.patchValue({
+      nomeCompleto: contato.nomeCompleto,
+      telefone: formatarTelefone(contato.telefone),
+      email: contato.email || '',
+      endereco: (contato as any).endereco || ''
+    });
+    this.modalContatoAberto = true;
+  }
+
+  fecharModalContato() {
+    this.modalContatoAberto = false;
+    this.contatoEmEdicaoId = null;
+    this.formEdicaoContato.reset();
+  }
+
+  salvarEdicaoContato() {
+    if (this.formEdicaoContato.invalid || !this.contatoEmEdicaoId) {
+      this.formEdicaoContato.markAllAsTouched();
+      return;
+    }
+
+    const dados = this.formEdicaoContato.getRawValue();
+    const dto = {
+      nomeCompleto: dados.nomeCompleto,
+      telefone: dados.telefone?.replace(/\D/g, ''),
+      email: dados.email || undefined,
+      endereco: dados.endereco
+    };
+
+    this.isLoading = true;
+    this.contatoService.atualizarContato(this.contatoEmEdicaoId, dto).subscribe({
+      next: () => {
+        this.ngZone.run(() => {
+          this.isLoading = false;
+          this.toastr.success('Contato atualizado com sucesso!', 'Sucesso');
+          this.fecharModalContato();
+          this.carregarContatos();
+        });
+      },
+      error: (err: any) => {
+        this.ngZone.run(() => {
+          this.isLoading = false;
+          this.toastr.error(err.error?.message || 'Erro ao atualizar contato.', 'Erro');
+        });
+      }
+    });
   }
 
   excluirAssistido(assistido: AssistidoResponseDTO) {
@@ -667,7 +874,6 @@ export class AssistidoComponent implements OnInit, OnDestroy, ComponentComAltera
         next: () => {
           this.ngZone.run(() => {
             this.toastr.success('Assistido excluído com sucesso!', 'Sucesso');
-            // CORREÇÃO: Liberta a trava de carregamento ANTES de chamar a nova busca
             this.carregandoLista = false;
             this.todosAssistidos = [];
             this.carregarAssistidos();
@@ -677,6 +883,37 @@ export class AssistidoComponent implements OnInit, OnDestroy, ComponentComAltera
           this.ngZone.run(() => {
             this.carregandoLista = false;
             this.toastr.error(err.error?.message || 'Erro ao excluir assistido.', 'Erro');
+            this.cdr.detectChanges();
+          });
+        }
+      });
+    });
+  }
+
+  excluirContato(contato: ContatoListagemDTO) {
+    if (contato.quantidadeVinculos > 0) {
+      this.toastr.warning(`Não é possível excluir. Este contato possui ${contato.quantidadeVinculos} vínculo(s) ativo(s).`, 'Atenção');
+      return;
+    }
+
+    Alertas.confirmarExclusao().then(confirmado => {
+      if (!confirmado) return;
+
+      this.carregandoLista = true;
+      this.cdr.detectChanges();
+
+      this.contatoService.deletarContato(contato.id).subscribe({
+        next: () => {
+          this.ngZone.run(() => {
+            this.toastr.success('Contato excluído com sucesso!', 'Sucesso');
+            this.carregandoLista = false;
+            this.carregarContatos();
+          });
+        },
+        error: (err: any) => {
+          this.ngZone.run(() => {
+            this.carregandoLista = false;
+            this.toastr.error(err.error?.message || 'Erro ao excluir contato.', 'Erro');
             this.cdr.detectChanges();
           });
         }
