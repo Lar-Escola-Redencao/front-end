@@ -18,7 +18,7 @@ import {
 } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription, of } from 'rxjs';
-import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, switchMap, catchError } from 'rxjs/operators';
 
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -39,7 +39,7 @@ import { Paginacao } from '@components/paginacao/paginacao';
 
 import { ComponentComAlteracoesNaoSalvas } from 'src/app/shared/guards/can-deactivate.guard';
 import { AssistidoService, ContatoService } from 'src/app/shared/services/assistido/assistido.service';
-import { AssistidoResponseDTO } from 'src/app/shared/models/assistido.model';
+import { AssistidoResponseDTO, CriarAssistidoDTO } from 'src/app/shared/models/assistido.model';
 import { ContatoListagemDTO } from 'src/app/shared/models/contato.model';
 import { Alertas } from 'src/app/shared/utils/alerts';
 import { mapearErrosFormulario } from 'src/app/shared/utils/form-validations';
@@ -227,11 +227,15 @@ export class AssistidoComponent implements OnInit, OnDestroy, ComponentComAltera
   }
 
   onUnidadeChange(idUnidade: number) {
-    this.formAssistido.get('idTurma')?.setValue(null);
+    const turmaCtrl = this.formAssistido.get('idTurma');
+    turmaCtrl?.setValue(null);
+    turmaCtrl?.disable();
     this.turmasDisponiveis = [];
+
     if (idUnidade) {
       this.turmaService.listar(idUnidade).subscribe(turmas => {
-        this.turmasDisponiveis = turmas;
+        this.turmasDisponiveis = turmas.filter(t => t.unidade.id === idUnidade);
+        turmaCtrl?.enable(); // Libera o campo após carregar as turmas
       });
     }
   }
@@ -242,27 +246,25 @@ export class AssistidoComponent implements OnInit, OnDestroy, ComponentComAltera
       dataNascimento: ['', Validators.required],
       endereco: ['', [Validators.required, Validators.minLength(5)]],
       usarOutroDocumento: [false],
-      // CPF começa como obrigatório por padrão
       cpf: ['', [Validators.required, Validators.minLength(14)]],
       tipoDocumento: [''],
       documentoAuxiliar: [''],
       idUnidade: [null, Validators.required],
-      idTurma: [null, Validators.required],
+      idTurma: [{ value: null, disabled: true }, Validators.required], // <--- INICIA DESABILITADO
       contatos: this.fb.array([])
     });
 
-    // Alterna a obrigatoriedade dinamicamente
     this.formAssistido.get('usarOutroDocumento')?.valueChanges.subscribe((usarOutro) => {
       const cpfCtrl = this.formAssistido.get('cpf');
       const tipoDocCtrl = this.formAssistido.get('tipoDocumento');
       const docAuxCtrl = this.formAssistido.get('documentoAuxiliar');
 
       if (usarOutro) {
-        cpfCtrl?.clearValidators(); // Remove validação do CPF
+        cpfCtrl?.clearValidators();
         tipoDocCtrl?.setValidators([Validators.required]);
         docAuxCtrl?.setValidators([Validators.required]);
       } else {
-        cpfCtrl?.setValidators([Validators.required, Validators.minLength(14)]); // Retorna validação do CPF
+        cpfCtrl?.setValidators([Validators.required, Validators.minLength(14)]);
         tipoDocCtrl?.clearValidators();
         docAuxCtrl?.clearValidators();
       }
@@ -288,10 +290,12 @@ export class AssistidoComponent implements OnInit, OnDestroy, ComponentComAltera
     this.isLoading = false;
 
     this.iniciarFormulario();
-    this.adicionarContato(true); // Insere contato principal
-    this.formAssistido.markAsPristine();
-    this.valoresOriginaisDoFormulario = this.formAssistido.getRawValue();
+    this.adicionarContato(true);
 
+    this.formAssistido.markAsPristine();
+    this.formAssistido.markAsUntouched();
+
+    this.valoresOriginaisDoFormulario = this.formAssistido.getRawValue();
     this.modalAberto = true;
   }
 
@@ -334,10 +338,11 @@ export class AssistidoComponent implements OnInit, OnDestroy, ComponentComAltera
   }
 
   proximaEtapa() {
-    this.formAssistido.markAllAsTouched();
-    this.verificarErros();
-
     if (this.etapaModal === 1) {
+      const step1Controls = ['nomeCompleto', 'dataNascimento', 'endereco', 'cpf', 'tipoDocumento', 'documentoAuxiliar', 'usarOutroDocumento'];
+      step1Controls.forEach(c => this.formAssistido.get(c)?.markAsTouched());
+      this.verificarErros();
+
       const nomeInvalido = this.formAssistido.get('nomeCompleto')?.invalid;
       const dataInvalida = this.formAssistido.get('dataNascimento')?.invalid;
       const enderecoInvalido = this.formAssistido.get('endereco')?.invalid;
@@ -350,6 +355,9 @@ export class AssistidoComponent implements OnInit, OnDestroy, ComponentComAltera
       }
     }
     else if (this.etapaModal === 2) {
+      ['idUnidade', 'idTurma'].forEach(c => this.formAssistido.get(c)?.markAsTouched());
+      this.verificarErros();
+
       if (this.formAssistido.get('idUnidade')?.invalid || this.formAssistido.get('idTurma')?.invalid) {
         return;
       }
@@ -373,8 +381,7 @@ export class AssistidoComponent implements OnInit, OnDestroy, ComponentComAltera
       nomeCompleto: ['', Validators.required],
       parentesco: ['', Validators.required],
       telefone: ['', [Validators.required, Validators.minLength(14)]],
-      email: [''],
-      endereco: [''],
+      email: ['', Validators.email],
       principal: [isPrincipal]
     });
 
@@ -383,23 +390,33 @@ export class AssistidoComponent implements OnInit, OnDestroy, ComponentComAltera
     this.opcoesAutocomplete[index] = [];
     this.contatoExpandidoIndex = index;
 
-    // RxJS Deduplicação
     contatoForm.get('nomeCompleto')?.valueChanges.pipe(
       debounceTime(300),
       distinctUntilChanged(),
       switchMap(termo => {
-        if (termo && typeof termo === 'string' && termo.length >= 3 && !contatoForm.get('id')?.value) {
-          return this.contatoService.buscarAutocomplete(termo);
+        if (contatoForm.get('id')?.value) {
+          contatoForm.get('id')?.setValue(null, { emitEvent: false });
+        }
+
+        if (termo && typeof termo === 'string' && termo.trim().length >= 3) {
+          return this.contatoService.buscarAutocomplete(termo.trim()).pipe(
+            catchError(() => of([]))
+          );
         }
         return of([]);
       })
     ).subscribe(resultados => {
-      this.opcoesAutocomplete[index] = resultados;
+      this.opcoesAutocomplete[index] = resultados.map(r => ({
+        ...r,
+        telefone: formatarTelefone(r.telefone)
+      }));
       this.cdr.detectChanges();
     });
   }
 
-  removerContato(index: number) {
+  removerContato(index: number, event?: Event) {
+    if (event) event.stopPropagation();
+
     if (this.contatosArray.at(index).get('principal')?.value) {
       this.toastr.warning('O contato principal não pode ser removido.');
       return;
@@ -410,7 +427,7 @@ export class AssistidoComponent implements OnInit, OnDestroy, ComponentComAltera
   }
 
   expandirContato(index: number) {
-    this.contatoExpandidoIndex = index;
+    this.contatoExpandidoIndex = this.contatoExpandidoIndex === index ? -1 : index;
   }
 
   selecionarContatoExistente(index: number, contato: ContatoListagemDTO) {
@@ -421,7 +438,8 @@ export class AssistidoComponent implements OnInit, OnDestroy, ComponentComAltera
       telefone: formatarTelefone(contato.telefone),
       email: contato.email,
       endereco: contato.endereco
-    });
+    }, { emitEvent: false }); // CORREÇÃO: Impede que o preenchimento automático apague o ID
+
     this.opcoesAutocomplete[index] = [];
   }
 
@@ -467,20 +485,33 @@ export class AssistidoComponent implements OnInit, OnDestroy, ComponentComAltera
     this.formAssistido.markAllAsTouched();
     this.verificarErros();
 
-    // Forçar validação visual nos arrays
     for (let i = 0; i < this.contatosArray.length; i++) {
       (this.contatosArray.at(i) as FormGroup).markAllAsTouched();
     }
 
     if (this.formAssistido.invalid) {
-      this.toastr.error('Verifique os campos obrigatórios na aba de contatos.');
+      this.toastr.error('Verifique os campos obrigatórios na aba de contatos.', 'Atenção');
       return;
     }
 
-    this.isLoading = true;
     const dados = this.formAssistido.getRawValue();
 
-    const dto = {
+    // =========================================================
+    // VALIDAÇÃO FRONT-END: IMPEDE CONTATOS DUPLICADOS
+    // =========================================================
+    const contatos = dados.contatos || [];
+    const telefones = contatos.map((c: any) => c.telefone?.replace(/\D/g, '')).filter((t: string) => !!t);
+    const ids = contatos.map((c: any) => c.id).filter((id: any) => id !== null);
+
+    // Verifica se há telefones repetidos ou IDs repetidos na lista
+    if (new Set(telefones).size !== telefones.length || (ids.length > 0 && new Set(ids).size !== ids.length)) {
+      this.toastr.warning('Não é possível adicionar o mesmo contato mais do que uma vez.', 'Contatos duplicados');
+      return; // Para o envio aqui
+    }
+
+    this.isLoading = true;
+
+    const dto: CriarAssistidoDTO = {
       nomeCompleto: dados.nomeCompleto,
       dataNascimento: dados.dataNascimento,
       cpf: dados.usarOutroDocumento ? null : dados.cpf?.replace(/\D/g, ''),
@@ -489,25 +520,38 @@ export class AssistidoComponent implements OnInit, OnDestroy, ComponentComAltera
       endereco: dados.endereco,
       idTurma: dados.idTurma,
       contatos: (dados.contatos as any[]).map((c) => ({
-        ...c,
-        telefone: c.telefone?.replace(/\D/g, '')
+        id: c.id,
+        nomeCompleto: c.nomeCompleto,
+        telefone: c.telefone?.replace(/\D/g, ''),
+        email: c.email,
+        endereco: c.endereco,
+        parentesco: c.parentesco,
+        principal: c.principal
       }))
     };
 
     if (this.modoEdicao) {
-      // Atualizar
+       // Lógica de Atualizar a ser implementada
     } else {
       this.assistidoService.criar(dto).subscribe({
         next: () => {
-          this.isLoading = false;
-          this.toastr.success('Assistido cadastrado com sucesso!', 'Sucesso');
-          this.fecharModalSemConfirmacao();
-          this.carregarAssistidos();
+          // NgZone força o Angular a atualizar a interface imediatamente
+          this.ngZone.run(() => {
+            this.isLoading = false;
+            this.toastr.success('Assistido cadastrado com sucesso!', 'Sucesso');
+            this.fecharModalSemConfirmacao();
+            this.todosAssistidos = []; // Limpa para forçar recarga
+            this.carregarAssistidos();
+          });
         },
         error: (err: any) => {
-          this.isLoading = false;
-          this.toastr.error(err.error?.message || 'Erro ao cadastrar assistido.', 'Erro');
-          this.cdr.detectChanges();
+          // NgZone corrige o "travamento" do botão
+          this.ngZone.run(() => {
+            this.isLoading = false;
+            const msgErro = err.error?.message || err.error?.detail || 'Erro ao cadastrar assistido.';
+            this.toastr.error(msgErro, 'Erro');
+            this.cdr.detectChanges();
+          });
         }
       });
     }

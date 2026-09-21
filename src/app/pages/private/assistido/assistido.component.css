@@ -132,6 +132,18 @@ h1 {
 
 
 /* cards contato */
+
+::ng-deep .mat-form-field-disabled .mat-mdc-text-field-wrapper {
+  background-color: #f5f5f5 !important;
+  border-color: #e0e0e0 !important;
+}
+
+::ng-deep .mat-form-field-disabled .mat-mdc-floating-label,
+::ng-deep .mat-form-field-disabled .mat-mdc-select-value-text,
+::ng-deep .mat-form-field-disabled .mat-mdc-select-arrow {
+  color: #9e9e9e !important;
+}
+
 .contato-card {
   border: 1px solid var(--input-border);
   border-radius: var(--input-radius);
@@ -239,6 +251,36 @@ h1 {
   font-size: 18px;
   width: 18px;
   height: 18px;
+}
+
+.resumo-acoes {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.btn-remover-icon {
+  background: none;
+  border: none;
+  color: var(--error-color);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  border-radius: 6px;
+  transition: background-color 0.2s;
+}
+
+.btn-remover-icon:hover {
+  background-color: #fee2e2;
+}
+
+.btn-remover-icon mat-icon {
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+  color: var(--error-color) !important;
 }
 
 /* ações do modal */
