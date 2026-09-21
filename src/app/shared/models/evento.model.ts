@@ -9,10 +9,15 @@ export interface Evento {
   tipoEvento: TipoEvento;
   comentarioPosEvento?: string;
   parceiros: Parceiro[];
-  // TODO: ainda não existe no back-end. Quando a galeria de mídias do evento
-  // (tabela midia_evento) for implementada, o endpoint GET /evento/{id} deve
-  // passar a retornar esta lista de URLs de imagens extras do evento.
+  // Fotos da cobertura pós-evento (tabela midia_evento), já resolvidas para URLs
+  // pelo EventoPublicoService a partir do array de objetos retornado pela API.
   midiaEvento?: string[];
+}
+
+export interface MidiaEventoDTO {
+  id: number;
+  tipoMidia: 'IMAGEM' | 'VIDEO';
+  urlMidia: string;
 }
 
 export interface CriarEventoDTO {

@@ -8,6 +8,7 @@ import { map } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
 import {
   Evento,
+  MidiaEventoDTO,
   TipoEvento
 } from 'src/app/shared/models/evento.model';
 
@@ -15,6 +16,10 @@ interface EventoPagedResponse {
   content?: Evento[];
   _embedded?: Record<string, Evento[]>;
 }
+
+// O GET /evento/{id} retorna midiaEvento como uma lista de objetos
+// { id, tipoMidia, urlMidia }, não como uma lista de strings.
+type EventoDetalheResponse = Omit<Evento, 'midiaEvento'> & { midiaEvento?: MidiaEventoDTO[] };
 
 @Injectable({
   providedIn: 'root'
@@ -60,12 +65,11 @@ export class EventoPublicoService {
   }
 
   buscarPorId(id: number): Observable<Evento> {
-    return this.http.get<Evento>(`${this.apiUrl}/${id}`).pipe(
+    return this.http.get<EventoDetalheResponse>(`${this.apiUrl}/${id}`).pipe(
       map(evento => ({
         ...evento,
         imagem: this.tratarImagem(evento.imagem),
-        // TODO: `midiaEvento` ainda não é retornado pelo back-end (ver evento.model.ts).
-        midiaEvento: (evento.midiaEvento ?? []).map(midia => this.tratarImagem(midia)),
+        midiaEvento: (evento.midiaEvento ?? []).map(midia => this.tratarImagem(midia.urlMidia)),
         parceiros: (evento.parceiros ?? []).map(parceiro => ({
           ...parceiro,
           logo: this.tratarImagem(parceiro.logo)
