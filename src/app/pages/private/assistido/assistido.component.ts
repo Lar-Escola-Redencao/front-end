@@ -117,6 +117,7 @@ export class AssistidoComponent implements OnInit, OnDestroy, ComponentComAltera
   etapaModal = 1;
   contatoExpandidoIndex = 0;
   assistidoSelecionadoId: number | null = null;
+  fotoSelecionada: File | null = null;
 
   // Modal Rápido de Contato
   modalContatoAberto = false;
@@ -134,6 +135,8 @@ export class AssistidoComponent implements OnInit, OnDestroy, ComponentComAltera
 
   modalPreviewContatoAberto = false;
   contatoPreview: any = null;
+
+  fotoPreviewUrl: string | ArrayBuffer | null = null; // Para mostrar um preview rápido no form
 
   formAssistido!: FormGroup;
   erros: { [key: string]: string } = {};
@@ -193,6 +196,21 @@ export class AssistidoComponent implements OnInit, OnDestroy, ComponentComAltera
   // =========================================================
   // CICLO DE VIDA E ABAS
   // =========================================================
+
+  onFotoSelecionada(event: any) {
+    const file = event.target.files[0];
+    if (file) {
+      this.fotoSelecionada = file;
+
+      const reader = new FileReader();
+      reader.onload = e => {
+        this.fotoPreviewUrl = reader.result;
+        this.cdr.detectChanges();
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
   ngOnInit(): void {
     this.iniciarFormulario();
     this.carregarUnidades();
@@ -400,7 +418,7 @@ export class AssistidoComponent implements OnInit, OnDestroy, ComponentComAltera
     this.assistidoService.buscarPorId(assistidoLista.id).subscribe({
       next: (dadosCompletos) => {
         this.iniciarFormulario();
-
+        this.fotoPreviewUrl = (dadosCompletos as any).imagem_perfil || null;
         const usaOutro = !dadosCompletos.cpf && !!dadosCompletos.documentoAuxiliar;
 
         this.formAssistido.patchValue({
@@ -537,6 +555,8 @@ export class AssistidoComponent implements OnInit, OnDestroy, ComponentComAltera
     this.modalTremendo = false;
     this.formAssistido.reset();
     this.contatosArray.clear();
+    this.fotoSelecionada = null;
+    this.fotoPreviewUrl = null;
   }
 
   private dispararTremorModal() {
@@ -755,13 +775,8 @@ export class AssistidoComponent implements OnInit, OnDestroy, ComponentComAltera
     if (this.modoEdicao) {
       this.assistidoService.atualizar(this.assistidoSelecionadoId!, dto).subscribe({
         next: () => {
-          this.ngZone.run(() => {
-            this.isLoading = false;
-            this.toastr.success('Assistido atualizado com sucesso!', 'Sucesso');
-            this.fecharModalSemConfirmacao();
-            this.todosAssistidos = [];
-            this.carregarAssistidos();
-          });
+          // Se atualizou fixe, chamamos a foto com o ID já conhecido
+          this.processarUploadFoto(this.assistidoSelecionadoId!, 'Assistido atualizado com sucesso!');
         },
         error: (err: any) => {
           this.ngZone.run(() => {
@@ -774,14 +789,8 @@ export class AssistidoComponent implements OnInit, OnDestroy, ComponentComAltera
       });
     } else {
       this.assistidoService.criar(dto).subscribe({
-        next: () => {
-          this.ngZone.run(() => {
-            this.isLoading = false;
-            this.toastr.success('Assistido cadastrado com sucesso!', 'Sucesso');
-            this.fecharModalSemConfirmacao();
-            this.todosAssistidos = [];
-            this.carregarAssistidos();
-          });
+        next: (assistidoCriado: any) => {
+          this.processarUploadFoto(assistidoCriado.id, 'Assistido cadastrado com sucesso!');
         },
         error: (err: any) => {
           this.ngZone.run(() => {
@@ -791,6 +800,39 @@ export class AssistidoComponent implements OnInit, OnDestroy, ComponentComAltera
             this.cdr.detectChanges();
           });
         }
+      });
+    }
+  }
+
+  processarUploadFoto(idAssistido: number, mensagemSucesso: string) {
+    if (this.fotoSelecionada) {
+      this.assistidoService.atualizarFotoPerfil(idAssistido, this.fotoSelecionada).subscribe({
+        next: () => {
+          this.ngZone.run(() => {
+            this.isLoading = false;
+            this.toastr.success(mensagemSucesso, 'Sucesso');
+            this.fecharModalSemConfirmacao();
+            this.todosAssistidos = [];
+            this.carregarAssistidos();
+          });
+        },
+        error: () => {
+          this.ngZone.run(() => {
+            this.isLoading = false;
+            this.toastr.warning(mensagemSucesso + ' Mas houve um erro a enviar a foto.', 'Aviso');
+            this.fecharModalSemConfirmacao();
+            this.todosAssistidos = [];
+            this.carregarAssistidos();
+          });
+        }
+      });
+    } else {
+      this.ngZone.run(() => {
+        this.isLoading = false;
+        this.toastr.success(mensagemSucesso, 'Sucesso');
+        this.fecharModalSemConfirmacao();
+        this.todosAssistidos = [];
+        this.carregarAssistidos();
       });
     }
   }

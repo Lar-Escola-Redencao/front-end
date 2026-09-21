@@ -26,6 +26,13 @@ export class AssistidoService {
     return this.http.put<AssistidoResponseDTO>(`${this.apiUrl}/${id}`, dto);
   }
 
+  atualizarFotoPerfil(id: number, arquivo: File): Observable<void> {
+    const formData = new FormData();
+    formData.append('foto', arquivo);
+
+    return this.http.post<void>(`${this.apiUrl}/${id}/foto`, formData);
+  }
+
   deletar(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
@@ -40,3 +47,5 @@ export class ContatoService {
     return this.http.get<ContatoListagemDTO[]>(`${this.apiUrl}/buscar`, { params: { termo } });
   }
 }
+
+

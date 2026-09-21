@@ -73,6 +73,31 @@
           </div>
         }
         <mat-checkbox formControlName="usarOutroDocumento" color="primary">Usar outro documento (Não possui CPF)</mat-checkbox>
+        <div class="form-row-foto-final">
+          <div class="upload-container-completo">
+
+            <!-- Caixa de Upload Retangular a Tracejado -->
+            <div class="caixa-upload-retangular" (click)="fileInput.click()">
+              <div class="upload-icone-bg">
+                <mat-icon>upload_file</mat-icon>
+              </div>
+              <div class="upload-textos">
+                <span class="upload-titulo">Selecione a foto de perfil</span>
+                <span class="upload-subtitulo">PNG, JPEG, JPG ou WEBP</span>
+              </div>
+              <button type="button" class="btn-procurar" (click)="fileInput.click(); $event.stopPropagation()">Procurar</button>
+            </div>
+
+            <input type="file" #fileInput hidden accept="image/png, image/jpeg, image/jpg, image/webp" (change)="onFotoSelecionada($event)">
+
+            <!-- Preview Redondo -->
+            <div class="preview-inferior-container" *ngIf="fotoPreviewUrl">
+              <img [src]="fotoPreviewUrl" class="avatar-preview-inferior" alt="Preview da foto de perfil">
+            </div>
+
+          </div>
+        </div>
+
         <div class="acoes-modal"><button type="button" class="btn-cancelar" (click)="fecharModal()">Cancelar</button><button type="button" class="btn-primary" (click)="proximaEtapa()">Próximo</button></div>
       </div>
 
@@ -168,6 +193,15 @@
     <div class="preview-badge-container">
       <span class="preview-badge">{{ assistidoPreview.nomeUnidade || 'Sem unidade' }}</span>
       <span class="preview-badge badge-turma">{{ assistidoPreview.nomeTurma || 'Sem turma' }}</span>
+    </div>
+
+    <div class="preview-avatar-container">
+      <img *ngIf="assistidoPreview.imagem; else semFoto" [src]="assistidoPreview.imagem_perfil" alt="Foto de perfil" class="preview-avatar">
+      <ng-template #semFoto>
+        <div class="preview-avatar placeholder">
+          <mat-icon>person</mat-icon>
+        </div>
+      </ng-template>
     </div>
 
     <!-- Título Principal Centralizado -->

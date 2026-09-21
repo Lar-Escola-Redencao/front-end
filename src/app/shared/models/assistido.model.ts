@@ -19,6 +19,7 @@ export interface AssistidoResponseDTO {
   documentoAuxiliar?: string;
   tipoDocumento?: string;
   endereco?: string;
+  foto?: string;
   contatos?: ContatoResponseDTO[];
 
   idTurma?: number;
