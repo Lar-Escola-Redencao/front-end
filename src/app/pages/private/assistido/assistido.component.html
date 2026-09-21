@@ -8,35 +8,20 @@
       </button>
     </div>
 
-    <app-tabela-layout
-      [colunas]="colunas"
-      [dados]="assistidos"
-      [acoes]="acoesTabela"
-      [carregando]="carregandoLista"
-      [erro]="erroLista"
-      [ordenacao]="ordenacao"
-      mensagemVazia="Nenhum assistido cadastrado ainda."
-      (acao)="executarAcao($event)"
-      (ordenar)="ordenarPor($event)"
-      (tentarNovamente)="carregarAssistidos()">
+    <app-tabela-layout [colunas]="colunas" [dados]="assistidos" [acoes]="acoesTabela" [carregando]="carregandoLista"
+      [erro]="erroLista" [ordenacao]="ordenacao" mensagemVazia="Nenhum assistido cadastrado ainda."
+      (acao)="executarAcao($event)" (ordenar)="ordenarPor($event)" (tentarNovamente)="carregarAssistidos()">
     </app-tabela-layout>
 
-    <app-paginacao
-      [paginaAtual]="pagina"
-      [totalPaginas]="totalPaginas"
-      [totalElementos]="totalElementos"
-      [tamanho]="tamanho"
-      [carregando]="carregandoLista"
-      (paginaChange)="irParaPagina($event)"
+    <app-paginacao [paginaAtual]="pagina" [totalPaginas]="totalPaginas" [totalElementos]="totalElementos"
+      [tamanho]="tamanho" [carregando]="carregandoLista" (paginaChange)="irParaPagina($event)"
       (tamanhoChange)="mudarTamanhoPagina($event)">
     </app-paginacao>
   </div>
 </section>
 
 @if (modalAberto) {
-<app-modal-layout
-  [class.tremer]="modalTremendo"
-  [titulo]="modoEdicao ? 'Editar assistido' : 'Novo assistido'"
+<app-modal-layout [class.tremer]="modalTremendo" [titulo]="modoEdicao ? 'Editar assistido' : 'Novo assistido'"
   (closed)="fecharModal()">
 
   <div class="stepper-indicador">
@@ -57,6 +42,15 @@
   </div>
 
   <form class="form-modal" [formGroup]="formAssistido" (ngSubmit)="salvar()">
+
+    @if (isCarregandoEdicao) {
+    <div class="form-carregando" style="display: flex; flex-direction: column; align-items: center; padding: 40px 0;">
+      <span class="spinner spinner-escuro" aria-hidden="true"></span>
+      <p style="text-align: center; margin-top: 10px; color: var(--input-color); font-family: var(--fonte-texto);">
+        Carregando dados...
+      </p>
+    </div>
+    } @else {
 
     <!-- ============================================== -->
     <!-- ETAPA 1: DADOS PESSOAIS -->
@@ -82,33 +76,35 @@
       <span class="error-text" *ngIf="erros['endereco']">{{ erros['endereco'] }}</span>
 
       @if (!formAssistido.get('usarOutroDocumento')?.value) {
-        <mat-form-field appearance="outline">
-          <mat-label>CPF</mat-label>
-          <input matInput formControlName="cpf" inputmode="numeric" (input)="aplicarMascaraCpf($event)" (blur)="verificarErros()" maxlength="14">
-        </mat-form-field>
-        <span class="error-text" *ngIf="erros['cpf']">{{ erros['cpf'] }}</span>
+      <mat-form-field appearance="outline">
+        <mat-label>CPF</mat-label>
+        <input matInput formControlName="cpf" inputmode="numeric" (input)="aplicarMascaraCpf($event)"
+          (blur)="verificarErros()" maxlength="14">
+      </mat-form-field>
+      <span class="error-text" *ngIf="erros['cpf']">{{ erros['cpf'] }}</span>
       } @else {
-        <div class="form-row">
-          <div>
-            <mat-form-field appearance="outline">
-              <mat-label>Tipo do Documento</mat-label>
-              <mat-select formControlName="tipoDocumento" (blur)="verificarErros()">
-                <mat-option *ngFor="let tipo of tiposDocumento" [value]="tipo.value">{{ tipo.label }}</mat-option>
-              </mat-select>
-            </mat-form-field>
-            <span class="error-text" *ngIf="erros['tipoDocumento']">{{ erros['tipoDocumento'] }}</span>
-          </div>
-          <div>
-            <mat-form-field appearance="outline">
-              <mat-label>Nº Documento</mat-label>
-              <input matInput formControlName="documentoAuxiliar" (blur)="verificarErros()">
-            </mat-form-field>
-            <span class="error-text" *ngIf="erros['documentoAuxiliar']">{{ erros['documentoAuxiliar'] }}</span>
-          </div>
+      <div class="form-row">
+        <div>
+          <mat-form-field appearance="outline">
+            <mat-label>Tipo do Documento</mat-label>
+            <mat-select formControlName="tipoDocumento" (blur)="verificarErros()">
+              <mat-option *ngFor="let tipo of tiposDocumento" [value]="tipo.value">{{ tipo.label }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <span class="error-text" *ngIf="erros['tipoDocumento']">{{ erros['tipoDocumento'] }}</span>
         </div>
+        <div>
+          <mat-form-field appearance="outline">
+            <mat-label>Nº Documento</mat-label>
+            <input matInput formControlName="documentoAuxiliar" (blur)="verificarErros()">
+          </mat-form-field>
+          <span class="error-text" *ngIf="erros['documentoAuxiliar']">{{ erros['documentoAuxiliar'] }}</span>
+        </div>
+      </div>
       }
 
-      <mat-checkbox formControlName="usarOutroDocumento" color="primary">Usar outro documento (Não possui CPF)</mat-checkbox>
+      <mat-checkbox formControlName="usarOutroDocumento" color="primary">Usar outro documento (Não possui
+        CPF)</mat-checkbox>
 
       <div class="acoes-modal">
         <button type="button" class="btn-cancelar" (click)="fecharModal()">Cancelar</button>
@@ -123,7 +119,8 @@
 
       <mat-form-field appearance="outline">
         <mat-label>Unidade</mat-label>
-        <mat-select formControlName="idUnidade" (selectionChange)="onUnidadeChange($event.value)" (blur)="verificarErros()">
+        <mat-select formControlName="idUnidade" (selectionChange)="onUnidadeChange($event.value)"
+          (blur)="verificarErros()">
           <mat-option *ngFor="let und of unidadesDisponiveis" [value]="und.id">{{ und.nome }}</mat-option>
         </mat-select>
       </mat-form-field>
@@ -159,7 +156,8 @@
           </div>
 
           <div class="resumo-acoes">
-            <button type="button" class="btn-remover-icon" *ngIf="!contato.get('principal')?.value" (click)="removerContato(i, $event)" title="Remover contato">
+            <button type="button" class="btn-remover-icon" *ngIf="!contato.get('principal')?.value"
+              (click)="removerContato(i, $event)" title="Remover contato">
               <mat-icon>delete</mat-icon>
             </button>
             <mat-icon>{{ contatoExpandidoIndex === i ? 'expand_less' : 'expand_more' }}</mat-icon>
@@ -169,16 +167,19 @@
         <div class="contato-detalhe" *ngIf="i === contatoExpandidoIndex">
           <div class="detalhe-header">
             <h4>{{ contato.get('principal')?.value ? 'Contato principal' : 'Contato adicional ' + i }}</h4>
-            <button type="button" class="btn-remover-icon" *ngIf="!contato.get('principal')?.value" (click)="removerContato(i, $event)" title="Remover contato">
+            <button type="button" class="btn-remover-icon" *ngIf="!contato.get('principal')?.value"
+              (click)="removerContato(i, $event)" title="Remover contato">
               <mat-icon>delete</mat-icon>
             </button>
           </div>
 
           <mat-form-field appearance="outline">
             <mat-label>Nome completo</mat-label>
-            <input matInput formControlName="nomeCompleto" [matAutocomplete]="auto" (blur)="contato.get('nomeCompleto')?.markAsTouched()">
+            <input matInput formControlName="nomeCompleto" [matAutocomplete]="auto"
+              (blur)="contato.get('nomeCompleto')?.markAsTouched()">
             <mat-autocomplete #auto="matAutocomplete" panelClass="painel-autocomplete-branca">
-              <mat-option *ngFor="let op of opcoesAutocomplete[i]" [value]="op.nomeCompleto" (click)="selecionarContatoExistente(i, op)">
+              <mat-option *ngFor="let op of opcoesAutocomplete[i]" [value]="op.nomeCompleto"
+                (click)="selecionarContatoExistente(i, op)">
                 {{ op.nomeCompleto }} - {{ op.telefone }}
               </mat-option>
             </mat-autocomplete>
@@ -199,7 +200,9 @@
 
           <mat-form-field appearance="outline">
             <mat-label>Telefone</mat-label>
-            <input matInput formControlName="telefone" inputmode="numeric" (input)="aplicarMascaraTelefoneContato(i, $event)" (blur)="contato.get('telefone')?.markAsTouched()" maxlength="15">
+            <input matInput formControlName="telefone" inputmode="numeric"
+              (input)="aplicarMascaraTelefoneContato(i, $event)" (blur)="contato.get('telefone')?.markAsTouched()"
+              maxlength="15">
           </mat-form-field>
           <span class="error-text" *ngIf="contato.get('telefone')?.invalid && contato.get('telefone')?.touched">
             O telefone válido é obrigatório.
@@ -233,6 +236,7 @@
       </div>
     </div>
 
+    }
   </form>
 </app-modal-layout>
 }

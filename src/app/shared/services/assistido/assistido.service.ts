@@ -14,8 +14,20 @@ export class AssistidoService {
     return this.http.get<AssistidoResponseDTO[]>(this.apiUrl);
   }
 
+  buscarPorId(id: number): Observable<AssistidoResponseDTO> {
+    return this.http.get<AssistidoResponseDTO>(`${this.apiUrl}/${id}`);
+  }
+
   criar(dto: CriarAssistidoDTO): Observable<AssistidoResponseDTO> {
     return this.http.post<AssistidoResponseDTO>(this.apiUrl, dto);
+  }
+
+  atualizar(id: number, dto: CriarAssistidoDTO): Observable<AssistidoResponseDTO> {
+    return this.http.put<AssistidoResponseDTO>(`${this.apiUrl}/${id}`, dto);
+  }
+
+  deletar(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
 }
 

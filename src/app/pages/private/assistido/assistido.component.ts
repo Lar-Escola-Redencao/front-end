@@ -101,6 +101,7 @@ export class AssistidoComponent implements OnInit, OnDestroy, ComponentComAltera
   modoEdicao = false;
   modalTremendo = false;
   isLoading = false;
+  isCarregandoEdicao = false;
   etapaModal = 1;
   contatoExpandidoIndex = 0;
   assistidoSelecionadoId: number | null = null;
@@ -288,20 +289,85 @@ export class AssistidoComponent implements OnInit, OnDestroy, ComponentComAltera
     this.contatoExpandidoIndex = 0;
     this.erros = {};
     this.isLoading = false;
+    this.isCarregandoEdicao = false;
 
     this.iniciarFormulario();
     this.adicionarContato(true);
-
     this.formAssistido.markAsPristine();
     this.formAssistido.markAsUntouched();
-
     this.valoresOriginaisDoFormulario = this.formAssistido.getRawValue();
+
     this.modalAberto = true;
   }
 
-  abrirEdicao(assistido: AssistidoResponseDTO) {
-    this.toastr.info('Edição de assistido será implementada em breve.', 'Aviso');
-    // Implementação da carga de edição entraria aqui.
+  abrirEdicao(assistidoLista: AssistidoResponseDTO) {
+    this.modoEdicao = true;
+    this.assistidoSelecionadoId = assistidoLista.id;
+    this.etapaModal = 1;
+    this.contatoExpandidoIndex = 0;
+    this.erros = {};
+    this.isLoading = false;
+    this.isCarregandoEdicao = true;
+    this.modalAberto = true;
+
+    this.assistidoService.buscarPorId(assistidoLista.id).subscribe({
+      next: (dadosCompletos) => {
+        this.iniciarFormulario();
+
+        const usaOutro = !dadosCompletos.cpf && !!dadosCompletos.documentoAuxiliar;
+
+        this.formAssistido.patchValue({
+          nomeCompleto: dadosCompletos.nomeCompleto,
+          dataNascimento: dadosCompletos.dataNascimento ? dadosCompletos.dataNascimento.split('T')[0] : '',
+          endereco: dadosCompletos.endereco,
+          usarOutroDocumento: usaOutro,
+          cpf: dadosCompletos.cpf ? formatarCpf(dadosCompletos.cpf) : '',
+          tipoDocumento: dadosCompletos.tipoDocumento || '',
+          documentoAuxiliar: dadosCompletos.documentoAuxiliar || '',
+          idUnidade: dadosCompletos.idUnidade || null
+        });
+
+        // Se o back-end enviou a unidade, carregamos as turmas dela e preenchemos o idTurma
+        if (dadosCompletos.idUnidade) {
+          const turmaCtrl = this.formAssistido.get('idTurma');
+          this.turmaService.listar(dadosCompletos.idUnidade).subscribe(turmas => {
+            this.turmasDisponiveis = turmas.filter(t => t.unidade.id === dadosCompletos.idUnidade);
+            turmaCtrl?.enable();
+            turmaCtrl?.setValue(dadosCompletos.idTurma || null);
+          });
+        }
+
+        this.contatosArray.clear();
+        if (dadosCompletos.contatos && dadosCompletos.contatos.length > 0) {
+          dadosCompletos.contatos.forEach((c, index) => {
+            const contatoForm = this.fb.group({
+              id: [c.id],
+              nomeCompleto: [c.nomeCompleto, Validators.required],
+              parentesco: [c.parentesco, Validators.required],
+              telefone: [formatarTelefone(c.telefone), [Validators.required, Validators.minLength(14)]],
+              email: [c.email, Validators.email],
+              endereco: [c.endereco],
+              principal: [c.principal]
+            });
+
+            this.contatosArray.push(contatoForm);
+            this.configurarAutocomplete(contatoForm, index);
+          });
+        } else {
+          this.adicionarContato(true);
+        }
+
+        this.formAssistido.markAsPristine();
+        this.formAssistido.markAsUntouched();
+        this.valoresOriginaisDoFormulario = this.formAssistido.getRawValue();
+        this.isCarregandoEdicao = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.toastr.error('Erro ao carregar os dados do assistido.');
+        this.fecharModalSemConfirmacao();
+      }
+    });
   }
 
   fecharModal() {
@@ -382,13 +448,19 @@ export class AssistidoComponent implements OnInit, OnDestroy, ComponentComAltera
       parentesco: ['', Validators.required],
       telefone: ['', [Validators.required, Validators.minLength(14)]],
       email: ['', Validators.email],
+      endereco: [''],
       principal: [isPrincipal]
     });
 
     this.contatosArray.push(contatoForm);
     const index = this.contatosArray.length - 1;
-    this.opcoesAutocomplete[index] = [];
     this.contatoExpandidoIndex = index;
+
+    this.configurarAutocomplete(contatoForm, index);
+  }
+
+  private configurarAutocomplete(contatoForm: FormGroup, index: number) {
+    this.opcoesAutocomplete[index] = [];
 
     contatoForm.get('nomeCompleto')?.valueChanges.pipe(
       debounceTime(300),
@@ -531,8 +603,27 @@ export class AssistidoComponent implements OnInit, OnDestroy, ComponentComAltera
     };
 
     if (this.modoEdicao) {
-       // Lógica de Atualizar a ser implementada
+      this.assistidoService.atualizar(this.assistidoSelecionadoId!, dto).subscribe({
+        next: () => {
+          this.ngZone.run(() => {
+            this.isLoading = false;
+            this.toastr.success('Assistido atualizado com sucesso!', 'Sucesso');
+            this.fecharModalSemConfirmacao();
+            this.todosAssistidos = [];
+            this.carregarAssistidos();
+          });
+        },
+        error: (err: any) => {
+          this.ngZone.run(() => {
+            this.isLoading = false;
+            const msgErro = err.error?.message || err.error?.detail || 'Erro ao atualizar assistido.';
+            this.toastr.error(msgErro, 'Erro');
+            this.cdr.detectChanges();
+          });
+        }
+      });
     } else {
+      // O código que do assistidoService.criar(dto)... else {
       this.assistidoService.criar(dto).subscribe({
         next: () => {
           // NgZone força o Angular a atualizar a interface imediatamente
@@ -562,10 +653,35 @@ export class AssistidoComponent implements OnInit, OnDestroy, ComponentComAltera
   // =========================================================
   executarAcao(evento: { tipo: string; linha: AssistidoResponseDTO }) {
     if (evento.tipo === 'editar') this.abrirEdicao(evento.linha);
-    if (evento.tipo === 'excluir') {
-      // Implementar exclusão com Alertas.confirmarExclusao()
-      this.toastr.info('Exclusão será implementada em breve.');
-    }
+    if (evento.tipo === 'excluir') this.excluirAssistido(evento.linha);
+  }
+
+  excluirAssistido(assistido: AssistidoResponseDTO) {
+    Alertas.confirmarExclusao().then(confirmado => {
+      if (!confirmado) return;
+
+      this.carregandoLista = true;
+      this.cdr.detectChanges();
+
+      this.assistidoService.deletar(assistido.id).subscribe({
+        next: () => {
+          this.ngZone.run(() => {
+            this.toastr.success('Assistido excluído com sucesso!', 'Sucesso');
+            // CORREÇÃO: Liberta a trava de carregamento ANTES de chamar a nova busca
+            this.carregandoLista = false;
+            this.todosAssistidos = [];
+            this.carregarAssistidos();
+          });
+        },
+        error: (err: any) => {
+          this.ngZone.run(() => {
+            this.carregandoLista = false;
+            this.toastr.error(err.error?.message || 'Erro ao excluir assistido.', 'Erro');
+            this.cdr.detectChanges();
+          });
+        }
+      });
+    });
   }
 
   ordenarPor(campo: string) {

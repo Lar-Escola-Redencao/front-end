@@ -20,4 +20,7 @@ export interface AssistidoResponseDTO {
   tipoDocumento?: string;
   endereco?: string;
   contatos?: ContatoResponseDTO[];
+
+  idTurma?: number;
+  idUnidade?: number;
 }
