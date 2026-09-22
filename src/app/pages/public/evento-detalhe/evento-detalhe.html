@@ -52,7 +52,7 @@
                 aria-hidden="true"
                 (error)="onMidiaPrincipalError()"
               ></video>
-              <span class="material-symbols-outlined video-preview-play" aria-hidden="true">play_arrow</span>
+              <span class="video-preview-play" aria-hidden="true"></span>
             </span>
           } @else if (midiaAtual && !midiaPrincipalIndisponivel) {
             <img class="imagem-principal" [src]="midiaAtual" [alt]="evento.titulo" (error)="onMidiaPrincipalError()" />
@@ -103,7 +103,7 @@
                         playsinline
                         aria-hidden="true"
                       ></video>
-                      <span class="material-symbols-outlined miniatura-video-play" aria-hidden="true">play_arrow</span>
+                      <span class="miniatura-video-play" aria-hidden="true"></span>
                     </span>
                   } @else {
                     <img [src]="midia.url" alt="" aria-hidden="true" (error)="onMiniaturaImageError($event)" />

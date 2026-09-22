@@ -203,16 +203,23 @@
 .miniatura-video-play {
   position: absolute;
   inset: 50% auto auto 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   width: 28px;
   height: 28px;
   border-radius: 50%;
   background: rgba(30, 30, 30, 0.58);
-  color: var(--branco);
-  font-size: 20px;
   transform: translate(-50%, -50%);
+}
+
+.miniatura-video-play::before {
+  content: "";
+  position: absolute;
+  left: 11px;
+  top: 8px;
+  width: 0;
+  height: 0;
+  border-top: 6px solid transparent;
+  border-bottom: 6px solid transparent;
+  border-left: 9px solid var(--branco);
 }
 
 .imagem-principal-wrapper {
@@ -287,16 +294,23 @@
 .video-preview-play {
   position: absolute;
   inset: 50% auto auto 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   width: 72px;
   height: 72px;
   border-radius: 50%;
   background: rgba(30, 30, 30, 0.58);
-  color: var(--branco);
-  font-size: 44px;
   transform: translate(-50%, -50%);
+}
+
+.video-preview-play::before {
+  content: "";
+  position: absolute;
+  left: 29px;
+  top: 21px;
+  width: 0;
+  height: 0;
+  border-top: 15px solid transparent;
+  border-bottom: 15px solid transparent;
+  border-left: 22px solid var(--branco);
 }
 
 .imagem-principal-hint {
@@ -486,9 +500,9 @@
   min-width: calc(100% / 3);
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
   gap: 10px;
-  padding: 0 10px 0 0;
+  padding: 0 10px;
   box-sizing: border-box;
 }
 
@@ -502,7 +516,7 @@
   height: 78px;
   display: flex;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: center;
 }
 
 .evento-parceiro-logo img {
