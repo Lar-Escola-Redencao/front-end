@@ -1,0 +1,65 @@
+<section class="public-unidades-section" *ngIf="!carregando">
+  <div class="container">
+    <div class="unidades-header">
+      <h2>Unidades de Atendimento</h2>
+      <p class="unidades-descricao">
+        Atualmente, a instituição conta com {{ unidades.length }} unidades de atendimento. Nossos polos oferecem
+        um ambiente seguro e estruturado no contraturno escolar, focado no acolhimento de meninos. Os espaços são
+        dedicados à realização de diversas atividades, que vão desde oficinas educacionais até projetos esportivos
+        e culturais.
+      </p>
+    </div>
+
+    <div class="grade-unidades" *ngIf="unidades.length > 0; else semUnidades">
+      <article class="card-unidade" *ngFor="let unidade of unidades; let i = index">
+        <div class="card-imagem-wrapper">
+          <span class="badge-numero" [style.background-color]="unidade.corHex">{{ i + 1 }}</span>
+          <img
+            *ngIf="obterUrlImagem(unidade.imagem)"
+            class="card-imagem"
+            [src]="obterUrlImagem(unidade.imagem)"
+            (error)="onImageError($event)"
+            [alt]="unidade.nome"
+            loading="lazy"
+          />
+          <div *ngIf="!obterUrlImagem(unidade.imagem)" class="card-imagem card-imagem-fallback">
+            <span class="material-symbols-outlined">apartment</span>
+          </div>
+        </div>
+
+        <div class="card-corpo">
+          <h3 class="card-titulo">{{ unidade.nome }}</h3>
+
+          <p class="card-linha">
+            <span class="material-symbols-outlined">location_on</span>
+            {{ unidade.endereco }}
+          </p>
+
+          <p class="card-linha">
+            <span class="material-symbols-outlined">schedule</span>
+            {{ formatarHorario(unidade) }} de {{ unidade.diasFuncionamento | diasFuncionamento }}
+          </p>
+
+          <p class="card-linha">
+            <span class="material-symbols-outlined">school</span>
+            Atendidos - Meninos de {{ unidade.idadeMin }} a {{ unidade.idadeMax }} anos
+          </p>
+
+          <p class="card-linha">
+            <span class="material-symbols-outlined">mail</span>
+            {{ unidade.email }}
+          </p>
+
+          <p class="card-linha">
+            <span class="material-symbols-outlined">call</span>
+            {{ unidade.telefone }}
+          </p>
+        </div>
+      </article>
+    </div>
+
+    <ng-template #semUnidades>
+      <p class="mensagem-vazia">Nenhuma unidade cadastrada no momento.</p>
+    </ng-template>
+  </div>
+</section>
