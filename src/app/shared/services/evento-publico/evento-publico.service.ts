@@ -69,7 +69,10 @@ export class EventoPublicoService {
       map(evento => ({
         ...evento,
         imagem: this.tratarImagem(evento.imagem),
-        midiaEvento: (evento.midiaEvento ?? []).map(midia => this.tratarImagem(midia.urlMidia)),
+        midiaEvento: (evento.midiaEvento ?? []).map(midia => ({
+          url: this.tratarImagem(midia.urlMidia ?? midia.url_midia),
+          tipo: midia.tipoMidia ?? midia.tipo_midia ?? 'IMAGEM'
+        })),
         parceiros: (evento.parceiros ?? []).map(parceiro => ({
           ...parceiro,
           logo: this.tratarImagem(parceiro.logo)

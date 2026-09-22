@@ -1,9 +1,9 @@
-import { ChangeDetectorRef, Component, HostListener, OnDestroy, OnInit, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, HostListener, OnDestroy, OnInit, QueryList, ViewChild, ViewChildren, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { PublicNavbar } from '@components/public-navbar/public-navbar';
 import { PublicFooter } from '@components/public-footer/public-footer';
-import { Evento, Parceiro, TipoEvento } from 'src/app/shared/models/evento.model';
+import { Evento, MidiaEvento, Parceiro, TipoEvento } from 'src/app/shared/models/evento.model';
 import { EventoPublicoService } from 'src/app/shared/services/evento-publico/evento-publico.service';
 import { PublicContentService } from 'src/app/shared/services/public-content/public-content.service';
 
@@ -31,11 +31,15 @@ export class EventoDetalhe implements OnInit, OnDestroy {
   naoEncontrado = false;
 
   indiceMidiaAtual = 0;
+  midiaPrincipalIndisponivel = false;
   lightboxAberto = false;
   indiceParceiroAtual = 0;
   parceirosEmTransicao = true;
   parceirosAnimando = false;
   private parceirosAutoPlayInterval: number | null = null;
+
+  @ViewChildren('miniaturaPreview') miniaturasPreview!: QueryList<ElementRef<HTMLButtonElement>>;
+  @ViewChild('lightboxVideo') lightboxVideo?: ElementRef<HTMLVideoElement>;
 
   ngOnInit(): void {
     const id = Number(this.route.snapshot.paramMap.get('id'));
@@ -70,9 +74,12 @@ export class EventoDetalhe implements OnInit, OnDestroy {
   // TODO: `midiaEvento` ainda não existe no back-end (ver evento.model.ts) — hoje
   // este array sempre terá no máximo 1 item, então o carrossel fica desabilitado
   // e é exibida apenas a imagem estática, como pedido.
-  get midias(): string[] {
+  get midias(): MidiaEvento[] {
     if (!this.evento?.imagem) return [];
-    return [this.evento.imagem, ...(this.evento.midiaEvento ?? [])];
+    return [
+      { url: this.evento.imagem, tipo: 'IMAGEM' },
+      ...(this.evento.midiaEvento ?? [])
+    ];
   }
 
   get possuiCarrossel(): boolean {
@@ -80,7 +87,15 @@ export class EventoDetalhe implements OnInit, OnDestroy {
   }
 
   get midiaAtual(): string {
-    return this.midias[this.indiceMidiaAtual] ?? '';
+    return this.midiaAtualItem?.url ?? '';
+  }
+
+  get midiaAtualItem(): MidiaEvento | null {
+    return this.midias[this.indiceMidiaAtual] ?? null;
+  }
+
+  get midiaAtualEhVideo(): boolean {
+    return this.ehVideo(this.midiaAtualItem);
   }
 
   get parceiros(): Parceiro[] {
@@ -112,19 +127,28 @@ export class EventoDetalhe implements OnInit, OnDestroy {
   }
 
   selecionarMidia(indice: number): void {
+    this.pausarVideoLightbox();
     this.indiceMidiaAtual = indice;
+    this.midiaPrincipalIndisponivel = false;
+    this.centralizarMiniaturaAtual();
   }
 
   proximaMidia(): void {
     const total = this.midias.length;
     if (total <= 1) return;
+    this.pausarVideoLightbox();
     this.indiceMidiaAtual = (this.indiceMidiaAtual + 1) % total;
+    this.midiaPrincipalIndisponivel = false;
+    this.centralizarMiniaturaAtual();
   }
 
   midiaAnterior(): void {
     const total = this.midias.length;
     if (total <= 1) return;
+    this.pausarVideoLightbox();
     this.indiceMidiaAtual = (this.indiceMidiaAtual - 1 + total) % total;
+    this.midiaPrincipalIndisponivel = false;
+    this.centralizarMiniaturaAtual();
   }
 
   abrirLightbox(): void {
@@ -134,6 +158,7 @@ export class EventoDetalhe implements OnInit, OnDestroy {
   }
 
   fecharLightbox(): void {
+    this.pausarVideoLightbox();
     this.lightboxAberto = false;
     document.body.style.overflow = '';
   }
@@ -219,6 +244,43 @@ export class EventoDetalhe implements OnInit, OnDestroy {
     const img = event.target as HTMLImageElement;
     img.style.display = 'none';
     img.nextElementSibling?.classList.remove('imagem-fallback-hidden');
+  }
+
+  onMiniaturaImageError(event: Event): void {
+    const img = event.target as HTMLImageElement;
+    img.style.display = 'none';
+    img.nextElementSibling?.classList.remove('miniatura-fallback-hidden');
+  }
+
+  onMidiaPrincipalError(): void {
+    this.midiaPrincipalIndisponivel = true;
+  }
+
+  ehVideo(midia: MidiaEvento | null | undefined): boolean {
+    return midia?.tipo === 'VIDEO';
+  }
+
+  tipoVideo(url: string): string {
+    const extensao = url.split('?')[0].split('.').pop()?.toLowerCase();
+    if (extensao === 'webm') return 'video/webm';
+    if (extensao === 'ogg' || extensao === 'ogv') return 'video/ogg';
+    return 'video/mp4';
+  }
+
+  private pausarVideoLightbox(): void {
+    if (!this.lightboxAberto) return;
+    this.lightboxVideo?.nativeElement.pause();
+  }
+
+  private centralizarMiniaturaAtual(): void {
+    setTimeout(() => {
+      const miniatura = this.miniaturasPreview?.get(this.indiceMidiaAtual);
+      miniatura?.nativeElement.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+        inline: 'center'
+      });
+    });
   }
 
   eventoEncerrado(): boolean {
