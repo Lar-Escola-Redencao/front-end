@@ -5,6 +5,7 @@ import { Observable, tap } from 'rxjs';
 
 import { environment } from '../../../../environments/environment';
 import { LoginRequest, LoginRequestDto, LoginResponse } from '../../models/auth.model';
+import { Modulo, Role, parseRole, roleTemAcesso } from '../../models/permissao.model';
 import { JwtPayload, decodeJwtPayload, isJwtInvalid } from '../../utils/jwt.util';
 import { TokenStorage } from './token-storage';
 
@@ -38,6 +39,18 @@ export class Auth {
   });
 
   readonly isAuthenticated = computed(() => this.token() !== null);
+
+  /** Perfil do usuário logado, decodificado da claim `role` do JWT (persistido no localStorage). */
+  readonly role = computed<Role | null>(() => parseRole(this.currentUser()?.role));
+
+  hasRole(...roles: Role[]): boolean {
+    const role = this.role();
+    return role !== null && roles.includes(role);
+  }
+
+  podeAcessar(modulo: Modulo): boolean {
+    return roleTemAcesso(this.role(), modulo);
+  }
 
   constructor() {
     this.scheduleExpiry(this.token());
