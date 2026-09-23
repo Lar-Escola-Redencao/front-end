@@ -154,4 +154,50 @@ describe('Sobre', () => {
       expect(slots.length).toBe(10);
     });
   });
+
+  // -----------------------------------------------------------------
+  // Arquivo escolhido pra um slot do carrossel
+  // -----------------------------------------------------------------
+
+  describe('onArquivoSlotSelecionado()', () => {
+    const selecionar = (arquivo: File, indice: number) => {
+      const input = { files: [arquivo], value: arquivo.name };
+      component.onArquivoSlotSelecionado({ target: input } as unknown as Event, indice);
+      return input;
+    };
+
+    it('nenhum slot mostra erro antes de alguém tentar enviar um arquivo', () => {
+      expect(component.erroSlot.every((erro) => erro === null)).toBe(true);
+    });
+
+    it('mostra os formatos aceitos só no slot que recebeu um formato inválido, sem enviar nada', () => {
+      const input = selecionar(new File(['x'], 'animacao.gif', { type: 'image/gif' }), 2);
+
+      expect(component.erroSlot[2]).toBe('Formato de arquivo inválido. Use PNG, JPEG, JPG ou WEBP.');
+      expect(component.erroSlot.filter((erro) => erro !== null).length).toBe(1);
+      expect(input.value).toBe('');
+      expect(sobreService.criarSecao).not.toHaveBeenCalled();
+      expect(sobreService.atualizarSecao).not.toHaveBeenCalled();
+    });
+
+    it('mostra o limite de tamanho quando a imagem passa de 10MB', () => {
+      const arquivo = new File(['x'], 'grande.png', { type: 'image/png' });
+      Object.defineProperty(arquivo, 'size', { value: 11 * 1024 * 1024 });
+
+      selecionar(arquivo, 0);
+
+      expect(component.erroSlot[0]).toBe('O arquivo deve ter no máximo 10MB.');
+      expect(sobreService.criarSecao).not.toHaveBeenCalled();
+    });
+
+    it('limpa o erro do slot quando depois é escolhida uma imagem válida', () => {
+      sobreService.criarSecao.mockReturnValue(of({ id: 1, titulo: TITULO_CARROSSEL, ativo: true }));
+      selecionar(new File(['x'], 'animacao.gif', { type: 'image/gif' }), 2);
+
+      selecionar(new File(['x'], 'foto.png', { type: 'image/png' }), 2);
+
+      expect(component.erroSlot[2]).toBeNull();
+      expect(sobreService.criarSecao).toHaveBeenCalledTimes(1);
+    });
+  });
 });

@@ -9,6 +9,9 @@ import { construirHttpParams } from 'src/app/shared/utils/paginacao-url';
 export const ID_PAGINA_TRANSPARENCIA = 1;
 export const ID_PAGINA_SOBRE = 2;
 
+/** Recorte opcional da listagem paginada de seções, espelhando o enum TipoSecao do back. */
+export type TipoSecao = 'HISTORIA';
+
 export interface Secao {
   id: number;
   titulo: string;
@@ -70,14 +73,18 @@ export class PaginaCmsService {
     return this.http.get<Secao[]>(`${this.apiUrl}/${idPagina}/secoes`);
   }
 
-  /** Rota autenticada e paginada, filtrada pela página. */
+  /**
+   * Rota autenticada e paginada, filtrada pela página. Com `tipo`, o back
+   * pagina e conta só as seções daquele recorte — sem ele, vêm todas.
+   */
   listarSecoesAdmin(
     idPagina: number,
     pagina: number,
     tamanho: number,
     sort?: string,
+    tipo?: TipoSecao,
   ): Observable<PaginaResposta<Secao>> {
-    const params = construirHttpParams({ pagina, tamanho, sort });
+    const params = construirHttpParams({ pagina, tamanho, sort, extras: { tipo } });
     return this.http.get<PaginaResposta<Secao>>(`${this.apiUrl}/${idPagina}/secoes/admin`, { params });
   }
 

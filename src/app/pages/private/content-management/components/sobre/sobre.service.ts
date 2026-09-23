@@ -8,9 +8,10 @@ import {
   Pagina,
   PaginaCmsService,
   Secao,
+  TipoSecao,
 } from 'src/app/shared/services/pagina/pagina-cms.service';
 
-export type { Secao, CriarSecaoDTO, AtualizarSecaoDTO, Pagina };
+export type { Secao, CriarSecaoDTO, AtualizarSecaoDTO, Pagina, TipoSecao };
 
 /**
  * Delegador fino pro PaginaCmsService, fixando idPagina = 2 (Sobre).
@@ -28,8 +29,13 @@ export class SobreService {
     return this.paginaCmsService.listarSecoes(ID_PAGINA_SOBRE);
   }
 
-  listarSecoesAdmin(pagina: number, tamanho: number, sort?: string): Observable<PaginaResposta<Secao>> {
-    return this.paginaCmsService.listarSecoesAdmin(ID_PAGINA_SOBRE, pagina, tamanho, sort);
+  listarSecoesAdmin(
+    pagina: number,
+    tamanho: number,
+    sort?: string,
+    tipo?: TipoSecao,
+  ): Observable<PaginaResposta<Secao>> {
+    return this.paginaCmsService.listarSecoesAdmin(ID_PAGINA_SOBRE, pagina, tamanho, sort, tipo);
   }
 
   buscarSecao(id: number): Observable<Secao> {

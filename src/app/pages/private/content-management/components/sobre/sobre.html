@@ -79,6 +79,8 @@
       <div class="grade-carrossel">
         @for (slot of slotsCarrossel; track $index) {
           <div class="slot-carrossel" [class.slot-carrossel-carregando]="carregandoSlot[$index]">
+            <span class="slot-carrossel-titulo">Slot {{ $index + 1 }}</span>
+
             <input
               #inputSlot
               type="file"
@@ -87,26 +89,28 @@
               (change)="onArquivoSlotSelecionado($event, $index)"
             />
 
-            <div class="upload-arquivo upload-arquivo-slot" (click)="inputSlot.click()">
+            <div
+              class="upload-arquivo upload-arquivo-slot"
+              [class.upload-arquivo-erro]="erroSlot[$index]"
+              (click)="inputSlot.click()"
+            >
               @if (imagemSlot($index)) {
                 <img class="slot-carrossel-imagem" [src]="imagemSlot($index)" [alt]="'Slot ' + ($index + 1)" />
               } @else {
                 <span class="material-symbols-outlined upload-arquivo-icone">upload_file</span>
               }
 
-              <div class="upload-arquivo-texto">
-                <strong>Slot {{ $index + 1 }}</strong>
-                <span>PNG, JPEG, JPG ou WEBP</span>
-              </div>
-
               <span class="upload-arquivo-botao">
-                {{ imagemSlot($index) ? 'Substituir' : 'Procurar' }}
+                @if (carregandoSlot[$index]) {
+                  <span class="spinner" aria-hidden="true"></span>
+                }
+                <span>{{ carregandoSlot[$index] ? 'Enviando...' : imagemSlot($index) ? 'Substituir' : 'Procurar' }}</span>
               </span>
-
-              @if (carregandoSlot[$index]) {
-                <span class="spinner" aria-hidden="true"></span>
-              }
             </div>
+
+            @if (erroSlot[$index]) {
+              <span class="error-text">{{ erroSlot[$index] }}</span>
+            }
           </div>
         }
       </div>

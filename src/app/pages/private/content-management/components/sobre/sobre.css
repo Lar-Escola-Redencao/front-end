@@ -130,18 +130,38 @@
 /* ABA 2 — GRADE DE 10 SLOTS DO CARROSSEL */
 /* ---------------------------------------------------------------- */
 
+/* Flex (e não grid) pra centralizar também a última linha, quando ela não fecha. */
 .grade-carrossel {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 20px 16px;
 }
 
 .slot-carrossel {
-  position: relative;
+  width: 200px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.slot-carrossel-titulo {
+  color: #333;
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.slot-carrossel-titulo,
+.slot-carrossel .error-text {
+  text-align: center;
 }
 
 .upload-arquivo-slot {
   position: relative;
+  flex-direction: column;
+  justify-content: center;
+  gap: 10px;
   min-height: 160px;
   overflow: hidden;
 }
@@ -155,13 +175,17 @@
   border-radius: var(--input-radius);
 }
 
-.slot-carrossel-imagem + .upload-arquivo-texto {
+.upload-arquivo-slot .upload-arquivo-botao {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Com imagem, o botão fica por cima dela, centralizado no rodapé do card. */
+.slot-carrossel-imagem + .upload-arquivo-botao {
   position: relative;
   z-index: 1;
-  background: rgba(0, 0, 0, 0.55);
-  color: var(--branco);
-  padding: 4px 8px;
-  border-radius: 4px;
+  margin-top: auto;
 }
 
 .slot-carrossel-carregando .upload-arquivo-slot {
@@ -209,7 +233,7 @@
     width: 100%;
   }
 
-  .grade-carrossel {
-    grid-template-columns: repeat(2, 1fr);
+  .slot-carrossel {
+    width: calc(50% - 8px);
   }
 }

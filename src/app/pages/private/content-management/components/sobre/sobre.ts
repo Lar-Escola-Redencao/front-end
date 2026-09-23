@@ -90,6 +90,7 @@ export class Sobre implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalvas
   slotsCarrossel: (Secao | null)[] = new Array(this.TOTAL_SLOTS_CARROSSEL).fill(null);
   previewSlot: (string | null)[] = new Array(this.TOTAL_SLOTS_CARROSSEL).fill(null);
   carregandoSlot: boolean[] = new Array(this.TOTAL_SLOTS_CARROSSEL).fill(false);
+  erroSlot: (string | null)[] = new Array(this.TOTAL_SLOTS_CARROSSEL).fill(null);
 
   // ---------------------------------------------------------------
   // ABA 3 — NOSSA HISTÓRIA (CRUD completo)
@@ -345,10 +346,15 @@ export class Sobre implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalvas
     const erro = validarArquivo(arquivo, validarImagem());
 
     if (erro) {
-      this.toastr.error(obterMensagemErro(erro), 'Erro');
+      // Os formatos aceitos só aparecem no card depois de uma tentativa
+      // com arquivo fora do padrão, junto do motivo da recusa.
+      const mensagem = obterMensagemErro(erro);
+      this.erroSlot[indice] = erro['formatoArquivoInvalido'] ? `${mensagem} Use PNG, JPEG, JPG ou WEBP.` : mensagem;
       input.value = '';
       return;
     }
+
+    this.erroSlot[indice] = null;
 
     const reader = new FileReader();
     reader.onload = () => {
@@ -429,16 +435,12 @@ export class Sobre implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalvas
     this.carregandoLista = true;
     this.erroLista = false;
 
-    this.sobreService.listarSecoesAdmin(this.pagina, this.tamanho, this.sort).subscribe({
+    // tipo HISTORIA faz o back recortar a consulta nos blocos de ano antes de
+    // paginar, então content, totalElements e totalPages já vêm só desta aba.
+    this.sobreService.listarSecoesAdmin(this.pagina, this.tamanho, this.sort, 'HISTORIA').subscribe({
       next: (resposta) => {
         this.ngZone.run(() => {
-          // Limitação conhecida da modelagem atual: a Secao não tem campo
-          // de tipo, então o back pagina TODAS as seções da página 2
-          // (texto e carrossel incluídos) e o filtro pelo padrão de ano é
-          // feito aqui. Isso pode deixar a página exibida com menos linhas
-          // do que o "tamanho" configurado — só se resolve de verdade
-          // quando a Secao ganhar um campo de tipo no back.
-          this.blocosHistoria = resposta.content.filter((secao) => REGEX_ANO.test(secao.titulo));
+          this.blocosHistoria = resposta.content;
           this.totalElementos = resposta.page.totalElements;
           this.totalPaginas = resposta.page.totalPages;
           this.carregandoLista = false;
