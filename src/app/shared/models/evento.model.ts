@@ -9,6 +9,24 @@ export interface Evento {
   tipoEvento: TipoEvento;
   comentarioPosEvento?: string;
   parceiros: Parceiro[];
+  // Fotos da cobertura pós-evento (tabela midia_evento), já resolvidas para URLs
+  // pelo EventoPublicoService a partir do array de objetos retornado pela API.
+  midiaEvento?: MidiaEvento[];
+}
+
+export type TipoMidiaEvento = 'IMAGEM' | 'VIDEO';
+
+export interface MidiaEvento {
+  url: string;
+  tipo: TipoMidiaEvento;
+}
+
+export interface MidiaEventoDTO {
+  id: number;
+  tipoMidia?: TipoMidiaEvento;
+  urlMidia?: string;
+  tipo_midia?: TipoMidiaEvento;
+  url_midia?: string;
 }
 
 export interface CriarEventoDTO {

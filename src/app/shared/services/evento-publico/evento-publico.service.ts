@@ -8,6 +8,7 @@ import { map } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
 import {
   Evento,
+  MidiaEventoDTO,
   TipoEvento
 } from 'src/app/shared/models/evento.model';
 
@@ -15,6 +16,10 @@ interface EventoPagedResponse {
   content?: Evento[];
   _embedded?: Record<string, Evento[]>;
 }
+
+// O GET /evento/{id} retorna midiaEvento como uma lista de objetos
+// { id, tipoMidia, urlMidia }, não como uma lista de strings.
+type EventoDetalheResponse = Omit<Evento, 'midiaEvento'> & { midiaEvento?: MidiaEventoDTO[] };
 
 @Injectable({
   providedIn: 'root'
@@ -24,7 +29,7 @@ export class EventoPublicoService {
 
   constructor(private http: HttpClient) {}
 
-  private tratarImagem(caminho: string | null | undefined): string {
+  tratarImagem(caminho: string | null | undefined): string {
     if (!caminho) return '';
     if (
       caminho.startsWith('http://') ||
@@ -56,6 +61,23 @@ export class EventoPublicoService {
           .map(evento => ({ ...evento, imagem: this.tratarImagem(evento.imagem) }))
           .sort((a, b) => new Date(a.dataEvento).getTime() - new Date(b.dataEvento).getTime())
       )
+    );
+  }
+
+  buscarPorId(id: number): Observable<Evento> {
+    return this.http.get<EventoDetalheResponse>(`${this.apiUrl}/${id}`).pipe(
+      map(evento => ({
+        ...evento,
+        imagem: this.tratarImagem(evento.imagem),
+        midiaEvento: (evento.midiaEvento ?? []).map(midia => ({
+          url: this.tratarImagem(midia.urlMidia ?? midia.url_midia),
+          tipo: midia.tipoMidia ?? midia.tipo_midia ?? 'IMAGEM'
+        })),
+        parceiros: (evento.parceiros ?? []).map(parceiro => ({
+          ...parceiro,
+          logo: this.tratarImagem(parceiro.logo)
+        }))
+      }))
     );
   }
 

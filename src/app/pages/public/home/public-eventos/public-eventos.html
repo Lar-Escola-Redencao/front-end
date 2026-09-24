@@ -5,11 +5,13 @@
     </div>
 
     <div class="grade-eventos" *ngIf="eventosDestaque.length > 0; else semEventos">
-      <article
+      <a
         class="card-evento"
         *ngFor="let evento of eventosDestaque"
-        [style.background-image]="'url(' + evento.imagem + ')'"
+        [routerLink]="['/eventos', evento.id]"
+        [attr.aria-label]="'Ver detalhes do evento ' + evento.titulo"
       >
+        <img class="card-imagem" [src]="obterUrlImagem(evento.imagem)" [alt]="evento.titulo" loading="lazy" />
         <div class="card-overlay">
           <div class="card-topo">
             <div class="card-data">
@@ -29,7 +31,7 @@
             <span class="card-valor" [class.gratuito]="!evento.valor">{{ formatarValor(evento) }}</span>
           </div>
         </div>
-      </article>
+      </a>
     </div>
 
     <ng-template #semEventos>

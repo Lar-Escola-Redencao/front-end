@@ -254,14 +254,23 @@
 }
 
 .card-evento {
+  position: relative;
   flex: 1 1 340px;
   max-width: 368px;
   height: 260px;
   border-radius: 12px;
-  background-size: cover;
-  background-position: center;
   box-shadow: var(--sombra-padrao);
   overflow: hidden;
+  cursor: pointer;
+}
+
+.card-imagem {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 .card-evento.encerrado {
@@ -282,6 +291,8 @@
 }
 
 .card-overlay {
+  position: relative;
+  z-index: 1;
   height: 100%;
   display: flex;
   flex-direction: column;
