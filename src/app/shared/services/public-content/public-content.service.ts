@@ -6,6 +6,7 @@ import { Diretoria } from 'src/app/shared/models/diretoria.model';
 import { Partner } from 'src/app/shared/models/partner.model';
 import { PaginaResposta } from 'src/app/shared/models/pagina.model';
 import { SocialLink } from 'src/app/shared/models/social-link.model';
+import { Unidade } from 'src/app/shared/models/unidade.model';
 
 @Injectable({ providedIn: 'root' })
 export class PublicContentService {
@@ -22,6 +23,13 @@ export class PublicContentService {
   getParceirosAtivos(): Observable<Partner[]> {
     return this.http.get<PaginaResposta<Partner>>(`${this.apiUrl}/parceiro/todos?size=100`).pipe(
       map(resposta => resposta.content.filter(p => p.ativo)),
+      catchError(() => of([]))
+    );
+  }
+
+  getUnidades(): Observable<Unidade[]> {
+    return this.http.get<PaginaResposta<Unidade>>(`${this.apiUrl}/unidade/todas?size=100`).pipe(
+      map(resposta => resposta.content),
       catchError(() => of([]))
     );
   }
