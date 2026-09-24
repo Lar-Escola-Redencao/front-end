@@ -3,6 +3,7 @@ export interface JwtPayload {
   email?: string;
   name?: string;
   exp?: number;
+  role?: string;
   [key: string]: unknown;
 }
 
