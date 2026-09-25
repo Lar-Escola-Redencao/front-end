@@ -59,4 +59,8 @@ export class PublicEventosComponent implements OnInit {
     if (!evento.valor) return 'Gratuito';
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(evento.valor);
   }
+
+  obterUrlImagem(caminho: string | null | undefined): string {
+    return this.eventoPublicoService.tratarImagem(caminho);
+  }
 }

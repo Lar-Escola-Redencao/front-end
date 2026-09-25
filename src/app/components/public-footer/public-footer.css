@@ -1,3 +1,8 @@
+:host {
+  display: block;
+  width: 100%;
+}
+
 .public-footer {
   width: 100%;
   background-color: #22538D;
@@ -127,7 +132,7 @@
   .footer-content {
     min-height: 812px;
     padding: 30px 20px 30px;
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     text-align: center;
   }
 
