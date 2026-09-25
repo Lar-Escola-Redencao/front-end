@@ -1,14 +1,14 @@
 <section class="sobre-admin">
 
   <div class="abas-container">
-    <button type="button" class="aba-btn" [class.ativa]="abaAtiva === 'texto'" (click)="mudarAba('texto')">
-      Texto Sobre
+    <button type="button" class="aba-btn" [class.ativa]="abaAtiva === 'historia'" (click)="mudarAba('historia')">
+      Nossa História
     </button>
     <button type="button" class="aba-btn" [class.ativa]="abaAtiva === 'carrossel'" (click)="mudarAba('carrossel')">
       Imagens Carrossel
     </button>
-    <button type="button" class="aba-btn" [class.ativa]="abaAtiva === 'historia'" (click)="mudarAba('historia')">
-      Nossa História
+    <button type="button" class="aba-btn" [class.ativa]="abaAtiva === 'texto'" (click)="mudarAba('texto')">
+      Texto Sobre
     </button>
   </div>
 
@@ -30,13 +30,12 @@
         </button>
       </div>
     } @else {
-      <form class="form-modal form-texto" [formGroup]="formTexto" (ngSubmit)="salvarTexto()">
-        <mat-form-field appearance="outline">
-          <mat-label>Título</mat-label>
-          <input matInput formControlName="titulo" (blur)="verificarErrosTexto()" maxlength="150" />
-        </mat-form-field>
-        <span class="error-text" *ngIf="errosTexto['titulo']">{{ errosTexto['titulo'] }}</span>
-
+      <form
+        class="form-modal form-texto"
+        [class.form-texto-disabled]="!editandoTexto"
+        [formGroup]="formTexto"
+        (ngSubmit)="salvarTexto()"
+      >
         <mat-form-field appearance="outline">
           <mat-label>Descrição</mat-label>
           <textarea
@@ -49,10 +48,22 @@
         <span class="error-text" *ngIf="errosTexto['conteudo']">{{ errosTexto['conteudo'] }}</span>
 
         <div class="acoes-modal">
-          <button type="submit" class="btn-primary" [disabled]="isLoadingTexto">
-            <span *ngIf="isLoadingTexto" class="spinner" aria-hidden="true"></span>
-            <span>{{ isLoadingTexto ? 'Salvando...' : 'Salvar' }}</span>
-          </button>
+          @if (!editandoTexto) {
+            <button type="button" class="btn-primary" (click)="editarTexto()">Editar</button>
+          } @else {
+            <button type="button" class="btn-cancelar" [disabled]="isLoadingTexto" (click)="cancelarEdicaoTexto()">
+              Cancelar
+            </button>
+
+            <button
+              type="submit"
+              class="btn-primary"
+              [disabled]="isLoadingTexto || formTexto.invalid || !temAlteracoesTexto"
+            >
+              <span *ngIf="isLoadingTexto" class="spinner" aria-hidden="true"></span>
+              <span>{{ isLoadingTexto ? 'Salvando...' : 'Salvar' }}</span>
+            </button>
+          }
         </div>
       </form>
     }
@@ -79,7 +90,7 @@
       <div class="grade-carrossel">
         @for (slot of slotsCarrossel; track $index) {
           <div class="slot-carrossel" [class.slot-carrossel-carregando]="carregandoSlot[$index]">
-            <span class="slot-carrossel-titulo">Slot {{ $index + 1 }}</span>
+            <span class="slot-carrossel-titulo">Imagem {{ $index + 1 }}</span>
 
             <input
               #inputSlot
@@ -95,18 +106,20 @@
               (click)="inputSlot.click()"
             >
               @if (imagemSlot($index)) {
-                <img class="slot-carrossel-imagem" [src]="imagemSlot($index)" [alt]="'Slot ' + ($index + 1)" />
+                <img class="slot-carrossel-imagem" [src]="imagemSlot($index)" [alt]="'Imagem ' + ($index + 1)" />
               } @else {
                 <span class="material-symbols-outlined upload-arquivo-icone">upload_file</span>
               }
+            </div>
 
-              <span class="upload-arquivo-botao">
+            @if (imagemSlot($index)) {
+              <button type="button" class="btn-primary slot-carrossel-botao" (click)="inputSlot.click()">
                 @if (carregandoSlot[$index]) {
                   <span class="spinner" aria-hidden="true"></span>
                 }
-                <span>{{ carregandoSlot[$index] ? 'Enviando...' : imagemSlot($index) ? 'Substituir' : 'Procurar' }}</span>
-              </span>
-            </div>
+                <span>{{ carregandoSlot[$index] ? 'Enviando...' : 'Substituir' }}</span>
+              </button>
+            }
 
             @if (erroSlot[$index]) {
               <span class="error-text">{{ erroSlot[$index] }}</span>
@@ -124,7 +137,7 @@
   @if (abaAtiva === 'historia') {
     <div class="acoes-historia">
       <button type="button" class="btn-primary btn-primary-thick" (click)="abrirModalHistoria()">
-        Adicionar Novo Bloco
+        Novo marco histórico
       </button>
     </div>
 
@@ -157,7 +170,7 @@
 @if (modalHistoriaAberto) {
   <app-modal-layout
     [class.tremer]="modalHistoriaTremendo"
-    [titulo]="modoEdicaoHistoria ? 'Editar bloco' : 'Adicionar novo bloco'"
+    [titulo]="modoEdicaoHistoria ? 'Editar marco histórico' : 'Cadastrar marco histórico'"
     (closed)="fecharModalHistoria()"
   >
     <form class="form-modal" [formGroup]="formHistoria" (ngSubmit)="salvarHistoria()">
@@ -177,7 +190,9 @@
         <mat-label>Ano</mat-label>
         <input
           matInput
+          type="text"
           formControlName="titulo"
+          (input)="limitarAnoHistoria($event)"
           (blur)="verificarErrosHistoria()"
           inputmode="numeric"
           maxlength="4"
@@ -224,7 +239,7 @@
 
       @if (imagemPreviewHistoria) {
         <div class="imagem-preview-wrapper">
-          <img class="imagem-preview" [src]="imagemPreviewHistoria" alt="Prévia da imagem do bloco" />
+          <img class="imagem-preview" [src]="imagemPreviewHistoria" alt="Prévia da imagem do marco histórico" />
         </div>
       }
 

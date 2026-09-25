@@ -7,9 +7,26 @@
   gap: 8px;
   margin-bottom: 16px;
   border-bottom: 1px solid #ddd;
+  overflow-x: auto;
+  scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+  scrollbar-width: thin;
+}
+
+.abas-container::-webkit-scrollbar {
+  height: 4px;
+}
+
+.abas-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.abas-container::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.16);
+  border-radius: 999px;
 }
 
 .aba-btn {
+  flex: 0 0 auto;
   font-family: var(--fonte-texto);
   padding: 12px 24px;
   background: transparent;
@@ -46,15 +63,40 @@
 }
 
 .form-texto {
-  max-width: 640px;
+  --sobre-campo-desabilitado-bg: #eeeeee;
+}
+
+.form-texto ::ng-deep .mat-form-field-disabled .mat-mdc-text-field-wrapper {
+  background-color: var(--sobre-campo-desabilitado-bg) !important;
+}
+
+.form-texto ::ng-deep .mat-form-field-disabled .mat-mdc-input-element {
+  color: var(--input-color) !important;
+  -webkit-text-fill-color: var(--input-color) !important;
+  cursor: not-allowed;
+}
+
+.form-texto ::ng-deep .mat-form-field-disabled .mat-mdc-form-field-infix {
+  z-index: 1;
+}
+
+.form-texto ::ng-deep .mat-form-field-disabled .mat-mdc-floating-label {
+  padding: 0 4px;
+  background-color: var(--sobre-campo-desabilitado-bg) !important;
+  color: var(--input-color) !important;
+  z-index: 2;
+}
+
+.form-texto ::ng-deep .mat-form-field-disabled .mdc-notched-outline__notch {
+  background-color: transparent !important;
 }
 
 .campo-textarea {
-  min-height: 116px;
+  min-height: 82px;
 }
 
 .campo-textarea ::ng-deep .mat-mdc-text-field-wrapper {
-  height: 116px;
+  height: 82px;
 }
 
 .campo-textarea textarea {
@@ -79,15 +121,11 @@
   font-weight: 700;
 }
 
-.btn-primary-thick {
-  padding-top: 14px;
-  padding-bottom: 14px;
-  font-weight: 700;
-}
-
 .acoes-historia {
   display: flex;
-  justify-content: flex-end;
+  align-items: flex-start;
+  gap: 20px;
+  flex-wrap: wrap;
   margin-bottom: 16px;
 }
 
@@ -135,21 +173,28 @@
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 20px 16px;
+  gap: 18px;
 }
 
 .slot-carrossel {
+  flex: 0 0 200px;
   width: 200px;
+  min-height: 236px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 6px;
+  background: var(--branco);
+  box-shadow: var(--sombra-padrao);
 }
 
 .slot-carrossel-titulo {
   color: #333;
-  font-family: 'Poppins', sans-serif;
-  font-size: 0.85rem;
-  font-weight: 500;
+  font-family: var(--fonte-texto);
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1.2;
 }
 
 .slot-carrossel-titulo,
@@ -159,10 +204,11 @@
 
 .upload-arquivo-slot {
   position: relative;
+  flex: 1;
   flex-direction: column;
   justify-content: center;
   gap: 10px;
-  min-height: 160px;
+  min-height: 150px;
   overflow: hidden;
 }
 
@@ -175,20 +221,19 @@
   border-radius: var(--input-radius);
 }
 
-.upload-arquivo-slot .upload-arquivo-botao {
+.slot-carrossel-botao {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
+  width: 100%;
+  min-height: 36px;
+  margin-top: 2px;
 }
 
 /* Com imagem, o botão fica por cima dela, centralizado no rodapé do card. */
-.slot-carrossel-imagem + .upload-arquivo-botao {
-  position: relative;
-  z-index: 1;
-  margin-top: auto;
-}
-
-.slot-carrossel-carregando .upload-arquivo-slot {
+.slot-carrossel-carregando .upload-arquivo-slot,
+.slot-carrossel-carregando .slot-carrossel-botao {
   opacity: 0.7;
   pointer-events: none;
 }
@@ -232,8 +277,22 @@
   .acoes-historia .btn-primary {
     width: 100%;
   }
+}
+
+@media (max-width: 430px) {
+  .grade-carrossel {
+    gap: 14px 10px;
+  }
 
   .slot-carrossel {
-    width: calc(50% - 8px);
+    padding: 10px;
+  }
+
+  .slot-carrossel-titulo {
+    font-size: 0.85rem;
+  }
+
+  .upload-arquivo-slot {
+    min-height: 128px;
   }
 }

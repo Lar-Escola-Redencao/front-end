@@ -34,7 +34,7 @@ export class TransparenciaService {
 
   /** Rota autenticada e paginada, usada pela tabela de seções da tela admin. */
   listarSecoesAdmin(pagina: number, tamanho: number, sort?: string): Observable<PaginaResposta<Secao>> {
-    return this.paginaCmsService.listarSecoesAdmin(ID_PAGINA_TRANSPARENCIA, pagina, tamanho, sort);
+    return this.paginaCmsService.listarSecoesAdmin(ID_PAGINA_TRANSPARENCIA, pagina, tamanho, sort, 'nenhum');
   }
 
   /** Rota autenticada e paginada, usada pela tabela de documentos da tela admin. */
@@ -56,6 +56,10 @@ export class TransparenciaService {
 
   deletarSecao(id: number): Observable<void> {
     return this.paginaCmsService.deletarSecao(id);
+  }
+
+  reordenarSecoes(secoes: { id: number; ordem: number }[]): Observable<void> {
+    return this.paginaCmsService.reordenarSecoes(secoes);
   }
 
   adicionarDocumento(secaoId: number, titulo: string, arquivo: File): Observable<Documento> {

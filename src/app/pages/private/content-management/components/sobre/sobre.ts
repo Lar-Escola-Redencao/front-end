@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, ChangeDetectorRef, HostListener, NgZone }
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Subscription } from 'rxjs';
+import { Observable, of, Subscription, switchMap } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
 
 import {
@@ -36,7 +36,9 @@ import { environment } from 'src/environments/environment';
 /** Título fixo que identifica as seções do carrossel — nunca aparece na UI. */
 export const TITULO_CARROSSEL = 'Imagem Carrossel';
 
-const REGEX_ANO = /^\d{4}$/;
+const GRUPO_TEXTO_SOBRE = 'texto-sobre';
+const GRUPO_HISTORIA = 'historia';
+const GRUPO_CARROSSEL = 'carrossel';
 
 type AbaSobre = 'texto' | 'carrossel' | 'historia';
 
@@ -65,7 +67,7 @@ interface ClassificacaoSecoes {
 export class Sobre implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalvas {
   readonly TOTAL_SLOTS_CARROSSEL = 10;
 
-  abaAtiva: AbaSobre = 'texto';
+  abaAtiva: AbaSobre = 'historia';
 
   /** Carregamento/erro do fetch único usado pelas Abas 1 e 2 (texto + carrossel). */
   carregandoPagina = false;
@@ -81,6 +83,7 @@ export class Sobre implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalvas
   formTexto: FormGroup;
   errosTexto: { [key: string]: string } = {};
   isLoadingTexto = false;
+  editandoTexto = false;
   private valoresOriginaisTexto: any = null;
 
   // ---------------------------------------------------------------
@@ -142,13 +145,12 @@ export class Sobre implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalvas
     private router: Router,
   ) {
     this.formTexto = this.fb.group({
-      titulo: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(150)]],
-      conteudo: [''],
+      conteudo: ['', [Validators.required]],
     });
 
     this.formHistoria = this.fb.group({
       titulo: ['', [Validators.required, validarAno()]],
-      conteudo: [''],
+      conteudo: ['', [Validators.required]],
       imagem: [null, [validarImagem()]],
       ativo: [true],
     });
@@ -178,7 +180,7 @@ export class Sobre implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalvas
   }
 
   private lerAbaValida(valor: string | null): AbaSobre {
-    return valor === 'carrossel' || valor === 'historia' ? valor : 'texto';
+    return valor === 'texto' || valor === 'carrossel' ? valor : 'historia';
   }
 
   mudarAba(aba: AbaSobre): void {
@@ -208,21 +210,22 @@ export class Sobre implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalvas
    * título é um ano de 4 dígitos; Texto Sobre é a primeira seção que sobra.
    */
   classificarSecoes(secoes: Secao[]): ClassificacaoSecoes {
-    const carrossel = secoes.filter((secao) => secao.titulo === TITULO_CARROSSEL);
-    const historia = secoes.filter((secao) => REGEX_ANO.test(secao.titulo));
-    const texto =
-      secoes.find((secao) => secao.titulo !== TITULO_CARROSSEL && !REGEX_ANO.test(secao.titulo)) ?? null;
+    const carrossel = secoes.filter((secao) => secao.grupo === GRUPO_CARROSSEL);
+    const historia = secoes.filter((secao) => secao.grupo === GRUPO_HISTORIA);
+    const texto = secoes.find((secao) => secao.grupo === GRUPO_TEXTO_SOBRE) ?? null;
 
     return { texto, carrossel, historia };
   }
 
   /** A grade do carrossel tem tamanho fixo: sempre 10 slots, nunca derivado da API. */
   montarSlotsCarrossel(secoesCarrossel: Secao[]): (Secao | null)[] {
-    const ordenadas = [...secoesCarrossel].sort((a, b) => a.id - b.id);
     const slots: (Secao | null)[] = new Array(this.TOTAL_SLOTS_CARROSSEL).fill(null);
 
-    ordenadas.slice(0, this.TOTAL_SLOTS_CARROSSEL).forEach((secao, indice) => {
-      slots[indice] = secao;
+    secoesCarrossel.forEach((secao) => {
+      const indice = (secao.ordem ?? 0) - 1;
+      if (indice >= 0 && indice < this.TOTAL_SLOTS_CARROSSEL) {
+        slots[indice] = secao;
+      }
     });
 
     return slots;
@@ -264,11 +267,12 @@ export class Sobre implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalvas
 
   private preencherFormTexto(): void {
     this.formTexto.reset({
-      titulo: this.secaoTexto?.titulo ?? '',
       conteudo: this.secaoTexto?.conteudo ?? '',
     });
     this.formTexto.markAsPristine();
     this.valoresOriginaisTexto = this.formTexto.getRawValue();
+    this.formTexto.disable();
+    this.editandoTexto = false;
   }
 
   get temAlteracoesTexto(): boolean {
@@ -277,6 +281,18 @@ export class Sobre implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalvas
 
   verificarErrosTexto(): void {
     this.errosTexto = mapearErrosFormulario(this.formTexto);
+  }
+
+  editarTexto(): void {
+    this.editandoTexto = true;
+    this.formTexto.enable();
+    this.cdr.detectChanges();
+  }
+
+  cancelarEdicaoTexto(): void {
+    this.preencherFormTexto();
+    this.errosTexto = {};
+    this.cdr.detectChanges();
   }
 
   salvarTexto(): void {
@@ -293,14 +309,22 @@ export class Sobre implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalvas
     }
 
     this.isLoadingTexto = true;
-    const { titulo, conteudo } = this.formTexto.value;
+    const { conteudo } = this.formTexto.value;
 
     // Enquanto a seção de texto ainda não existe, Salvar cria o registro;
     // depois disso, sempre atualiza o mesmo id. Não é um botão de
     // "adicionar" — é a mesma ação Salvar em dois estados possíveis.
     const request = this.secaoTexto
-      ? this.sobreService.atualizarSecao(this.secaoTexto.id, { titulo, conteudo, ativo: true })
-      : this.sobreService.criarSecao({ titulo, conteudo, ativo: true });
+      ? this.sobreService.atualizarSecao(this.secaoTexto.id, {
+          conteudo,
+          ativo: true,
+          grupo: GRUPO_TEXTO_SOBRE,
+        })
+      : this.sobreService.criarSecao({
+          conteudo,
+          ativo: true,
+          grupo: GRUPO_TEXTO_SOBRE,
+        });
 
     request.subscribe({
       next: (secao) => {
@@ -372,22 +396,41 @@ export class Sobre implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalvas
   private enviarImagemSlot(indice: number, arquivo: File): void {
     this.carregandoSlot[indice] = true;
     const secaoExistente = this.slotsCarrossel[indice];
+    const ordem = indice + 1;
 
     // O título "Imagem Carrossel" nunca aparece na tela: é injetado aqui,
     // igual em todo slot, pra manter as seções do carrossel identificáveis
     // sem precisar de um campo de tipo que a Secao não tem.
-    const request = secaoExistente
+    const request: Observable<Secao> = secaoExistente
       ? this.sobreService.atualizarSecao(secaoExistente.id, {
           titulo: TITULO_CARROSSEL,
           conteudo: secaoExistente.conteudo ?? '',
           ativo: true,
+          grupo: GRUPO_CARROSSEL,
+          ordem,
           imagem: arquivo,
         })
       : this.sobreService.criarSecao({
           titulo: TITULO_CARROSSEL,
           ativo: true,
+          grupo: GRUPO_CARROSSEL,
+          ordem,
           imagem: arquivo,
-        });
+        }).pipe(
+          switchMap((secao) => {
+            if (secao.ordem === ordem) {
+              return of(secao);
+            }
+
+            return this.sobreService.atualizarSecao(secao.id, {
+              titulo: TITULO_CARROSSEL,
+              conteudo: secao.conteudo ?? '',
+              ativo: true,
+              grupo: GRUPO_CARROSSEL,
+              ordem,
+            });
+          }),
+        );
 
     request.subscribe({
       next: () => {
@@ -428,7 +471,7 @@ export class Sobre implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalvas
   // ---------------------------------------------------------------
 
   get mensagemVaziaHistoria(): string {
-    return 'Nenhum bloco cadastrado.';
+    return 'Nenhum marco histórico cadastrado.';
   }
 
   carregarHistoria(): void {
@@ -437,7 +480,7 @@ export class Sobre implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalvas
 
     // tipo HISTORIA faz o back recortar a consulta nos blocos de ano antes de
     // paginar, então content, totalElements e totalPages já vêm só desta aba.
-    this.sobreService.listarSecoesAdmin(this.pagina, this.tamanho, this.sort, 'HISTORIA').subscribe({
+    this.sobreService.listarSecoesAdmin(this.pagina, this.tamanho, this.sort, GRUPO_HISTORIA).subscribe({
       next: (resposta) => {
         this.ngZone.run(() => {
           this.blocosHistoria = resposta.content;
@@ -565,6 +608,16 @@ export class Sobre implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalvas
     this.errosHistoria = mapearErrosFormulario(this.formHistoria);
   }
 
+  limitarAnoHistoria(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const valorLimitado = input.value.replace(/\D/g, '').slice(0, 4);
+    input.value = valorLimitado;
+    this.formHistoria.get('titulo')?.setValue(valorLimitado);
+    if (valorLimitado.length < 4) {
+      delete this.errosHistoria['titulo'];
+    }
+  }
+
   onImagemHistoriaSelecionada(event: Event): void {
     const input = event.target as HTMLInputElement;
     const arquivo = input.files?.[0];
@@ -593,8 +646,10 @@ export class Sobre implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalvas
 
     const reader = new FileReader();
     reader.onload = () => {
-      this.imagemPreviewHistoria = reader.result as string;
-      this.cdr.detectChanges();
+      this.ngZone.run(() => {
+        this.imagemPreviewHistoria = reader.result as string;
+        this.cdr.detectChanges();
+      });
     };
     reader.readAsDataURL(arquivo);
   }
@@ -617,13 +672,28 @@ export class Sobre implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalvas
     const imagem = this.imagemSelecionadaHistoria ?? undefined;
 
     const request = this.modoEdicaoHistoria
-      ? this.sobreService.atualizarSecao(this.blocoSelecionadoId!, { titulo, conteudo, ativo, imagem })
-      : this.sobreService.criarSecao({ titulo, conteudo, ativo, imagem });
+      ? this.sobreService.atualizarSecao(this.blocoSelecionadoId!, {
+          titulo,
+          conteudo,
+          ativo,
+          imagem,
+          grupo: GRUPO_HISTORIA,
+        })
+      : this.sobreService.criarSecao({
+          titulo,
+          conteudo,
+          ativo,
+          imagem,
+          grupo: GRUPO_HISTORIA,
+        });
 
     request.subscribe({
       next: () => {
         this.ngZone.run(() => {
-          this.toastr.success(this.modoEdicaoHistoria ? 'Bloco atualizado!' : 'Bloco criado!', 'Sucesso');
+          this.toastr.success(
+            this.modoEdicaoHistoria ? 'Marco histórico atualizado!' : 'Marco histórico criado!',
+            'Sucesso',
+          );
           this.fecharModalHistoriaSemConfirmacao();
           this.carregarHistoria();
           this.cdr.detectChanges();
@@ -632,7 +702,7 @@ export class Sobre implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalvas
       error: (err: any) => {
         this.ngZone.run(() => {
           this.isLoadingHistoria = false;
-          this.toastr.error(err.error?.message || 'Erro ao salvar o bloco.', 'Erro');
+          this.toastr.error(err.error?.message || 'Erro ao salvar o marco histórico.', 'Erro');
           this.cdr.detectChanges();
         });
       },
@@ -659,13 +729,13 @@ export class Sobre implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalvas
       this.sobreService.deletarSecao(bloco.id).subscribe({
         next: () => {
           this.ngZone.run(() => {
-            this.toastr.success('Bloco excluído com sucesso!', 'Sucesso');
+            this.toastr.success('Marco histórico excluído com sucesso!', 'Sucesso');
             this.carregarHistoria();
           });
         },
         error: () => {
           this.ngZone.run(() => {
-            this.toastr.error('Erro ao excluir bloco.', 'Erro');
+            this.toastr.error('Erro ao excluir marco histórico.', 'Erro');
             this.cdr.detectChanges();
           });
         },

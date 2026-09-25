@@ -7,6 +7,8 @@ export interface Documento {
 export interface Secao {
   id: number;
   titulo: string;
+  grupo?: string;
+  ordem?: number;
   conteudo?: string;
   imagem?: string;
   ativo: boolean;

@@ -3,15 +3,15 @@ import { Observable } from 'rxjs';
 import { PaginaResposta } from 'src/app/shared/models/pagina.model';
 import {
   AtualizarSecaoDTO,
+  GrupoSecao,
   CriarSecaoDTO,
   ID_PAGINA_SOBRE,
   Pagina,
   PaginaCmsService,
   Secao,
-  TipoSecao,
 } from 'src/app/shared/services/pagina/pagina-cms.service';
 
-export type { Secao, CriarSecaoDTO, AtualizarSecaoDTO, Pagina, TipoSecao };
+export type { Secao, CriarSecaoDTO, AtualizarSecaoDTO, Pagina, GrupoSecao };
 
 /**
  * Delegador fino pro PaginaCmsService, fixando idPagina = 2 (Sobre).
@@ -33,9 +33,9 @@ export class SobreService {
     pagina: number,
     tamanho: number,
     sort?: string,
-    tipo?: TipoSecao,
+    grupo?: GrupoSecao,
   ): Observable<PaginaResposta<Secao>> {
-    return this.paginaCmsService.listarSecoesAdmin(ID_PAGINA_SOBRE, pagina, tamanho, sort, tipo);
+    return this.paginaCmsService.listarSecoesAdmin(ID_PAGINA_SOBRE, pagina, tamanho, sort, grupo);
   }
 
   buscarSecao(id: number): Observable<Secao> {
@@ -52,5 +52,9 @@ export class SobreService {
 
   deletarSecao(id: number): Observable<void> {
     return this.paginaCmsService.deletarSecao(id);
+  }
+
+  reordenarSecoes(secoes: { id: number; ordem: number }[]): Observable<void> {
+    return this.paginaCmsService.reordenarSecoes(secoes);
   }
 }

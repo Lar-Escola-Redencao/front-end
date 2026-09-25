@@ -87,6 +87,11 @@ describe('Sobre', () => {
     it('aceita um ano válido recente', () => {
       expect(executar('2024')).toBeNull();
     });
+
+    it('aceita qualquer ano com exatamente 4 dígitos', () => {
+      expect(executar('1111')).toBeNull();
+      expect(executar('2424')).toBeNull();
+    });
   });
 
   // -----------------------------------------------------------------

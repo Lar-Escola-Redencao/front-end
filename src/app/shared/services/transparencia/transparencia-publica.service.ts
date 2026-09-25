@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { Documento, Secao } from 'src/app/shared/models/transparencia.model';
 import { ID_PAGINA_TRANSPARENCIA } from 'src/app/shared/services/pagina/pagina-cms.service';
@@ -14,7 +14,9 @@ export class TransparenciaPublicaService {
   constructor(private http: HttpClient) {}
 
   listarSecoes(): Observable<Secao[]> {
-    return this.http.get<Secao[]>(`${this.apiUrl}/${ID_PAGINA_TRANSPARENCIA}/secoes`);
+    return this.http.get<Secao[]>(`${this.apiUrl}/${ID_PAGINA_TRANSPARENCIA}/secoes`).pipe(
+      map((secoes) => [...secoes].sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0))),
+    );
   }
 
   urlVisualizar(documento: Documento): string {

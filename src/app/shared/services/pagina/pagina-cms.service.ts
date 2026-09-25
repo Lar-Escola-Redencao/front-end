@@ -9,12 +9,13 @@ import { construirHttpParams } from 'src/app/shared/utils/paginacao-url';
 export const ID_PAGINA_TRANSPARENCIA = 1;
 export const ID_PAGINA_SOBRE = 2;
 
-/** Recorte opcional da listagem paginada de seções, espelhando o enum TipoSecao do back. */
-export type TipoSecao = 'HISTORIA';
+export type GrupoSecao = 'texto-sobre' | 'historia' | 'carrossel' | 'nenhum';
 
 export interface Secao {
   id: number;
   titulo: string;
+  grupo?: string;
+  ordem?: number;
   conteudo?: string;
   imagem?: string;
   ativo: boolean;
@@ -29,15 +30,19 @@ export interface DocumentoAdmin {
 }
 
 export interface CriarSecaoDTO {
-  titulo: string;
+  titulo?: string;
   conteudo?: string;
+  grupo?: string;
+  ordem?: number;
   imagem?: File;
   ativo?: boolean;
 }
 
 export interface AtualizarSecaoDTO {
-  titulo: string;
+  titulo?: string;
   conteudo?: string;
+  grupo?: string;
+  ordem?: number;
   imagem?: File;
   ativo: boolean;
 }
@@ -74,17 +79,17 @@ export class PaginaCmsService {
   }
 
   /**
-   * Rota autenticada e paginada, filtrada pela página. Com `tipo`, o back
-   * pagina e conta só as seções daquele recorte — sem ele, vêm todas.
+   * Rota autenticada e paginada, filtrada pela página. Com `grupo`, o back
+   * pagina e conta só as seções daquele recorte; sem ele, vêm todas.
    */
   listarSecoesAdmin(
     idPagina: number,
     pagina: number,
     tamanho: number,
     sort?: string,
-    tipo?: TipoSecao,
+    grupo?: GrupoSecao,
   ): Observable<PaginaResposta<Secao>> {
-    const params = construirHttpParams({ pagina, tamanho, sort, extras: { tipo } });
+    const params = construirHttpParams({ pagina, tamanho, sort, extras: { grupo } });
     return this.http.get<PaginaResposta<Secao>>(`${this.apiUrl}/${idPagina}/secoes/admin`, { params });
   }
 
@@ -106,12 +111,22 @@ export class PaginaCmsService {
 
   criarSecao(idPagina: number, dto: CriarSecaoDTO): Observable<Secao> {
     const formData = new FormData();
-    formData.append('titulo', dto.titulo);
+    if (dto.titulo && dto.titulo.trim()) {
+      formData.append('titulo', dto.titulo);
+    }
 
     // Só manda conteudo quando tem texto de verdade, pra não gravar ''
     // no banco logo na criação do registro.
     if (dto.conteudo && dto.conteudo.trim()) {
       formData.append('conteudo', dto.conteudo);
+    }
+
+    if (dto.grupo && dto.grupo.trim()) {
+      formData.append('grupo', dto.grupo);
+    }
+
+    if (dto.ordem !== undefined) {
+      formData.append('ordem', String(dto.ordem));
     }
 
     if (dto.ativo !== undefined) {
@@ -127,13 +142,23 @@ export class PaginaCmsService {
 
   atualizarSecao(id: number, dto: AtualizarSecaoDTO): Observable<Secao> {
     const formData = new FormData();
-    formData.append('titulo', dto.titulo);
+    if (dto.titulo && dto.titulo.trim()) {
+      formData.append('titulo', dto.titulo);
+    }
     formData.append('ativo', String(dto.ativo));
 
     // Ao contrário do criar, aqui sempre manda o campo — mesmo vazio —
     // senão o usuário nunca consegue apagar uma descrição já salva.
     // Combinado com o back: string vazia/em branco vira NULL na atualização.
     formData.append('conteudo', dto.conteudo ?? '');
+
+    if (dto.grupo !== undefined) {
+      formData.append('grupo', dto.grupo);
+    }
+
+    if (dto.ordem !== undefined) {
+      formData.append('ordem', String(dto.ordem));
+    }
 
     if (dto.imagem) {
       formData.append('imagem', dto.imagem);
@@ -151,6 +176,10 @@ export class PaginaCmsService {
 
   deletarSecao(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/secoes/${id}`);
+  }
+
+  reordenarSecoes(secoes: { id: number; ordem: number }[]): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/secoes/reordenar`, secoes);
   }
 
   adicionarDocumento(secaoId: number, titulo: string, arquivo: File): Observable<Documento> {

@@ -239,14 +239,7 @@ export function validarDocumento(): ValidatorFn {
 // =========================================================
 
 /**
- * Ano mínimo aceito pro título de um bloco de "Nossa História".
- */
-export const ANO_MINIMO = 1900;
-
-/**
- * Valida que o título é um ano com 4 dígitos, dentro de uma faixa razoável
- * (de ANO_MINIMO até o ano que vem). É esse ano que ordena a linha do
- * tempo pública, então não aceita texto livre tipo "2015 - fundação".
+ * Valida que o título é um ano com exatamente 4 dígitos.
  *
  * Campo vazio não é responsabilidade deste validator.
  */
@@ -260,13 +253,6 @@ export function validarAno(): ValidatorFn {
 
     if (!/^\d{4}$/.test(valor)) {
       return { anoInvalido: { valor } };
-    }
-
-    const ano = Number(valor);
-    const anoMaximo = new Date().getFullYear() + 1;
-
-    if (ano < ANO_MINIMO || ano > anoMaximo) {
-      return { anoInvalido: { valor, anoMinimo: ANO_MINIMO, anoMaximo } };
     }
 
     return null;
