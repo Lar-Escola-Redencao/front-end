@@ -47,14 +47,14 @@ describe('Transparencia', () => {
 
     expect(fixture.nativeElement.querySelector('.spinner')).not.toBeNull();
 
-    httpMock.expectOne(`${environment.apiUrl}/transparencia/secoes`).flush(secoesMock);
+    httpMock.expectOne(`${environment.apiUrl}/paginas/1/secoes`).flush(secoesMock);
   });
 
   it('renders only sections with documents and keeps them closed once loaded', () => {
     setup();
     fixture.detectChanges();
 
-    httpMock.expectOne(`${environment.apiUrl}/transparencia/secoes`).flush(secoesMock);
+    httpMock.expectOne(`${environment.apiUrl}/paginas/1/secoes`).flush(secoesMock);
     fixture.detectChanges();
 
     const titles = Array.from(fixture.nativeElement.querySelectorAll('.secao-titulo')).map(
@@ -68,7 +68,7 @@ describe('Transparencia', () => {
     setup();
     fixture.detectChanges();
 
-    httpMock.expectOne(`${environment.apiUrl}/transparencia/secoes`).flush(secoesMock);
+    httpMock.expectOne(`${environment.apiUrl}/paginas/1/secoes`).flush(secoesMock);
     fixture.detectChanges();
 
     (fixture.nativeElement.querySelector('.secao-cabecalho') as HTMLButtonElement).click();
@@ -83,14 +83,14 @@ describe('Transparencia', () => {
     fixture.detectChanges();
 
     httpMock
-      .expectOne(`${environment.apiUrl}/transparencia/secoes`)
+      .expectOne(`${environment.apiUrl}/paginas/1/secoes`)
       .flush('erro', { status: 500, statusText: 'Server Error' });
     fixture.detectChanges();
 
     expect(fixture.nativeElement.textContent).toContain('Não foi possível carregar os documentos');
 
     (fixture.nativeElement.querySelector('.btn-retry') as HTMLButtonElement).click();
-    httpMock.expectOne(`${environment.apiUrl}/transparencia/secoes`).flush(secoesMock);
+    httpMock.expectOne(`${environment.apiUrl}/paginas/1/secoes`).flush(secoesMock);
     fixture.detectChanges();
 
     expect(fixture.nativeElement.querySelector('.state-error')).toBeNull();

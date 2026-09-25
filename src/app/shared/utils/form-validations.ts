@@ -38,7 +38,10 @@ const MENSAGENS_GENERICAS: Record<string, (err: any) => string> = {
     'Formato de arquivo inválido.',
 
   tamanhoArquivoExcedido: (err) =>
-    `O arquivo deve ter no máximo ${err.tamanhoMaximoMB}MB.`
+    `O arquivo deve ter no máximo ${err.tamanhoMaximoMB}MB.`,
+
+  anoInvalido: () =>
+    'O título deve ser um ano com 4 dígitos (ex.: 2015).'
 
 };
 
@@ -228,6 +231,32 @@ export function validarDocumento(): ValidatorFn {
     ],
     TAMANHO_MAXIMO_ARQUIVO_BYTES
   );
+}
+
+
+// =========================================================
+// VALIDAÇÃO DE ANO
+// =========================================================
+
+/**
+ * Valida que o título é um ano com exatamente 4 dígitos.
+ *
+ * Campo vazio não é responsabilidade deste validator.
+ */
+export function validarAno(): ValidatorFn {
+  return (control: AbstractControl) => {
+    const valor = String(control.value ?? '').trim();
+
+    if (!valor) {
+      return null;
+    }
+
+    if (!/^\d{4}$/.test(valor)) {
+      return { anoInvalido: { valor } };
+    }
+
+    return null;
+  };
 }
 
 
