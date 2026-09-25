@@ -1,27 +1,27 @@
-<section class="assistidos-admin">
-  <h1>Gestão de Assistidos</h1>
+<section class="usuarios-admin">
+  <h1>Gestão de Usuários</h1>
   <div class="conteudo">
 
     <div class="abas-container">
-      <button type="button" class="aba-btn" [class.ativa]="abaAtiva === 'assistidos'" (click)="mudarAba('assistidos')">Assistidos</button>
-      <button type="button" class="aba-btn" [class.ativa]="abaAtiva === 'contatos'" (click)="mudarAba('contatos')">Contatos</button>
+      <button type="button" class="aba-btn" [class.ativa]="abaAtiva === 'usuarios'" (click)="mudarAba('usuarios')">Usuários</button>
+      <button *ngIf="!isMonitor" type="button" class="aba-btn" [class.ativa]="abaAtiva === 'contatos'" (click)="mudarAba('contatos')">Contatos</button>
     </div>
 
-    <div class="acoes-assistidos">
-      <button *ngIf="abaAtiva === 'assistidos'" type="button" class="btn-primary btn-primary-thick" (click)="abrirCadastro()">Novo assistido</button>
+    <div class="acoes-usuarios">
+      <button *ngIf="abaAtiva === 'usuarios' && podeCadastrarUsuario" type="button" class="btn-primary btn-primary-thick" (click)="abrirCadastro()">Novo usuário</button>
     </div>
 
    <app-tabela-layout
-      [colunas]="$any(abaAtiva === 'assistidos' ? colunas : colunasContatos)"
-      [dados]="$any(abaAtiva === 'assistidos' ? assistidos : contatos)"
-      [acoes]="$any(abaAtiva === 'assistidos' ? acoesTabela : acoesTabelaContatos)"
+      [colunas]="$any(abaAtiva === 'usuarios' ? colunas : colunasContatos)"
+      [dados]="$any(abaAtiva === 'usuarios' ? usuarios : contatos)"
+      [acoes]="$any(abaAtiva === 'usuarios' ? acoesTabelaUsuariosAtual : acoesTabelaContatosAtual)"
       [carregando]="carregandoLista"
       [erro]="erroLista"
       [ordenacao]="ordenacao"
-      [mensagemVazia]="abaAtiva === 'assistidos' ? 'Nenhum assistido cadastrado ainda.' : 'Nenhum contato cadastrado ainda.'"
+      [mensagemVazia]="abaAtiva === 'usuarios' ? 'Nenhum usuário cadastrado ainda.' : 'Nenhum contato cadastrado ainda.'"
       (acao)="executarAcao($event)"
       (ordenar)="ordenarPor($event)"
-      (tentarNovamente)="abaAtiva === 'assistidos' ? carregarAssistidos() : carregarContatos()">
+      (tentarNovamente)="abaAtiva === 'usuarios' ? carregarUsuarios() : carregarContatos()">
     </app-tabela-layout>
 
     <app-paginacao [paginaAtual]="pagina" [totalPaginas]="totalPaginas" [totalElementos]="totalElementos" [tamanho]="tamanho" [carregando]="carregandoLista" (paginaChange)="irParaPagina($event)" (tamanhoChange)="mudarTamanhoPagina($event)"></app-paginacao>
@@ -29,7 +29,7 @@
 </section>
 
 @if (modalAberto) {
-<app-modal-layout [class.tremer]="modalTremendo" [titulo]="modoEdicao ? 'Editar assistido' : 'Novo assistido'" (closed)="fecharModal()">
+<app-modal-layout [class.tremer]="modalTremendo" [titulo]="modoEdicao ? 'Editar usuário' : 'Novo usuário'" (closed)="fecharModal()">
   <div class="stepper-indicador">
     <div class="step" [class.ativo]="etapaModal >= 1"><div class="step-numero">1</div><span class="step-texto">Dados pessoais</span></div>
     <div class="step-linha" [class.ativo]="etapaModal >= 2"></div>
@@ -38,7 +38,7 @@
     <div class="step" [class.ativo]="etapaModal === 3"><div class="step-numero">3</div><span class="step-texto">Contatos</span></div>
   </div>
 
-  <form class="form-modal" [formGroup]="formAssistido" (ngSubmit)="salvar()">
+  <form class="form-modal" [formGroup]="formUsuario" (ngSubmit)="salvar()">
     @if (isCarregandoEdicao) {
       <div class="form-carregando" style="display: flex; flex-direction: column; align-items: center; padding: 40px 0;">
         <span class="spinner spinner-escuro" aria-hidden="true"></span>
@@ -57,7 +57,7 @@
         <mat-form-field appearance="outline"><mat-label>Endereço</mat-label><input matInput formControlName="endereco" (blur)="verificarErros()"></mat-form-field>
         <span class="error-text" *ngIf="erros['endereco']">{{ erros['endereco'] }}</span>
 
-        @if (!formAssistido.get('usarOutroDocumento')?.value) {
+        @if (!formUsuario.get('usarOutroDocumento')?.value) {
           <mat-form-field appearance="outline"><mat-label>CPF</mat-label><input matInput formControlName="cpf" inputmode="numeric" (input)="aplicarMascaraCpf($event)" (blur)="verificarErros()" maxlength="14"></mat-form-field>
           <span class="error-text" *ngIf="erros['cpf']">{{ erros['cpf'] }}</span>
         } @else {
@@ -76,8 +76,7 @@
         <div class="form-row-foto-final">
           <div class="upload-container-completo">
 
-            <!-- Caixa de Upload Retangular a Tracejado -->
-            <div class="caixa-upload-retangular" (click)="fileInput.click()">
+            <div class="caixa-upload-retangular" [class.upload-com-erro]="erros['foto']" (click)="fileInput.click()">
               <div class="upload-icone-bg">
                 <mat-icon>upload_file</mat-icon>
               </div>
@@ -90,12 +89,12 @@
 
             <input type="file" #fileInput hidden accept="image/png, image/jpeg, image/jpg, image/webp" (change)="onFotoSelecionada($event)">
 
-            <!-- Preview Redondo -->
             <div class="preview-inferior-container" *ngIf="fotoPreviewUrl">
               <img [src]="fotoPreviewUrl" class="avatar-preview-inferior" alt="Preview da foto de perfil">
             </div>
 
           </div>
+          <span class="error-text" *ngIf="erros['foto']">{{ erros['foto'] }}</span>
         </div>
 
         <div class="acoes-modal"><button type="button" class="btn-cancelar" (click)="fecharModal()">Cancelar</button><button type="button" class="btn-primary" (click)="proximaEtapa()">Próximo</button></div>
@@ -166,7 +165,6 @@
       <input matInput type="email" formControlName="email">
     </mat-form-field>
 
-    <!-- CAMPO DE ENDEREÇO ADICIONADO -->
     <mat-form-field appearance="outline">
       <mat-label>Endereço</mat-label>
       <input matInput formControlName="endereco">
@@ -184,19 +182,18 @@
 </app-modal-layout>
 }
 
-<!-- MODAL DE PREVIEW DE ASSISTIDO (Padrão Eventos) -->
-@if (modalPreviewAssistidoAberto) {
-<app-modal-layout titulo="Detalhes do assistido" (closed)="fecharPreviewAssistido()">
-  <div class="form-modal preview-evento-style" *ngIf="assistidoPreview">
+<!-- MODAL DE PREVIEW DE USUÁRIO (Padrão Eventos) -->
+@if (modalPreviewUsuarioAberto) {
+<app-modal-layout titulo="Detalhes do usuário" (closed)="fecharPreviewUsuario()">
+  <div class="form-modal preview-evento-style" *ngIf="usuarioPreview">
 
-    <!-- Badges estilo "Arrecadação" -->
     <div class="preview-badge-container">
-      <span class="preview-badge">{{ assistidoPreview.nomeUnidade || 'Sem unidade' }}</span>
-      <span class="preview-badge badge-turma">{{ assistidoPreview.nomeTurma || 'Sem turma' }}</span>
+      <span class="preview-badge">{{ usuarioPreview.nomeUnidade || 'Sem unidade' }}</span>
+      <span class="preview-badge badge-turma">{{ usuarioPreview.nomeTurma || 'Sem turma' }}</span>
     </div>
 
     <div class="preview-avatar-container">
-      <img *ngIf="assistidoPreview.imagem; else semFoto" [src]="assistidoPreview.imagem_perfil" alt="Foto de perfil" class="preview-avatar">
+      <img *ngIf="usuarioPreview.imagem; else semFoto" [src]="usuarioPreview.imagem_perfil" alt="Foto de perfil" class="preview-avatar">
       <ng-template #semFoto>
         <div class="preview-avatar placeholder">
           <mat-icon>person</mat-icon>
@@ -204,31 +201,28 @@
       </ng-template>
     </div>
 
-    <!-- Título Principal Centralizado -->
-    <h2 class="preview-title">{{ assistidoPreview.nomeCompleto }}</h2>
+    <h2 class="preview-title">{{ usuarioPreview.nomeCompleto }}</h2>
 
-    <!-- Linhas de Informação com Ícones (Datas, Local, Documento) -->
     <div class="preview-info-row">
       <mat-icon>cake</mat-icon>
-      <span>{{ assistidoPreview.dataNascimento | date:'dd/MM/yyyy' }}</span>
+      <span>{{ usuarioPreview.dataNascimento | date:'dd/MM/yyyy' }}</span>
     </div>
 
     <div class="preview-info-row">
       <mat-icon>location_on</mat-icon>
-      <span>{{ assistidoPreview.endereco }}</span>
+      <span>{{ usuarioPreview.endereco }}</span>
     </div>
 
     <div class="preview-info-row">
       <mat-icon>badge</mat-icon>
-      <span>{{ formatarDocumentoPreview(assistidoPreview) }}</span>
+      <span>{{ formatarDocumentoPreview(usuarioPreview) }}</span>
     </div>
 
-    <!-- Secção de Responsáveis (Estilo "Sobre o evento") -->
     <div class="preview-section">
       <h3>Contatos / Responsáveis</h3>
 
-      <div *ngIf="assistidoPreview.contatos?.length; else semContatos" class="contatos-lista-preview">
-        <div class="contato-item-preview" *ngFor="let c of assistidoPreview.contatos">
+      <div *ngIf="usuarioPreview.contatos?.length; else semContatos" class="contatos-lista-preview">
+        <div class="contato-item-preview" *ngFor="let c of usuarioPreview.contatos">
           <div class="contato-nome-preview">{{ c.nomeCompleto }} <span class="parentesco-tag">({{ c.parentesco }})</span></div>
           <div class="contato-dados-preview">
             <span><mat-icon>phone</mat-icon> {{ c.telefone }}</span>
@@ -238,52 +232,145 @@
       </div>
       <ng-template #semContatos><p class="texto-vazio">Nenhum contacto associado.</p></ng-template>
     </div>
-
-    <!-- Botões de ação removidos. O modal fechará apenas pelo "X" nativo do topo. -->
   </div>
 </app-modal-layout>
 }
 
-<!-- MODAL DE PREVIEW DE CONTATO (Sem Backend) -->
+<!-- MODAL DE PREVIEW DE CONTATO -->
 @if (modalPreviewContatoAberto) {
-<app-modal-layout titulo="Detalhes do Contato" (closed)="fecharPreviewContato()">
+<app-modal-layout titulo="Detalhes do contato" (closed)="fecharPreviewContato()">
   <div class="form-modal preview-evento-style" *ngIf="contatoPreview">
 
-    <!-- Badge para quantidade de vínculos -->
-    <div class="preview-badge-container" style="justify-content: center;">
-      <span class="preview-badge">{{ contatoPreview.quantidadeVinculos }} Vínculo(s) Ativo(s)</span>
+    <div class="preview-avatar-container">
+      <div class="preview-avatar placeholder">
+        <mat-icon>person</mat-icon>
+      </div>
     </div>
 
-    <!-- Título Principal Centralizado -->
     <h2 class="preview-title">{{ contatoPreview.nomeCompleto }}</h2>
 
-    <!-- Linhas de Informação com Ícones -->
     <div class="preview-info-row">
       <mat-icon>phone</mat-icon>
       <span>{{ contatoPreview.telefone }}</span>
     </div>
 
-    <div class="preview-info-row">
+    <div class="preview-info-row" *ngIf="contatoPreview.email">
       <mat-icon>email</mat-icon>
       <span>{{ contatoPreview.email }}</span>
     </div>
 
     <div class="preview-info-row">
-      <mat-icon>location_on</mat-icon>
-      <span>{{ contatoPreview.endereco }}</span>
+      <mat-icon>account_child_invert</mat-icon>
+      <span>{{ contatoPreview.quantidadeVinculos || 0 }} usuário(s) vinculado(s)</span>
     </div>
 
-    <!-- Secção de Assistidos Vinculados -->
-    <div class="preview-section">
-      <h3>Assistidos Vinculados</h3>
-
-      <div *ngIf="contatoPreview.assistidosVinculados?.length; else semVinculos" class="contatos-lista-preview">
-        <div class="contato-item-preview" *ngFor="let ass of contatoPreview.assistidosVinculados">
-          <div class="contato-nome-preview" style="margin-bottom: 0;">{{ ass }}</div>
-        </div>
-      </div>
-      <ng-template #semVinculos><p class="texto-vazio">Nenhum assistido vinculado.</p></ng-template>
-    </div>
   </div>
+</app-modal-layout>
+}
+
+<!-- MODAL "USUÁRIOS VINCULADOS" -->
+@if (modalVinculosAberto) {
+<app-modal-layout titulo="Usuários vinculados" (closed)="fecharVinculos()">
+  <div class="form-modal vinculos-modal-style">
+
+    <button
+      type="button"
+      class="btn-primary btn-novo-vinculo"
+      *ngIf="podeGerenciarContatos && contatoSelecionado"
+      (click)="fecharVinculos(); abrirNovoVinculo(contatoSelecionado)">
+      Novo vínculo
+    </button>
+
+    @if (carregandoVinculos) {
+      <div style="display:flex; flex-direction:column; align-items:center; padding: 32px 0;">
+        <span class="spinner spinner-escuro" aria-hidden="true"></span>
+        <p style="margin-top:10px; color: var(--input-color); font-family: var(--fonte-texto);">Carregando vínculos...</p>
+      </div>
+    } @else if (!vinculosDoContato.length) {
+      <p class="texto-vazio">Nenhum usuário vinculado a este contato.</p>
+    } @else {
+      <div class="vinculo-card" *ngFor="let vinculo of vinculosDoContato">
+        <div class="vinculo-avatar-linha">
+          <img
+            *ngIf="vinculo.imagemPerfil; else semFotoVinculo"
+            [src]="vinculo.imagemPerfil"
+            class="vinculo-avatar"
+            alt="Foto de perfil"
+            (error)="onErroImagemVinculo(vinculo)">
+          <ng-template #semFotoVinculo>
+            <div class="vinculo-avatar placeholder"><mat-icon>person</mat-icon></div>
+          </ng-template>
+          <div class="vinculo-textos">
+            <span class="vinculo-nome-detalhe">{{ vinculo.nomeCompleto }}</span>
+            <span class="vinculo-parentesco">{{ labelParentesco(vinculo.parentesco) }}{{ vinculo.principal ? ' - contato principal' : '' }}</span>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          class="btn-remover-icon"
+          *ngIf="podeRemoverEsteVinculo(vinculo)"
+          (click)="removerVinculo(vinculo)"
+          title="Remover vínculo">
+          <mat-icon>person_remove</mat-icon>
+        </button>
+      </div>
+    }
+  </div>
+</app-modal-layout>
+}
+
+<!-- MODAL "NOVO VÍNCULO" -->
+@if (modalNovoVinculoAberto) {
+<app-modal-layout titulo="Novo vínculo" (closed)="fecharNovoVinculo()">
+  <p class="novo-vinculo-subtitulo" *ngIf="contatoSelecionado">Contato: {{ contatoSelecionado.nomeCompleto }}</p>
+
+  <form class="form-modal" [formGroup]="formNovoVinculo" (ngSubmit)="salvarNovoVinculo()">
+
+    <mat-form-field appearance="outline">
+      <mat-label>Parentesco</mat-label>
+      <mat-select formControlName="parentesco">
+        <mat-option *ngFor="let p of opcoesParentesco" [value]="p.value">{{ p.label }}</mat-option>
+      </mat-select>
+    </mat-form-field>
+    <span class="error-text" *ngIf="formNovoVinculo.get('parentesco')?.invalid && formNovoVinculo.get('parentesco')?.touched">O parentesco é obrigatório.</span>
+
+    <mat-checkbox formControlName="principal" color="primary">Principal</mat-checkbox>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Unidade</mat-label>
+      <mat-select formControlName="idUnidade" (selectionChange)="onUnidadeVinculoChange($event.value)">
+        <mat-option *ngFor="let und of todasUnidades" [value]="und.id">{{ und.nome }}</mat-option>
+      </mat-select>
+    </mat-form-field>
+    <span class="error-text" *ngIf="formNovoVinculo.get('idUnidade')?.invalid && formNovoVinculo.get('idUnidade')?.touched">A unidade é obrigatória.</span>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Turma</mat-label>
+      <mat-select formControlName="idTurma" (selectionChange)="onTurmaVinculoChange($event.value)">
+        <mat-option *ngFor="let t of turmasDoVinculo" [value]="t.id">{{ t.periodo === 'MANHA' ? 'Manhã' : 'Tarde' }} ({{ t.horaInicio }} às {{ t.horaFim }})</mat-option>
+      </mat-select>
+    </mat-form-field>
+    <span class="error-text" *ngIf="formNovoVinculo.get('idTurma')?.invalid && formNovoVinculo.get('idTurma')?.touched">A turma é obrigatória.</span>
+
+    <mat-form-field appearance="outline" floatLabel="always">
+      <mat-label>Usuário</mat-label>
+      <input matInput formControlName="usuarioBusca" [matAutocomplete]="autoUsuario" placeholder="Digite para buscar...">
+      <mat-autocomplete #autoUsuario="matAutocomplete" panelClass="painel-autocomplete-branca">
+        <mat-option *ngFor="let u of opcoesUsuarioVinculo" [value]="u.nomeCompleto" (click)="selecionarUsuarioVinculo(u)">
+          {{ u.nomeCompleto }}
+        </mat-option>
+      </mat-autocomplete>
+    </mat-form-field>
+    <span class="error-text" *ngIf="formNovoVinculo.get('idUsuario')?.invalid && formNovoVinculo.get('idUsuario')?.touched">Selecione um usuário.</span>
+
+    <div class="acoes-modal">
+      <button type="button" class="btn-cancelar" (click)="fecharNovoVinculo()" [disabled]="isSalvandoVinculo">Cancelar</button>
+      <button type="submit" class="btn-primary" [disabled]="isSalvandoVinculo">
+        <span *ngIf="isSalvandoVinculo" class="spinner" aria-hidden="true"></span>
+        <span>{{ isSalvandoVinculo ? 'Salvando...' : 'Salvar' }}</span>
+      </button>
+    </div>
+  </form>
 </app-modal-layout>
 }

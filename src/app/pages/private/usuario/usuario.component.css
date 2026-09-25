@@ -4,13 +4,13 @@
   margin-bottom: 24px;
   border-bottom: 1px solid #e0e0e0;
   width: 100%;
-  justify-content: flex-start; /* Alinha à esquerda */
+  justify-content: flex-start;
   padding-left: 0;
 }
 
 .aba-btn {
   font-family: var(--fonte-texto);
-  padding: 12px 4px; /* Ajusta o padding para acompanhar a linha */
+  padding: 12px 4px;
   background: transparent;
   border: none;
   border-bottom: 2px solid transparent;
@@ -19,7 +19,7 @@
   color: #757575;
   cursor: pointer;
   transition: all 0.2s ease;
-  margin-bottom: -1px; /* Cola a linha ativa exatamente em cima da borda cinza */
+  margin-bottom: -1px;
 }
 
 .aba-btn:hover {
@@ -36,7 +36,7 @@ h1 {
   font-family: var(--fonte-titulo);
 }
 
-.assistidos-admin {
+.usuarios-admin {
   min-height: calc(100vh - 130px);
   padding: 32px 24px 48px;
   display: flex;
@@ -54,7 +54,7 @@ h1 {
   text-align: center;
 }
 
-.acoes-assistidos {
+.acoes-usuarios {
   display: flex;
   gap: 20px;
   flex-wrap: wrap;
@@ -83,7 +83,6 @@ h1 {
   min-width: 0;
   width: 100%;
 }
-
 
 .form-row-foto-final {
   width: 100%;
@@ -189,6 +188,11 @@ h1 {
   border: 4px solid var(--branco, #fff);
 }
 
+.upload-com-erro {
+  border-color: var(--error-color, #d32f2f) !important;
+  background-color: #fff5f5;
+}
+
 .etapa-container {
   display: flex;
   flex-direction: column;
@@ -269,7 +273,6 @@ h1 {
   background-color: var(--primary-color);
 }
 
-
 /* cards contato e correções do modal rápido */
 
 /* Força a cor vermelha no ícone de exclusão atraveçando o encapsulamento */
@@ -283,6 +286,12 @@ h1 {
 ::ng-deep app-tabela-layout button[title*="excluir"]:hover mat-icon,
 ::ng-deep app-tabela-layout .mat-mdc-cell button:last-child:hover mat-icon {
   color: rgb(104, 5, 5) !important;
+}
+
+/* Ícone "Usuários vinculados" usa a fonte Material Symbols (não existe na Material Icons clássica) */
+::ng-deep app-tabela-layout button[title="Usuários vinculados"] mat-icon {
+  font-family: 'Material Symbols Outlined' !important;
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
 }
 
 .contato-card {
@@ -543,18 +552,115 @@ h1 {
 }
 
 /* Força absoluta do ícone de exclusão a ficar vermelho na tabela de contatos */
-::ng-deep app-assistido app-tabela-layout button.botao-acao.botao-excluir mat-icon,
-::ng-deep app-assistido app-tabela-layout .mat-mdc-cell button:last-child mat-icon,
+::ng-deep app-usuario app-tabela-layout button.botao-acao.botao-excluir mat-icon,
+::ng-deep app-usuario app-tabela-layout .mat-mdc-cell button:last-child mat-icon,
 ::ng-deep app-tabela-layout button[title*="Excluir"] mat-icon,
 ::ng-deep app-tabela-layout button[title*="excluir"] mat-icon {
   color: rgb(182, 43, 43) !important;
 }
 
-::ng-deep app-assistido app-tabela-layout button.botao-acao.botao-excluir:hover mat-icon,
-::ng-deep app-assistido app-tabela-layout .mat-mdc-cell button:last-child:hover mat-icon,
-::ng-deep app-assistido app-tabela-layout button[title*="Excluir"]:hover mat-icon,
-::ng-deep app-assistido app-tabela-layout button[title*="excluir"]:hover mat-icon {
+::ng-deep app-usuario app-tabela-layout button.botao-acao.botao-excluir:hover mat-icon,
+::ng-deep app-usuario app-tabela-layout .mat-mdc-cell button:last-child:hover mat-icon,
+::ng-deep app-usuario app-tabela-layout button[title*="Excluir"]:hover mat-icon,
+::ng-deep app-usuario app-tabela-layout button[title*="excluir"]:hover mat-icon {
   color: rgb(104, 5, 5) !important;
+}
+
+/* Modal "Usuários vinculados" / "Novo vínculo" */
+
+.vinculos-modal-style {
+  padding-bottom: 8px;
+}
+
+.btn-novo-vinculo {
+  align-self: flex-start;
+  margin-bottom: 16px;
+}
+
+.vinculo-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border: 1px solid var(--input-border);
+  border-radius: var(--input-radius);
+  margin-bottom: 10px;
+  background: var(--branco);
+}
+
+.vinculo-avatar-linha {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+}
+
+.vinculo-avatar {
+  width: 56px;
+  height: 56px;
+  min-width: 56px;
+  min-height: 56px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  object-fit: cover;
+  background-color: #f0f0f0;
+}
+
+.vinculo-avatar.placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #9ca3af;
+}
+
+.vinculo-textos {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.vinculo-nome-detalhe {
+  font-family: var(--fonte-texto);
+  font-weight: 700;
+  color: var(--preto);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.vinculo-parentesco {
+  font-family: var(--fonte-texto);
+  font-size: 0.85rem;
+  color: var(--input-color);
+}
+
+.novo-vinculo-subtitulo {
+  font-family: var(--fonte-texto);
+  font-size: 0.85rem;
+  color: var(--input-color);
+  margin: -8px 0 16px 0;
+}
+
+::ng-deep .form-modal .mat-mdc-form-field.mat-form-field-disabled .mdc-notched-outline__leading,
+::ng-deep .form-modal .mat-mdc-form-field.mat-form-field-disabled .mdc-notched-outline__notch,
+::ng-deep .form-modal .mat-mdc-form-field.mat-form-field-disabled .mdc-notched-outline__trailing {
+  border-color: #e0e0e0 !important;
+}
+
+::ng-deep .form-modal .mat-mdc-form-field.mat-form-field-disabled .mdc-text-field {
+  background-color: #f5f5f5 !important;
+  opacity: 0.7;
+}
+
+::ng-deep .form-modal .mat-mdc-form-field.mat-form-field-disabled .mat-mdc-floating-label,
+::ng-deep .form-modal .mat-mdc-form-field.mat-form-field-disabled input,
+::ng-deep .form-modal .mat-mdc-form-field.mat-form-field-disabled .mat-mdc-select-value {
+  color: #9ca3af !important;
+}
+
+::ng-deep .form-modal .mat-mdc-form-field.mat-form-field-disabled .mat-mdc-select-arrow {
+  color: #c1c1c1 !important;
 }
 
 /* responsividade */
@@ -594,8 +700,8 @@ h1 {
     width: 100%;
   }
 
-  .acoes-assistidos,
-  .acoes-assistidos .btn-primary {
+  .acoes-usuarios,
+  .acoes-usuarios .btn-primary {
     width: 100%;
   }
 }
