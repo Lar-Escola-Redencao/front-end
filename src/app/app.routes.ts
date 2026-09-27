@@ -2,7 +2,8 @@ import { Routes } from '@angular/router';
 import { Home } from './pages/public/home/home';
 import { About } from './pages/public/about/about';
 import { Eventos } from './pages/public/eventos/eventos';
-import { Dashboard } from './pages/private/dashboard/dashboard';
+import { EventoDetalhe } from './pages/public/evento-detalhe/evento-detalhe';
+import { Dashboard } from './pages/private/dashboard/dashboard'; 
 import { DashboardHome } from './pages/private/dashboard/dashboard-home/dashboard-home';
 import { ContentManagement } from './pages/private/content-management/content-management';
 import { ColaboradorComponent } from '@pages/private/colaborador/colaborador.component';
@@ -17,6 +18,7 @@ export const routes: Routes = [
     { path: '', component: Home, canActivate: [guestGuard]},
     { path: 'conheca-a-osc', component: About },
     { path: 'eventos', component: Eventos},
+    { path: 'eventos/:id', component: EventoDetalhe},
     {
         path: 'dashboard',
         canActivate: [authGuard],

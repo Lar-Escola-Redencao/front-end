@@ -94,8 +94,9 @@
         <article
           class="card-evento"
           [class.encerrado]="eventoEncerrado(evento)"
-          [style.background-image]="'url(' + evento.imagem + ')'"
+          [routerLink]="['/eventos', evento.id]"
         >
+          <img class="card-imagem" [src]="obterUrlImagem(evento.imagem)" [alt]="evento.titulo" loading="lazy" />
           <div class="card-overlay">
             <div class="card-topo">
               <div class="card-data">

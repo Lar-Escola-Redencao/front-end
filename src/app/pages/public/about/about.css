@@ -24,7 +24,15 @@
   font-weight: 700;
   text-transform: uppercase;
 }
-#conheca-osc, #parceiros {
+#conheca-osc,
+#unidades,
+#parceiros {
   display: block; 
   min-height: auto;
+}
+
+#conheca-osc app-public-diretoria,
+#unidades app-public-unidades {
+  display: block;
+  width: 100%;
 }
