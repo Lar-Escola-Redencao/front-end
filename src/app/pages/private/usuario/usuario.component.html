@@ -285,12 +285,13 @@
 @if (modalVinculosAberto) {
 <app-modal-layout titulo="Usuários vinculados" (closed)="fecharVinculos()">
   <div class="form-modal vinculos-modal-style">
+    <p class="novo-vinculo-subtitulo" *ngIf="contatoSelecionado">Contato: {{ contatoSelecionado.nomeCompleto }}</p>
 
     <button
       type="button"
       class="btn-primary btn-novo-vinculo"
       *ngIf="podeGerenciarContatos && contatoSelecionado"
-      (click)="fecharVinculos(); abrirNovoVinculo(contatoSelecionado)">
+      (click)="abrirNovoVinculo(contatoSelecionado)">
       Novo vínculo
     </button>
 
@@ -372,8 +373,12 @@
     <mat-form-field appearance="outline" floatLabel="always">
       <mat-label>Usuário</mat-label>
       <input matInput formControlName="usuarioBusca" [matAutocomplete]="autoUsuario" placeholder="Digite para buscar...">
-      <mat-autocomplete #autoUsuario="matAutocomplete" panelClass="painel-autocomplete-branca">
-        <mat-option *ngFor="let u of opcoesUsuarioVinculo" [value]="u.nomeCompleto" (click)="selecionarUsuarioVinculo(u)">
+      <mat-autocomplete
+        #autoUsuario="matAutocomplete"
+        panelClass="painel-autocomplete-branca"
+        [displayWith]="displayUsuarioVinculo"
+        (optionSelected)="selecionarUsuarioVinculo($event.option.value)">
+        <mat-option *ngFor="let u of opcoesUsuarioVinculo" [value]="u">
           {{ u.nomeCompleto }}
         </mat-option>
       </mat-autocomplete>

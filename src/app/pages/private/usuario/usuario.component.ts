@@ -172,7 +172,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
   formNovoVinculo = this.fb.group({
     idUnidade: this.fb.control<number | null>(null, Validators.required),
     idTurma: this.fb.control<number | null>({ value: null, disabled: true }, Validators.required),
-    idUsuario: this.fb.control<number | null>({ value: null, disabled: true }, Validators.required),
+    idUsuario: this.fb.control<number | null>(null),
     usuarioBusca: this.fb.control<string>({ value: '', disabled: true }),
     parentesco: ['', Validators.required],
     principal: [false]
@@ -276,8 +276,6 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
       this.carregarUnidades();
       this.cdr.detectChanges();
     });
-
-    this.formNovoVinculo.get('principal')?.valueChanges.subscribe(() => this.verificarPrincipalDuplicado());
 
     this.routeSub = this.route.queryParamMap.subscribe(params => {
       const { pagina, tamanho, sort } = lerParametrosPagina(params);
@@ -1251,9 +1249,10 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
 
   // Modal "NOVO VÍNCULO"
   abrirNovoVinculo(contato: ContatoListagemDTO) {
-    if (!this.podeGerenciarContatos) return;
+    if (!this.podeGerenciarContatos || !contato) return;
 
     this.contatoSelecionado = contato;
+    this.modalVinculosAberto = false;
     this.turmasDoVinculo = [];
     this.usuariosParaVinculo = [];
     this.usuarioSelecionadoParaVinculo = null;
@@ -1268,13 +1267,11 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
 
   onUnidadeVinculoChange(idUnidade: number) {
     const turmaCtrl = this.formNovoVinculo.get('idTurma');
-    const usuarioCtrl = this.formNovoVinculo.get('idUsuario');
     const usuarioBuscaCtrl = this.formNovoVinculo.get('usuarioBusca');
 
     turmaCtrl?.setValue(null);
-    usuarioCtrl?.setValue(null);
+    this.formNovoVinculo.get('idUsuario')?.setValue(null);
     usuarioBuscaCtrl?.setValue('');
-    usuarioCtrl?.disable();
     usuarioBuscaCtrl?.disable();
     this.turmasDoVinculo = [];
     this.usuariosParaVinculo = [];
@@ -1290,18 +1287,15 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
   }
 
   onTurmaVinculoChange(idTurma: number) {
-    const usuarioCtrl = this.formNovoVinculo.get('idUsuario');
     const usuarioBuscaCtrl = this.formNovoVinculo.get('usuarioBusca');
 
-    usuarioCtrl?.setValue(null);
+    this.formNovoVinculo.get('idUsuario')?.setValue(null);
     usuarioBuscaCtrl?.setValue('');
-    this.usuariosParaVinculo = this.todosUsuarios.filter(u => u.idTurma === idTurma);
+    this.atualizarUsuariosParaVinculo(idTurma);
 
     if (idTurma) {
-      usuarioCtrl?.enable();
       usuarioBuscaCtrl?.enable();
     } else {
-      usuarioCtrl?.disable();
       usuarioBuscaCtrl?.disable();
     }
   }
@@ -1312,26 +1306,31 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
     return this.usuariosParaVinculo.filter(u => u.nomeCompleto.toLowerCase().includes(termo));
   }
 
+  displayUsuarioVinculo(usuario: AssistidoResponseDTO | string | null): string {
+    return typeof usuario === 'string' ? usuario : usuario?.nomeCompleto || '';
+  }
+
   selecionarUsuarioVinculo(usuario: AssistidoResponseDTO) {
     this.formNovoVinculo.patchValue({ idUsuario: usuario.id, usuarioBusca: usuario.nomeCompleto }, { emitEvent: false });
     this.usuarioSelecionadoParaVinculo = null;
 
     this.usuarioService.buscarPorId(usuario.id).subscribe(dadosCompletos => {
       this.usuarioSelecionadoParaVinculo = dadosCompletos;
-      this.verificarPrincipalDuplicado();
     });
   }
 
-  /** Se o usuário selecionado já tem um contato principal, não deixa marcar este vínculo como principal também. */
-  private verificarPrincipalDuplicado() {
-    const principalCtrl = this.formNovoVinculo.get('principal');
-    if (!principalCtrl?.value || !this.usuarioSelecionadoParaVinculo) return;
-
-    const jaTemPrincipal = (this.usuarioSelecionadoParaVinculo.contatos || []).some((c: any) => c.principal);
-    if (jaTemPrincipal) {
-      principalCtrl.setValue(false, { emitEvent: false });
-      this.toastr.warning('Este usuário já possui um contato principal. Não é possível marcar outro.', 'Atenção');
+  private resolverUsuarioSelecionadoParaVinculo(
+    idUsuario: number | null | undefined,
+    usuarioBusca: string | null | undefined
+  ): AssistidoResponseDTO | null {
+    if (idUsuario) {
+      return this.usuariosParaVinculo.find(u => u.id === idUsuario) || null;
     }
+
+    const termo = (usuarioBusca || '').trim().toLowerCase();
+    if (!termo) return null;
+
+    return this.usuariosParaVinculo.find(u => u.nomeCompleto.trim().toLowerCase() === termo) || null;
   }
 
   fecharNovoVinculo() {
@@ -1342,28 +1341,66 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
 
   /** Carrega a lista de usuários (uma vez) para alimentar o passo "Usuário" do vínculo. */
   private garantirUsuariosCarregados() {
-    if (this.todosUsuarios.length > 0) return;
+    if (this.todosUsuarios.length > 0) {
+      this.atualizarUsuariosParaVinculo(this.formNovoVinculo.get('idTurma')?.value);
+      return;
+    }
+
     this.usuarioService.listarAssistidos().subscribe(resposta => {
       this.todosUsuarios = resposta;
+      this.atualizarUsuariosParaVinculo(this.formNovoVinculo.get('idTurma')?.value);
     });
   }
 
-  salvarNovoVinculo() {
+  private atualizarUsuariosParaVinculo(idTurma: number | null | undefined) {
+    this.usuariosParaVinculo = idTurma
+      ? this.todosUsuarios.filter(u => u.idTurma === idTurma)
+      : [];
+  }
+
+  async salvarNovoVinculo() {
     this.formNovoVinculo.markAllAsTouched();
 
-    if (this.formNovoVinculo.invalid || !this.contatoSelecionado) return;
+    if (!this.contatoSelecionado) {
+      this.toastr.warning('Selecione um contato.', 'Atenção');
+      return;
+    }
 
     const dados = this.formNovoVinculo.getRawValue();
 
+    if (!dados.parentesco) {
+      this.toastr.warning('Selecione o parentesco.', 'Atenção');
+      return;
+    }
+
+    if (!dados.idUnidade) {
+      this.toastr.warning('Selecione a unidade.', 'Atenção');
+      return;
+    }
+
+    if (!dados.idTurma) {
+      this.toastr.warning('Selecione a turma.', 'Atenção');
+      return;
+    }
+
+    const usuarioSelecionado = this.resolverUsuarioSelecionadoParaVinculo(dados.idUsuario, dados.usuarioBusca);
+
+    if (!usuarioSelecionado) {
+      this.toastr.warning('Selecione um usuário.', 'Atenção');
+      return;
+    }
+
+    this.formNovoVinculo.get('idUsuario')?.setValue(usuarioSelecionado.id, { emitEvent: false });
+
     const jaTemPrincipal = (this.usuarioSelecionadoParaVinculo?.contatos || []).some((c: any) => c.principal);
     if (dados.principal && jaTemPrincipal) {
-      this.toastr.error('Não é possível salvar: este usuário já possui um contato principal.', 'Erro');
-      return;
+      const confirmou = await Alertas.confirmarSubstituirContatoPrincipal();
+      if (!confirmou) return;
     }
 
     this.isSalvandoVinculo = true;
 
-    this.usuarioService.vincularContatoExistente(dados.idUsuario!, this.contatoSelecionado.id, {
+    this.usuarioService.vincularContatoExistente(usuarioSelecionado.id, this.contatoSelecionado.id, {
       parentesco: dados.parentesco!,
       principal: !!dados.principal
     }).subscribe({

@@ -27,5 +27,19 @@ export const Alertas = {
       cancelButtonColor: '#757575',
       reverseButtons: true
     }).then((resultado) => resultado.isConfirmed);
+  },
+
+  confirmarSubstituirContatoPrincipal: (): Promise<boolean> => {
+    return Swal.fire({
+      title: 'Substituir contato principal?',
+      text: 'Este usuário já possui um contato principal. Deseja substituir pelo contato atual?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sim, substituir',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#3682dc',
+      cancelButtonColor: '#757575',
+      reverseButtons: true
+    }).then((resultado) => resultado.isConfirmed);
   }
 };
