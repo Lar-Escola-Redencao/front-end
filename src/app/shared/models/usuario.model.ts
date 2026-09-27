@@ -24,4 +24,7 @@ export interface AssistidoResponseDTO {
 
   idTurma?: number;
   idUnidade?: number;
+  nomeTurma?: string;
+  nomeUnidade?: string;
+  periodo?: string;
 }

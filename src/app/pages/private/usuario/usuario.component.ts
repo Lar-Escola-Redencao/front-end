@@ -25,7 +25,6 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatIconModule } from '@angular/material/icon';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
-import { MatCheckboxModule } from '@angular/material/checkbox';
 
 import { ToastrService } from 'ngx-toastr';
 
@@ -73,8 +72,7 @@ import { TurmaService } from 'src/app/shared/services/turma/turma.service';
     MatInputModule,
     MatSelectModule,
     MatIconModule,
-    MatAutocompleteModule,
-    MatCheckboxModule
+    MatAutocompleteModule
   ],
   templateUrl: './usuario.component.html',
   styleUrls: ['./usuario.component.css']
@@ -107,6 +105,8 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
   carregandoLista = false;
   erroLista = false;
   private routeSub?: Subscription;
+  private formSubs: Subscription[] = [];
+  private readonly mensagemCpfDuplicado = 'Usuário já possui uma matrícula ativa.';
 
   // permissõess
   get isMonitor(): boolean {
@@ -216,7 +216,11 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
       titulo: 'Data de Nascimento',
       formatar: (valor) => valor ? new Date(valor).toLocaleDateString('pt-BR') : '-'
     },
-    { titulo: 'Turma', chave: 'nomeTurma' as keyof AssistidoResponseDTO }
+    {
+      titulo: 'Turma',
+      chave: 'nomeTurma',
+      formatar: (_valor, linha) => this.formatarUnidadeTurmaTabela(linha)
+    }
   ];
 
   private readonly acoesTabelaUsuarios: TabelaAcao<AssistidoResponseDTO>[] = [
@@ -419,6 +423,9 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
   }
 
   iniciarFormulario() {
+    this.formSubs.forEach(sub => sub.unsubscribe());
+    this.formSubs = [];
+
     this.formUsuario = this.fb.group({
       nomeCompleto: ['', [Validators.required, Validators.minLength(3)]],
       dataNascimento: ['', Validators.required],
@@ -432,7 +439,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
       contatos: this.fb.array([])
     });
 
-    this.formUsuario.get('usarOutroDocumento')?.valueChanges.subscribe((usarOutro) => {
+    const usarOutroDocumentoSub = this.formUsuario.get('usarOutroDocumento')?.valueChanges.subscribe((usarOutro) => {
       const cpfCtrl = this.formUsuario.get('cpf');
       const tipoDocCtrl = this.formUsuario.get('tipoDocumento');
       const docAuxCtrl = this.formUsuario.get('documentoAuxiliar');
@@ -453,6 +460,14 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
 
       this.verificarErros();
     });
+
+    const cpfSub = this.formUsuario.get('cpf')?.valueChanges.pipe(
+      debounceTime(300),
+      distinctUntilChanged()
+    ).subscribe(() => this.verificarCpfCadastradoDinamicamente());
+
+    if (usarOutroDocumentoSub) this.formSubs.push(usarOutroDocumentoSub);
+    if (cpfSub) this.formSubs.push(cpfSub);
   }
 
   get contatosArray(): FormArray {
@@ -633,6 +648,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
       const step1Controls = ['nomeCompleto', 'dataNascimento', 'endereco', 'cpf', 'tipoDocumento', 'documentoAuxiliar', 'usarOutroDocumento'];
       step1Controls.forEach(c => this.formUsuario.get(c)?.markAsTouched());
       this.verificarErros();
+      this.verificarCpfCadastradoDinamicamente();
 
       const nomeInvalido = this.formUsuario.get('nomeCompleto')?.invalid;
       const dataInvalida = this.formUsuario.get('dataNascimento')?.invalid;
@@ -641,13 +657,9 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
       const tipoDocInvalido = this.formUsuario.get('tipoDocumento')?.invalid;
       const docAuxInvalido = this.formUsuario.get('documentoAuxiliar')?.invalid;
 
-      if (this.fotoValida()) {
-        delete this.erros['foto'];
-      } else {
-        this.erros['foto'] = 'A foto de perfil é obrigatória.';
-      }
+      delete this.erros['foto'];
 
-      if (nomeInvalido || dataInvalida || enderecoInvalido || cpfInvalido || tipoDocInvalido || docAuxInvalido || !this.fotoValida()) {
+      if (nomeInvalido || dataInvalida || enderecoInvalido || cpfInvalido || tipoDocInvalido || docAuxInvalido) {
         return;
       }
     }
@@ -753,7 +765,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
 
   aplicarMascaraCpf(event: Event) {
     const input = event.target as HTMLInputElement;
-    this.formUsuario.get('cpf')?.setValue(formatarCpf(input.value), { emitEvent: false });
+    this.formUsuario.get('cpf')?.setValue(formatarCpf(input.value));
     this.verificarErros();
   }
 
@@ -772,8 +784,131 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
     return 'Não informado';
   }
 
+  formatarUnidadeTurmaTabela(usuario: AssistidoResponseDTO): string {
+    const nomeTurma = usuario.nomeTurma?.trim();
+    const unidade = usuario.nomeUnidade?.trim() || this.extrairUnidadeDaTurma(nomeTurma);
+    const turma = this.formatarPeriodoTabela(usuario.periodo || nomeTurma);
+
+    if (unidade && turma) return `${unidade} - ${turma}`;
+    if (unidade) return unidade;
+    if (turma) return turma;
+    return '-';
+  }
+
+  private formatarPeriodoTabela(valor?: string | null): string {
+    if (!valor) return '';
+
+    const texto = valor.toString().replace(/\(.*?\)/g, '').trim();
+    const normalizado = texto
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toUpperCase();
+
+    if (normalizado.includes('MANHA')) return 'Manhã';
+    if (normalizado.includes('TARDE')) return 'Tarde';
+
+    return texto.charAt(0).toUpperCase() + texto.slice(1).toLowerCase();
+  }
+
+  private extrairUnidadeDaTurma(nomeTurma?: string | null): string {
+    if (!nomeTurma || !nomeTurma.includes('-')) return '';
+
+    const [possivelUnidade] = nomeTurma.split('-');
+    const unidade = possivelUnidade.replace(/\(.*?\)/g, '').trim();
+    const normalizada = unidade
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toUpperCase();
+
+    if (!unidade || normalizada.includes('MANHA') || normalizada.includes('TARDE')) {
+      return '';
+    }
+
+    return unidade;
+  }
+
+  private verificarCpfCadastradoDinamicamente(): void {
+    if (this.formUsuario.get('usarOutroDocumento')?.value) {
+      this.limparErroCpfDuplicado();
+      return;
+    }
+
+    const cpf = this.formUsuario.get('cpf')?.value?.replace(/\D/g, '') || '';
+    if (cpf.length !== 11) {
+      this.limparErroCpfDuplicado();
+      return;
+    }
+
+    if (this.todosUsuarios.length) {
+      this.aplicarValidacaoCpfDuplicado(cpf);
+      return;
+    }
+
+    this.usuarioService.listarAssistidos().subscribe({
+      next: (usuarios) => {
+        this.todosUsuarios = usuarios;
+        this.aplicarValidacaoCpfDuplicado(cpf);
+      },
+      error: () => {}
+    });
+  }
+
+  private aplicarValidacaoCpfDuplicado(cpf: string): void {
+    const duplicado = this.todosUsuarios.some(usuario => {
+      const cpfUsuario = usuario.cpf?.replace(/\D/g, '');
+      const mesmoUsuarioEmEdicao = this.modoEdicao && usuario.id === this.usuarioSelecionadoId;
+      return cpfUsuario === cpf && !mesmoUsuarioEmEdicao;
+    });
+
+    if (!duplicado) {
+      this.limparErroCpfDuplicado();
+      return;
+    }
+
+    const cpfCtrl = this.formUsuario.get('cpf');
+    cpfCtrl?.setErrors({ ...(cpfCtrl.errors || {}), cpfDuplicado: true });
+    this.erros['cpf'] = this.mensagemCpfDuplicado;
+  }
+
+  private limparErroCpfDuplicado(): void {
+    const cpfCtrl = this.formUsuario.get('cpf');
+    if (!cpfCtrl?.errors?.['cpfDuplicado']) {
+      if (this.erros['cpf'] === this.mensagemCpfDuplicado) delete this.erros['cpf'];
+      return;
+    }
+
+    const { cpfDuplicado, ...outrosErros } = cpfCtrl.errors;
+    cpfCtrl.setErrors(Object.keys(outrosErros).length ? outrosErros : null);
+
+    if (this.erros['cpf'] === this.mensagemCpfDuplicado) {
+      delete this.erros['cpf'];
+    }
+  }
+
   fotoValida(): boolean {
     return !!this.fotoSelecionada || !!this.fotoPreviewUrl;
+  }
+
+  nomeVinculo(vinculo: UsuarioVinculadoDTO): string {
+    return vinculo.nomeCompleto || vinculo.nomeAssistido || 'Usuário vinculado';
+  }
+
+  idUsuarioVinculo(vinculo: UsuarioVinculadoDTO): number | null {
+    return vinculo.idUsuario ?? vinculo.idAssistido ?? null;
+  }
+
+  private tratarErroSalvarUsuario(err: any, mensagemPadrao: string): void {
+    const msgErro = err.error?.message || err.error?.detail || mensagemPadrao;
+    const msgNormalizada = msgErro.toString().toLowerCase();
+
+    if (msgNormalizada.includes('matrícula ativa') || msgNormalizada.includes('matricula ativa') || msgNormalizada.includes('cpf')) {
+      const campoDocumento = this.formUsuario.get('usarOutroDocumento')?.value ? 'documentoAuxiliar' : 'cpf';
+      this.erros[campoDocumento] = msgErro;
+      this.etapaModal = 1;
+      this.formUsuario.get(campoDocumento)?.markAsTouched();
+    }
+
+    this.toastr.error(msgErro, 'Erro');
   }
 
   /** Mapeia o código de parentesco (ex.: "IRMAO") para o rótulo exibido (ex.: "Irmão / Irmã"). */
@@ -801,13 +936,6 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
   salvar() {
     this.formUsuario.markAllAsTouched();
     this.verificarErros();
-
-    if (!this.fotoValida()) {
-      this.erros['foto'] = 'A foto de perfil é obrigatória.';
-      this.etapaModal = 1;
-      this.toastr.error('A foto de perfil é obrigatória.', 'Atenção');
-      return;
-    }
 
     for (let i = 0; i < this.contatosArray.length; i++) {
       (this.contatosArray.at(i) as FormGroup).markAllAsTouched();
@@ -858,8 +986,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
         error: (err: any) => {
           this.ngZone.run(() => {
             this.isLoading = false;
-            const msgErro = err.error?.message || err.error?.detail || 'Erro ao atualizar usuário.';
-            this.toastr.error(msgErro, 'Erro');
+            this.tratarErroSalvarUsuario(err, 'Erro ao atualizar usuário.');
             this.cdr.detectChanges();
           });
         }
@@ -872,8 +999,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
         error: (err: any) => {
           this.ngZone.run(() => {
             this.isLoading = false;
-            const msgErro = err.error?.message || err.error?.detail || 'Erro ao cadastrar usuário.';
-            this.toastr.error(msgErro, 'Erro');
+            this.tratarErroSalvarUsuario(err, 'Erro ao cadastrar usuário.');
             this.cdr.detectChanges();
           });
         }
@@ -1093,14 +1219,25 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
       return;
     }
 
+    if (vinculo.principal) {
+      this.toastr.warning('Vínculo principal não pode ser removido. Altere o contato principal do usuário e tente novamente.', 'Atenção');
+      return;
+    }
+
+    const idUsuario = this.idUsuarioVinculo(vinculo);
+    if (!idUsuario) {
+      this.toastr.error('Não foi possível identificar o usuário vinculado a este contato.', 'Erro');
+      return;
+    }
+
     Alertas.confirmarExclusao().then(confirmado => {
       if (!confirmado || !this.contatoSelecionado) return;
 
-      this.usuarioService.desvincularContato(vinculo.idUsuario, this.contatoSelecionado.id).subscribe({
+      this.usuarioService.desvincularContato(idUsuario, this.contatoSelecionado.id).subscribe({
         next: () => {
           this.ngZone.run(() => {
             this.toastr.success('Vínculo removido com sucesso!', 'Sucesso');
-            this.vinculosDoContato = this.vinculosDoContato.filter(v => v.idUsuario !== vinculo.idUsuario);
+            this.vinculosDoContato = this.vinculosDoContato.filter(v => this.idUsuarioVinculo(v) !== idUsuario);
             this.carregarContatos();
             this.cdr.detectChanges();
           });

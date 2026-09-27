@@ -29,8 +29,10 @@ export interface ContatoListagemDTO {
 
 /** Um dos usuários vinculados a um contato (modal "Usuários vinculados"). */
 export interface UsuarioVinculadoDTO {
-  idUsuario: number;
-  nomeCompleto: string;
+  idUsuario?: number;
+  idAssistido?: number;
+  nomeCompleto?: string;
+  nomeAssistido?: string;
   parentesco: string;
   principal: boolean;
   idUnidade?: number;

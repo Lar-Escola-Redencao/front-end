@@ -1,5 +1,5 @@
 <section class="usuarios-admin">
-  <h1>Gestão de Usuários</h1>
+  <h1>Usuários</h1>
   <div class="conteudo">
 
     <div class="abas-container">
@@ -61,7 +61,7 @@
           <mat-form-field appearance="outline"><mat-label>CPF</mat-label><input matInput formControlName="cpf" inputmode="numeric" (input)="aplicarMascaraCpf($event)" (blur)="verificarErros()" maxlength="14"></mat-form-field>
           <span class="error-text" *ngIf="erros['cpf']">{{ erros['cpf'] }}</span>
         } @else {
-          <div class="form-row">
+          <div class="form-row form-row-documento">
             <div>
               <mat-form-field appearance="outline"><mat-label>Tipo do Documento</mat-label><mat-select formControlName="tipoDocumento" (blur)="verificarErros()"><mat-option *ngFor="let tipo of tiposDocumento" [value]="tipo.value">{{ tipo.label }}</mat-option></mat-select></mat-form-field>
               <span class="error-text" *ngIf="erros['tipoDocumento']">{{ erros['tipoDocumento'] }}</span>
@@ -72,19 +72,22 @@
             </div>
           </div>
         }
-        <mat-checkbox formControlName="usarOutroDocumento" color="primary">Usar outro documento (Não possui CPF)</mat-checkbox>
+        <label class="checkbox-inline">
+          <input type="checkbox" formControlName="usarOutroDocumento">
+          <span>Usar outro documento (Não possui CPF)</span>
+        </label>
         <div class="form-row-foto-final">
           <div class="upload-container-completo">
 
-            <div class="caixa-upload-retangular" [class.upload-com-erro]="erros['foto']" (click)="fileInput.click()">
-              <div class="upload-icone-bg">
-                <mat-icon>upload_file</mat-icon>
-              </div>
-              <div class="upload-textos">
-                <span class="upload-titulo">Selecione a foto de perfil</span>
+            <div class="upload-arquivo" [class.upload-arquivo-erro]="erros['foto']" (click)="fileInput.click()">
+              <span class="material-symbols-outlined upload-arquivo-icone"> upload_file </span>
+
+              <div class="upload-arquivo-texto">
+                <strong>Selecione a foto de perfil</strong>
                 <span class="upload-subtitulo">PNG, JPEG, JPG ou WEBP</span>
               </div>
-              <button type="button" class="btn-procurar" (click)="fileInput.click(); $event.stopPropagation()">Procurar</button>
+
+              <span class="upload-arquivo-botao">Procurar</span>
             </div>
 
             <input type="file" #fileInput hidden accept="image/png, image/jpeg, image/jpg, image/webp" (change)="onFotoSelecionada($event)">
@@ -102,17 +105,27 @@
 
       <!-- ETAPA 2 -->
       <div *ngIf="etapaModal === 2" class="etapa-container">
+        <button type="button" class="btn-voltar-etapa" (click)="voltarEtapa()">
+          <mat-icon>arrow_back</mat-icon>
+          <span>Voltar</span>
+        </button>
+
         <mat-form-field appearance="outline"><mat-label>Unidade</mat-label><mat-select formControlName="idUnidade" (selectionChange)="onUnidadeChange($event.value)" (blur)="verificarErros()"><mat-option *ngFor="let und of unidadesDisponiveis" [value]="und.id">{{ und.nome }}</mat-option></mat-select></mat-form-field>
         <span class="error-text" *ngIf="erros['idUnidade']">{{ erros['idUnidade'] }}</span>
 
         <mat-form-field appearance="outline"><mat-label>Turma</mat-label><mat-select formControlName="idTurma" (blur)="verificarErros()"><mat-option *ngFor="let t of turmasDisponiveis" [value]="t.id">{{ t.periodo === 'MANHA' ? 'Manhã' : 'Tarde' }} ({{ t.horaInicio }} às {{ t.horaFim }})</mat-option></mat-select></mat-form-field>
         <span class="error-text" *ngIf="erros['idTurma']">{{ erros['idTurma'] }}</span>
 
-        <div class="acoes-modal"><button type="button" class="btn-cancelar" (click)="voltarEtapa()">Voltar</button><button type="button" class="btn-primary" (click)="proximaEtapa()">Próximo</button></div>
+        <div class="acoes-modal"><button type="button" class="btn-cancelar" (click)="fecharModal()">Cancelar</button><button type="button" class="btn-primary" (click)="proximaEtapa()">Próximo</button></div>
       </div>
 
       <!-- ETAPA 3 -->
       <div *ngIf="etapaModal === 3" class="etapa-container" formArrayName="contatos">
+        <button type="button" class="btn-voltar-etapa" (click)="voltarEtapa()">
+          <mat-icon>arrow_back</mat-icon>
+          <span>Voltar</span>
+        </button>
+
         <div class="contato-card" *ngFor="let contato of contatosArray.controls; let i = index" [formGroupName]="i">
           <div class="contato-resumo" (click)="expandirContato(i)">
             <div class="resumo-texto"><strong>{{ contato.get('principal')?.value ? 'Contato principal' : 'Contato adicional ' + i }}</strong><span>{{ contato.get('nomeCompleto')?.value || 'Novo contato...' }}</span></div>
@@ -139,7 +152,7 @@
           </div>
         </div>
         <button type="button" class="btn-add-contato" *ngIf="contatosArray.length < 4" (click)="adicionarContato()"><mat-icon>add</mat-icon> Contato adicional</button>
-        <div class="acoes-modal"><button type="button" class="btn-cancelar" (click)="voltarEtapa()" [disabled]="isLoading">Cancelar</button><button type="submit" class="btn-primary" [disabled]="isLoading"><span *ngIf="isLoading" class="spinner" aria-hidden="true"></span><span>{{ isLoading ? 'Finalizando...' : 'Finalizar' }}</span></button></div>
+        <div class="acoes-modal"><button type="button" class="btn-cancelar" (click)="fecharModal()" [disabled]="isLoading">Cancelar</button><button type="submit" class="btn-primary" [disabled]="isLoading"><span *ngIf="isLoading" class="spinner" aria-hidden="true"></span><span>{{ isLoading ? 'Finalizando...' : 'Finalizar' }}</span></button></div>
       </div>
     }
   </form>
@@ -301,7 +314,7 @@
             <div class="vinculo-avatar placeholder"><mat-icon>person</mat-icon></div>
           </ng-template>
           <div class="vinculo-textos">
-            <span class="vinculo-nome-detalhe">{{ vinculo.nomeCompleto }}</span>
+            <span class="vinculo-nome-detalhe">{{ nomeVinculo(vinculo) }}</span>
             <span class="vinculo-parentesco">{{ labelParentesco(vinculo.parentesco) }}{{ vinculo.principal ? ' - contato principal' : '' }}</span>
           </div>
         </div>
@@ -335,7 +348,10 @@
     </mat-form-field>
     <span class="error-text" *ngIf="formNovoVinculo.get('parentesco')?.invalid && formNovoVinculo.get('parentesco')?.touched">O parentesco é obrigatório.</span>
 
-    <mat-checkbox formControlName="principal" color="primary">Principal</mat-checkbox>
+    <label class="checkbox-inline">
+      <input type="checkbox" formControlName="principal">
+      <span>Principal</span>
+    </label>
 
     <mat-form-field appearance="outline">
       <mat-label>Unidade</mat-label>
