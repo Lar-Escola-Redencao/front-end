@@ -2,14 +2,15 @@ import { Routes } from '@angular/router';
 import { Home } from './pages/public/home/home';
 import { About } from './pages/public/about/about';
 import { Eventos } from './pages/public/eventos/eventos';
+import { EventoDetalhe } from './pages/public/evento-detalhe/evento-detalhe';
 import { Dashboard } from './pages/private/dashboard/dashboard'; 
 import { DashboardHome } from './pages/private/dashboard/dashboard-home/dashboard-home';
 import { ContentManagement } from './pages/private/content-management/content-management';
 import { ColaboradorComponent } from '@pages/private/colaborador/colaborador.component';
+import { UsuarioComponent } from '@pages/private/usuario/usuario.component';
 import { authGuard } from './shared/guards/auth-guard';
 import { guestGuard } from './shared/guards/guest-guard';
 import { roleGuard } from './shared/guards/role-guard';
-import { Usuario } from '@pages/private/usuario/usuario';
 import { Diario } from '@pages/private/diario/diario';
 import { UnidadesTurmas } from '@pages/private/unidades-turmas/unidades-turmas';
 import { Perfil } from '@pages/private/perfil/perfil';
@@ -18,6 +19,7 @@ export const routes: Routes = [
     { path: '', component: Home, canActivate: [guestGuard]},
     { path: 'conheca-a-osc', component: About },
     { path: 'eventos', component: Eventos},
+    { path: 'eventos/:id', component: EventoDetalhe},
     {
         path: 'dashboard',
         canActivate: [authGuard],
@@ -27,7 +29,7 @@ export const routes: Routes = [
             { path: 'conteudo-publico', component: ContentManagement, canActivate: [roleGuard], data: { modulo: 'conteudo-publico' } },
             { path: 'conteudo-publico/:secao', component: ContentManagement, canActivate: [roleGuard], data: { modulo: 'conteudo-publico' } },
             { path: 'colaboradores', component: ColaboradorComponent, canActivate: [roleGuard], data: { modulo: 'colaboradores' } },
-            { path: 'usuarios', component: Usuario, canActivate: [roleGuard], data: { modulo: 'usuarios' } },
+            { path: 'usuarios', component: UsuarioComponent, canActivate: [roleGuard], data: { modulo: 'usuarios' } },
             { path: 'diario', component: Diario, canActivate: [roleGuard], data: { modulo: 'diario' } },
             { path: 'unidades-turmas', component: UnidadesTurmas, canActivate: [roleGuard], data: { modulo: 'unidades-turmas' } },
             { path: 'perfil', component: Perfil}

@@ -2,9 +2,12 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { of } from 'rxjs';
 
-import { Role } from 'src/app/shared/models/permissao.model';
+import { Modulo, Role, roleTemAcesso } from 'src/app/shared/models/permissao.model';
 import { PrivateNavbar } from './private-navbar';
+import { Auth } from 'src/app/shared/services/auth/auth';
+import { PerfilService } from 'src/app/shared/services/colaborador/perfil.service';
 
 function base64url(input: string): string {
   return btoa(input).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
@@ -27,7 +30,25 @@ describe('PrivateNavbar', () => {
 
     await TestBed.configureTestingModule({
       imports: [PrivateNavbar],
-      providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()],
+      providers: [
+        provideRouter([]),
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        {
+          provide: Auth,
+          useValue: {
+            podeAcessar: (modulo: Modulo) => roleTemAcesso(role, modulo),
+            logout: () => {}
+          }
+        },
+        {
+          provide: PerfilService,
+          useValue: {
+            perfilAtual: () => ({ nomeCompleto: 'Maria Silva' }),
+            buscarMeuPerfil: () => of({})
+          }
+        }
+      ]
     }).compileComponents();
 
     fixture = TestBed.createComponent(PrivateNavbar);

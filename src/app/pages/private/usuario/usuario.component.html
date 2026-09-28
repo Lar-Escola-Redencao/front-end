@@ -1,0 +1,397 @@
+<section class="usuarios-admin">
+  <h1>Usuários</h1>
+  <div class="conteudo">
+
+    <div class="abas-container">
+      <button type="button" class="aba-btn" [class.ativa]="abaAtiva === 'usuarios'" (click)="mudarAba('usuarios')">Usuários</button>
+      <button *ngIf="!isMonitor" type="button" class="aba-btn" [class.ativa]="abaAtiva === 'contatos'" (click)="mudarAba('contatos')">Contatos</button>
+    </div>
+
+    <div class="acoes-usuarios">
+      <button *ngIf="abaAtiva === 'usuarios' && podeCadastrarUsuario" type="button" class="btn-primary btn-primary-thick" (click)="abrirCadastro()">Novo usuário</button>
+    </div>
+
+   <app-tabela-layout
+      [colunas]="$any(abaAtiva === 'usuarios' ? colunas : colunasContatos)"
+      [dados]="$any(abaAtiva === 'usuarios' ? usuarios : contatos)"
+      [acoes]="$any(abaAtiva === 'usuarios' ? acoesTabelaUsuariosAtual : acoesTabelaContatosAtual)"
+      [carregando]="carregandoLista"
+      [erro]="erroLista"
+      [ordenacao]="ordenacao"
+      [mensagemVazia]="abaAtiva === 'usuarios' ? 'Nenhum usuário cadastrado ainda.' : 'Nenhum contato cadastrado ainda.'"
+      (acao)="executarAcao($event)"
+      (ordenar)="ordenarPor($event)"
+      (tentarNovamente)="abaAtiva === 'usuarios' ? carregarUsuarios() : carregarContatos()">
+    </app-tabela-layout>
+
+    <app-paginacao [paginaAtual]="pagina" [totalPaginas]="totalPaginas" [totalElementos]="totalElementos" [tamanho]="tamanho" [carregando]="carregandoLista" (paginaChange)="irParaPagina($event)" (tamanhoChange)="mudarTamanhoPagina($event)"></app-paginacao>
+  </div>
+</section>
+
+@if (modalAberto) {
+<app-modal-layout [class.tremer]="modalTremendo" [titulo]="modoEdicao ? 'Editar usuário' : 'Novo usuário'" (closed)="fecharModal()">
+  <div class="stepper-indicador">
+    <div class="step" [class.ativo]="etapaModal >= 1"><div class="step-numero">1</div><span class="step-texto">Dados pessoais</span></div>
+    <div class="step-linha" [class.ativo]="etapaModal >= 2"></div>
+    <div class="step" [class.ativo]="etapaModal >= 2"><div class="step-numero">2</div><span class="step-texto">Matrícula</span></div>
+    <div class="step-linha" [class.ativo]="etapaModal >= 3"></div>
+    <div class="step" [class.ativo]="etapaModal === 3"><div class="step-numero">3</div><span class="step-texto">Contatos</span></div>
+  </div>
+
+  <form class="form-modal" [formGroup]="formUsuario" (ngSubmit)="salvar()">
+    @if (isCarregandoEdicao) {
+      <div class="form-carregando" style="display: flex; flex-direction: column; align-items: center; padding: 40px 0;">
+        <span class="spinner spinner-escuro" aria-hidden="true"></span>
+        <p style="text-align: center; margin-top: 10px; color: var(--input-color); font-family: var(--fonte-texto);">Carregando dados...</p>
+      </div>
+    } @else {
+
+      <!-- ETAPA 1 -->
+      <div *ngIf="etapaModal === 1" class="etapa-container">
+        <mat-form-field appearance="outline"><mat-label>Nome completo</mat-label><input matInput formControlName="nomeCompleto" (blur)="verificarErros()" maxlength="150"></mat-form-field>
+        <span class="error-text" *ngIf="erros['nomeCompleto']">{{ erros['nomeCompleto'] }}</span>
+
+        <mat-form-field appearance="outline"><mat-label>Data nascimento</mat-label><input matInput type="date" formControlName="dataNascimento" (blur)="verificarErros()"></mat-form-field>
+        <span class="error-text" *ngIf="erros['dataNascimento']">{{ erros['dataNascimento'] }}</span>
+
+        <mat-form-field appearance="outline"><mat-label>Endereço</mat-label><input matInput formControlName="endereco" (blur)="verificarErros()"></mat-form-field>
+        <span class="error-text" *ngIf="erros['endereco']">{{ erros['endereco'] }}</span>
+
+        @if (!formUsuario.get('usarOutroDocumento')?.value) {
+          <mat-form-field appearance="outline"><mat-label>CPF</mat-label><input matInput formControlName="cpf" inputmode="numeric" (input)="aplicarMascaraCpf($event)" (blur)="verificarErros()" maxlength="14"></mat-form-field>
+          <span class="error-text" *ngIf="erros['cpf']">{{ erros['cpf'] }}</span>
+        } @else {
+          <div class="form-row form-row-documento">
+            <div>
+              <mat-form-field appearance="outline"><mat-label>Tipo do Documento</mat-label><mat-select formControlName="tipoDocumento" (blur)="verificarErros()"><mat-option *ngFor="let tipo of tiposDocumento" [value]="tipo.value">{{ tipo.label }}</mat-option></mat-select></mat-form-field>
+              <span class="error-text" *ngIf="erros['tipoDocumento']">{{ erros['tipoDocumento'] }}</span>
+            </div>
+            <div>
+              <mat-form-field appearance="outline"><mat-label>Nº Documento</mat-label><input matInput formControlName="documentoAuxiliar" (blur)="verificarErros()"></mat-form-field>
+              <span class="error-text" *ngIf="erros['documentoAuxiliar']">{{ erros['documentoAuxiliar'] }}</span>
+            </div>
+          </div>
+        }
+        <label class="checkbox-inline">
+          <input type="checkbox" formControlName="usarOutroDocumento">
+          <span>Usar outro documento (Não possui CPF)</span>
+        </label>
+        <div class="form-row-foto-final">
+          <div class="upload-container-completo">
+
+            <div class="upload-arquivo" [class.upload-arquivo-erro]="erros['foto']" (click)="fileInput.click()">
+              <span class="material-symbols-outlined upload-arquivo-icone"> upload_file </span>
+
+              <div class="upload-arquivo-texto">
+                <strong>Selecione a foto de perfil</strong>
+                <span class="upload-subtitulo">PNG, JPEG, JPG ou WEBP</span>
+              </div>
+
+              <span class="upload-arquivo-botao">Procurar</span>
+            </div>
+
+            <input type="file" #fileInput hidden accept="image/png, image/jpeg, image/jpg, image/webp" (change)="onFotoSelecionada($event)">
+
+            <div class="preview-inferior-container" *ngIf="fotoPreviewUrl">
+              <img [src]="fotoPreviewUrl" class="avatar-preview-inferior" alt="Preview da foto de perfil">
+            </div>
+
+          </div>
+          <span class="error-text" *ngIf="erros['foto']">{{ erros['foto'] }}</span>
+        </div>
+
+        <div class="acoes-modal"><button type="button" class="btn-cancelar" (click)="fecharModal()">Cancelar</button><button type="button" class="btn-primary" (click)="proximaEtapa()">Próximo</button></div>
+      </div>
+
+      <!-- ETAPA 2 -->
+      <div *ngIf="etapaModal === 2" class="etapa-container">
+        <button type="button" class="btn-voltar-etapa" (click)="voltarEtapa()">
+          <mat-icon>arrow_back</mat-icon>
+          <span>Voltar</span>
+        </button>
+
+        <mat-form-field appearance="outline"><mat-label>Unidade</mat-label><mat-select formControlName="idUnidade" (selectionChange)="onUnidadeChange($event.value)" (blur)="verificarErros()"><mat-option *ngFor="let und of unidadesDisponiveis" [value]="und.id">{{ und.nome }}</mat-option></mat-select></mat-form-field>
+        <span class="error-text" *ngIf="erros['idUnidade']">{{ erros['idUnidade'] }}</span>
+
+        <mat-form-field appearance="outline"><mat-label>Turma</mat-label><mat-select formControlName="idTurma" (blur)="verificarErros()"><mat-option *ngFor="let t of turmasDisponiveis" [value]="t.id">{{ t.periodo === 'MANHA' ? 'Manhã' : 'Tarde' }} ({{ t.horaInicio }} às {{ t.horaFim }})</mat-option></mat-select></mat-form-field>
+        <span class="error-text" *ngIf="erros['idTurma']">{{ erros['idTurma'] }}</span>
+
+        <div class="acoes-modal"><button type="button" class="btn-cancelar" (click)="fecharModal()">Cancelar</button><button type="button" class="btn-primary" (click)="proximaEtapa()">Próximo</button></div>
+      </div>
+
+      <!-- ETAPA 3 -->
+      <div *ngIf="etapaModal === 3" class="etapa-container" formArrayName="contatos">
+        <button type="button" class="btn-voltar-etapa" (click)="voltarEtapa()">
+          <mat-icon>arrow_back</mat-icon>
+          <span>Voltar</span>
+        </button>
+
+        <div class="contato-card" *ngFor="let contato of contatosArray.controls; let i = index" [formGroupName]="i">
+          <div class="contato-resumo" (click)="expandirContato(i)">
+            <div class="resumo-texto"><strong>{{ contato.get('principal')?.value ? 'Contato principal' : 'Contato adicional ' + i }}</strong><span>{{ contato.get('nomeCompleto')?.value || 'Novo contato...' }}</span></div>
+            <div class="resumo-acoes">
+              <button type="button" class="btn-remover-icon" *ngIf="!contato.get('principal')?.value" (click)="removerContato(i, $event)" title="Remover contato"><mat-icon>delete</mat-icon></button>
+              <mat-icon>{{ contatoExpandidoIndex === i ? 'expand_less' : 'expand_more' }}</mat-icon>
+            </div>
+          </div>
+          <div class="contato-detalhe" *ngIf="i === contatoExpandidoIndex">
+            <div class="detalhe-header"><h4>{{ contato.get('principal')?.value ? 'Contato principal' : 'Contato adicional ' + i }}</h4><button type="button" class="btn-remover-icon" *ngIf="!contato.get('principal')?.value" (click)="removerContato(i, $event)" title="Remover contato"><mat-icon>delete</mat-icon></button></div>
+            <mat-form-field appearance="outline"><mat-label>Nome completo</mat-label><input matInput formControlName="nomeCompleto" [matAutocomplete]="auto" (blur)="contato.get('nomeCompleto')?.markAsTouched()"><mat-autocomplete #auto="matAutocomplete" panelClass="painel-autocomplete-branca"><mat-option *ngFor="let op of opcoesAutocomplete[i]" [value]="op.nomeCompleto" (click)="selecionarContatoExistente(i, op)">{{ op.nomeCompleto }} - {{ op.telefone }}</mat-option></mat-autocomplete></mat-form-field>
+            <span class="error-text" *ngIf="contato.get('nomeCompleto')?.invalid && contato.get('nomeCompleto')?.touched">O nome é obrigatório.</span>
+
+            <mat-form-field appearance="outline"><mat-label>Parentesco</mat-label><mat-select formControlName="parentesco" (blur)="contato.get('parentesco')?.markAsTouched()"><mat-option *ngFor="let p of opcoesParentesco" [value]="p.value">{{ p.label }}</mat-option></mat-select></mat-form-field>
+            <span class="error-text" *ngIf="contato.get('parentesco')?.invalid && contato.get('parentesco')?.touched">O parentesco é obrigatório.</span>
+
+            <mat-form-field appearance="outline"><mat-label>Telefone</mat-label><input matInput formControlName="telefone" inputmode="numeric" (input)="aplicarMascaraTelefoneContato(i, $event)" (blur)="contato.get('telefone')?.markAsTouched()" maxlength="15"></mat-form-field>
+            <span class="error-text" *ngIf="contato.get('telefone')?.invalid && contato.get('telefone')?.touched">O telefone válido é obrigatório.</span>
+
+            <mat-form-field appearance="outline"><mat-label>E-mail</mat-label><input matInput type="email" formControlName="email" (blur)="contato.get('email')?.markAsTouched()"></mat-form-field>
+            <span class="error-text" *ngIf="contato.get('email')?.invalid && contato.get('email')?.touched">Informe um e-mail válido.</span>
+
+            <mat-form-field appearance="outline"><mat-label>Endereço</mat-label><input matInput formControlName="endereco"></mat-form-field>
+          </div>
+        </div>
+        <button type="button" class="btn-add-contato" *ngIf="contatosArray.length < 4" (click)="adicionarContato()"><mat-icon>add</mat-icon> Contato adicional</button>
+        <div class="acoes-modal"><button type="button" class="btn-cancelar" (click)="fecharModal()" [disabled]="isLoading">Cancelar</button><button type="submit" class="btn-primary" [disabled]="isLoading"><span *ngIf="isLoading" class="spinner" aria-hidden="true"></span><span>{{ isLoading ? 'Finalizando...' : 'Finalizar' }}</span></button></div>
+      </div>
+    }
+  </form>
+</app-modal-layout>
+}
+
+@if (modalContatoAberto) {
+<app-modal-layout titulo="Editar contato centralizado" (closed)="fecharModalContato()">
+  <form class="form-modal" [formGroup]="formEdicaoContato" (ngSubmit)="salvarEdicaoContato()">
+
+    <mat-form-field appearance="outline">
+      <mat-label>Nome completo</mat-label>
+      <input matInput formControlName="nomeCompleto">
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Telefone</mat-label>
+      <input matInput formControlName="telefone" maxlength="15">
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>E-mail</mat-label>
+      <input matInput type="email" formControlName="email">
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Endereço</mat-label>
+      <input matInput formControlName="endereco">
+    </mat-form-field>
+
+    <div class="acoes-modal">
+      <button type="button" class="btn-cancelar" (click)="fecharModalContato()" [disabled]="isLoading">Cancelar</button>
+      <button type="submit" class="btn-primary" [disabled]="isLoading">
+        <span *ngIf="isLoading" class="spinner" aria-hidden="true"></span>
+        <span>{{ isLoading ? 'Salvando...' : 'Salvar alterações' }}</span>
+      </button>
+    </div>
+
+  </form>
+</app-modal-layout>
+}
+
+<!-- MODAL DE PREVIEW DE USUÁRIO (Padrão Eventos) -->
+@if (modalPreviewUsuarioAberto) {
+<app-modal-layout titulo="Detalhes do usuário" (closed)="fecharPreviewUsuario()">
+  <div class="form-modal preview-evento-style" *ngIf="usuarioPreview">
+
+    <div class="preview-badge-container">
+      <span class="preview-badge">{{ usuarioPreview.nomeUnidade || 'Sem unidade' }}</span>
+      <span class="preview-badge badge-turma">{{ usuarioPreview.nomeTurma || 'Sem turma' }}</span>
+    </div>
+
+    <div class="preview-avatar-container">
+      <img *ngIf="usuarioPreview.imagem; else semFoto" [src]="usuarioPreview.imagem_perfil" alt="Foto de perfil" class="preview-avatar">
+      <ng-template #semFoto>
+        <div class="preview-avatar placeholder">
+          <mat-icon>person</mat-icon>
+        </div>
+      </ng-template>
+    </div>
+
+    <h2 class="preview-title">{{ usuarioPreview.nomeCompleto }}</h2>
+
+    <div class="preview-info-row">
+      <mat-icon>cake</mat-icon>
+      <span>{{ usuarioPreview.dataNascimento | date:'dd/MM/yyyy' }}</span>
+    </div>
+
+    <div class="preview-info-row">
+      <mat-icon>location_on</mat-icon>
+      <span>{{ usuarioPreview.endereco }}</span>
+    </div>
+
+    <div class="preview-info-row">
+      <mat-icon>badge</mat-icon>
+      <span>{{ formatarDocumentoPreview(usuarioPreview) }}</span>
+    </div>
+
+    <div class="preview-section">
+      <h3>Contatos / Responsáveis</h3>
+
+      <div *ngIf="usuarioPreview.contatos?.length; else semContatos" class="contatos-lista-preview">
+        <div class="contato-item-preview" *ngFor="let c of usuarioPreview.contatos">
+          <div class="contato-nome-preview">{{ c.nomeCompleto }} <span class="parentesco-tag">({{ c.parentesco }})</span></div>
+          <div class="contato-dados-preview">
+            <span><mat-icon>phone</mat-icon> {{ c.telefone }}</span>
+            <span *ngIf="c.email"><mat-icon>email</mat-icon> {{ c.email }}</span>
+          </div>
+        </div>
+      </div>
+      <ng-template #semContatos><p class="texto-vazio">Nenhum contacto associado.</p></ng-template>
+    </div>
+  </div>
+</app-modal-layout>
+}
+
+<!-- MODAL DE PREVIEW DE CONTATO -->
+@if (modalPreviewContatoAberto) {
+<app-modal-layout titulo="Detalhes do contato" (closed)="fecharPreviewContato()">
+  <div class="form-modal preview-evento-style" *ngIf="contatoPreview">
+
+    <div class="preview-avatar-container">
+      <div class="preview-avatar placeholder">
+        <mat-icon>person</mat-icon>
+      </div>
+    </div>
+
+    <h2 class="preview-title">{{ contatoPreview.nomeCompleto }}</h2>
+
+    <div class="preview-info-row">
+      <mat-icon>phone</mat-icon>
+      <span>{{ contatoPreview.telefone }}</span>
+    </div>
+
+    <div class="preview-info-row" *ngIf="contatoPreview.email">
+      <mat-icon>email</mat-icon>
+      <span>{{ contatoPreview.email }}</span>
+    </div>
+
+    <div class="preview-info-row">
+      <mat-icon>account_child_invert</mat-icon>
+      <span>{{ contatoPreview.quantidadeVinculos || 0 }} usuário(s) vinculado(s)</span>
+    </div>
+
+  </div>
+</app-modal-layout>
+}
+
+<!-- MODAL "USUÁRIOS VINCULADOS" -->
+@if (modalVinculosAberto) {
+<app-modal-layout titulo="Usuários vinculados" (closed)="fecharVinculos()">
+  <div class="form-modal vinculos-modal-style">
+    <p class="novo-vinculo-subtitulo" *ngIf="contatoSelecionado">Contato: {{ contatoSelecionado.nomeCompleto }}</p>
+
+    <button
+      type="button"
+      class="btn-primary btn-novo-vinculo"
+      *ngIf="podeGerenciarContatos && contatoSelecionado"
+      (click)="abrirNovoVinculo(contatoSelecionado)">
+      Novo vínculo
+    </button>
+
+    @if (carregandoVinculos) {
+      <div style="display:flex; flex-direction:column; align-items:center; padding: 32px 0;">
+        <span class="spinner spinner-escuro" aria-hidden="true"></span>
+        <p style="margin-top:10px; color: var(--input-color); font-family: var(--fonte-texto);">Carregando vínculos...</p>
+      </div>
+    } @else if (!vinculosDoContato.length) {
+      <p class="texto-vazio">Nenhum usuário vinculado a este contato.</p>
+    } @else {
+      <div class="vinculo-card" *ngFor="let vinculo of vinculosDoContato">
+        <div class="vinculo-avatar-linha">
+          <img
+            *ngIf="vinculo.imagemPerfil; else semFotoVinculo"
+            [src]="vinculo.imagemPerfil"
+            class="vinculo-avatar"
+            alt="Foto de perfil"
+            (error)="onErroImagemVinculo(vinculo)">
+          <ng-template #semFotoVinculo>
+            <div class="vinculo-avatar placeholder"><mat-icon>person</mat-icon></div>
+          </ng-template>
+          <div class="vinculo-textos">
+            <span class="vinculo-nome-detalhe">{{ nomeVinculo(vinculo) }}</span>
+            <span class="vinculo-parentesco">{{ labelParentesco(vinculo.parentesco) }}{{ vinculo.principal ? ' - contato principal' : '' }}</span>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          class="btn-remover-icon"
+          *ngIf="podeRemoverEsteVinculo(vinculo)"
+          (click)="removerVinculo(vinculo)"
+          title="Remover vínculo">
+          <mat-icon>person_remove</mat-icon>
+        </button>
+      </div>
+    }
+  </div>
+</app-modal-layout>
+}
+
+<!-- MODAL "NOVO VÍNCULO" -->
+@if (modalNovoVinculoAberto) {
+<app-modal-layout titulo="Novo vínculo" (closed)="fecharNovoVinculo()">
+  <p class="novo-vinculo-subtitulo" *ngIf="contatoSelecionado">Contato: {{ contatoSelecionado.nomeCompleto }}</p>
+
+  <form class="form-modal" [formGroup]="formNovoVinculo" (ngSubmit)="salvarNovoVinculo()">
+
+    <mat-form-field appearance="outline">
+      <mat-label>Parentesco</mat-label>
+      <mat-select formControlName="parentesco">
+        <mat-option *ngFor="let p of opcoesParentesco" [value]="p.value">{{ p.label }}</mat-option>
+      </mat-select>
+    </mat-form-field>
+    <span class="error-text" *ngIf="formNovoVinculo.get('parentesco')?.invalid && formNovoVinculo.get('parentesco')?.touched">O parentesco é obrigatório.</span>
+
+    <label class="checkbox-inline">
+      <input type="checkbox" formControlName="principal">
+      <span>Principal</span>
+    </label>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Unidade</mat-label>
+      <mat-select formControlName="idUnidade" (selectionChange)="onUnidadeVinculoChange($event.value)">
+        <mat-option *ngFor="let und of todasUnidades" [value]="und.id">{{ und.nome }}</mat-option>
+      </mat-select>
+    </mat-form-field>
+    <span class="error-text" *ngIf="formNovoVinculo.get('idUnidade')?.invalid && formNovoVinculo.get('idUnidade')?.touched">A unidade é obrigatória.</span>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Turma</mat-label>
+      <mat-select formControlName="idTurma" (selectionChange)="onTurmaVinculoChange($event.value)">
+        <mat-option *ngFor="let t of turmasDoVinculo" [value]="t.id">{{ t.periodo === 'MANHA' ? 'Manhã' : 'Tarde' }} ({{ t.horaInicio }} às {{ t.horaFim }})</mat-option>
+      </mat-select>
+    </mat-form-field>
+    <span class="error-text" *ngIf="formNovoVinculo.get('idTurma')?.invalid && formNovoVinculo.get('idTurma')?.touched">A turma é obrigatória.</span>
+
+    <mat-form-field appearance="outline" floatLabel="always">
+      <mat-label>Usuário</mat-label>
+      <input matInput formControlName="usuarioBusca" [matAutocomplete]="autoUsuario" placeholder="Digite para buscar...">
+      <mat-autocomplete
+        #autoUsuario="matAutocomplete"
+        panelClass="painel-autocomplete-branca"
+        [displayWith]="displayUsuarioVinculo"
+        (optionSelected)="selecionarUsuarioVinculo($event.option.value)">
+        <mat-option *ngFor="let u of opcoesUsuarioVinculo" [value]="u">
+          {{ u.nomeCompleto }}
+        </mat-option>
+      </mat-autocomplete>
+    </mat-form-field>
+    <span class="error-text" *ngIf="formNovoVinculo.get('idUsuario')?.invalid && formNovoVinculo.get('idUsuario')?.touched">Selecione um usuário.</span>
+
+    <div class="acoes-modal">
+      <button type="button" class="btn-cancelar" (click)="fecharNovoVinculo()" [disabled]="isSalvandoVinculo">Cancelar</button>
+      <button type="submit" class="btn-primary" [disabled]="isSalvandoVinculo">
+        <span *ngIf="isSalvandoVinculo" class="spinner" aria-hidden="true"></span>
+        <span>{{ isSalvandoVinculo ? 'Salvando...' : 'Salvar' }}</span>
+      </button>
+    </div>
+  </form>
+</app-modal-layout>
+}
