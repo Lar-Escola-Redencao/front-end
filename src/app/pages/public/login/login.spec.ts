@@ -43,7 +43,7 @@ describe('Login', () => {
     vi.useRealTimers();
   });
 
-  it('does not show the session-expired toast on a plain visit to /login', () => {
+  it('does not show the session-alert toast on a plain visit to /login', () => {
     setup();
 
     expect(toastEl()).toBeNull();
@@ -53,6 +53,12 @@ describe('Login', () => {
     setup({ reason: 'expired' });
 
     expect(toastEl()?.textContent).toContain('Sua autenticação expirou');
+  });
+
+  it('shows the access-denied toast when redirected with reason=invalid', () => {
+    setup({ reason: 'invalid' });
+
+    expect(toastEl()?.textContent).toContain('Acesso negado');
   });
 
   it('hides the toast when its close button is clicked', () => {
