@@ -310,18 +310,11 @@ export function mapearErrosFormulario(
     const controle =
       formGroup.get(campo);
 
-    if (
-      controle &&
-      controle.invalid &&
-      (
-        controle.dirty ||
-        controle.touched
-      )
-    ) {
-      const primeiroErroAtivo =
-        Object.keys(
-          controle.errors!
-        )[0];
+    if (controle && controle.invalid && (controle.dirty || controle.touched)) {
+
+      if (!controle.errors) return;
+
+      const primeiroErroAtivo = Object.keys(controle.errors!)[0];
 
       // -----------------------------------------------------
       // MENSAGEM CUSTOMIZADA
@@ -329,12 +322,12 @@ export function mapearErrosFormulario(
 
       if (
         mensagensCustomizadas[campo]
-          ?.[primeiroErroAtivo]
+        ?.[primeiroErroAtivo]
       ) {
 
         erros[campo] =
           mensagensCustomizadas[campo]
-            [primeiroErroAtivo];
+          [primeiroErroAtivo];
 
       }
 
@@ -344,7 +337,7 @@ export function mapearErrosFormulario(
 
       else if (
         MENSAGENS_GENERICAS[
-          primeiroErroAtivo
+        primeiroErroAtivo
         ]
       ) {
         erros[campo] =
@@ -352,7 +345,7 @@ export function mapearErrosFormulario(
             primeiroErroAtivo
           ](
             controle.errors![
-              primeiroErroAtivo
+            primeiroErroAtivo
             ]
           );
       }
