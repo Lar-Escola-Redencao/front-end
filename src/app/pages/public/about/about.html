@@ -3,15 +3,36 @@
 <main class="about-main">
 
   <section id="sobre" class="about-section">
-    <p>Sobre nós</p>
+    @for (secao of secoesTextoSobre(); track secao.id) {
+      <article>
+        <h2>{{ secao.titulo }}</h2>
+        @if (secao.conteudo) {
+          <div [innerHTML]="secao.conteudo"></div>
+        }
+      </article>
+    }
   </section>
 
   <section id="historia" class="about-section">
-    <p>Nossa história</p>
+    @for (secao of secoesHistoria(); track secao.id) {
+      <article>
+        <h2>{{ secao.titulo }}</h2>
+        @if (secao.conteudo) {
+          <div [innerHTML]="secao.conteudo"></div>
+        }
+      </article>
+    }
   </section>
 
   <section id="numeros" class="about-section">
-    <p>OSC em números</p>
+    @for (secao of secoesCarrossel(); track secao.id) {
+      <article>
+        <h2>{{ secao.titulo }}</h2>
+        @if (secao.conteudo) {
+          <div [innerHTML]="secao.conteudo"></div>
+        }
+      </article>
+    }
   </section>
 
   <section id="conheca-osc" class="about-section">

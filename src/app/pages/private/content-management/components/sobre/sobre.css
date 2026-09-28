@@ -1,0 +1,298 @@
+.sobre-admin {
+  width: 100%;
+}
+
+.abas-container {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid #ddd;
+  overflow-x: auto;
+  scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+  scrollbar-width: thin;
+}
+
+.abas-container::-webkit-scrollbar {
+  height: 4px;
+}
+
+.abas-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.abas-container::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.16);
+  border-radius: 999px;
+}
+
+.aba-btn {
+  flex: 0 0 auto;
+  font-family: var(--fonte-texto);
+  padding: 12px 24px;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--input-border);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.aba-btn:hover {
+  color: var(--primary-color);
+}
+
+.aba-btn.ativa {
+  color: var(--primary-color);
+  border-bottom-color: var(--primary-color);
+}
+
+/* ---------------------------------------------------------------- */
+/* FORMULÁRIOS (Aba 1 e modal da Aba 3) */
+/* ---------------------------------------------------------------- */
+
+.form-modal {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.form-modal .mat-mdc-form-field {
+  width: 100%;
+}
+
+.form-texto {
+  --sobre-campo-desabilitado-bg: #eeeeee;
+}
+
+.form-texto ::ng-deep .mat-form-field-disabled .mat-mdc-text-field-wrapper {
+  background-color: var(--sobre-campo-desabilitado-bg) !important;
+}
+
+.form-texto ::ng-deep .mat-form-field-disabled .mat-mdc-input-element {
+  color: var(--input-color) !important;
+  -webkit-text-fill-color: var(--input-color) !important;
+  cursor: not-allowed;
+}
+
+.form-texto ::ng-deep .mat-form-field-disabled .mat-mdc-form-field-infix {
+  z-index: 1;
+}
+
+.form-texto ::ng-deep .mat-form-field-disabled .mat-mdc-floating-label {
+  padding: 0 4px;
+  background-color: var(--sobre-campo-desabilitado-bg) !important;
+  color: var(--input-color) !important;
+  z-index: 2;
+}
+
+.form-texto ::ng-deep .mat-form-field-disabled .mdc-notched-outline__notch {
+  background-color: transparent !important;
+}
+
+.campo-textarea {
+  min-height: 82px;
+}
+
+.campo-textarea ::ng-deep .mat-mdc-text-field-wrapper {
+  height: 82px;
+}
+
+.campo-textarea textarea {
+  resize: none;
+}
+
+.acoes-modal {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 28px;
+  margin-top: 4px;
+}
+
+.btn-cancelar {
+  border: 0;
+  background: transparent;
+  color: var(--input-color);
+  cursor: pointer;
+  font-family: var(--fonte-texto);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.acoes-historia {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+/* ---------------------------------------------------------------- */
+/* ESTADOS DE CARREGAMENTO/ERRO (Abas 1 e 2, sem TabelaLayout) */
+/* ---------------------------------------------------------------- */
+
+.estado-pagina {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 40px 0;
+  color: var(--input-color);
+  font-family: var(--fonte-texto);
+}
+
+.estado-pagina-erro {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.botao-tentar-novamente {
+  border: 1px solid var(--primary-color);
+  background: transparent;
+  color: var(--primary-color);
+  border-radius: var(--input-radius);
+  padding: 8px 16px;
+  font-family: var(--fonte-texto);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.botao-tentar-novamente:hover {
+  background: var(--primary-color);
+  color: var(--branco);
+}
+
+/* ---------------------------------------------------------------- */
+/* ABA 2 — GRADE DE 10 SLOTS DO CARROSSEL */
+/* ---------------------------------------------------------------- */
+
+/* Flex (e não grid) pra centralizar também a última linha, quando ela não fecha. */
+.grade-carrossel {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 18px;
+}
+
+.slot-carrossel {
+  flex: 0 0 200px;
+  width: 200px;
+  min-height: 236px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 6px;
+  background: var(--branco);
+  box-shadow: var(--sombra-padrao);
+}
+
+.slot-carrossel-titulo {
+  color: #333;
+  font-family: var(--fonte-texto);
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.slot-carrossel-titulo,
+.slot-carrossel .error-text {
+  text-align: center;
+}
+
+.upload-arquivo-slot {
+  position: relative;
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+  gap: 10px;
+  min-height: 150px;
+  overflow: hidden;
+}
+
+.slot-carrossel-imagem {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: var(--input-radius);
+}
+
+.slot-carrossel-botao {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  min-height: 36px;
+  margin-top: 2px;
+}
+
+/* Com imagem, o botão fica por cima dela, centralizado no rodapé do card. */
+.slot-carrossel-carregando .upload-arquivo-slot,
+.slot-carrossel-carregando .slot-carrossel-botao {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+/* ---------------------------------------------------------------- */
+/* SPINNER (botões de salvar) */
+/* ---------------------------------------------------------------- */
+
+.spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-top-color: var(--branco);
+  border-radius: 50%;
+  display: inline-block;
+  animation: girar 0.7s linear infinite;
+}
+
+.spinner-escuro {
+  border: 2px solid var(--input-border);
+  border-top-color: var(--primary-color);
+}
+
+@keyframes girar {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 600px) {
+  .acoes-modal,
+  .acoes-modal .btn-primary {
+    width: 100%;
+  }
+
+  .acoes-modal {
+    justify-content: space-between;
+  }
+
+  .acoes-historia,
+  .acoes-historia .btn-primary {
+    width: 100%;
+  }
+}
+
+@media (max-width: 430px) {
+  .grade-carrossel {
+    gap: 14px 10px;
+  }
+
+  .slot-carrossel {
+    padding: 10px;
+  }
+
+  .slot-carrossel-titulo {
+    font-size: 0.85rem;
+  }
+
+  .upload-arquivo-slot {
+    min-height: 128px;
+  }
+}

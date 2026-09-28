@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Transparencia } from './components/transparencia/transparencia';
+import { Sobre } from './components/sobre/sobre';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatOption, MatSelect } from '@angular/material/select';
 import { EventoComponent } from './components/evento/evento.component';
@@ -11,13 +12,13 @@ import { DiretoriaComponent } from './components/diretoria/diretoria.component';
 @Component({
   selector: 'app-content-management',
   standalone: true,
-  imports: [MatFormFieldModule, MatSelect, MatOption, DiretoriaComponent,EventoComponent,PartnersManager,SocialLinksManager,Transparencia],
+  imports: [MatFormFieldModule, MatSelect, MatOption, DiretoriaComponent,EventoComponent,PartnersManager,SocialLinksManager,Transparencia,Sobre],
   templateUrl: './content-management.html',
   styleUrl: './content-management.css'
 })
 export class ContentManagement implements OnInit {
   secaoSelecionada: string = 'evento';
-  private secoesPermitidas = ['diretoria', 'evento', 'parceiro', 'redes-sociais', 'transparencia'];
+  private secoesPermitidas = ['diretoria', 'evento', 'parceiro', 'redes-sociais', 'transparencia', 'sobre'];
 
   constructor(private route: ActivatedRoute, private router: Router) {}
 

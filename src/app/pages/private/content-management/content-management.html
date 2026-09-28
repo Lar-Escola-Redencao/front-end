@@ -13,6 +13,7 @@
         <mat-option value="parceiro">Parceiros</mat-option>
         <mat-option value="redes-sociais">Redes Sociais</mat-option>
         <mat-option value="transparencia">Transparência</mat-option>
+        <mat-option value="sobre">Conheça a OSC</mat-option>
       </mat-select>
     </mat-form-field>
 
@@ -34,6 +35,9 @@
     }
      @case ('transparencia'){
         <app-transparencia></app-transparencia>
+    }
+    @case ('sobre'){
+        <app-sobre></app-sobre>
     }
     @default{ 
         <p class="mensagem-vazia">Nenhuma página selecionada</p> 

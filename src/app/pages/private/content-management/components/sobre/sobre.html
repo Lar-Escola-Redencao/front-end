@@ -1,0 +1,258 @@
+<section class="sobre-admin">
+
+  <div class="abas-container">
+    <button type="button" class="aba-btn" [class.ativa]="abaAtiva === 'historia'" (click)="mudarAba('historia')">
+      Nossa História
+    </button>
+    <button type="button" class="aba-btn" [class.ativa]="abaAtiva === 'carrossel'" (click)="mudarAba('carrossel')">
+      Imagens Carrossel
+    </button>
+    <button type="button" class="aba-btn" [class.ativa]="abaAtiva === 'texto'" (click)="mudarAba('texto')">
+      Texto Sobre
+    </button>
+  </div>
+
+  <!-- ============================================================= -->
+  <!-- ABA 1 — TEXTO SOBRE (só edição: sem adicionar, sem excluir) -->
+  <!-- ============================================================= -->
+
+  @if (abaAtiva === 'texto') {
+    @if (carregandoPagina) {
+      <div class="estado-pagina">
+        <span class="spinner spinner-escuro" aria-hidden="true"></span>
+        <span>Carregando...</span>
+      </div>
+    } @else if (erroPagina) {
+      <div class="estado-pagina estado-pagina-erro">
+        <p>Não foi possível carregar a página Sobre.</p>
+        <button type="button" class="botao-tentar-novamente" (click)="tentarNovamentePagina()">
+          Tentar novamente
+        </button>
+      </div>
+    } @else {
+      <form
+        class="form-modal form-texto"
+        [class.form-texto-disabled]="!editandoTexto"
+        [formGroup]="formTexto"
+        (ngSubmit)="salvarTexto()"
+      >
+        <mat-form-field appearance="outline">
+          <mat-label>Descrição</mat-label>
+          <textarea
+            matInput
+            class="campo-textarea"
+            formControlName="conteudo"
+            (blur)="verificarErrosTexto()"
+          ></textarea>
+        </mat-form-field>
+        <span class="error-text" *ngIf="errosTexto['conteudo']">{{ errosTexto['conteudo'] }}</span>
+
+        <div class="acoes-modal">
+          @if (!editandoTexto) {
+            <button type="button" class="btn-primary" (click)="editarTexto()">Editar</button>
+          } @else {
+            <button type="button" class="btn-cancelar" [disabled]="isLoadingTexto" (click)="cancelarEdicaoTexto()">
+              Cancelar
+            </button>
+
+            <button
+              type="submit"
+              class="btn-primary"
+              [disabled]="isLoadingTexto || formTexto.invalid || !temAlteracoesTexto"
+            >
+              <span *ngIf="isLoadingTexto" class="spinner" aria-hidden="true"></span>
+              <span>{{ isLoadingTexto ? 'Salvando...' : 'Salvar' }}</span>
+            </button>
+          }
+        </div>
+      </form>
+    }
+  }
+
+  <!-- ============================================================= -->
+  <!-- ABA 2 — IMAGENS CARROSSEL (10 slots fixos, só substituição) -->
+  <!-- ============================================================= -->
+
+  @if (abaAtiva === 'carrossel') {
+    @if (carregandoPagina) {
+      <div class="estado-pagina">
+        <span class="spinner spinner-escuro" aria-hidden="true"></span>
+        <span>Carregando...</span>
+      </div>
+    } @else if (erroPagina) {
+      <div class="estado-pagina estado-pagina-erro">
+        <p>Não foi possível carregar a página Sobre.</p>
+        <button type="button" class="botao-tentar-novamente" (click)="tentarNovamentePagina()">
+          Tentar novamente
+        </button>
+      </div>
+    } @else {
+      <div class="grade-carrossel">
+        @for (slot of slotsCarrossel; track $index) {
+          <div class="slot-carrossel" [class.slot-carrossel-carregando]="carregandoSlot[$index]">
+            <span class="slot-carrossel-titulo">Imagem {{ $index + 1 }}</span>
+
+            <input
+              #inputSlot
+              type="file"
+              class="input-arquivo-oculto"
+              accept=".jpg,.jpeg,.png,.webp"
+              (change)="onArquivoSlotSelecionado($event, $index)"
+            />
+
+            <div
+              class="upload-arquivo upload-arquivo-slot"
+              [class.upload-arquivo-erro]="erroSlot[$index]"
+              (click)="inputSlot.click()"
+            >
+              @if (imagemSlot($index)) {
+                <img class="slot-carrossel-imagem" [src]="imagemSlot($index)" [alt]="'Imagem ' + ($index + 1)" />
+              } @else {
+                <span class="material-symbols-outlined upload-arquivo-icone">upload_file</span>
+              }
+            </div>
+
+            @if (imagemSlot($index)) {
+              <button type="button" class="btn-primary slot-carrossel-botao" (click)="inputSlot.click()">
+                @if (carregandoSlot[$index]) {
+                  <span class="spinner" aria-hidden="true"></span>
+                }
+                <span>{{ carregandoSlot[$index] ? 'Enviando...' : 'Substituir' }}</span>
+              </button>
+            }
+
+            @if (erroSlot[$index]) {
+              <span class="error-text">{{ erroSlot[$index] }}</span>
+            }
+          </div>
+        }
+      </div>
+    }
+  }
+
+  <!-- ============================================================= -->
+  <!-- ABA 3 — NOSSA HISTÓRIA (única aba com CRUD completo) -->
+  <!-- ============================================================= -->
+
+  @if (abaAtiva === 'historia') {
+    <div class="acoes-historia">
+      <button type="button" class="btn-primary btn-primary-thick" (click)="abrirModalHistoria()">
+        Novo marco histórico
+      </button>
+    </div>
+
+    <app-tabela-layout
+      [colunas]="colunasHistoria"
+      [dados]="blocosHistoria"
+      [acoes]="acoesTabela"
+      [carregando]="carregandoLista"
+      [erro]="erroLista"
+      [ordenacao]="ordenacao"
+      [mensagemVazia]="mensagemVaziaHistoria"
+      (acao)="executarAcaoHistoria($event)"
+      (ordenar)="ordenarPor($event)"
+      (tentarNovamente)="tentarNovamente()"
+    />
+
+    <app-paginacao
+      [paginaAtual]="pagina"
+      [totalPaginas]="totalPaginas"
+      [totalElementos]="totalElementos"
+      [tamanho]="tamanho"
+      [carregando]="carregandoLista"
+      (paginaChange)="irParaPagina($event)"
+      (tamanhoChange)="mudarTamanhoPagina($event)"
+    />
+  }
+
+</section>
+
+@if (modalHistoriaAberto) {
+  <app-modal-layout
+    [class.tremer]="modalHistoriaTremendo"
+    [titulo]="modoEdicaoHistoria ? 'Editar marco histórico' : 'Cadastrar marco histórico'"
+    (closed)="fecharModalHistoria()"
+  >
+    <form class="form-modal" [formGroup]="formHistoria" (ngSubmit)="salvarHistoria()">
+      @if (modoEdicaoHistoria) {
+        <div class="campo-status toggle-wrapper">
+          <span class="status-label">
+            {{ formHistoria.get('ativo')?.value ? 'Ativo' : 'Inativo' }}
+          </span>
+          <label class="custom-switch">
+            <input type="checkbox" formControlName="ativo" />
+            <span class="slider"></span>
+          </label>
+        </div>
+      }
+
+      <mat-form-field appearance="outline">
+        <mat-label>Ano</mat-label>
+        <input
+          matInput
+          type="text"
+          formControlName="titulo"
+          (input)="limitarAnoHistoria($event)"
+          (blur)="verificarErrosHistoria()"
+          inputmode="numeric"
+          maxlength="4"
+        />
+      </mat-form-field>
+      <span class="error-text" *ngIf="errosHistoria['titulo']">{{ errosHistoria['titulo'] }}</span>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Descrição</mat-label>
+        <textarea
+          matInput
+          class="campo-textarea"
+          formControlName="conteudo"
+          (blur)="verificarErrosHistoria()"
+        ></textarea>
+      </mat-form-field>
+      <span class="error-text" *ngIf="errosHistoria['conteudo']">{{ errosHistoria['conteudo'] }}</span>
+
+      <div class="form-group">
+        <input
+          #inputImagemHistoria
+          type="file"
+          class="input-arquivo-oculto"
+          accept=".jpg,.jpeg,.png,.webp"
+          (change)="onImagemHistoriaSelecionada($event)"
+        />
+
+        <div
+          class="upload-arquivo"
+          [class.upload-arquivo-erro]="errosHistoria['imagem']"
+          (click)="inputImagemHistoria.click()"
+        >
+          <span class="material-symbols-outlined upload-arquivo-icone">upload_file</span>
+
+          <div class="upload-arquivo-texto">
+            <strong>{{ nomeArquivoHistoria ? nomeArquivoHistoria : 'Selecione uma imagem (opcional)' }}</strong>
+            <span>PNG, JPEG, JPG ou WEBP</span>
+          </div>
+
+          <span class="upload-arquivo-botao">Procurar</span>
+        </div>
+      </div>
+      <span class="error-text" *ngIf="errosHistoria['imagem']">{{ errosHistoria['imagem'] }}</span>
+
+      @if (imagemPreviewHistoria) {
+        <div class="imagem-preview-wrapper">
+          <img class="imagem-preview" [src]="imagemPreviewHistoria" alt="Prévia da imagem do marco histórico" />
+        </div>
+      }
+
+      <div class="acoes-modal">
+        <button type="button" class="btn-cancelar" [disabled]="isLoadingHistoria" (click)="fecharModalHistoria()">
+          Cancelar
+        </button>
+
+        <button type="submit" class="btn-primary" [disabled]="isLoadingHistoria || formHistoria.invalid">
+          <span *ngIf="isLoadingHistoria" class="spinner" aria-hidden="true"></span>
+          <span>{{ isLoadingHistoria ? 'Salvando...' : 'Salvar' }}</span>
+        </button>
+      </div>
+    </form>
+  </app-modal-layout>
+}
