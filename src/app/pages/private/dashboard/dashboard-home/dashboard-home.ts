@@ -1,5 +1,6 @@
 import { Component, OnInit, computed, inject } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { Modulo } from 'src/app/shared/models/permissao.model';
 import { Auth } from 'src/app/shared/services/auth/auth';
 import { PerfilService } from 'src/app/shared/services/colaborador/perfil.service';
 
@@ -47,6 +48,10 @@ export class DashboardHome implements OnInit {
       .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
       .join(' ');
   });
+
+  protected podeAcessar(modulo: Modulo): boolean {
+    return this.auth.podeAcessar(modulo);
+  }
 
   ngOnInit(): void {
     if (!this.perfil()) {

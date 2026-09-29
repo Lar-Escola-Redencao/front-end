@@ -10,6 +10,7 @@ import { ColaboradorComponent } from '@pages/private/colaborador/colaborador.com
 import { UsuarioComponent } from '@pages/private/usuario/usuario.component';
 import { authGuard } from './shared/guards/auth-guard';
 import { guestGuard } from './shared/guards/guest-guard';
+import { roleGuard } from './shared/guards/role-guard';
 import { Diario } from '@pages/private/diario/diario';
 import { UnidadesTurmas } from '@pages/private/unidades-turmas/unidades-turmas';
 import { Perfil } from '@pages/private/perfil/perfil';
@@ -25,12 +26,12 @@ export const routes: Routes = [
         component: Dashboard,
         children: [
             { path: '', component: DashboardHome },
-            { path: 'conteudo-publico', component: ContentManagement },
-            { path: 'conteudo-publico/:secao', component: ContentManagement },
-            { path: 'colaboradores', component: ColaboradorComponent},
-            { path: 'usuarios', component: UsuarioComponent},
-            { path: 'diario', component: Diario},
-            { path: 'unidades-turmas', component: UnidadesTurmas},
+            { path: 'conteudo-publico', component: ContentManagement, canActivate: [roleGuard], data: { modulo: 'conteudo-publico' } },
+            { path: 'conteudo-publico/:secao', component: ContentManagement, canActivate: [roleGuard], data: { modulo: 'conteudo-publico' } },
+            { path: 'colaboradores', component: ColaboradorComponent, canActivate: [roleGuard], data: { modulo: 'colaboradores' } },
+            { path: 'usuarios', component: UsuarioComponent, canActivate: [roleGuard], data: { modulo: 'usuarios' } },
+            { path: 'diario', component: Diario, canActivate: [roleGuard], data: { modulo: 'diario' } },
+            { path: 'unidades-turmas', component: UnidadesTurmas, canActivate: [roleGuard], data: { modulo: 'unidades-turmas' } },
             { path: 'perfil', component: Perfil}
         ]
     },

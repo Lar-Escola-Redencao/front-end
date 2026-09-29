@@ -3,6 +3,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { NgClass, NgIf } from '@angular/common';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 
+import { Modulo } from 'src/app/shared/models/permissao.model';
 import { Auth } from 'src/app/shared/services/auth/auth';
 import { PerfilService } from 'src/app/shared/services/colaborador/perfil.service';
 
@@ -24,6 +25,10 @@ export class PrivateNavbar implements OnInit {
 
   protected readonly nomeUsuario = computed(() => this.perfilService.perfilAtual()?.nomeCompleto ?? '');
   protected readonly iniciaisUsuario = computed(() => this.calcularIniciais(this.nomeUsuario()));
+
+  protected podeAcessar(modulo: Modulo): boolean {
+    return this.auth.podeAcessar(modulo);
+  }
 
   ngOnInit(): void {
     this.carregarUsuario();

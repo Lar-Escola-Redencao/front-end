@@ -6,20 +6,22 @@
         Novo colaborador
       </button>
 
-      <mat-form-field appearance="outline" class="filtro-papel">
-        <mat-label>Papel de acesso</mat-label>
-        <mat-select
-          [value]="filtroPapel"
-          [canSelectNullableOptions]="true"
-          (selectionChange)="filtrarPorPapel($event.value)">
-          <mat-option [value]="null">Todos os papéis</mat-option>
-          <mat-option
-            *ngFor="let papel of papeis"
-            [value]="papel.id">
-            {{ obterNomePapel(papel) }}
-          </mat-option>
-        </mat-select>
-      </mat-form-field>
+      @if (!somenteMonitores) {
+        <mat-form-field appearance="outline" class="filtro-papel">
+          <mat-label>Papel de acesso</mat-label>
+          <mat-select
+            [value]="filtroPapel"
+            [canSelectNullableOptions]="true"
+            (selectionChange)="filtrarPorPapel($event.value)">
+            <mat-option [value]="null">Todos os papéis</mat-option>
+            <mat-option
+              *ngFor="let papel of papeis"
+              [value]="papel.id">
+              {{ obterNomePapel(papel) }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      }
     </div>
 
     <app-tabela-layout

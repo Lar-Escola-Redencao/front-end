@@ -1,12 +1,12 @@
 <app-public-navbar></app-public-navbar>
 
-@if (showSessionExpiredToast()) {
+@if (showSessionAlertToast()) {
   <div class="toast toast-warning" role="alert">
-    <span>Sua autenticação expirou. Para sua segurança, faça login novamente.</span>
+    <span>{{ sessionAlertMessage() }}</span>
     <button
       type="button"
       class="toast-close"
-      (click)="dismissSessionExpiredToast()"
+      (click)="dismissSessionAlertToast()"
       aria-label="Fechar aviso"
     >
       &times;

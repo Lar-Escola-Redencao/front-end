@@ -23,7 +23,6 @@ import {
 const SESSION_EXPIRED_TOAST_MS = 6000;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-/** Accepts either a full e-mail or an 11-digit CPF (mask characters ignored). */
 function identifierValidator(control: AbstractControl): ValidationErrors | null {
   const value = (control.value ?? '').trim();
   if (!value) {
@@ -52,17 +51,29 @@ export class Login {
   protected readonly mostrarSenha = signal(false);
 
   private readonly queryParams = toSignal(this.route.queryParamMap);
-  private readonly sessionExpiredParam = computed(
-    () => this.queryParams()?.get('reason') === 'expired',
+  
+  private readonly reasonParam = computed(() => this.queryParams()?.get('reason'));
+  
+  private readonly isSessionAlert = computed(
+    () => this.reasonParam() === 'expired' || this.reasonParam() === 'invalid'
   );
+
   private readonly toastDismissed = signal(false);
-  protected readonly showSessionExpiredToast = computed(
-    () => this.sessionExpiredParam() && !this.toastDismissed(),
+  
+  protected readonly showSessionAlertToast = computed(
+    () => this.isSessionAlert() && !this.toastDismissed(),
   );
+
+  protected readonly sessionAlertMessage = computed(() => {
+    if (this.reasonParam() === 'invalid') {
+      return 'Acesso negado. Autenticação inválida ou corrompida.';
+    }
+    return 'Sua autenticação expirou. Para sua segurança, faça login novamente.';
+  });
 
   constructor() {
     effect((onCleanup) => {
-      if (!this.sessionExpiredParam()) {
+      if (!this.isSessionAlert()) {
         return;
       }
       const timer = setTimeout(() => this.toastDismissed.set(true), SESSION_EXPIRED_TOAST_MS);
@@ -70,7 +81,7 @@ export class Login {
     });
   }
 
-  protected dismissSessionExpiredToast(): void {
+  protected dismissSessionAlertToast(): void {
     this.toastDismissed.set(true);
   }
 
@@ -90,10 +101,6 @@ export class Login {
     remember: new FormControl(false, { nonNullable: true }),
   });
 
-  /**
-   * Applies the CPF mask live while the field looks numeric; the instant a letter or `@` shows
-   * up, masking stops and the raw text is left alone so the user can type an e-mail freely.
-   */
   protected onIdentifierInput(event: Event): void {
     const input = event.target as HTMLInputElement;
     if (pareceEmail(input.value)) {

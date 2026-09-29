@@ -100,6 +100,53 @@ describe('Auth', () => {
     httpMock.verify();
   });
 
+  it('decodes the role claim from the login token and exposes the permissions', () => {
+    const auth = createService();
+    const httpMock = TestBed.inject(HttpTestingController);
+
+    auth.login({ identifier: 'coord@b.com', password: 'secret' }, false).subscribe();
+
+    const token = buildToken({
+      sub: 'coord@b.com',
+      role: 'COORDENADOR',
+      exp: Math.floor(Date.now() / 1000) + 3600,
+    });
+    httpMock.expectOne(`${environment.apiUrl}/auth/login`).flush({ token });
+
+    expect(auth.role()).toBe('COORDENADOR');
+    expect(auth.hasRole('COORDENADOR')).toBe(true);
+    expect(auth.hasRole('ADMINISTRADOR')).toBe(false);
+    expect(auth.podeAcessar('colaboradores')).toBe(true);
+    expect(auth.podeAcessar('conteudo-publico')).toBe(false);
+    expect(localStorage.getItem(TOKEN_KEY)).toBe(token);
+
+    httpMock.verify();
+  });
+
+  it('restores the role from the stored token and clears it on logout', () => {
+    const token = buildToken({ sub: 'm@b.com', role: 'MONITOR', exp: Math.floor(Date.now() / 1000) + 3600 });
+    localStorage.setItem(TOKEN_KEY, token);
+    const auth = createService();
+
+    expect(auth.role()).toBe('MONITOR');
+    expect(auth.podeAcessar('diario')).toBe(true);
+    expect(auth.podeAcessar('usuarios')).toBe(false);
+
+    auth.logout();
+
+    expect(auth.role()).toBeNull();
+    expect(auth.podeAcessar('diario')).toBe(false);
+  });
+
+  it('has no role (and no module access) when the token carries no role claim', () => {
+    const token = buildToken({ sub: 'x@b.com', exp: Math.floor(Date.now() / 1000) + 3600 });
+    localStorage.setItem(TOKEN_KEY, token);
+    const auth = createService();
+
+    expect(auth.role()).toBeNull();
+    expect(auth.podeAcessar('diario')).toBe(false);
+  });
+
   it('clears the token on logout', () => {
     const token = buildToken({ sub: 'user-1', exp: Math.floor(Date.now() / 1000) + 3600 });
     localStorage.setItem(TOKEN_KEY, token);

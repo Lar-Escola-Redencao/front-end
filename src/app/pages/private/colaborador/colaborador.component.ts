@@ -37,6 +37,7 @@ import { Paginacao } from '@components/paginacao/paginacao';
 
 import { ComponentComAlteracoesNaoSalvas } from 'src/app/shared/guards/can-deactivate.guard';
 import { AtualizarColaboradorDTO, Colaborador, CriarColaboradorDTO } from 'src/app/shared/models/colaborador.model';
+import { Auth } from 'src/app/shared/services/auth/auth';
 import { ColaboradorService } from 'src/app/shared/services/colaborador/colaborador.service';
 import { PapelService } from 'src/app/shared/services/colaborador/papel.service';
 import { UnidadeService } from 'src/app/shared/services/colaborador/unidade.service';
@@ -191,7 +192,8 @@ export class ColaboradorComponent
     private toastr: ToastrService,
     private ngZone: NgZone,
     private route: ActivatedRoute,
-    private router: Router
+    private router: Router,
+    private auth: Auth
   ) {
     this.formColaborador = this.fb.group({
       nomeCompleto: [
@@ -303,11 +305,25 @@ export class ColaboradorComponent
     );
   }
 
+  /** Coordenador só faz a gestão de monitores; administrador vê e gerencia todos os papéis. */
+  get somenteMonitores(): boolean {
+    return this.auth.hasRole('COORDENADOR');
+  }
+
+  private get idPapelMonitor(): number | null {
+    return this.papeis.find(p => (p.nomePapel || p.nome || '').toUpperCase() === 'MONITOR')?.id ?? null;
+  }
+
   carregarPapeis(): void {
     this.papelService.listarTodos().subscribe({
       next: (dados: Papel[]) => {
-        this.papeis = dados;
-        this.papeisDisponiveis = dados
+        this.papeis = this.somenteMonitores
+          ? dados.filter(p => (p.nomePapel || p.nome || '').toUpperCase() === 'MONITOR')
+          : dados;
+        if (this.somenteMonitores) {
+          this.carregarColaboradores();
+        }
+        this.papeisDisponiveis = this.papeis
           .map((papel) => this.obterNomePapel(papel))
           .filter((nome): nome is string => Boolean(nome));
         this.cdr.detectChanges();
@@ -340,10 +356,18 @@ export class ColaboradorComponent
       return;
     }
 
+    // Para o coordenador a lista é sempre restrita a monitores; aguarda os papéis
+    // carregarem para saber o id do papel MONITOR (carregarPapeis recarrega a lista).
+    if (this.somenteMonitores && this.idPapelMonitor === null) {
+      return;
+    }
+
     this.carregandoLista = true;
     this.erroLista = false;
 
-    const idPapel = this.filtroPapel ?? undefined;
+    const idPapel = this.somenteMonitores
+      ? this.idPapelMonitor!
+      : this.filtroPapel ?? undefined;
 
     this.colaboradorService
       .listarTodos(this.pagina, this.tamanho, this.sort, idPapel)
@@ -471,7 +495,7 @@ export class ColaboradorComponent
       cpf: '',
       endereco: '',
       telefone: '',
-      idPapel: null,
+      idPapel: this.somenteMonitores ? this.idPapelMonitor : null,
       idsUnidades: []
     });
 
@@ -849,7 +873,7 @@ export class ColaboradorComponent
       cpf: '',
       endereco: '',
       telefone: '',
-      idPapel: null,
+      idPapel: this.somenteMonitores ? this.idPapelMonitor : null,
       idsUnidades: []
     });
 

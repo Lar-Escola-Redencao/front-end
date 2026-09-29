@@ -5,6 +5,7 @@ import { catchError, throwError } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 import { Auth } from '../services/auth/auth';
+import { decodeJwtPayload } from '../utils/jwt.util';
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const auth = inject(Auth);
@@ -19,11 +20,16 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
   return next(authorizedReq).pipe(
     catchError((error: unknown) => {
-      // Only treat this as a session expiry when the rejected request actually carried a
-      // token — otherwise a plain wrong-password 401 on /auth/login would also trigger it.
+
       if (error instanceof HttpErrorResponse && error.status === 401 && isApiRequest && token) {
         auth.logout();
-        router.navigate(['/entrar'], { queryParams: { reason: 'expired' } });
+
+        const payload = decodeJwtPayload(token);
+        const isExpired = payload?.exp ? Date.now() >= payload.exp * 1000 : false;
+        
+        const reason = isExpired ? 'expired' : 'invalid';
+
+        router.navigate(['/entrar'], { queryParams: { reason } });
       }
       return throwError(() => error);
     }),
