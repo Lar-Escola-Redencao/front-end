@@ -7,6 +7,8 @@ export interface Evento {
   imagem: string;
   valor?: number;
   tipoEvento: TipoEvento;
+  // Calculado pelo back a partir da dataEvento.
+  encerrado?: boolean;
   comentarioPosEvento?: string;
   parceiros: Parceiro[];
   // Fotos da cobertura pós-evento (tabela midia_evento), já resolvidas para URLs
@@ -27,6 +29,20 @@ export interface MidiaEventoDTO {
   urlMidia?: string;
   tipo_midia?: TipoMidiaEvento;
   url_midia?: string;
+}
+
+// Link do evento em uma rede social (tabela evento_rede_social), usado no pós-evento.
+export interface EventoRedeSocial {
+  idRedeSocial: number;
+  nome: string;
+  icone: string;
+  urlLink: string;
+}
+
+export interface VincularRedeSocialEventoDTO {
+  idRedeSocial: number;
+  // Opcional: vazio faz o back usar a url cadastrada na própria rede social.
+  urlLink?: string;
 }
 
 export interface CriarEventoDTO {

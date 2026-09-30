@@ -1,0 +1,100 @@
+<app-modal-layout
+  [class.tremer]="modalTremendo"
+  titulo="Links do pós-evento"
+  (closed)="fechar()">
+
+  <div class="vinculo-redes">
+    <p class="vinculo-descricao">
+      Escolha em quais redes sociais o evento <strong>{{ evento.titulo }}</strong> foi publicado.
+      Deixe o link em branco para usar o endereço padrão da rede social.
+    </p>
+
+    @if (carregando) {
+    <div class="vinculo-estado">
+      <span class="spinner spinner-escuro" aria-hidden="true"></span>
+      <p>Carregando redes sociais...</p>
+    </div>
+    } @else if (erroCarregamento) {
+    <div class="vinculo-estado vinculo-estado-erro">
+      <p>Não foi possível carregar as redes sociais.</p>
+      <button type="button" class="botao-tentar-novamente" (click)="carregar()">Tentar novamente</button>
+    </div>
+    } @else if (linhas.length === 0) {
+    <div class="vinculo-estado">
+      <p>Nenhuma rede social ativa cadastrada.</p>
+    </div>
+    } @else {
+    <p class="vinculo-resumo">{{ totalVinculadas }} de {{ linhas.length }} vinculada(s)</p>
+
+    <table class="vinculo-tabela">
+      <thead>
+        <tr>
+          <th>Rede social</th>
+          <th>Link da publicação</th>
+          <th class="coluna-acoes"></th>
+        </tr>
+      </thead>
+
+      <tbody>
+        @for (linha of linhas; track linha.idRedeSocial) {
+        <tr [class.vinculada]="linha.vinculada">
+          <td class="celula-rede">
+            @if (linha.icone) {
+            <img class="rede-icone" [src]="tratarImagem(linha.icone)" alt="" (error)="esconderIcone($event)" />
+            }
+            <span class="rede-nome">{{ linha.nome }}</span>
+            <span class="badge-vinculo" [class.ativo]="linha.vinculada">
+              {{ linha.vinculada ? 'Vinculada' : 'Não vinculada' }}
+            </span>
+          </td>
+
+          <td class="celula-link">
+            <input
+              type="url"
+              class="input-link"
+              [class.input-link-erro]="linha.erro"
+              [(ngModel)]="linha.urlLink"
+              [placeholder]="linha.urlPadrao || 'https://...'"
+              [disabled]="linha.salvando"
+              maxlength="255"
+              (blur)="validar(linha)"
+              (keydown.enter)="salvar(linha)" />
+            @if (linha.erro) {
+            <span class="error-text">{{ linha.erro }}</span>
+            }
+          </td>
+
+          <td class="coluna-acoes">
+            <div class="acoes">
+              @if (linha.salvando) {
+              <span class="spinner spinner-escuro" aria-hidden="true"></span>
+              } @else if (!linha.vinculada) {
+              <button type="button" class="botao-acao" title="Vincular ao evento" (click)="salvar(linha)">
+                <mat-icon>add_link</mat-icon>
+              </button>
+              } @else {
+              @if (foiAlterada(linha)) {
+              <button type="button" class="botao-acao" title="Salvar link" (click)="salvar(linha)">
+                <mat-icon>check</mat-icon>
+              </button>
+              <button type="button" class="botao-acao" title="Descartar alteração" (click)="descartarAlteracao(linha)">
+                <mat-icon>undo</mat-icon>
+              </button>
+              }
+              <button type="button" class="botao-acao botao-excluir" title="Desvincular" (click)="desvincular(linha)">
+                <mat-icon>link_off</mat-icon>
+              </button>
+              }
+            </div>
+          </td>
+        </tr>
+        }
+      </tbody>
+    </table>
+    }
+
+    <div class="acoes-modal">
+      <button type="button" class="btn-primary" (click)="fechar()">Concluir</button>
+    </div>
+  </div>
+</app-modal-layout>

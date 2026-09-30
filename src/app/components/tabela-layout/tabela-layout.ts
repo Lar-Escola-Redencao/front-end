@@ -22,6 +22,8 @@ export interface TabelaColuna<T = any> {
    * (ex.: coluna exibe `nomePapel`, mas o back ordena por `papel.nomePapel`).
    */
   campoOrdenacao?: string;
+  /** Texto de uma tag exibida ao lado do valor (ex.: "Encerrado"); null/'' não exibe. */
+  etiqueta?: (linha: T) => string | null;
 }
 
 export interface TabelaAcao<T = any> {
@@ -29,6 +31,8 @@ export interface TabelaAcao<T = any> {
   tooltip: string;
   acao: string;
   executar?: (linha: T) => void;
+  /** Quando informado, a ação só aparece nas linhas em que retornar true. */
+  visivel?: (linha: T) => boolean;
 }
 
 export interface TabelaOrdenacao {
@@ -87,11 +91,18 @@ export class TabelaLayout<T = any> {
   }
 
   obterValorPrincipal(linha: T): string {
-    const colunaPrincipal =
-      this.colunas.find(c => c.principalMobile) ||
-      this.colunas[0];
+    return this.obterValor(linha, this.colunaPrincipal);
+  }
 
-    return this.obterValor(linha, colunaPrincipal);
+  obterEtiquetaPrincipal(linha: T): string | null {
+    return this.obterEtiqueta(linha, this.colunaPrincipal);
+  }
+
+  private get colunaPrincipal(): TabelaColuna<T> {
+    return (
+      this.colunas.find(c => c.principalMobile) ||
+      this.colunas[0]
+    );
   }
 
   get valorTotalColunas(): number {
@@ -116,6 +127,14 @@ export class TabelaLayout<T = any> {
       valor !== undefined
       ? String(valor)
       : '-';
+  }
+
+  obterEtiqueta(linha: T, coluna: TabelaColuna<T>): string | null {
+    return coluna.etiqueta?.(linha) || null;
+  }
+
+  acoesVisiveis(linha: T): TabelaAcao<T>[] {
+    return this.acoes.filter(acao => !acao.visivel || acao.visivel(linha));
   }
 
   obterUrlImagem(valor: any): string | null {

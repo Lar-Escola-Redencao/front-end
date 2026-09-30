@@ -280,6 +280,22 @@
   font-weight: 700;
 }
 
+.preview-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tag-encerrado {
+  padding: 6px 12px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.08);
+  color: rgba(0, 0, 0, 0.6);
+  font-family: var(--fonte-texto);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
 .preview-info h2 {
   margin: 0;
   color: var(--preto);

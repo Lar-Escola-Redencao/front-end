@@ -60,6 +60,9 @@
             <span class="titulo-mobile">
               {{ obterValorPrincipal(linha) }}
             </span>
+            @if (obterEtiquetaPrincipal(linha); as etiqueta) {
+              <span class="etiqueta-celula">{{ etiqueta }}</span>
+            }
             <mat-icon>
               {{
               linhaExpandida === $index
@@ -160,6 +163,10 @@
 
         {{ obterValor(linha, coluna) }}
 
+        @if (obterEtiqueta(linha, coluna); as etiqueta) {
+          <span class="etiqueta-celula">{{ etiqueta }}</span>
+        }
+
       }
 
     </span>
@@ -176,7 +183,7 @@
           @if (acoes.length > 0) {
           <td class="coluna-acoes" data-label="Ações">
             <div class="acoes">
-              @for (acao of acoes; track acao.acao) {
+              @for (acao of acoesVisiveis(linha); track acao.acao) {
               <button type="button" class="botao-acao" [class.botao-excluir]="acao.acao === 'excluir'"
                 [title]="acao.tooltip" (click)="executarAcao(acao, linha)">
                 <mat-icon>
