@@ -1,8 +1,9 @@
-import { Component, OnInit, OnDestroy, ChangeDetectorRef, HostListener, NgZone } from '@angular/core';
+import { Component, DestroyRef, OnInit, OnDestroy, ChangeDetectorRef, HostListener, NgZone, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Observable, of, Subscription, switchMap } from 'rxjs';
+import { Observable, of, Subscription, debounceTime, filter, map, switchMap } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
 
 import {
@@ -15,6 +16,7 @@ import {
 import { Alertas } from 'src/app/shared/utils/alerts';
 
 import { ComponentComAlteracoesNaoSalvas } from 'src/app/shared/guards/can-deactivate.guard';
+import { CampoBusca } from '@components/campo-busca/campo-busca';
 import { ModalLayout } from '@components/modal-layout/modal-layout';
 import { TabelaLayout, TabelaColuna, TabelaAcao } from '@components/tabela-layout/tabela-layout';
 import { Paginacao } from '@components/paginacao/paginacao';
@@ -57,6 +59,7 @@ interface ClassificacaoSecoes {
     ModalLayout,
     TabelaLayout,
     Paginacao,
+    CampoBusca,
     MatFormFieldModule,
     MatInputModule,
     MatSlideToggleModule,
@@ -109,6 +112,12 @@ export class Sobre implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalvas
   totalPaginas = 0;
   carregandoLista = false;
   erroLista = false;
+  private listaSub?: Subscription;
+  private readonly destroyRef = inject(DestroyRef);
+
+  // Omnisearch da aba Nossa História: o termo vai para a URL (?search=).
+  readonly campoBusca = new FormControl<string>('');
+  busca = '';
 
   modalHistoriaAberto = false;
   modoEdicaoHistoria = false;
@@ -169,14 +178,30 @@ export class Sobre implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalvas
       this.ordenacao = analisarOrdenacao(sort);
       this.abaAtiva = this.lerAbaValida(params.get('aba'));
 
+      this.busca = params.get('search') ?? '';
+      if (this.campoBusca.value !== this.busca) {
+        this.campoBusca.setValue(this.busca, { emitEvent: false });
+      }
+
       if (this.abaAtiva === 'historia') {
         this.carregarHistoria();
       }
     });
+
+    // Só consulta a API 500ms depois que o usuário para de digitar.
+    this.campoBusca.valueChanges
+      .pipe(
+        debounceTime(500),
+        map((valor) => (valor ?? '').trim()),
+        filter((termo) => termo !== this.busca),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe((termo) => this.navegar({ search: termo || null, page: 0 }));
   }
 
   ngOnDestroy(): void {
     this.routeSub?.unsubscribe();
+    this.listaSub?.unsubscribe();
   }
 
   private lerAbaValida(valor: string | null): AbaSobre {
@@ -188,7 +213,7 @@ export class Sobre implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalvas
       return;
     }
 
-    this.navegar({ aba, page: 0, sort: null });
+    this.navegar({ aba, page: 0, sort: null, search: null });
   }
 
   private navegar(queryParams: Record<string, any>): void {
@@ -471,7 +496,9 @@ export class Sobre implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalvas
   // ---------------------------------------------------------------
 
   get mensagemVaziaHistoria(): string {
-    return 'Nenhum marco histórico cadastrado.';
+    return this.busca
+      ? `Nenhum marco histórico encontrado para "${this.busca}".`
+      : 'Nenhum marco histórico cadastrado.';
   }
 
   carregarHistoria(): void {
@@ -480,7 +507,9 @@ export class Sobre implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalvas
 
     // tipo HISTORIA faz o back recortar a consulta nos blocos de ano antes de
     // paginar, então content, totalElements e totalPages já vêm só desta aba.
-    this.sobreService.listarSecoesAdmin(this.pagina, this.tamanho, this.sort, GRUPO_HISTORIA).subscribe({
+    // Cancela a requisição anterior para uma resposta antiga não sobrescrever a busca atual.
+    this.listaSub?.unsubscribe();
+    this.listaSub = this.sobreService.listarSecoesAdmin(this.pagina, this.tamanho, this.sort, GRUPO_HISTORIA, this.busca || undefined).subscribe({
       next: (resposta) => {
         this.ngZone.run(() => {
           this.blocosHistoria = resposta.content;

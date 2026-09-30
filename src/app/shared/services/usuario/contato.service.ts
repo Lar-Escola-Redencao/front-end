@@ -18,9 +18,10 @@ export class ContatoService {
   private readonly http = inject(HttpClient);
   private readonly apiUrl = `${environment.apiUrl}/contatos`;
 
-  listarContatos(pagina: number, tamanho: number, sort?: string): Observable<PageResponse<ContatoListagemDTO>> {
+  listarContatos(pagina: number, tamanho: number, sort?: string, search?: string): Observable<PageResponse<ContatoListagemDTO>> {
     let params = new HttpParams().set('page', pagina).set('size', tamanho);
     if (sort) params = params.set('sort', sort);
+    if (search) params = params.set('search', search);
     return this.http.get<PageResponse<ContatoListagemDTO>>(this.apiUrl, { params });
   }
 

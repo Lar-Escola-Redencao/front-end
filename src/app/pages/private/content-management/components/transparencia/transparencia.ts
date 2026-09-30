@@ -1,8 +1,9 @@
-import { Component, OnInit, OnDestroy, ChangeDetectorRef, HostListener, NgZone } from '@angular/core';
+import { Component, DestroyRef, OnInit, OnDestroy, ChangeDetectorRef, HostListener, NgZone, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Subscription } from 'rxjs';
+import { Subscription, debounceTime, filter, map } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
 import {
   mapearErrosFormulario,
@@ -11,6 +12,7 @@ import {
 import { Alertas } from 'src/app/shared/utils/alerts';
 
 import { ComponentComAlteracoesNaoSalvas } from 'src/app/shared/guards/can-deactivate.guard';
+import { CampoBusca } from '@components/campo-busca/campo-busca';
 import { ModalLayout } from '@components/modal-layout/modal-layout';
 import {
   TabelaLayout,
@@ -45,6 +47,7 @@ interface DocumentoExibicao extends DocumentoAdmin {
     ModalLayout,
     TabelaLayout,
     Paginacao,
+    CampoBusca,
     MatFormFieldModule,
     MatInputModule,
     MatSelect,
@@ -76,6 +79,12 @@ export class Transparencia implements OnInit, OnDestroy, ComponentComAlteracoesN
   erroLista = false;
 
   private routeSub?: Subscription;
+  private listaSub?: Subscription;
+  private readonly destroyRef = inject(DestroyRef);
+
+  // Omnisearch: o termo vai para a URL (?search=) e o back busca em todas as colunas.
+  readonly campoBusca = new FormControl<string>('');
+  busca = '';
 
   // --- TABELAS ---
   documentos: DocumentoExibicao[] = [];
@@ -166,12 +175,28 @@ export class Transparencia implements OnInit, OnDestroy, ComponentComAlteracoesN
       this.ordenacao = analisarOrdenacao(sort);
       this.abaAtiva = params.get('aba') === 'secoes' ? 'secoes' : 'documentos';
 
+      this.busca = params.get('search') ?? '';
+      if (this.campoBusca.value !== this.busca) {
+        this.campoBusca.setValue(this.busca, { emitEvent: false });
+      }
+
       this.carregarListaAtiva();
     });
+
+    // Só consulta a API 500ms depois que o usuário para de digitar.
+    this.campoBusca.valueChanges
+      .pipe(
+        debounceTime(500),
+        map(valor => (valor ?? '').trim()),
+        filter(termo => termo !== this.busca),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe(termo => this.navegar({ search: termo || null, page: 0 }));
   }
 
   ngOnDestroy(): void {
     this.routeSub?.unsubscribe();
+    this.listaSub?.unsubscribe();
   }
 
   mudarAba(aba: 'documentos' | 'secoes'): void {
@@ -179,10 +204,15 @@ export class Transparencia implements OnInit, OnDestroy, ComponentComAlteracoesN
       return;
     }
 
-    this.navegar({ aba, page: 0, sort: null });
+    this.navegar({ aba, page: 0, sort: null, search: null });
   }
 
   get mensagemVazia(): string {
+    if (this.busca) {
+      return this.abaAtiva === 'documentos'
+        ? `Nenhum documento encontrado para "${this.busca}".`
+        : `Nenhuma seção encontrada para "${this.busca}".`;
+    }
     return this.abaAtiva === 'documentos'
       ? 'Nenhum documento cadastrado.'
       : 'Nenhuma seção cadastrada.';
@@ -202,14 +232,12 @@ export class Transparencia implements OnInit, OnDestroy, ComponentComAlteracoesN
   }
 
   carregarDocumentos(): void {
-    if (this.carregandoLista) {
-      return;
-    }
-
     this.carregandoLista = true;
     this.erroLista = false;
 
-    this.transparenciaService.listarDocumentosAdmin(this.pagina, this.tamanho, this.sort).subscribe({
+    // Cancela a requisição anterior para uma resposta antiga não sobrescrever a busca atual.
+    this.listaSub?.unsubscribe();
+    this.listaSub = this.transparenciaService.listarDocumentosAdmin(this.pagina, this.tamanho, this.sort, this.busca || undefined).subscribe({
       next: (resposta) => {
         this.documentos = resposta.content.map(doc => this.mapearDocumento(doc));
         this.totalElementos = resposta.page.totalElements;
@@ -233,14 +261,11 @@ export class Transparencia implements OnInit, OnDestroy, ComponentComAlteracoesN
   }
 
   carregarSecoes(): void {
-    if (this.carregandoLista) {
-      return;
-    }
-
     this.carregandoLista = true;
     this.erroLista = false;
 
-    this.transparenciaService.listarSecoesAdmin(this.pagina, this.tamanho, this.sort).subscribe({
+    this.listaSub?.unsubscribe();
+    this.listaSub = this.transparenciaService.listarSecoesAdmin(this.pagina, this.tamanho, this.sort, this.busca || undefined).subscribe({
       next: (resposta) => {
         this.secoes = resposta.content;
         this.totalElementos = resposta.page.totalElements;

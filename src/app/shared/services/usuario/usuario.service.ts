@@ -14,8 +14,9 @@ export class AssistidoService {
   private readonly http = inject(HttpClient);
   private readonly apiUrl = `${environment.apiUrl}/assistidos`;
 
-  listarAssistidos(): Observable<AssistidoResponseDTO[]> {
-    return this.http.get<AssistidoResponseDTO[]>(this.apiUrl);
+  listarAssistidos(search?: string): Observable<AssistidoResponseDTO[]> {
+    const params = search ? { search } : undefined;
+    return this.http.get<AssistidoResponseDTO[]>(this.apiUrl, { params });
   }
 
   buscarPorId(id: number): Observable<AssistidoResponseDTO> {

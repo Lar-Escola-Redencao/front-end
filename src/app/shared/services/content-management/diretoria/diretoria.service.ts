@@ -14,8 +14,8 @@ export class DiretoriaService {
 
   constructor(private http: HttpClient) {}
 
-  listarTodos(pagina: number, tamanho: number, sort?: string): Observable<PaginaResposta<Diretoria>> {
-    const params = construirHttpParams({ pagina, tamanho, sort });
+  listarTodos(pagina: number, tamanho: number, sort?: string, search?: string): Observable<PaginaResposta<Diretoria>> {
+    const params = construirHttpParams({ pagina, tamanho, sort, extras: { search } });
     return this.http.get<PaginaResposta<Diretoria>>(`${this.apiUrl}/todos`, { params });
   }
 

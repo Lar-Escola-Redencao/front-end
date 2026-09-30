@@ -136,6 +136,7 @@
 
   @if (abaAtiva === 'historia') {
     <div class="acoes-historia">
+      <app-campo-busca [control]="campoBusca" placeholder="Buscar marco histórico" />
       <button type="button" class="btn-primary btn-primary-thick" (click)="abrirModalHistoria()">
         Novo marco histórico
       </button>

@@ -1,11 +1,12 @@
 <section class="partners-manager">
   <div class="acoes-partners">
+    <app-campo-busca [control]="campoBusca" placeholder="Buscar parceiro" />
     <button type="button" class="btn-primary btn-primary-thick" (click)="abrirModal()">
       Novo parceiro
     </button>
   </div>
   <app-tabela-layout [colunas]="colunas" [dados]="partners" [acoes]="acoesTabela" [carregando]="isLoading"
-    [erro]="loadError" [ordenacao]="ordenacao" mensagemVazia="Nenhum parceiro cadastrado."
+    [erro]="loadError" [ordenacao]="ordenacao" [mensagemVazia]="mensagemVazia"
     (acao)="executarAcao($event)" (ordenar)="ordenarPor($event)" (tentarNovamente)="carregarPartners()" />
 
   <app-paginacao [paginaAtual]="pagina" [totalPaginas]="totalPaginas" [totalElementos]="totalElementos"

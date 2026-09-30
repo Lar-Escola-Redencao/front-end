@@ -150,14 +150,14 @@ describe('UnidadesTurmas', () => {
   });
 
   it('carrega a lista de turmas ao iniciar (aba padrão)', () => {
-    expect(turmaService.listarPaginado).toHaveBeenCalledWith(0, 10, null);
+    expect(turmaService.listarPaginado).toHaveBeenCalledWith(0, 10, null, undefined);
     expect(component.turmas).toEqual([turma]);
   });
 
   it('carrega a tabela de unidades ao trocar para a aba unidades', () => {
     component.mudarAba('unidades');
 
-    expect(unidadeService.listarPaginado).toHaveBeenCalledWith(0, 10);
+    expect(unidadeService.listarPaginado).toHaveBeenCalledWith(0, 10, undefined, undefined);
     expect(component.unidadesTabela).toEqual(unidades);
   });
 
@@ -166,7 +166,7 @@ describe('UnidadesTurmas', () => {
     component.onFiltroUnidadeChange();
 
     expect(component.unidadeFiltroId).toBe(1);
-    expect(turmaService.listarPaginado).toHaveBeenLastCalledWith(0, 10, 1);
+    expect(turmaService.listarPaginado).toHaveBeenLastCalledWith(0, 10, 1, undefined);
   });
 
   it('volta a listar sem unidadeId ao selecionar "Todas as unidades"', () => {
@@ -176,7 +176,26 @@ describe('UnidadesTurmas', () => {
     component.onFiltroUnidadeChange();
 
     expect(component.unidadeFiltroId).toBeNull();
-    expect(turmaService.listarPaginado).toHaveBeenLastCalledWith(0, 10, null);
+    expect(turmaService.listarPaginado).toHaveBeenLastCalledWith(0, 10, null, undefined);
+  });
+
+  it('só busca na API 500ms depois que o usuário para de digitar', () => {
+    vi.useFakeTimers();
+    try {
+      turmaService.listarPaginado.mockClear();
+
+      component.campoBusca.setValue('man');
+      vi.advanceTimersByTime(300);
+      component.campoBusca.setValue('manha');
+      vi.advanceTimersByTime(499);
+      expect(turmaService.listarPaginado).not.toHaveBeenCalled();
+
+      vi.advanceTimersByTime(1);
+      expect(turmaService.listarPaginado).toHaveBeenCalledTimes(1);
+      expect(turmaService.listarPaginado).toHaveBeenLastCalledWith(0, 10, null, 'manha');
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('carrega as unidades e desmarca o estado de carregamento', () => {

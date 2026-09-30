@@ -1,15 +1,17 @@
-import { ChangeDetectorRef, Component, HostListener, NgZone, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, DestroyRef, HostListener, NgZone, OnDestroy, OnInit, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import {
   AbstractControl,
   FormBuilder,
+  FormControl,
   FormGroup,
   FormsModule,
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Subscription } from 'rxjs';
+import { Subscription, debounceTime, filter, map } from 'rxjs';
 
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -17,6 +19,7 @@ import { MatOption, MatSelect } from '@angular/material/select';
 
 import { ToastrService } from 'ngx-toastr';
 
+import { CampoBusca } from '@components/campo-busca/campo-busca';
 import { ModalLayout } from '@components/modal-layout/modal-layout';
 import { Paginacao } from '@components/paginacao/paginacao';
 import { TabelaAcao, TabelaColuna, TabelaLayout } from '@components/tabela-layout/tabela-layout';
@@ -50,6 +53,7 @@ type OpcaoPeriodo = { valor: Periodo; label: string };
     ModalLayout,
     TabelaLayout,
     Paginacao,
+    CampoBusca,
     MatFormFieldModule,
     MatInputModule,
     MatSelect,
@@ -62,6 +66,12 @@ export class UnidadesTurmas implements OnInit, OnDestroy, ComponentComAlteracoes
   abaAtiva: 'turmas' | 'unidades' = 'turmas';
 
   private routeSub?: Subscription;
+  private listaSub?: Subscription;
+  private readonly destroyRef = inject(DestroyRef);
+
+  // Omnisearch: o termo vai para a URL (?search=) e o back busca em todas as colunas.
+  readonly campoBusca = new FormControl<string>('');
+  busca = '';
 
   // Paginação compartilhada: sempre descreve a lista da aba ativa no momento
   // (igual à tela de Eventos), por isso é resetada para a página 0 ao trocar
@@ -321,8 +331,23 @@ export class UnidadesTurmas implements OnInit, OnDestroy, ComponentComAlteracoes
       this.unidadeFiltroId =
         Number.isFinite(unidadeIdBruto) && unidadeIdBruto > 0 ? unidadeIdBruto : null;
 
+      this.busca = params.get('search') ?? '';
+      if (this.campoBusca.value !== this.busca) {
+        this.campoBusca.setValue(this.busca, { emitEvent: false });
+      }
+
       this.carregarListaAtiva();
     });
+
+    // Só consulta a API 500ms depois que o usuário para de digitar.
+    this.campoBusca.valueChanges
+      .pipe(
+        debounceTime(500),
+        map((valor) => (valor ?? '').trim()),
+        filter((termo) => termo !== this.busca),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe((termo) => this.navegar({ search: termo || null, page: 0 }));
 
     this.formUnidade.get('horarioAbertura')?.valueChanges.subscribe(() => this.checarHorarios());
 
@@ -349,10 +374,11 @@ export class UnidadesTurmas implements OnInit, OnDestroy, ComponentComAlteracoes
 
   ngOnDestroy(): void {
     this.routeSub?.unsubscribe();
+    this.listaSub?.unsubscribe();
   }
 
   mudarAba(aba: 'unidades' | 'turmas'): void {
-    this.navegar({ aba, page: 0 });
+    this.navegar({ aba, page: 0, search: null });
   }
 
   private navegar(queryParams: Record<string, any>): void {
@@ -372,11 +398,15 @@ export class UnidadesTurmas implements OnInit, OnDestroy, ComponentComAlteracoes
   }
 
   get mensagemVazia(): string {
-    return 'Nenhuma unidade cadastrada ainda';
+    return this.busca
+      ? `Nenhuma unidade encontrada para "${this.busca}"`
+      : 'Nenhuma unidade cadastrada ainda';
   }
 
   get mensagemVaziaTurmas(): string {
-    return 'Nenhuma turma cadastrada ainda';
+    return this.busca
+      ? `Nenhuma turma encontrada para "${this.busca}"`
+      : 'Nenhuma turma cadastrada ainda';
   }
 
   irParaPagina(pagina: number): void {
@@ -469,14 +499,12 @@ export class UnidadesTurmas implements OnInit, OnDestroy, ComponentComAlteracoes
   }
 
   carregarUnidadesTabela(): void {
-    if (this.carregandoLista) {
-      return;
-    }
-
     this.carregandoLista = true;
     this.erroLista = false;
 
-    this.unidadeService.listarPaginado(this.pagina, this.tamanho).subscribe({
+    // Cancela a requisição anterior para uma resposta antiga não sobrescrever a busca atual.
+    this.listaSub?.unsubscribe();
+    this.listaSub = this.unidadeService.listarPaginado(this.pagina, this.tamanho, undefined, this.busca || undefined).subscribe({
       next: (resposta) => {
         this.ngZone.run(() => {
           this.unidadesTabela = [...resposta.content];
@@ -507,14 +535,11 @@ export class UnidadesTurmas implements OnInit, OnDestroy, ComponentComAlteracoes
   }
 
   carregarTurmas(): void {
-    if (this.carregandoLista) {
-      return;
-    }
-
     this.carregandoLista = true;
     this.erroLista = false;
 
-    this.turmaService.listarPaginado(this.pagina, this.tamanho, this.unidadeFiltroId).subscribe({
+    this.listaSub?.unsubscribe();
+    this.listaSub = this.turmaService.listarPaginado(this.pagina, this.tamanho, this.unidadeFiltroId, this.busca || undefined).subscribe({
       next: (resposta) => {
         this.ngZone.run(() => {
           // O back ignora o filtro unidadeId nas turmas (só pagina), então ele é

@@ -8,6 +8,7 @@
     </div>
 
     <div class="acoes-usuarios">
+      <app-campo-busca [control]="campoBusca" [placeholder]="abaAtiva === 'usuarios' ? 'Buscar usuário' : 'Buscar contato'" />
       <button *ngIf="abaAtiva === 'usuarios' && podeCadastrarUsuario" type="button" class="btn-primary btn-primary-thick" (click)="abrirCadastro()">Novo usuário</button>
     </div>
 
@@ -18,7 +19,7 @@
       [carregando]="carregandoLista"
       [erro]="erroLista"
       [ordenacao]="ordenacao"
-      [mensagemVazia]="abaAtiva === 'usuarios' ? 'Nenhum usuário cadastrado ainda.' : 'Nenhum contato cadastrado ainda.'"
+      [mensagemVazia]="mensagemVazia"
       (acao)="executarAcao($event)"
       (ordenar)="ordenarPor($event)"
       (tentarNovamente)="abaAtiva === 'usuarios' ? carregarUsuarios() : carregarContatos()">

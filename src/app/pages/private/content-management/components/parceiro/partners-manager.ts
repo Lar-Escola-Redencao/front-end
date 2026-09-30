@@ -3,21 +3,25 @@ import {
   OnInit,
   OnDestroy,
   ChangeDetectorRef,
+  DestroyRef,
   HostListener,
-  NgZone
+  NgZone,
+  inject
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { CommonModule } from '@angular/common';
 
 import {
   FormBuilder,
+  FormControl,
   FormGroup,
   ReactiveFormsModule,
   Validators
 } from '@angular/forms';
 
 import { ActivatedRoute, Router } from '@angular/router';
-import { Subscription } from 'rxjs';
+import { Subscription, debounceTime, filter, map } from 'rxjs';
 
 import { ToastrService } from 'ngx-toastr';
 
@@ -40,6 +44,7 @@ import {
 
 import { Paginacao } from '@components/paginacao/paginacao';
 
+import { CampoBusca } from '@components/campo-busca/campo-busca';
 import { ModalLayout } from '@components/modal-layout/modal-layout';
 
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -73,6 +78,7 @@ import { environment } from '../../../../../../environments/environment';
     ModalLayout,
     TabelaLayout,
     Paginacao,
+    CampoBusca,
     MatFormFieldModule,
     MatInputModule,
     MatSlideToggleModule
@@ -143,6 +149,13 @@ export class PartnersManager
   totalPaginas = 0;
 
   private routeSub?: Subscription;
+  // listarTodos devolve Promise (não cancelável): respostas de buscas antigas são descartadas pelo contador.
+  private requisicaoLista = 0;
+
+  // Omnisearch: o termo vai para a URL (?search=) e o back busca em todas as colunas.
+  readonly campoBusca = new FormControl<string>('');
+  busca = '';
+  private readonly destroyRef = inject(DestroyRef);
 
 
   // =========================================================
@@ -216,8 +229,23 @@ export class PartnersManager
       this.tamanho = tamanho;
       this.sort = sort;
       this.ordenacao = analisarOrdenacao(sort);
+
+      this.busca = params.get('search') ?? '';
+      if (this.campoBusca.value !== this.busca) {
+        this.campoBusca.setValue(this.busca, { emitEvent: false });
+      }
       this.carregarPartners();
     });
+
+    // Só consulta a API 500ms depois que o usuário para de digitar.
+    this.campoBusca.valueChanges
+      .pipe(
+        debounceTime(500),
+        map(valor => (valor ?? '').trim()),
+        filter(termo => termo !== this.busca),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe(termo => this.navegar({ search: termo || null, page: 0 }));
   }
 
   ngOnDestroy(): void {
@@ -228,16 +256,24 @@ export class PartnersManager
   // CARREGAR PARCEIROS
   // =========================================================
 
+  get mensagemVazia(): string {
+    return this.busca
+      ? `Nenhum parceiro encontrado para "${this.busca}".`
+      : 'Nenhum parceiro cadastrado.';
+  }
+
   carregarPartners(): void {
-    if (this.isLoading) {
-      return;
-    }
+    const requisicao = ++this.requisicaoLista;
 
     this.isLoading = true;
     this.loadError = false;
     this.partnersService
-      .listarTodos(this.pagina, this.tamanho, this.sort)
+      .listarTodos(this.pagina, this.tamanho, this.sort, this.busca || undefined)
       .then((resposta) => {
+        if (requisicao !== this.requisicaoLista) {
+          return;
+        }
+
         this.partners = resposta.content;
         this.totalElementos = resposta.page.totalElements;
         this.totalPaginas = resposta.page.totalPages;
@@ -252,6 +288,10 @@ export class PartnersManager
       })
 
       .catch(() => {
+        if (requisicao !== this.requisicaoLista) {
+          return;
+        }
+
         this.isLoading = false;
         this.loadError = true;
         this.toastr.error(

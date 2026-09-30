@@ -2,9 +2,7 @@
   <h1>Colaboradores</h1>
   <div class="conteudo">
     <div class="acoes-colaboradores">
-      <button type="button" class="btn-primary btn-primary-thick" (click)="abrirCadastro()">
-        Novo colaborador
-      </button>
+      <app-campo-busca [control]="campoBusca" placeholder="Buscar colaborador" />
 
       @if (!somenteMonitores) {
         <mat-form-field appearance="outline" class="filtro-papel">
@@ -22,6 +20,10 @@
           </mat-select>
         </mat-form-field>
       }
+
+      <button type="button" class="btn-primary btn-primary-thick" (click)="abrirCadastro()">
+        Novo colaborador
+      </button>
     </div>
 
     <app-tabela-layout

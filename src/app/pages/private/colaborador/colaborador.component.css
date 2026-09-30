@@ -159,7 +159,7 @@ h1{
 }
 
 .acoes-colaboradores .filtro-papel{
-  width: 60%;
+  width: min(100%, 260px);
 }
 
 .colaboradores-card {

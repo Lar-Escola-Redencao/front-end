@@ -1,12 +1,14 @@
-import { Component, ChangeDetectorRef, HostListener, NgZone, OnDestroy, OnInit } from '@angular/core';
+import { Component, ChangeDetectorRef, DestroyRef, HostListener, NgZone, OnDestroy, OnInit, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Subscription } from 'rxjs';
+import { Subscription, debounceTime, filter, map } from 'rxjs';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { ToastrService } from 'ngx-toastr';
+import { CampoBusca } from '../../../../../components/campo-busca/campo-busca';
 import { ModalLayout } from '../../../../../components/modal-layout/modal-layout';
 import { Paginacao } from '../../../../../components/paginacao/paginacao';
 import { TabelaAcao, TabelaColuna, TabelaLayout } from '../../../../../components/tabela-layout/tabela-layout';
@@ -31,6 +33,7 @@ import {
     ModalLayout,
     TabelaLayout,
     Paginacao,
+    CampoBusca,
     MatFormFieldModule,
     MatInputModule,
     MatSlideToggleModule
@@ -52,6 +55,12 @@ export class DiretoriaComponent implements OnInit, OnDestroy, ComponentComAltera
   erroLista = false;
 
   private routeSub?: Subscription;
+  private listaSub?: Subscription;
+
+  // Omnisearch: o termo vai para a URL (?search=) e o back busca em todas as colunas.
+  readonly campoBusca = new FormControl<string>('');
+  busca = '';
+  private readonly destroyRef = inject(DestroyRef);
 
   colunas: TabelaColuna<Diretoria>[] = [
     { chave: 'foto', titulo: 'Foto', tipo: 'imagem' },
@@ -102,24 +111,44 @@ export class DiretoriaComponent implements OnInit, OnDestroy, ComponentComAltera
       this.tamanho = tamanho;
       this.sort = sort;
       this.ordenacao = analisarOrdenacao(sort);
+
+      this.busca = params.get('search') ?? '';
+      if (this.campoBusca.value !== this.busca) {
+        this.campoBusca.setValue(this.busca, { emitEvent: false });
+      }
       this.carregarDiretores();
     });
+
+    // Só consulta a API 500ms depois que o usuário para de digitar.
+    this.campoBusca.valueChanges
+      .pipe(
+        debounceTime(500),
+        map(valor => (valor ?? '').trim()),
+        filter(termo => termo !== this.busca),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe(termo => this.navegar({ search: termo || null, page: 0 }));
   }
 
   ngOnDestroy(): void {
     this.revogarPreviewSeNecessario();
     this.routeSub?.unsubscribe();
+    this.listaSub?.unsubscribe();
+  }
+
+  get mensagemVazia(): string {
+    return this.busca
+      ? `Nenhum membro da diretoria encontrado para "${this.busca}".`
+      : 'Nenhum membro da diretoria cadastrado.';
   }
 
   carregarDiretores(): void {
-    if (this.carregandoLista) {
-      return;
-    }
-
     this.carregandoLista = true;
     this.erroLista = false;
 
-    this.diretoriaService.listarTodos(this.pagina, this.tamanho, this.sort).subscribe({
+    // Cancela a requisição anterior para uma resposta antiga não sobrescrever a busca atual.
+    this.listaSub?.unsubscribe();
+    this.listaSub = this.diretoriaService.listarTodos(this.pagina, this.tamanho, this.sort, this.busca || undefined).subscribe({
       next: (resposta) => {
         this.diretores = resposta.content;
         this.totalElementos = resposta.page.totalElements;
