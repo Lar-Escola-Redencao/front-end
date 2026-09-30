@@ -3,12 +3,13 @@ import {
   HttpClient,
   HttpParams
 } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { Observable, forkJoin, of } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
 import {
   Evento,
-  MidiaEventoDTO,
+  EventoRedeSocial,
+  EventoRedeSocialDTO,
   TipoEvento
 } from 'src/app/shared/models/evento.model';
 
@@ -17,9 +18,8 @@ interface EventoPagedResponse {
   _embedded?: Record<string, Evento[]>;
 }
 
-// O GET /evento/{id} retorna midiaEvento como uma lista de objetos
-// { id, tipoMidia, urlMidia }, não como uma lista de strings.
-type EventoDetalheResponse = Omit<Evento, 'midiaEvento'> & { midiaEvento?: MidiaEventoDTO[] };
+// O GET /evento/{id} pode trazer a imagem alternativa em camelCase ou snake_case.
+type EventoDetalheResponse = Omit<Evento, 'redesSociais'> & { url_imagem_drive?: string };
 
 @Injectable({
   providedIn: 'root'
@@ -64,20 +64,44 @@ export class EventoPublicoService {
     );
   }
 
+  // As redes sociais vêm de um endpoint próprio; se ele falhar o detalhe do evento
+  // continua abrindo, apenas sem o overlay de redes sociais.
   buscarPorId(id: number): Observable<Evento> {
-    return this.http.get<EventoDetalheResponse>(`${this.apiUrl}/${id}`).pipe(
-      map(evento => ({
-        ...evento,
-        imagem: this.tratarImagem(evento.imagem),
-        midiaEvento: (evento.midiaEvento ?? []).map(midia => ({
-          url: this.tratarImagem(midia.urlMidia ?? midia.url_midia),
-          tipo: midia.tipoMidia ?? midia.tipo_midia ?? 'IMAGEM'
-        })),
-        parceiros: (evento.parceiros ?? []).map(parceiro => ({
-          ...parceiro,
-          logo: this.tratarImagem(parceiro.logo)
-        }))
-      }))
+    return forkJoin({
+      evento: this.http.get<EventoDetalheResponse>(`${this.apiUrl}/${id}`),
+      redesSociais: this.listarRedesSociais(id)
+    }).pipe(
+      map(({ evento, redesSociais }) => {
+        const { url_imagem_drive, ...dados } = evento;
+        const urlImagemDrive = dados.urlImagemDrive ?? url_imagem_drive;
+
+        return {
+          ...dados,
+          imagem: this.tratarImagem(dados.imagem),
+          urlImagemDrive: urlImagemDrive ? this.tratarImagem(urlImagemDrive) : undefined,
+          redesSociais,
+          parceiros: (dados.parceiros ?? []).map(parceiro => ({
+            ...parceiro,
+            logo: this.tratarImagem(parceiro.logo)
+          }))
+        };
+      })
+    );
+  }
+
+  listarRedesSociais(id: number): Observable<EventoRedeSocial[]> {
+    return this.http.get<EventoRedeSocialDTO[]>(`${this.apiUrl}/${id}/redes-sociais`).pipe(
+      map(redes =>
+        (redes ?? [])
+          .map(rede => ({
+            idRedeSocial: (rede.idRedeSocial ?? rede.id_rede_social) as number,
+            nome: rede.nome,
+            icone: this.tratarImagem(rede.icone),
+            urlLink: (rede.urlLink ?? rede.url_link ?? '').trim()
+          }))
+          .filter(rede => rede.urlLink)
+      ),
+      catchError(() => of([]))
     );
   }
 

@@ -7,26 +7,28 @@ export interface Evento {
   imagem: string;
   valor?: number;
   tipoEvento: TipoEvento;
-  comentarioPosEvento?: string;
   parceiros: Parceiro[];
-  // Fotos da cobertura pós-evento (tabela midia_evento), já resolvidas para URLs
-  // pelo EventoPublicoService a partir do array de objetos retornado pela API.
-  midiaEvento?: MidiaEvento[];
+  // Imagem alternativa (Drive) para a capa do detalhe; quando ausente vale `imagem`.
+  urlImagemDrive?: string;
+  // Postagens oficiais do evento nas redes sociais (GET /evento/{id}/redes-sociais).
+  redesSociais?: EventoRedeSocial[];
 }
 
-export type TipoMidiaEvento = 'IMAGEM' | 'VIDEO';
-
-export interface MidiaEvento {
-  url: string;
-  tipo: TipoMidiaEvento;
+export interface EventoRedeSocial {
+  idRedeSocial: number;
+  nome: string;
+  icone: string;
+  urlLink: string;
 }
 
-export interface MidiaEventoDTO {
-  id: number;
-  tipoMidia?: TipoMidiaEvento;
-  urlMidia?: string;
-  tipo_midia?: TipoMidiaEvento;
-  url_midia?: string;
+// Formato bruto retornado pela API; aceita camelCase e snake_case.
+export interface EventoRedeSocialDTO {
+  idRedeSocial?: number;
+  id_rede_social?: number;
+  nome: string;
+  icone: string;
+  urlLink?: string;
+  url_link?: string;
 }
 
 export interface CriarEventoDTO {
@@ -48,7 +50,6 @@ export interface AtualizarEventoDTO {
   imagem?: File;
   valor?: number;
   tipoEvento?: TipoEvento;
-  comentarioPosEvento?: string;
   parceirosIds?: number[];
 }
 
