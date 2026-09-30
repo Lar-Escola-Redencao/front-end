@@ -182,6 +182,28 @@
   background-color: #fee2e2;
 }
 
+.etiqueta-celula {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 8px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+  vertical-align: middle;
+  color: rgba(0, 0, 0, 0.6);
+  background-color: rgba(0, 0, 0, 0.08);
+}
+
+.header-mobile .etiqueta-celula {
+  flex-shrink: 0;
+  margin: 0 8px;
+}
+
 .tabela-imagem {
   display: block;
 
