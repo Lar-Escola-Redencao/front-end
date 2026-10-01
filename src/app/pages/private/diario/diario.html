@@ -38,7 +38,14 @@
 
   <div class="diario-conteudo">
     
-    @if (carregando) {
+    @if (estadoTela === 'VAZIO' && !carregando) {
+      <div class="state-box empty-state">
+        <mat-icon class="empty-icon">rule</mat-icon>
+        <p>Selecione a unidade e a turma acima para carregar o diário.</p>
+      </div>
+    }
+
+    @else if (carregando) {
       <div class="state-box">
         <span class="spinner spinner-escuro"></span>
         <p>Carregando usuários...</p>
@@ -78,22 +85,22 @@
                 <td class="col-presenca">
                   @if (estadoTela === 'INICIAL') {
                     <div class="toggle-fp disabled" title="Inicie a chamada para preencher">
-                      <button type="button" class="btn-falta">F</button>
-                      <button type="button" class="btn-presenca">P</button>
+                      <span class="btn-falta">F</span>
+                      <span class="btn-presenca">P</span>
                     </div>
                   } @else {
-                    <div class="toggle-fp" [class.disabled]="!podeEditarFrequencia || usuario.statusMatricula === 'EXCLUIDO'">
-                      <button 
-                        type="button" 
+                    <button 
+                      type="button" 
+                      class="toggle-fp" 
+                      [class.disabled]="!podeEditarFrequencia || usuario.statusMatricula === 'EXCLUIDO'"
+                      (click)="marcarFrequencia(usuario, !usuario.presente)">
+                      <span 
                         class="btn-falta" 
-                        [class.ativo]="usuario.presente === false"
-                        (click)="marcarFrequencia(usuario, false)">F</button>
-                      <button 
-                        type="button" 
+                        [class.ativo]="usuario.presente === false">F</span>
+                      <span 
                         class="btn-presenca" 
-                        [class.ativo]="usuario.presente === true"
-                        (click)="marcarFrequencia(usuario, true)">P</button>
-                    </div>
+                        [class.ativo]="usuario.presente === true">P</span>
+                    </button>
                   }
                 </td>
 
