@@ -14,6 +14,7 @@ import { roleGuard } from './shared/guards/role-guard';
 import { Diario } from '@pages/private/diario/diario';
 import { UnidadesTurmas } from '@pages/private/unidades-turmas/unidades-turmas';
 import { Perfil } from '@pages/private/perfil/perfil';
+import { canDeactivateGuard } from './shared/guards/can-deactivate.guard';
 
 export const routes: Routes = [
     { path: '', component: Home, canActivate: [guestGuard]},
@@ -30,7 +31,7 @@ export const routes: Routes = [
             { path: 'conteudo-publico/:secao', component: ContentManagement, canActivate: [roleGuard], data: { modulo: 'conteudo-publico' } },
             { path: 'colaboradores', component: ColaboradorComponent, canActivate: [roleGuard], data: { modulo: 'colaboradores' } },
             { path: 'usuarios', component: UsuarioComponent, canActivate: [roleGuard], data: { modulo: 'usuarios' } },
-            { path: 'diario', component: Diario, canActivate: [roleGuard], data: { modulo: 'diario' } },
+            { path: 'diario', component: Diario, canActivate: [roleGuard], canDeactivate: [canDeactivateGuard], data: { modulo: 'diario' } },
             { path: 'unidades-turmas', component: UnidadesTurmas, canActivate: [roleGuard], data: { modulo: 'unidades-turmas' } },
             { path: 'perfil', component: Perfil}
         ]
