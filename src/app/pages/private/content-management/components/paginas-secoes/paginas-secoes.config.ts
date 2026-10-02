@@ -7,9 +7,10 @@ import {
 
 /**
  * Como cada grupo é exibido:
- * - `formulario`: registro único, só edição (sem adicionar nem excluir), no
- *   mesmo espírito de Redes Sociais. Salvar cria o registro se ainda não existir.
- * - `tabela`: CRUD completo, com modal de criação/edição e exclusão.
+ * - `formulario`: registro único editado direto na tela, sem adicionar nem
+ *   excluir. Salvar cria o registro se ainda não existir.
+ * - `tabela`: botão de adicionar + tabela com os itens salvos, editados por
+ *   modal. `registroUnico` e `permiteExcluir` restringem esse CRUD.
  */
 export type ExibicaoGrupo = 'formulario' | 'tabela';
 
@@ -38,6 +39,15 @@ export interface GrupoSecaoConfig {
   /** Só os campos listados aqui são enviados — o resto do DTO fica de fora. */
   campos: CampoTextoConfig[];
   imagem?: CampoImagemConfig;
+  /**
+   * Só na exibição `tabela`: o back guarda um único registro do grupo
+   * (POST é upsert), então o botão de adicionar some depois do primeiro.
+   */
+  registroUnico?: boolean;
+  /** Só na exibição `tabela`: mostra a ação de excluir (padrão: true). */
+  permiteExcluir?: boolean;
+  /** Só na exibição `tabela`: imagem antes dos campos de texto, na tabela e no modal. */
+  imagemPrimeiro?: boolean;
 }
 
 export interface PaginaSecoesConfig {
@@ -88,8 +98,11 @@ export const PAGINAS_SECOES_CONFIG: PaginaSecoesConfig[] = [
       {
         grupo: GRUPOS_SECAO.pix,
         rotuloAba: 'Pix',
-        exibicao: 'formulario',
+        exibicao: 'tabela',
         nomeItem: 'Pix',
+        registroUnico: true,
+        permiteExcluir: false,
+        imagemPrimeiro: true,
         campos: [{ campo: 'conteudo', rotulo: 'Chave Pix', obrigatorio: true, tipo: 'texto' }],
         imagem: { rotulo: 'QR Code', obrigatoria: true },
       },

@@ -37,8 +37,9 @@ import {
 import { SecaoImagemCampo } from '../secao-imagem-campo/secao-imagem-campo';
 
 /**
- * Grupo com CRUD completo (Produtos da Gráfica). A rota de listagem do
- * contrato não é paginada, então a tabela mostra todos os itens do grupo.
+ * Grupo exibido em tabela (Produtos da Gráfica, Pix): adicionar, editar por
+ * modal e, quando o grupo permite, excluir. A rota de listagem do contrato
+ * não é paginada, então a tabela mostra todos os itens do grupo.
  */
 @Component({
   selector: 'app-secao-tabela',
@@ -69,10 +70,7 @@ export class SecaoTabela implements OnInit, ComponentComAlteracoesNaoSalvas {
 
   colunas: TabelaColuna<SecaoGrupo>[] = [];
 
-  acoesTabela: TabelaAcao<SecaoGrupo>[] = [
-    { icone: 'edit', tooltip: 'Editar', acao: 'editar' },
-    { icone: 'delete', tooltip: 'Excluir', acao: 'excluir' },
-  ];
+  acoesTabela: TabelaAcao<SecaoGrupo>[] = [];
 
   modalAberto = false;
   modalTremendo = false;
@@ -99,6 +97,7 @@ export class SecaoTabela implements OnInit, ComponentComAlteracoesNaoSalvas {
   ngOnInit(): void {
     this.form = criarFormularioGrupo(this.fb, this.grupo);
     this.colunas = this.montarColunas();
+    this.acoesTabela = this.montarAcoes();
     this.carregar();
   }
 
@@ -112,10 +111,36 @@ export class SecaoTabela implements OnInit, ComponentComAlteracoesNaoSalvas {
     }));
 
     if (this.grupo.imagem) {
-      colunas.push({ chave: 'imagem', titulo: 'Imagem', tipo: 'imagem' });
+      // A coluna principal no mobile continua sendo o primeiro campo de texto.
+      const colunaImagem: TabelaColuna<SecaoGrupo> = {
+        chave: 'imagem',
+        titulo: this.grupo.imagem.rotulo,
+        tipo: 'imagem',
+      };
+
+      if (this.grupo.imagemPrimeiro) {
+        colunas.unshift(colunaImagem);
+      } else {
+        colunas.push(colunaImagem);
+      }
     }
 
     return colunas;
+  }
+
+  private montarAcoes(): TabelaAcao<SecaoGrupo>[] {
+    const acoes: TabelaAcao<SecaoGrupo>[] = [{ icone: 'edit', tooltip: 'Editar', acao: 'editar' }];
+
+    if (this.grupo.permiteExcluir !== false) {
+      acoes.push({ icone: 'delete', tooltip: 'Excluir', acao: 'excluir' });
+    }
+
+    return acoes;
+  }
+
+  /** Em grupo de registro único, o item já salvo é alterado pela ação de editar. */
+  get podeAdicionar(): boolean {
+    return !this.grupo.registroUnico || (!this.carregandoLista && this.itens.length === 0);
   }
 
   get modoEdicao(): boolean {
@@ -159,7 +184,7 @@ export class SecaoTabela implements OnInit, ComponentComAlteracoesNaoSalvas {
       return;
     }
 
-    if (evento.tipo === 'excluir') {
+    if (evento.tipo === 'excluir' && this.grupo.permiteExcluir !== false) {
       this.excluir(evento.linha);
     }
   }

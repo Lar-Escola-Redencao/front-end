@@ -1,8 +1,10 @@
-<div class="acoes-lista">
-  <button type="button" class="btn-primary btn-primary-thick" (click)="abrirModal()">
-    Adicionar {{ grupo.nomeItem }}
-  </button>
-</div>
+@if (podeAdicionar) {
+  <div class="acoes-lista">
+    <button type="button" class="btn-primary btn-primary-thick" (click)="abrirModal()">
+      Adicionar {{ grupo.nomeItem }}
+    </button>
+  </div>
+}
 
 <app-tabela-layout
   [colunas]="colunas"
@@ -19,6 +21,10 @@
 @if (modalAberto) {
   <app-modal-layout [class.tremer]="modalTremendo" [titulo]="tituloModal" (closed)="fecharModal()">
     <form class="form-modal" [formGroup]="form" (ngSubmit)="salvar()">
+      @if (grupo.imagemPrimeiro) {
+        <ng-container [ngTemplateOutlet]="campoImagem" />
+      }
+
       @for (campo of grupo.campos; track campo.campo) {
         <mat-form-field appearance="outline">
           <mat-label>{{
@@ -39,15 +45,8 @@
         }
       }
 
-      @if (grupo.imagem; as imagem) {
-        <app-secao-imagem-campo
-          [rotulo]="imagem.rotulo"
-          [obrigatoria]="imagem.obrigatoria && !imagemAtual"
-          [imagemAtual]="imagemAtual"
-          [arquivo]="arquivoSelecionado"
-          [erro]="erros[CONTROLE_IMAGEM] || null"
-          (arquivoEscolhido)="selecionarArquivo($event)"
-        />
+      @if (!grupo.imagemPrimeiro) {
+        <ng-container [ngTemplateOutlet]="campoImagem" />
       }
 
       <div class="acoes-modal">
@@ -63,3 +62,17 @@
     </form>
   </app-modal-layout>
 }
+
+<!-- Campo de imagem, posicionado antes ou depois dos campos de texto conforme `imagemPrimeiro`. -->
+<ng-template #campoImagem>
+  @if (grupo.imagem; as imagem) {
+    <app-secao-imagem-campo
+      [rotulo]="imagem.rotulo"
+      [obrigatoria]="imagem.obrigatoria && !imagemAtual"
+      [imagemAtual]="imagemAtual"
+      [arquivo]="arquivoSelecionado"
+      [erro]="erros[CONTROLE_IMAGEM] || null"
+      (arquivoEscolhido)="selecionarArquivo($event)"
+    />
+  }
+</ng-template>

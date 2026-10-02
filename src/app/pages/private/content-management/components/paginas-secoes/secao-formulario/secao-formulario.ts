@@ -32,7 +32,7 @@ import {
 import { SecaoImagemCampo } from '../secao-imagem-campo/secao-imagem-campo';
 
 /**
- * Grupo de registro único (Telefone da Gráfica, Pix): só edição, sem
+ * Grupo de registro único editado direto na tela (Telefone da Gráfica): sem
  * adicionar nem excluir. Enquanto o registro não existe, Salvar faz POST;
  * depois disso, sempre PUT no mesmo id.
  */
