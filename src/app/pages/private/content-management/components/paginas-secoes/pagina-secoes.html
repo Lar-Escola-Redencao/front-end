@@ -1,0 +1,28 @@
+<section class="pagina-secoes">
+  @if (config.grupos.length > 1) {
+    <div class="abas-container">
+      @for (grupo of config.grupos; track grupo.grupo) {
+        <button
+          type="button"
+          class="aba-btn"
+          [class.ativa]="grupo === grupoAtivo"
+          (click)="mudarAba(grupo)"
+        >
+          {{ grupo.rotuloAba }}
+        </button>
+      }
+    </div>
+  }
+
+  <!-- O @for de um item só recria o componente da aba quando o grupo muda. -->
+  @for (grupo of [grupoAtivo]; track grupo.grupo) {
+    @switch (grupo.exibicao) {
+      @case ('formulario') {
+        <app-secao-formulario [idPagina]="config.idPagina" [grupo]="grupo" />
+      }
+      @case ('tabela') {
+        <app-secao-tabela [idPagina]="config.idPagina" [grupo]="grupo" />
+      }
+    }
+  }
+</section>

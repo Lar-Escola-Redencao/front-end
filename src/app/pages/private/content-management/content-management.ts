@@ -8,17 +8,24 @@ import { EventoComponent } from './components/evento/evento.component';
 import { PartnersManager } from './components/parceiro/partners-manager';
 import { SocialLinksManager } from './components/redes-sociais/social-links-manager';
 import { DiretoriaComponent } from './components/diretoria/diretoria.component';
+import { PaginaSecoes } from './components/paginas-secoes/pagina-secoes';
+import { PAGINAS_SECOES_CONFIG, PaginaSecoesConfig } from './components/paginas-secoes/paginas-secoes.config';
 
 @Component({
   selector: 'app-content-management',
   standalone: true,
-  imports: [MatFormFieldModule, MatSelect, MatOption, DiretoriaComponent,EventoComponent,PartnersManager,SocialLinksManager,Transparencia,Sobre],
+  imports: [MatFormFieldModule, MatSelect, MatOption, DiretoriaComponent,EventoComponent,PartnersManager,SocialLinksManager,Transparencia,Sobre,PaginaSecoes],
   templateUrl: './content-management.html',
   styleUrl: './content-management.css'
 })
 export class ContentManagement implements OnInit {
   secaoSelecionada: string = 'evento';
-  private secoesPermitidas = ['diretoria', 'evento', 'parceiro', 'redes-sociais', 'transparencia', 'sobre'];
+  /** Páginas montadas pela configuração declarativa (Gráfica, Pix). */
+  readonly paginasSecoes = PAGINAS_SECOES_CONFIG;
+  private secoesPermitidas = [
+    'diretoria', 'evento', 'parceiro', 'redes-sociais', 'transparencia', 'sobre',
+    ...this.paginasSecoes.map(pagina => pagina.secao),
+  ];
 
   constructor(private route: ActivatedRoute, private router: Router) {}
 
@@ -32,6 +39,10 @@ export class ContentManagement implements OnInit {
 
       this.secaoSelecionada = secao;
     });
+  }
+
+  get paginaSecoesSelecionada(): PaginaSecoesConfig | undefined {
+    return this.paginasSecoes.find(pagina => pagina.secao === this.secaoSelecionada);
   }
 
   mudarSecao(secao: string) {

@@ -1,0 +1,224 @@
+/* Compartilhado pelos componentes de paginas-secoes; segue o visual da página Sobre. */
+
+.pagina-secoes {
+  width: 100%;
+}
+
+.abas-container {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid #ddd;
+}
+
+.aba-btn {
+  font-family: var(--fonte-texto);
+  padding: 12px 24px;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--input-border);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.aba-btn:hover {
+  color: var(--primary-color);
+}
+
+.aba-btn.ativa {
+  color: var(--primary-color);
+  border-bottom-color: var(--primary-color);
+}
+
+/* ---------------------------------------------------------------- */
+/* FORMULÁRIOS */
+/* ---------------------------------------------------------------- */
+
+.form-modal {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.form-modal .mat-mdc-form-field {
+  width: 100%;
+}
+
+.form-secao {
+  max-width: 640px;
+}
+
+.acoes-modal {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 28px;
+  margin-top: 4px;
+}
+
+.btn-cancelar {
+  border: 0;
+  background: transparent;
+  color: var(--input-color);
+  cursor: pointer;
+  font-family: var(--fonte-texto);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.btn-primary-thick {
+  padding-top: 14px;
+  padding-bottom: 14px;
+  font-weight: 700;
+}
+
+.acoes-lista {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 16px;
+}
+
+/* ---------------------------------------------------------------- */
+/* CAMPO DE IMAGEM */
+/* ---------------------------------------------------------------- */
+
+.campo-imagem {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.campo-imagem-rotulo {
+  color: var(--input-color);
+  font-family: var(--fonte-texto);
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-align: start;
+}
+
+.previews-imagem {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.preview-imagem {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.preview-imagem-img {
+  width: 160px;
+  height: 160px;
+  object-fit: contain;
+  border: 1px solid #f0f0f0;
+  border-radius: 8px;
+  background: #fafafa;
+}
+
+.preview-imagem figcaption {
+  color: #888;
+  font-family: var(--fonte-texto);
+  font-size: 0.75rem;
+}
+
+/* ---------------------------------------------------------------- */
+/* ESTADOS DE CARREGAMENTO/ERRO (formulário único, sem TabelaLayout) */
+/* ---------------------------------------------------------------- */
+
+.estado-pagina {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 40px 0;
+  color: var(--input-color);
+  font-family: var(--fonte-texto);
+}
+
+.aviso-carregamento {
+  max-width: 640px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  border: 1px solid var(--error-color);
+  border-radius: 8px;
+  color: var(--input-color);
+  font-family: var(--fonte-texto);
+  font-size: 0.9rem;
+  text-align: start;
+}
+
+.aviso-carregamento p {
+  margin: 0;
+}
+
+.botao-tentar-novamente {
+  border: 1px solid var(--primary-color);
+  background: transparent;
+  color: var(--primary-color);
+  border-radius: var(--input-radius);
+  padding: 8px 16px;
+  font-family: var(--fonte-texto);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.botao-tentar-novamente:hover {
+  background: var(--primary-color);
+  color: var(--branco);
+}
+
+/* ---------------------------------------------------------------- */
+/* SPINNER (botões de salvar) */
+/* ---------------------------------------------------------------- */
+
+.spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-top-color: var(--branco);
+  border-radius: 50%;
+  display: inline-block;
+  animation: girar 0.7s linear infinite;
+}
+
+.spinner-escuro {
+  border: 2px solid var(--input-border);
+  border-top-color: var(--primary-color);
+}
+
+@keyframes girar {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 600px) {
+  .acoes-modal,
+  .acoes-modal .btn-primary {
+    width: 100%;
+  }
+
+  .acoes-modal {
+    justify-content: space-between;
+  }
+
+  .acoes-lista,
+  .acoes-lista .btn-primary {
+    width: 100%;
+  }
+
+  .preview-imagem-img {
+    width: 120px;
+    height: 120px;
+  }
+}
