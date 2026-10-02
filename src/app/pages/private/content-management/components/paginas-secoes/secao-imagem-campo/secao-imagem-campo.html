@@ -1,0 +1,44 @@
+<div class="campo-imagem">
+  <span class="campo-imagem-rotulo">{{ rotulo }}</span>
+
+  <input
+    #inputArquivo
+    type="file"
+    class="input-arquivo-oculto"
+    accept=".jpg,.jpeg,.png,.webp"
+    (change)="aoSelecionarArquivo($event)"
+  />
+
+  <div class="upload-arquivo" [class.upload-arquivo-erro]="erro" (click)="inputArquivo.click()">
+    <span class="material-symbols-outlined upload-arquivo-icone">upload_file</span>
+
+    <div class="upload-arquivo-texto">
+      <strong>{{ textoUpload }}</strong>
+      <span>PNG, JPEG, JPG ou WEBP</span>
+    </div>
+
+    <span class="upload-arquivo-botao">Procurar</span>
+  </div>
+
+  @if (erro) {
+    <span class="error-text">{{ erro }}</span>
+  }
+
+  @if (imagemAtual || previewNova) {
+    <div class="previews-imagem">
+      @if (imagemAtual) {
+        <figure class="preview-imagem">
+          <img class="preview-imagem-img" [src]="imagemAtual" [alt]="rotulo + ' atual'" />
+          <figcaption>Imagem atual</figcaption>
+        </figure>
+      }
+
+      @if (previewNova) {
+        <figure class="preview-imagem">
+          <img class="preview-imagem-img" [src]="previewNova" [alt]="'Nova ' + rotulo" />
+          <figcaption>Nova imagem</figcaption>
+        </figure>
+      }
+    </div>
+  }
+</div>

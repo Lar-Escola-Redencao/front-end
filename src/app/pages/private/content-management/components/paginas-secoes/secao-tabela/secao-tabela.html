@@ -1,0 +1,65 @@
+<div class="acoes-lista">
+  <button type="button" class="btn-primary btn-primary-thick" (click)="abrirModal()">
+    Adicionar {{ grupo.nomeItem }}
+  </button>
+</div>
+
+<app-tabela-layout
+  [colunas]="colunas"
+  [dados]="itens"
+  [acoes]="acoesTabela"
+  [carregando]="carregandoLista"
+  [erro]="erroLista"
+  [mensagemErro]="'Não foi possível carregar a lista de ' + grupo.rotuloAba + '.'"
+  [mensagemVazia]="'Nenhum ' + grupo.nomeItem + ' cadastrado.'"
+  (acao)="executarAcao($event)"
+  (tentarNovamente)="carregar()"
+/>
+
+@if (modalAberto) {
+  <app-modal-layout [class.tremer]="modalTremendo" [titulo]="tituloModal" (closed)="fecharModal()">
+    <form class="form-modal" [formGroup]="form" (ngSubmit)="salvar()">
+      @for (campo of grupo.campos; track campo.campo) {
+        <mat-form-field appearance="outline">
+          <mat-label>{{
+            campo.obrigatorio ? campo.rotulo : campo.rotulo + ' (opcional)'
+          }}</mat-label>
+          <input
+            matInput
+            [formControlName]="campo.campo"
+            [type]="campo.tipo === 'telefone' ? 'tel' : 'text'"
+            [attr.maxlength]="limiteCaracteres(campo)"
+            (input)="aoDigitar(campo)"
+            (blur)="verificarErros()"
+          />
+        </mat-form-field>
+
+        @if (erros[campo.campo]) {
+          <span class="error-text">{{ erros[campo.campo] }}</span>
+        }
+      }
+
+      @if (grupo.imagem; as imagem) {
+        <app-secao-imagem-campo
+          [rotulo]="imagem.rotulo"
+          [obrigatoria]="imagem.obrigatoria && !imagemAtual"
+          [imagemAtual]="imagemAtual"
+          [arquivo]="arquivoSelecionado"
+          [erro]="erros[CONTROLE_IMAGEM] || null"
+          (arquivoEscolhido)="selecionarArquivo($event)"
+        />
+      }
+
+      <div class="acoes-modal">
+        <button type="button" class="btn-cancelar" [disabled]="salvando" (click)="fecharModal()">
+          Cancelar
+        </button>
+
+        <button type="submit" class="btn-primary" [disabled]="salvando">
+          <span *ngIf="salvando" class="spinner" aria-hidden="true"></span>
+          <span>{{ salvando ? 'Salvando...' : 'Salvar' }}</span>
+        </button>
+      </div>
+    </form>
+  </app-modal-layout>
+}
