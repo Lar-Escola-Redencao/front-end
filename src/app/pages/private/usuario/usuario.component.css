@@ -62,6 +62,10 @@ h1 {
   justify-content: flex-start;
 }
 
+.mat-mdc-select {
+  margin-top: 10px;
+}
+
 .form-modal {
   display: flex;
   flex-direction: column;
@@ -208,76 +212,6 @@ h1 {
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(5px); }
   to { opacity: 1; transform: translateY(0); }
-}
-
-/* etapas do cadastro */
-
-.stepper-indicador {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  margin-bottom: 50px;
-  padding: 0;
-}
-
-.step {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  position: relative;
-  z-index: 2;
-}
-
-.step-numero {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background-color: #e0e0e0;
-  color: #757575;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--fonte-texto);
-  font-weight: 700;
-  font-size: 0.9rem;
-  transition: all 0.3s ease;
-  padding-bottom: 2px;
-}
-
-.step-texto {
-  font-family: var(--fonte-texto);
-  font-size: 0.8rem;
-  color: #a0a0a0;
-  font-weight: 500;
-  position: absolute;
-  top: 40px;
-  white-space: nowrap;
-  transition: color 0.3s ease;
-}
-
-.step.ativo .step-numero {
-  background-color: var(--primary-color);
-  color: var(--branco);
-}
-
-.step.ativo .step-texto {
-  color: var(--primary-color);
-  font-weight: 600;
-}
-
-.step-linha {
-  flex: 0 1 70px;
-  height: 2px;
-  background-color: #e0e0e0;
-  transform: translateY(-10px);
-  transition: background-color 0.3s ease;
-  margin-top: 20px;
-}
-
-.step-linha.ativo {
-  background-color: var(--primary-color);
 }
 
 /* cards contato e correções do modal rápido */
@@ -678,19 +612,6 @@ h1 {
     gap: 14px;
   }
 
-  .stepper-indicador {
-    gap: 2px;
-  }
-
-  .step-linha {
-    flex: 0 1 30px;
-  }
-
-  .step-texto {
-    font-size: 0.65rem;
-    top: 36px;
-  }
-
   .resumo-texto span {
     white-space: nowrap;
     overflow: hidden;
@@ -718,18 +639,55 @@ h1 {
   }
 }
 
-.stepper-indicador { display: flex; align-items: flex-start; justify-content: center; gap: 8px; padding: 16px 8px 24px; }
-.stepper-indicador .step { min-width: 64px; text-align: center; }
-.stepper-indicador .step-linha { flex: 1; max-width: 54px; margin-top: 13px; }
-.step-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 14px; }
-.step-grid .wide { grid-column: 1 / -1; }
-.familiar-card { border: 1px solid #e1e5ea; border-radius: 8px; padding: 16px; margin-bottom: 12px; }
-.transporte-linha, .saude-linha { display: flex; align-items: center; justify-content: space-between; gap: 20px; min-height: 56px; }
-.transporte-linha mat-form-field, .saude-linha mat-form-field { flex: 0 1 50%; }
-.upload-saude { display: block; padding: 18px; border: 1px dashed #cbd3dd; border-radius: 7px; cursor: pointer; text-align: center; }
-.upload-saude input { display: block; margin: 10px auto 0; max-width: 100%; }
-.arquivo-selecionado { display: flex; justify-content: space-between; padding: 8px 12px; border: 1px solid #e1e5ea; border-radius: 5px; }
-@media (max-width: 650px) { .step-grid { grid-template-columns: 1fr; } .stepper-indicador { gap: 2px; } .stepper-indicador .step { min-width: 48px; } .stepper-indicador .step-texto { font-size: .58rem; } .transporte-linha, .saude-linha { flex-wrap: wrap; } }
+.step-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 14px;
+}
+
+.step-grid .wide {
+  grid-column: 1 / -1;
+}
+
+.transporte-linha,
+.saude-linha {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  min-height: 56px;
+}
+
+.transporte-linha mat-form-field,
+.saude-linha mat-form-field {
+  flex: 0 1 50%;
+}
+
+.upload-saude {
+  display: block;
+  padding: 18px;
+  border: 1px dashed #cbd3dd;
+  border-radius: 7px;
+  cursor: pointer;
+  text-align: center;
+}
+
+.upload-saude input {
+  display: block;
+  margin: 10px auto 0;
+  max-width: 100%;
+}
+
+@media (max-width: 650px) {
+  .step-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .transporte-linha,
+  .saude-linha {
+    flex-wrap: wrap;
+  }
+}
 
 :host ::ng-deep app-modal-layout.cadastro-modal .modal-card {
   box-sizing: border-box;
@@ -753,18 +711,18 @@ h1 {
 }
 
 .stepper-indicador {
-  display: flex;
-  justify-content: center;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   align-items: flex-start;
-  gap: 0;
-  max-width: 540px;
-  margin: 0 auto 34px;
+  width: 100%;
+  max-width: 580px;
+  margin: 30px auto 20px;
   padding: 0;
 }
 
 .stepper-indicador .step {
+  position: relative;
   display: flex;
-  flex: 0 0 80px;
   min-width: 0;
   flex-direction: column;
   align-items: center;
@@ -773,11 +731,17 @@ h1 {
 }
 
 .stepper-indicador .step-numero {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 24px;
   height: 24px;
+  border-radius: 50%;
   padding: 0;
   background: #a4a4a4;
   color: #fff;
+  font-family: var(--fonte-texto);
+  font-weight: 700;
   font-size: 0.72rem;
 }
 
@@ -786,15 +750,23 @@ h1 {
 }
 
 .stepper-indicador .step-texto {
-  position: static;
   display: block;
-  width: 88px;
+  width: 136px;
+  min-width: 0;
   color: #9a9a9a;
+  font-family: var(--fonte-texto);
   font-size: 0.68rem;
   font-weight: 400;
   line-height: 1.15;
   white-space: normal;
   overflow-wrap: normal;
+  word-break: normal;
+  text-align: center;
+}
+
+.stepper-indicador .step-texto span {
+  display: block;
+  white-space: nowrap;
 }
 
 .stepper-indicador .step.ativo .step-texto {
@@ -802,13 +774,18 @@ h1 {
   font-weight: 400;
 }
 
-.stepper-indicador .step-linha {
-  flex: 1 1 30px;
-  max-width: 60px;
+.stepper-indicador .step:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  top: 12px;
+  left: calc(50% + 14px);
+  width: calc(100% - 28px);
   height: 1px;
-  margin: 12px -28px 0;
-  transform: none;
   background: #aaa;
+}
+
+.stepper-indicador .step-linha {
+  display: none;
 }
 
 .cadastro-form {
@@ -837,13 +814,31 @@ h1 {
 
 .cadastro-form .documento-duplo {
   display: grid;
-  grid-template-columns: 0.9fr 1.1fr;
+  grid-template-columns: 1fr 1fr;
   gap: 8px;
   min-width: 0;
 }
 
 :host ::ng-deep app-modal-layout.cadastro-modal .mat-mdc-form-field-subscript-wrapper {
+  display: block;
+}
+
+/* não reserva altura quando não há erro; a mensagem empurra o conteúdo */
+:host ::ng-deep app-modal-layout.cadastro-modal .mat-mdc-form-field-subscript-wrapper::before {
   display: none;
+}
+
+:host ::ng-deep app-modal-layout.cadastro-modal .mat-mdc-form-field-error-wrapper {
+  position: static;
+  padding: 0 2px;
+}
+
+:host ::ng-deep app-modal-layout.cadastro-modal .mat-mdc-form-field-error {
+  display: block;
+  padding-top: 3px;
+  font-size: 0.72rem;
+  line-height: 1.25;
+  text-align: left;
 }
 
 :host ::ng-deep app-modal-layout.cadastro-modal .mat-mdc-text-field-wrapper {
@@ -873,33 +868,17 @@ h1 {
   height: 14px;
 }
 
-.cadastro-form .upload-simples {
-  position: relative;
-  display: flex;
-  min-height: 47px;
-  align-items: center;
-  justify-content: center;
-  margin-top: 5px;
-  border: 1px dashed #d6d6d6;
-  border-radius: 5px;
-  color: #929292;
-  font-size: 0.95rem;
-  cursor: pointer;
-  text-align: center;
-}
-
-.cadastro-form .upload-simples input {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  opacity: 0;
+.cadastro-form .etapa-indisponivel {
+  margin: 12px 0;
+  color: #555;
+  font-size: 0.85rem;
+  line-height: 1.5;
 }
 
 .cadastro-form .avatar-preview-inferior {
-  width: 112px;
-  height: 112px;
-  margin: 12px auto 0;
+  width: 128px;
+  height: 128px;
+  margin: 0;
   box-shadow: none;
   border: 0;
 }
@@ -966,6 +945,13 @@ h1 {
   border: 0;
 }
 
+.cadastro-form .aviso-contato-edicao {
+  display: block;
+  color: var(--mat-form-field-error-text-color, #d32f2f);
+  font-size: 0.8rem;
+  line-height: 1.35;
+}
+
 .cadastro-form .resumo-acoes {
   display: inline-flex;
   align-items: center;
@@ -984,6 +970,11 @@ h1 {
 
 .cadastro-form .resumo-acoes .btn-remover-icon mat-icon {
   color: #bc3434;
+}
+
+.cadastro-form .contato-cpf-repetido {
+  color: var(--mat-form-field-error-text-color, #d32f2f);
+  font-size: 0.72rem;
 }
 
 .cadastro-form .busca-contato {
@@ -1064,6 +1055,11 @@ h1 {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 8px;
+}
+
+:host ::ng-deep app-modal-layout.cadastro-modal .despesas-grid .mat-mdc-form-field:not(.mat-form-field-should-float) .mat-mdc-form-field-text-prefix,
+:host ::ng-deep app-modal-layout.cadastro-modal .opcao-linha .mat-mdc-form-field:not(.mat-form-field-should-float) .mat-mdc-form-field-text-prefix {
+  display: none;
 }
 
 .cadastro-form .total-despesas {
@@ -1180,18 +1176,18 @@ h1 {
   }
 
   .stepper-indicador .step {
-    flex: 0 1 58px;
+    min-width: 0;
   }
 
   .stepper-indicador .step-texto {
-    width: 64px;
-    font-size: 0.57rem;
+    width: 100%;
+    font-size: 0.55rem;
+    overflow-wrap: anywhere;
   }
 
-  .stepper-indicador .step-linha {
-    min-width: 7px;
-    margin-left: -12px;
-    margin-right: -12px;
+  .stepper-indicador .step-texto span {
+    white-space: normal;
+    overflow-wrap: anywhere;
   }
 
   .cadastro-form .step-grid,
@@ -1229,4 +1225,170 @@ h1 {
   }
 }
 
-.stepper-indicador .step-linha.ativo { background: #aaa; }
+/* Etapas 1 e 4: campos de anexo  */
+
+.cadastro-form .upload-foto {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-sizing: border-box;
+  min-height: 55px;
+  margin-top: 5px;
+  padding: 10px 14px 10px 12px;
+  border: 1px dashed #d9d9d9;
+  border-radius: 6px;
+  background: #fafafa;
+}
+
+.cadastro-form .upload-foto + .error-text {
+  display: block;
+  margin: 4px 0 0 2px;
+  font-size: 0.72rem;
+  line-height: 1.25;
+}
+
+.cadastro-form .upload-foto-icone {
+  display: inline-flex;
+  flex: 0 0 32px;
+  width: 32px;
+  height: 32px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  background: #e8f0fc;
+  color: var(--primary-color, #3486e5);
+}
+
+.cadastro-form .upload-foto-icone mat-icon {
+  width: 20px;
+  height: 20px;
+  font-size: 20px;
+}
+
+.cadastro-form .upload-foto-textos {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  text-align: center;
+}
+
+.cadastro-form .upload-foto-titulo {
+  max-width: 100%;
+  overflow: hidden;
+  color: #2b2b2b;
+  font-family: var(--fonte-texto);
+  font-size: 0.8rem;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cadastro-form .upload-foto-formatos {
+  color: #9a9a9a;
+  font-family: var(--fonte-texto);
+  font-size: 0.7rem;
+  line-height: 1.2;
+}
+
+.cadastro-form .btn-procurar {
+  flex: 0 0 auto;
+  height: 28px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 4px;
+  background: var(--primary-color, #3486e5);
+  color: #fff;
+  cursor: pointer;
+  font-family: var(--fonte-texto);
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: filter 0.2s;
+}
+
+.cadastro-form .btn-procurar:hover {
+  filter: brightness(0.94);
+}
+
+.cadastro-form .btn-procurar:focus-visible {
+  outline: 2px solid var(--primary-color, #3486e5);
+  outline-offset: 2px;
+}
+
+.cadastro-form .upload-foto-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.cadastro-form .preview-foto {
+  display: flex;
+  justify-content: center;
+  margin-top: 12px;
+}
+
+/*  Selects do cadastro  */
+
+:host ::ng-deep app-modal-layout.cadastro-modal .mat-mdc-select-arrow svg {
+  display: none;
+}
+
+:host ::ng-deep app-modal-layout.cadastro-modal .mat-mdc-select-arrow {
+  width: 9px;
+  height: 9px;
+  margin: -4px 4px 0 0;
+  border-right: 2px solid #222;
+  border-bottom: 2px solid #222;
+  transform: rotate(45deg);
+  transition: transform 0.2s, margin 0.2s;
+}
+
+:host ::ng-deep app-modal-layout.cadastro-modal .mat-mdc-select[aria-expanded='true'] .mat-mdc-select-arrow {
+  margin-top: 4px;
+  transform: rotate(225deg);
+}
+
+:host ::ng-deep app-modal-layout.cadastro-modal .mat-mdc-select-disabled .mat-mdc-select-arrow {
+  border-color: #c1c1c1;
+}
+
+/* Rótulos e selects dos campos do cadastro */
+
+:host ::ng-deep app-modal-layout.cadastro-modal .mat-mdc-form-field-required-marker {
+  display: none;
+}
+
+:host ::ng-deep app-modal-layout.cadastro-modal .mdc-floating-label--required::after {
+  content: none;
+}
+
+:host ::ng-deep app-modal-layout.cadastro-modal .mat-mdc-form-field .mdc-floating-label:not(.mdc-floating-label--float-above) {
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+}
+
+:host ::ng-deep app-modal-layout.cadastro-modal .mat-mdc-form-field .mdc-floating-label {
+  transition: transform 150ms cubic-bezier(0.4, 0, 0.2, 1), top 150ms cubic-bezier(0.4, 0, 0.2, 1), color 150ms linear;
+}
+
+:host ::ng-deep app-modal-layout.cadastro-modal .mat-mdc-form-field.mat-form-field-should-float .mat-mdc-select-value {
+  position: relative;
+  top: 7px;
+}
+
+.cadastro-form .documento-duplo .mat-mdc-select-value {
+  font-size: 0.875rem;
+}
+
+.cadastro-form .moradia-opcoes .erro-campo {
+  width: 100%;
+  color: var(--mat-form-field-error-text-color, #d32f2f);
+  font-size: 0.72rem;
+  line-height: 1.25;
+}

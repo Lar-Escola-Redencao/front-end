@@ -34,7 +34,13 @@
     <ng-container *ngFor="let etapa of etapas; let i = index">
       <div class="step" [class.ativo]="etapaModal >= i + 1" [attr.aria-current]="etapaModal === i + 1 ? 'step' : null">
         <div class="step-numero">{{ i + 1 }}</div>
-        <span class="step-texto">{{ etapa }}</span>
+        <span class="step-texto">
+          <ng-container *ngIf="etapa.startsWith('Dados '); else tituloUnico">
+            <span>Dados</span>
+            <span>{{ etapa.substring(6) }}</span>
+          </ng-container>
+          <ng-template #tituloUnico>{{ etapa }}</ng-template>
+        </span>
       </div>
       <div class="step-linha" *ngIf="i < 4" [class.ativo]="etapaModal > i + 1"></div>
     </ng-container>
@@ -48,15 +54,15 @@
       <div *ngIf="etapaModal === 1" class="etapa-container">
         <h3>Dados pessoais</h3>
         <div class="step-grid">
-          <mat-form-field appearance="outline"><mat-label>Nome completo*</mat-label><input matInput formControlName="nomeCompleto"></mat-form-field>
-          <mat-form-field appearance="outline"><mat-label>Data de nascimento*</mat-label><input matInput type="date" formControlName="dataNascimento"></mat-form-field>
+          <mat-form-field appearance="outline"><mat-label>Nome completo*</mat-label><input matInput formControlName="nomeCompleto"><mat-error>{{ mensagemErro(formUsuario.get('nomeCompleto')) }}</mat-error></mat-form-field>
+          <mat-form-field appearance="outline"><mat-label>Data nascimento*</mat-label><input matInput type="date" formControlName="dataNascimento"><mat-error>{{ mensagemErro(formUsuario.get('dataNascimento')) }}</mat-error></mat-form-field>
           <ng-container *ngIf="!formUsuario.get('usarOutroDocumento')?.value; else outroDocumento">
-            <mat-form-field appearance="outline"><mat-label>CPF/CIN*</mat-label><input matInput formControlName="cpf" inputmode="numeric" maxlength="14" (input)="aplicarMascaraCpf($event)"></mat-form-field>
+            <mat-form-field appearance="outline"><mat-label>CPF/CIN*</mat-label><input matInput formControlName="cpf" inputmode="numeric" maxlength="14" (input)="aplicarMascaraCpf($event)"><mat-error>{{ mensagemErro(formUsuario.get('cpf'), 'CPF', 'cpf') }}</mat-error></mat-form-field>
           </ng-container>
           <ng-template #outroDocumento>
             <div class="documento-duplo">
-              <mat-form-field appearance="outline"><mat-label>Tipo documento*</mat-label><mat-select formControlName="tipoDocumento"><mat-option *ngFor="let tipo of tiposDocumento" [value]="tipo.value">{{ tipo.label }}</mat-option></mat-select></mat-form-field>
-              <mat-form-field appearance="outline"><mat-label>Documento*</mat-label><input matInput formControlName="documentoAuxiliar"></mat-form-field>
+              <mat-form-field appearance="outline"><mat-label>Tipo documento*</mat-label><mat-select formControlName="tipoDocumento"><mat-option *ngFor="let tipo of tiposDocumento" [value]="tipo.value">{{ tipo.label }}</mat-option></mat-select><mat-error>{{ mensagemErro(formUsuario.get('tipoDocumento')) }}</mat-error></mat-form-field>
+              <mat-form-field appearance="outline"><mat-label>Documento*</mat-label><input matInput formControlName="documentoAuxiliar"><mat-error>{{ mensagemErro(formUsuario.get('documentoAuxiliar'), undefined, 'documentoAuxiliar') }}</mat-error></mat-form-field>
             </div>
           </ng-template>
           <mat-form-field appearance="outline"><mat-label>CadÚnico</mat-label><input matInput formControlName="cadUnico"></mat-form-field>
@@ -66,19 +72,30 @@
         <h3>Endereço</h3>
         <div class="step-grid">
           <mat-form-field appearance="outline"><mat-label>CEP</mat-label><input matInput formControlName="cep"></mat-form-field>
-          <mat-form-field appearance="outline"><mat-label>Bairro*</mat-label><input matInput formControlName="bairro"></mat-form-field>
-          <mat-form-field appearance="outline"><mat-label>Endereço*</mat-label><input matInput formControlName="endereco"></mat-form-field>
+          <mat-form-field appearance="outline"><mat-label>Bairro*</mat-label><input matInput formControlName="bairro"><mat-error>{{ mensagemErro(formUsuario.get('bairro')) }}</mat-error></mat-form-field>
+          <mat-form-field appearance="outline"><mat-label>Endereço*</mat-label><input matInput formControlName="endereco"><mat-error>{{ mensagemErro(formUsuario.get('endereco')) }}</mat-error></mat-form-field>
         </div>
 
         <h3>Dados escolares</h3>
         <div class="step-grid">
-          <mat-form-field appearance="outline"><mat-label>Escola*</mat-label><input matInput formControlName="escola"></mat-form-field>
-          <mat-form-field appearance="outline"><mat-label>Período escolar*</mat-label><mat-select formControlName="periodoEscolar"><mat-option *ngFor="let periodo of periodosEscolares" [value]="periodo">{{ periodo.replace('_', ' ') }}</mat-option></mat-select></mat-form-field>
-          <mat-form-field appearance="outline"><mat-label>Série escolar*</mat-label><mat-select formControlName="serieEscolar"><mat-option *ngFor="let serie of seriesEscolares" [value]="serie">{{ serie.replace('_', ' ') }}</mat-option></mat-select></mat-form-field>
+          <mat-form-field appearance="outline"><mat-label>Escola*</mat-label><input matInput formControlName="escola"><mat-error>{{ mensagemErro(formUsuario.get('escola')) }}</mat-error></mat-form-field>
+          <mat-form-field appearance="outline"><mat-label>Período escolar*</mat-label><mat-select formControlName="periodoEscolar"><mat-option *ngFor="let periodo of periodosEscolares" [value]="periodo.value">{{ periodo.label }}</mat-option></mat-select><mat-error>{{ mensagemErro(formUsuario.get('periodoEscolar')) }}</mat-error></mat-form-field>
+          <mat-form-field appearance="outline"><mat-label>Série escolar*</mat-label><mat-select formControlName="serieEscolar"><mat-option *ngFor="let serie of seriesEscolares" [value]="serie.value">{{ serie.label }}</mat-option></mat-select><mat-error>{{ mensagemErro(formUsuario.get('serieEscolar')) }}</mat-error></mat-form-field>
           <mat-form-field appearance="outline"><mat-label>RA (Registro do Aluno)</mat-label><input matInput formControlName="raEscolar"></mat-form-field>
         </div>
-        <label class="upload-simples">Selecione a foto de perfil<input type="file" accept="image/png,image/jpeg,image/webp" (change)="onFotoSelecionada($event)"></label>
-        <img *ngIf="fotoPreviewUrl" [src]="fotoPreviewUrl" class="avatar-preview-inferior" alt="Prévia da foto de perfil">
+        <div class="upload-foto" [class.upload-foto-selecionada]="!!fotoSelecionada">
+          <span class="upload-foto-icone" aria-hidden="true"><mat-icon>upload_file</mat-icon></span>
+          <div class="upload-foto-textos">
+            <span class="upload-foto-titulo" [attr.title]="fotoSelecionada?.name || null">{{ fotoSelecionada?.name || 'Selecione a foto de perfil' }}</span>
+            <span class="upload-foto-formatos">PNG, JPEG, JPG</span>
+          </div>
+          <button type="button" class="btn-procurar" (click)="inputFoto.click()">Procurar</button>
+          <input #inputFoto type="file" class="upload-foto-input" accept="image/png,image/jpeg" tabindex="-1" (change)="onFotoSelecionada($event)">
+        </div>
+        <span class="error-text" *ngIf="erros['foto']">{{ erros['foto'] }}</span>
+        <div class="preview-foto" *ngIf="fotoPreviewUrl">
+          <img [src]="fotoPreviewUrl" class="avatar-preview-inferior" alt="Prévia da foto de perfil">
+        </div>
       </div>
 
       <div *ngIf="etapaModal === 2" class="etapa-container" formArrayName="contatos">
@@ -86,6 +103,7 @@
           <div class="contato-resumo" role="button" tabindex="0" [attr.aria-expanded]="contatoExpandidoIndex === i" (click)="expandirContato(i)" (keydown.enter)="expandirContato(i)" (keydown.space)="$event.preventDefault(); expandirContato(i)">
             <strong>{{ contato.get('principal')?.value ? 'Contato principal' : 'Contato adicional ' + i }}</strong>
             <span class="resumo-acoes">
+              <span class="contato-cpf-repetido" *ngIf="contatoExpandidoIndex !== i && contato.get('cpf')?.hasError('cpfDuplicadoContato')">CPF já informado</span>
               <button type="button" *ngIf="!contato.get('principal')?.value" class="btn-remover-icon" title="Remover contato" aria-label="Remover contato" (keydown)="$event.stopPropagation()" (click)="removerContato(i, $event)"><mat-icon>delete</mat-icon></button>
               <mat-icon>{{ contatoExpandidoIndex === i ? 'expand_less' : 'expand_more' }}</mat-icon>
             </span>
@@ -94,24 +112,25 @@
             <label class="checkbox-inline checkbox-discreto"><input type="checkbox" formControlName="buscarExistente" (change)="alternarBuscaContato(i, $any($event.target).checked)"><span>Buscar por contato existente</span></label>
             <div *ngIf="contato.get('buscarExistente')?.value" class="busca-contato">
               <mat-form-field appearance="outline"><mat-label>Buscar por</mat-label><mat-select formControlName="tipoBusca"><mat-option *ngFor="let opcao of opcoesBuscaContato" [value]="opcao">{{ opcao }}</mat-option></mat-select></mat-form-field>
-              <mat-form-field appearance="outline"><mat-label>{{ contato.get('tipoBusca')?.value }}*</mat-label><input matInput formControlName="busca" [matAutocomplete]="autoContato"><mat-autocomplete #autoContato="matAutocomplete" (optionSelected)="selecionarContatoExistente(i, $event.option.value)"><mat-option *ngFor="let op of opcoesAutocomplete[i]" [value]="op">{{ op.nomeCompleto }} — {{ op.telefone }}</mat-option></mat-autocomplete></mat-form-field>
-              <mat-form-field appearance="outline"><mat-label>Parentesco*</mat-label><mat-select formControlName="parentesco"><mat-option *ngFor="let p of opcoesParentesco" [value]="p.value">{{ p.label }}</mat-option></mat-select></mat-form-field>
+              <mat-form-field appearance="outline"><mat-label>{{ contato.get('tipoBusca')?.value }}*</mat-label><input matInput formControlName="busca" [matAutocomplete]="autoContato" (input)="onBuscaContatoAlterada(i, $any($event.target).value)"><mat-autocomplete #autoContato="matAutocomplete" [displayWith]="exibirNomeContatoBusca" (optionSelected)="selecionarContatoExistente(i, $event.option.value)"><mat-option *ngFor="let op of opcoesAutocomplete[i]" [value]="op">{{ op.nomeCompleto }} — {{ op.telefone }}</mat-option></mat-autocomplete></mat-form-field>
+              <mat-form-field appearance="outline"><mat-label>Parentesco*</mat-label><mat-select formControlName="parentesco"><mat-option *ngFor="let p of opcoesParentesco" [value]="p.value">{{ p.label }}</mat-option></mat-select><mat-error>{{ mensagemErro(contato.get('parentesco')) }}</mat-error></mat-form-field>
             </div>
-            <mat-form-field *ngIf="!contato.get('buscarExistente')?.value" appearance="outline"><mat-label>Parentesco*</mat-label><mat-select formControlName="parentesco"><mat-option *ngFor="let p of opcoesParentesco" [value]="p.value">{{ p.label }}</mat-option></mat-select></mat-form-field>
+            <mat-form-field *ngIf="!contato.get('buscarExistente')?.value" appearance="outline"><mat-label>Parentesco*</mat-label><mat-select formControlName="parentesco"><mat-option *ngFor="let p of opcoesParentesco" [value]="p.value">{{ p.label }}</mat-option></mat-select><mat-error>{{ mensagemErro(contato.get('parentesco')) }}</mat-error></mat-form-field>
             <div class="step-grid">
-              <mat-form-field appearance="outline"><mat-label>Nome completo*</mat-label><input matInput formControlName="nomeCompleto"></mat-form-field>
-              <mat-form-field appearance="outline"><mat-label>CPF</mat-label><input matInput formControlName="cpf"></mat-form-field>
-              <mat-form-field appearance="outline"><mat-label>Telefone*</mat-label><input matInput formControlName="telefone" (input)="aplicarMascaraTelefoneContato(i, $event)"></mat-form-field>
-              <mat-form-field appearance="outline"><mat-label>E-mail</mat-label><input matInput type="email" formControlName="email"></mat-form-field>
+              <mat-form-field appearance="outline"><mat-label>Nome completo*</mat-label><input matInput formControlName="nomeCompleto"><mat-error>{{ mensagemErro(contato.get('nomeCompleto')) }}</mat-error></mat-form-field>
+              <mat-form-field appearance="outline"><mat-label>CPF</mat-label><input matInput formControlName="cpf" inputmode="numeric" maxlength="14" (input)="aplicarMascaraCpfContato(i, $event)"><mat-error>{{ mensagemErro(contato.get('cpf')) }}</mat-error></mat-form-field>
+              <mat-form-field appearance="outline"><mat-label>Telefone*</mat-label><input matInput formControlName="telefone" (input)="aplicarMascaraTelefoneContato(i, $event)"><mat-error>{{ mensagemErro(contato.get('telefone'), 'Telefone') }}</mat-error></mat-form-field>
+              <mat-form-field appearance="outline"><mat-label>E-mail</mat-label><input matInput type="email" formControlName="email"><mat-error>{{ mensagemErro(contato.get('email')) }}</mat-error></mat-form-field>
               <mat-form-field appearance="outline"><mat-label>Endereço</mat-label><input matInput formControlName="endereco"></mat-form-field>
               <mat-form-field appearance="outline"><mat-label>Local de trabalho</mat-label><input matInput formControlName="localTrabalho"></mat-form-field>
             </div>
+            <span class="aviso-contato-edicao" role="alert" *ngIf="contatoExistenteAlterado(i)">Este contato será atualizado para todos os usuários vinculados a ele.</span>
           </div>
         </div>
         <button type="button" class="btn-add-contato" *ngIf="contatosArray.length < 4" (click)="adicionarContato()"><mat-icon>add</mat-icon> Contato adicional</button>
       </div>
 
-      <p *ngIf="modoEdicao && etapaModal === 3">Os dados socioeconômicos já cadastrados não estão disponíveis para edição nesta tela.</p>
+      <p class="etapa-indisponivel" *ngIf="modoEdicao && etapaModal === 3">Os dados socioeconômicos não são retornados na consulta deste usuário. Os registros existentes serão preservados; esta etapa não pode ser editada aqui por enquanto.</p>
       <div *ngIf="!modoEdicao && etapaModal === 3" class="etapa-container" formGroupName="socioeconomico">
         <h3>Composição familiar</h3>
         <p class="descricao-etapa">Registrar as pessoas que convivem com a criança/adolescente, inclusive quando não possuem parentesco.</p>
@@ -123,12 +142,12 @@
             </div>
             <div class="familiar-detalhe" *ngIf="familiarExpandidoIndex === i">
               <div class="familia-grid">
-                <mat-form-field appearance="outline"><mat-label>Nome completo*</mat-label><input matInput formControlName="nomeCompleto"></mat-form-field>
-                <mat-form-field appearance="outline"><mat-label>Idade</mat-label><input matInput type="number" min="0" formControlName="idade"></mat-form-field>
-                <mat-form-field appearance="outline"><mat-label>Parentesco / vínculo*</mat-label><mat-select formControlName="parentescoVinculo"><mat-option *ngFor="let p of opcoesParentesco" [value]="p.value">{{ p.label }}</mat-option></mat-select></mat-form-field>
-                <mat-form-field appearance="outline"><mat-label>Escolaridade*</mat-label><mat-select formControlName="escolaridade"><mat-option *ngFor="let e of escolaridades" [value]="e">{{ e.replace('_', ' ') }}</mat-option></mat-select></mat-form-field>
-                <mat-form-field appearance="outline"><mat-label>Renda (R$)</mat-label><input matInput type="number" min="0" formControlName="renda"></mat-form-field>
-                <mat-form-field appearance="outline"><mat-label>Benefícios (R$)</mat-label><input matInput type="number" min="0" formControlName="beneficios"></mat-form-field>
+                <mat-form-field appearance="outline"><mat-label>Nome completo*</mat-label><input matInput formControlName="nomeCompleto"><mat-error>{{ mensagemErro(membro.get('nomeCompleto')) }}</mat-error></mat-form-field>
+                <mat-form-field appearance="outline"><mat-label>Idade</mat-label><input matInput type="number" min="0" formControlName="idade"><mat-error>{{ mensagemErro(membro.get('idade')) }}</mat-error></mat-form-field>
+                <mat-form-field appearance="outline"><mat-label>Parentesco / vínculo*</mat-label><mat-select formControlName="parentescoVinculo"><mat-option *ngFor="let p of opcoesParentesco" [value]="p.value">{{ p.label }}</mat-option></mat-select><mat-error>{{ mensagemErro(membro.get('parentescoVinculo')) }}</mat-error></mat-form-field>
+                <mat-form-field appearance="outline"><mat-label>Escolaridade*</mat-label><mat-select formControlName="escolaridade"><mat-option *ngFor="let e of escolaridades" [value]="e.value">{{ e.label }}</mat-option></mat-select><mat-error>{{ mensagemErro(membro.get('escolaridade')) }}</mat-error></mat-form-field>
+                <mat-form-field appearance="outline"><mat-label>Renda (R$)</mat-label><input matInput type="number" min="0" formControlName="renda"><mat-error>{{ mensagemErro(membro.get('renda')) }}</mat-error></mat-form-field>
+                <mat-form-field appearance="outline"><mat-label>Benefícios (R$)</mat-label><input matInput type="number" min="0" formControlName="beneficios"><mat-error>{{ mensagemErro(membro.get('beneficios')) }}</mat-error></mat-form-field>
               </div>
             </div>
           </div>
@@ -137,43 +156,51 @@
 
         <h3>Habitação</h3>
         <div class="habitacao-linha">
-          <fieldset class="moradia-opcoes"><legend>Tipo de moradia</legend><label *ngFor="let tipo of tiposMoradia"><input type="radio" formControlName="tipoMoradia" [value]="tipo.value"> {{ tipo.label }}</label></fieldset>
-          <mat-form-field *ngIf="['ALUGADA', 'APARTAMENTO_ALUGADO'].includes(formUsuario.get('socioeconomico.tipoMoradia')?.value)" appearance="outline"><mat-label>Valor do aluguel*</mat-label><input matInput type="number" min="0" formControlName="valorAluguel"></mat-form-field>
-          <mat-form-field *ngIf="['PROPRIA', 'APARTAMENTO_PROPRIO'].includes(formUsuario.get('socioeconomico.tipoMoradia')?.value)" appearance="outline"><mat-label>Valor do financiamento</mat-label><input matInput type="number" min="0" formControlName="valorFinanciamento"></mat-form-field>
+          <fieldset class="moradia-opcoes"><legend>Tipo de moradia</legend><label *ngFor="let tipo of tiposMoradia"><input type="radio" formControlName="tipoMoradia" [value]="tipo.value"> {{ tipo.label }}</label><span class="erro-campo" *ngIf="formUsuario.get('socioeconomico.tipoMoradia')?.invalid && formUsuario.get('socioeconomico.tipoMoradia')?.touched">{{ mensagemErro(formUsuario.get('socioeconomico.tipoMoradia')) }}</span></fieldset>
+          <mat-form-field *ngIf="['ALUGADA', 'APARTAMENTO_ALUGADO'].includes(formUsuario.get('socioeconomico.tipoMoradia')?.value)" appearance="outline"><mat-label>Valor do aluguel*</mat-label><input matInput type="number" min="0" formControlName="valorAluguel"><mat-error>{{ mensagemErro(formUsuario.get('socioeconomico.valorAluguel')) }}</mat-error></mat-form-field>
+          <mat-form-field *ngIf="['PROPRIA', 'APARTAMENTO_PROPRIO'].includes(formUsuario.get('socioeconomico.tipoMoradia')?.value)" appearance="outline"><mat-label>Valor do financiamento</mat-label><input matInput type="number" min="0" formControlName="valorFinanciamento"><mat-error>{{ mensagemErro(formUsuario.get('socioeconomico.valorFinanciamento')) }}</mat-error></mat-form-field>
         </div>
 
         <h3>Despesas mensais</h3>
-        <div class="despesas-grid"><mat-form-field *ngFor="let despesa of despesas" appearance="outline"><mat-label>{{ despesa.label }}</mat-label><span matTextPrefix>R$&nbsp;</span><input matInput type="number" min="0" [formControlName]="despesa.campo"></mat-form-field></div>
+        <div class="despesas-grid"><mat-form-field *ngFor="let despesa of despesas" appearance="outline"><mat-label>{{ despesa.label }}</mat-label><span matTextPrefix>R$&nbsp;</span><input matInput type="number" min="0" [formControlName]="despesa.campo"><mat-error>{{ mensagemErro(formUsuario.get('socioeconomico.' + despesa.campo)) }}</mat-error></mat-form-field></div>
         <p class="total-despesas">Total aproximado das despesas <strong>{{ totalDespesasMensais | currency:'BRL' }}</strong></p>
       </div>
 
-      <p *ngIf="modoEdicao && etapaModal === 4">Os dados complementares já cadastrados não estão disponíveis para edição nesta tela.</p>
+      <p class="etapa-indisponivel" *ngIf="modoEdicao && etapaModal === 4">Os dados complementares não são retornados na consulta deste usuário. Os registros existentes serão preservados; esta etapa não pode ser editada aqui por enquanto.</p>
       <div *ngIf="!modoEdicao && etapaModal === 4" class="etapa-container" formGroupName="complementares">
         <h3>Transporte</h3>
         <div class="opcao-linha" *ngFor="let transporte of transportes" [class.tem-campo]="!!transporte.valor && !!formUsuario.get('complementares.' + transporte.campo)?.value">
           <div class="opcao-pergunta"><span>{{ transporte.label }}</span><div class="radio-opcoes"><label><input type="radio" [formControlName]="transporte.campo" [value]="false"> Não</label><label><input type="radio" [formControlName]="transporte.campo" [value]="true"> Sim</label></div></div>
-          <mat-form-field *ngIf="transporte.valor && formUsuario.get('complementares.' + transporte.campo)?.value" appearance="outline"><mat-label>Gasto mensal ({{ transporte.label }})</mat-label><span matTextPrefix>R$&nbsp;</span><input matInput type="number" min="0" [formControlName]="transporte.valor"></mat-form-field>
+          <mat-form-field *ngIf="transporte.valor && formUsuario.get('complementares.' + transporte.campo)?.value" appearance="outline"><mat-label>Gasto mensal ({{ transporte.label }})</mat-label><span matTextPrefix>R$&nbsp;</span><input matInput type="number" min="0" [formControlName]="transporte.valor"><mat-error>{{ mensagemErro(formUsuario.get('complementares.' + transporte.valor)) }}</mat-error></mat-form-field>
         </div>
 
         <h3>Religião</h3>
         <div class="opcao-linha" [class.tem-campo]="formUsuario.get('complementares.professaReligiao')?.value">
           <div class="opcao-pergunta"><span>A família professa alguma religião?</span><div class="radio-opcoes"><label><input type="radio" formControlName="professaReligiao" [value]="false"> Não</label><label><input type="radio" formControlName="professaReligiao" [value]="true"> Sim</label></div></div>
-          <div class="religiao-campos" *ngIf="formUsuario.get('complementares.professaReligiao')?.value"><mat-form-field appearance="outline"><mat-label>Qual religião?*</mat-label><mat-select formControlName="religiao"><mat-option *ngFor="let r of religioes" [value]="r">{{ r }}</mat-option></mat-select></mat-form-field><mat-form-field *ngIf="formUsuario.get('complementares.religiao')?.value === 'Outra'" appearance="outline"><mat-label>Nome da religião*</mat-label><input matInput formControlName="outraReligiao"></mat-form-field></div>
+          <div class="religiao-campos" *ngIf="formUsuario.get('complementares.professaReligiao')?.value"><mat-form-field appearance="outline"><mat-label>Qual religião?*</mat-label><mat-select formControlName="religiao"><mat-option *ngFor="let r of religioes" [value]="r">{{ r }}</mat-option></mat-select><mat-error>{{ mensagemErro(formUsuario.get('complementares.religiao')) }}</mat-error></mat-form-field><mat-form-field *ngIf="formUsuario.get('complementares.religiao')?.value === 'Outra'" appearance="outline"><mat-label>Nome da religião*</mat-label><input matInput formControlName="outraReligiao"><mat-error>{{ mensagemErro(formUsuario.get('complementares.outraReligiao')) }}</mat-error></mat-form-field></div>
         </div>
 
         <h3>Saúde</h3>
         <div class="opcao-linha" *ngFor="let saude of perguntasSaude" [class.tem-campo]="formUsuario.get('complementares.' + saude.campo)?.value">
           <div class="opcao-pergunta"><span>{{ saude.label }}</span><div class="radio-opcoes"><label><input type="radio" [formControlName]="saude.campo" [value]="false"> Não</label><label><input type="radio" [formControlName]="saude.campo" [value]="true"> Sim</label></div></div>
-          <mat-form-field *ngIf="formUsuario.get('complementares.' + saude.campo)?.value" appearance="outline"><mat-label>Qual ou quais?*</mat-label><input matInput [formControlName]="saude.descricao"></mat-form-field>
+          <mat-form-field *ngIf="formUsuario.get('complementares.' + saude.campo)?.value" appearance="outline"><mat-label>Qual ou quais?*</mat-label><input matInput [formControlName]="saude.descricao"><mat-error>{{ mensagemErro(formUsuario.get('complementares.' + saude.descricao)) }}</mat-error></mat-form-field>
         </div>
-        <label class="upload-simples">Anexe documentos de saúde (Receitas, Laudos, etc.)<input type="file" multiple accept=".pdf,.jpg,.jpeg,.png" (change)="selecionarArquivosSaude($event)"></label>
+        <div class="upload-foto">
+          <span class="upload-foto-icone" aria-hidden="true"><mat-icon>upload_file</mat-icon></span>
+          <div class="upload-foto-textos">
+            <span class="upload-foto-titulo">{{ arquivosSaude.length ? (arquivosSaude.length === 1 ? '1 arquivo selecionado' : arquivosSaude.length + ' arquivos selecionados') : 'Anexe documentos de saúde (Receitas, Laudos, etc.)' }}</span>
+            <span class="upload-foto-formatos">PDF, JPG, PNG · até 4 arquivos</span>
+          </div>
+          <button type="button" class="btn-procurar" (click)="inputSaude.click()">Procurar</button>
+          <input #inputSaude type="file" class="upload-foto-input" multiple accept=".pdf,.jpg,.jpeg,.png" tabindex="-1" (change)="selecionarArquivosSaude($event)">
+        </div>
         <span class="error-text" *ngIf="erroArquivos">{{ erroArquivos }}</span>
         <div class="arquivos-lista"><div *ngFor="let arquivo of arquivosSaude; let i = index" class="arquivo-selecionado"><span>{{ arquivo.name }}</span><button type="button" (click)="removerArquivoSaude(i)" aria-label="Remover arquivo"><mat-icon>close</mat-icon></button></div></div>
       </div>
 
       <div *ngIf="etapaModal === 5" class="etapa-container">
         <h3>Matrícula</h3>
-        <div class="step-grid"><mat-form-field appearance="outline"><mat-label>Unidade*</mat-label><mat-select formControlName="idUnidade" (selectionChange)="onUnidadeChange($event.value)"><mat-option *ngFor="let und of unidadesDisponiveis" [value]="und.id">{{ und.nome }}</mat-option></mat-select></mat-form-field><mat-form-field appearance="outline"><mat-label>Turma*</mat-label><mat-select formControlName="idTurma"><mat-option *ngFor="let t of turmasDisponiveis" [value]="t.id">{{ t.periodo === 'MANHA' ? 'Manhã' : 'Tarde' }} ({{ t.horaInicio }} às {{ t.horaFim }})</mat-option></mat-select></mat-form-field></div>
+        <div class="step-grid"><mat-form-field appearance="outline"><mat-label>Unidade*</mat-label><mat-select formControlName="idUnidade" (selectionChange)="onUnidadeChange($event.value)"><mat-option *ngFor="let und of unidadesDisponiveis" [value]="und.id">{{ und.nome }}</mat-option></mat-select><mat-error>{{ mensagemErro(formUsuario.get('idUnidade')) }}</mat-error></mat-form-field><mat-form-field appearance="outline"><mat-label>Turma*</mat-label><mat-select formControlName="idTurma"><mat-option *ngFor="let t of turmasDisponiveis" [value]="t.id">{{ t.periodo === 'MANHA' ? 'Manhã' : 'Tarde' }} ({{ t.horaInicio }} às {{ t.horaFim }})</mat-option></mat-select><mat-error>{{ mensagemErro(formUsuario.get('idTurma')) }}</mat-error></mat-form-field></div>
       </div>
 
       <div class="acoes-modal cadastro-acoes">
@@ -234,7 +261,7 @@
     </div>
 
     <div class="preview-avatar-container">
-      <img *ngIf="usuarioPreview.imagem; else semFoto" [src]="usuarioPreview.imagem_perfil" alt="Foto de perfil" class="preview-avatar">
+      <img *ngIf="usuarioPreview.imagemPerfil; else semFoto" [src]="usuarioPreview.imagemPerfil" alt="Foto de perfil" class="preview-avatar">
       <ng-template #semFoto>
         <div class="preview-avatar placeholder">
           <mat-icon>person</mat-icon>
