@@ -83,7 +83,7 @@ h1 {
   width: 100%;
 }
 
-.form-row > div {
+.form-row>div {
   min-width: 0;
   width: 100%;
 }
@@ -92,7 +92,7 @@ h1 {
   align-items: start;
 }
 
-.form-row-documento > div {
+.form-row-documento>div {
   display: flex;
   flex-direction: column;
 }
@@ -120,7 +120,8 @@ h1 {
   margin-bottom: 24px;
 }
 
-.form-row .error-text, .form-row-foto-final .error-text{
+.form-row .error-text,
+.form-row-foto-final .error-text {
   margin-top: 14px;
 }
 
@@ -210,8 +211,15 @@ h1 {
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(5px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* cards contato e correções do modal rápido */
@@ -347,6 +355,7 @@ h1 {
 .btn-add-contato:hover {
   color: var(--primary-color);
 }
+
 .btn-add-contato mat-icon {
   font-size: 18px;
   width: 18px;
@@ -820,7 +829,7 @@ h1 {
 }
 
 :host ::ng-deep app-modal-layout.cadastro-modal .mat-mdc-form-field-subscript-wrapper {
-  display: block;
+  display: block !important;
 }
 
 /* não reserva altura quando não há erro; a mensagem empurra o conteúdo */
@@ -958,7 +967,7 @@ h1 {
   gap: 6px;
 }
 
-.cadastro-form .resumo-acoes > mat-icon {
+.cadastro-form .resumo-acoes>mat-icon {
   color: #242424;
 }
 
@@ -1005,8 +1014,8 @@ h1 {
   gap: 8px;
 }
 
-.cadastro-form .familia-grid > :nth-child(3),
-.cadastro-form .familia-grid > :nth-child(4) {
+.cadastro-form .familia-grid> :nth-child(3),
+.cadastro-form .familia-grid> :nth-child(4) {
   grid-column: span 2;
 }
 
@@ -1202,8 +1211,8 @@ h1 {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .cadastro-form .familia-grid > :nth-child(3),
-  .cadastro-form .familia-grid > :nth-child(4) {
+  .cadastro-form .familia-grid> :nth-child(3),
+  .cadastro-form .familia-grid> :nth-child(4) {
     grid-column: auto;
   }
 
@@ -1241,7 +1250,7 @@ h1 {
   background: #fafafa;
 }
 
-.cadastro-form .upload-foto + .error-text {
+.cadastro-form .upload-foto+.error-text {
   display: block;
   margin: 4px 0 0 2px;
   font-size: 0.72rem;
@@ -1391,4 +1400,129 @@ h1 {
   color: var(--mat-form-field-error-text-color, #d32f2f);
   font-size: 0.72rem;
   line-height: 1.25;
+}
+
+/* Detalhes do contato: informações legíveis também em telas pequenas. */
+.contato-preview {
+  padding: 4px 0 20px;
+  font-family: var(--fonte-texto);
+}
+
+.contato-preview-cabecalho {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.contato-preview-cabecalho>div:last-child {
+  min-width: 0;
+}
+
+.contato-preview-avatar {
+  display: grid;
+  place-items: center;
+  flex: 0 0 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #eef3fc;
+  color: #1976d2;
+}
+
+.contato-preview-avatar mat-icon {
+  width: 32px;
+  height: 32px;
+  font-size: 32px;
+}
+
+.contato-preview-legenda {
+  color: #5f6368;
+  font-size: .85rem;
+}
+
+.contato-preview h2 {
+  margin: 4px 0 8px;
+  font-size: 1.4rem;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.contato-preview-dados {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px 24px;
+  margin: 24px 0;
+}
+
+.contato-preview-dados dt {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #5f6368;
+  font-size: .85rem;
+}
+
+.contato-preview-dados dt mat-icon {
+  width: 18px;
+  height: 18px;
+  font-size: 18px;
+  color: #1976d2;
+}
+
+.contato-preview-dados dd {
+  margin: 8px 0 0;
+  color: var(--preto);
+  overflow-wrap: anywhere;
+  line-height: 1.5;
+}
+
+.contato-preview-endereco {
+  grid-column: 1 / -1;
+}
+
+.contato-preview-status {
+  color: #5f6368;
+  line-height: 1.5;
+}
+
+.contato-preview-erro {
+  color: #b3261e;
+  padding: 16px 0;
+}
+
+@media (max-width: 600px) {
+  .contato-preview-dados {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .contato-preview-cabecalho {
+    gap: 12px;
+  }
+
+  .contato-preview h2 {
+    font-size: 1.2rem;
+  }
+}
+
+/* A regra global oculta o subscript; estes formulários exibem a validação. */
+:host ::ng-deep .form-modal .mat-mdc-form-field-subscript-wrapper {
+  display: block !important;
+}
+
+:host ::ng-deep .form-modal .mat-mdc-form-field-subscript-wrapper::before {
+  display: none;
+}
+
+:host ::ng-deep .form-modal .mat-mdc-form-field-error-wrapper {
+  position: static;
+  padding: 0 2px;
+}
+
+:host ::ng-deep .form-modal .mat-mdc-form-field-error {
+  padding-top: 10px;
+  font-family: var(--fonte-texto);
+  font-size: .85rem;
+  line-height: 1.3;
+  color: var(--error-color);
 }

@@ -76,10 +76,18 @@ export interface UsuarioResponseDTO {
   raEscolar?: string;
   imagemPerfil?: string;
   contatos?: ContatoResponseDTO[];
+  composicaoFamiliar?: ComposicaoFamiliarDTO[] | null;
+  fichaSocioeconomica?: FichaSocioeconomicaDTO | null;
   idTurma?: number;
   idUnidade?: number;
   nomeTurma?: string;
   nomeUnidade?: string;
   periodo?: string;
   status?: string;
+}
+
+export interface ArquivoSaudeDTO {
+  id: number;
+  titulo: string;
+  caminhoArquivo?: string;
 }
