@@ -1,6 +1,8 @@
 import { ChangeDetectorRef, Component, EventEmitter, Input, NgZone, OnInit, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
 import { forkJoin, from } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
 import { ModalLayout } from '@components/modal-layout/modal-layout';
@@ -18,7 +20,6 @@ interface LinhaRedeSocial {
   idRedeSocial: number;
   nome: string;
   icone: string;
-  urlPadrao: string;
   vinculada: boolean;
   urlSalva: string;
   urlLink: string;
@@ -29,7 +30,7 @@ interface LinhaRedeSocial {
 @Component({
   selector: 'app-evento-redes-sociais',
   standalone: true,
-  imports: [FormsModule, MatIconModule, ModalLayout],
+  imports: [FormsModule, MatFormFieldModule, MatIconModule, MatInputModule, ModalLayout],
   templateUrl: './evento-redes-sociais.component.html',
   styleUrls: ['./evento-redes-sociais.component.css']
 })
@@ -64,7 +65,7 @@ export class EventoRedesSociaisComponent implements OnInit {
     this.erroCarregamento = false;
 
     forkJoin({
-      redesSociais: from(this.socialLinksService.listarTodas()),
+      redesSociais: from(this.socialLinksService.listarParaVinculoEvento()),
       vinculos: this.eventoService.listarRedesSociais(this.evento.id)
     }).subscribe({
       next: ({ redesSociais, vinculos }) => {
@@ -84,20 +85,17 @@ export class EventoRedesSociaisComponent implements OnInit {
     });
   }
 
-  // Lista as redes sociais ativas (as únicas que o back aceita vincular) e também
-  // as já vinculadas que foram inativadas depois, para que ainda possam ser desvinculadas.
   private montarLinhas(redesSociais: SocialLink[], vinculos: EventoRedeSocial[]): LinhaRedeSocial[] {
     const vinculosPorRede = new Map(vinculos.map(v => [v.idRedeSocial, v]));
 
     return redesSociais
-      .filter(rede => rede.ativo || vinculosPorRede.has(rede.id))
+      .filter(rede => rede.nome.trim().toLowerCase() !== 'whatsapp')
       .map(rede => {
         const vinculo = vinculosPorRede.get(rede.id);
         return {
           idRedeSocial: rede.id,
           nome: rede.nome,
           icone: rede.icone,
-          urlPadrao: rede.url,
           vinculada: !!vinculo,
           urlSalva: vinculo?.urlLink ?? '',
           urlLink: vinculo?.urlLink ?? '',
@@ -115,7 +113,9 @@ export class EventoRedesSociaisComponent implements OnInit {
   validar(linha: LinhaRedeSocial): boolean {
     const url = linha.urlLink.trim();
 
-    if (url && !URL_PATTERN.test(url)) {
+    if (!url) {
+      linha.erro = 'Informe o link da publicação';
+    } else if (!URL_PATTERN.test(url)) {
       linha.erro = 'Informe um link válido começando com http:// ou https://';
     } else if (url.length > URL_TAMANHO_MAXIMO) {
       linha.erro = `O link não pode ter mais de ${URL_TAMANHO_MAXIMO} caracteres`;
@@ -138,7 +138,7 @@ export class EventoRedesSociaisComponent implements OnInit {
 
     this.eventoService.vincularRedeSocial(this.evento.id, {
       idRedeSocial: linha.idRedeSocial,
-      urlLink: url || undefined
+      urlLink: url
     }).subscribe({
       next: (vinculo) => {
         this.ngZone.run(() => {

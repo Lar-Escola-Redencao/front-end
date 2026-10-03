@@ -146,7 +146,9 @@ export class TabelaLayout<T = any> {
 
     if (
       valorString.startsWith('http://') ||
-      valorString.startsWith('https://')
+      valorString.startsWith('https://') ||
+      valorString.startsWith('data:') ||
+      valorString.startsWith('/images/')
     ) {
       return valorString;
     }

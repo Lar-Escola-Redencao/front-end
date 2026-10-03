@@ -17,6 +17,47 @@
   box-shadow: var(--sombra-padrao);
 }
 
+:host ::ng-deep .social-links-manager .tabela-imagem {
+  width: auto;
+  max-width: 20px;
+  filter: brightness(0) saturate(100%) invert(45%) sepia(62%) saturate(1034%) hue-rotate(184deg) brightness(88%) contrast(88%);
+}
+
+@media (min-width: 1001px) {
+  :host ::ng-deep .social-links-manager .tabela {
+    table-layout: fixed;
+  }
+
+  :host ::ng-deep .social-links-manager .tabela th:nth-child(1) {
+    width: 80px;
+  }
+
+  :host ::ng-deep .social-links-manager .tabela th:nth-child(2) {
+    width: 150px;
+  }
+
+  :host ::ng-deep .social-links-manager .tabela th:nth-child(3) {
+    width: auto;
+  }
+
+  :host ::ng-deep .social-links-manager .tabela th:nth-child(4) {
+    width: 190px;
+  }
+
+  :host ::ng-deep .social-links-manager .tabela th:nth-child(5) {
+    width: 70px;
+  }
+
+  :host ::ng-deep .social-links-manager .tabela tbody tr > td:nth-child(4) .valor-celula {
+    display: block;
+    max-width: 100%;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+    white-space: normal;
+    word-break: break-word;
+  }
+}
+
 .form-modal {
   display: flex;
   flex-direction: column;

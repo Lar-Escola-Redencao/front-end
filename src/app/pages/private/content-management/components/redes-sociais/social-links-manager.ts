@@ -56,7 +56,7 @@ import {
 
 import { Alertas } from 'src/app/shared/utils/alerts';
 
-import { environment } from 'src/environments/environment';
+import { PublicContentService } from 'src/app/shared/services/public-content/public-content.service';
 
 const URL_PATTERN = /^https?:\/\/.+/i;
 
@@ -80,8 +80,6 @@ export class SocialLinksManager
 
   socialLinks: SocialLink[] = [];
 
-  apiUrl = environment.apiUrl;
-
   /**
    * Loading somente da lista.
    */
@@ -101,7 +99,7 @@ export class SocialLinksManager
   modalTremendo = false;
 
   pagina = 0;
-  tamanho = 10;
+  tamanho = 5;
   sort: string | undefined;
   ordenacao: CampoOrdenacao | null = null;
   totalElementos = 0;
@@ -110,6 +108,11 @@ export class SocialLinksManager
   private routeSub?: Subscription;
 
   colunas: TabelaColuna<SocialLink>[] = [
+    {
+      chave: 'icone',
+      titulo: 'Icone',
+      tipo: 'imagem'
+    },
     {
       chave: 'nome',
       titulo: 'Nome',
@@ -122,7 +125,7 @@ export class SocialLinksManager
     },
     {
       chave: 'ativo',
-      titulo: 'Exibição',
+      titulo: 'Exibição no rodapé',
       tipo: 'status',
       ordenavel: true
     }
@@ -164,7 +167,8 @@ export class SocialLinksManager
     private cdr: ChangeDetectorRef,
     private ngZone: NgZone,
     private route: ActivatedRoute,
-    private router: Router
+    private router: Router,
+    private publicContentService: PublicContentService
   ) {
     this.form = this.fb.group({
       nome: [
@@ -198,7 +202,7 @@ export class SocialLinksManager
 
   ngOnInit(): void {
     this.routeSub = this.route.queryParamMap.subscribe(params => {
-      const { pagina, tamanho, sort } = lerParametrosPagina(params);
+      const { pagina, tamanho, sort } = lerParametrosPagina(params, 5);
       this.pagina = pagina;
       this.tamanho = tamanho;
       this.sort = sort;
@@ -226,7 +230,10 @@ export class SocialLinksManager
       .listarAdmin(this.pagina, this.tamanho, this.sort)
       .then((resposta) => {
         this.ngZone.run(() => {
-          this.socialLinks = [...resposta.content];
+          this.socialLinks = resposta.content.map(socialLink => ({
+            ...socialLink,
+            icone: this.tratarImagem(socialLink.icone)
+          }));
           this.totalElementos = resposta.page.totalElements;
           this.totalPaginas = resposta.page.totalPages;
 
@@ -309,7 +316,7 @@ export class SocialLinksManager
 
       if (socialLink.icone) {
         this.iconePreviewUrl =
-          `${this.apiUrl}${socialLink.icone}`;
+          this.tratarImagem(socialLink.icone);
 
         this.nomeIconeSelecionado =
           socialLink.icone.split('/').pop() ?? '';
@@ -645,5 +652,9 @@ export class SocialLinksManager
         evento.linha
       );
     }
+  }
+
+  private tratarImagem(caminho: string | null | undefined): string {
+    return this.publicContentService.tratarUrlImagem(caminho);
   }
 }
