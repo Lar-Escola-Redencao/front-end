@@ -294,4 +294,27 @@ describe('Contrato de edição de usuários', () => {
     expect(component.arquivosSaude).toHaveLength(0);
     expect(component.erroArquivos).toContain('4');
   });
+
+  it('rejeita anexo de saúde acima de 7 MB e informa o novo limite', () => {
+    const arquivo = new File(['png'], 'laudo.png', { type: 'image/png' });
+    Object.defineProperty(arquivo, 'size', { value: 7 * 1024 * 1024 + 1 });
+    const input = { files: [arquivo], value: 'laudo.png' };
+    component.selecionarArquivosSaude({ target: input } as unknown as Event);
+    expect(component.arquivosSaude).toHaveLength(0);
+    expect(component.erroArquivos).toContain('7MB');
+    expect(input.value).toBe('');
+  });
+
+  it('aceita quatro anexos de 7 MB, deixando margem no limite total do back', () => {
+    const arquivos = [1, 2, 3, 4].map(id => {
+      const arquivo = new File(['png'], `laudo${id}.png`, { type: 'image/png' });
+      Object.defineProperty(arquivo, 'size', { value: 7 * 1024 * 1024 });
+      return arquivo;
+    });
+    const input = { files: arquivos, value: 'laudos' };
+    component.selecionarArquivosSaude({ target: input } as unknown as Event);
+    expect(component.arquivosSaude).toHaveLength(4);
+    expect(component.erroArquivos).toBe('');
+    expect(component.arquivosSaude.reduce((total, arquivo) => total + arquivo.size, 0)).toBe(28 * 1024 * 1024);
+  });
 });

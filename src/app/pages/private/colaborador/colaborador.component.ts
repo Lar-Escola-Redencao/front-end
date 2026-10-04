@@ -106,6 +106,7 @@ export class ColaboradorComponent
   erroLista = false;
 
   private routeSub?: Subscription;
+  private papelSub?: Subscription;
 
   modalAberto = false;
   modoEdicao = false;
@@ -248,6 +249,9 @@ export class ColaboradorComponent
         Validators.required
       ]
     });
+    this.papelSub = this.formColaborador.get('idPapel')!.valueChanges.subscribe(() => {
+      this.atualizarCampoUnidades();
+    });
   }
 
   ngOnInit(): void {
@@ -285,6 +289,7 @@ export class ColaboradorComponent
 
   ngOnDestroy(): void {
     this.routeSub?.unsubscribe();
+    this.papelSub?.unsubscribe();
   }
 
   get mensagemVazia(): string {
@@ -314,6 +319,17 @@ export class ColaboradorComponent
     return this.papeis.find(p => (p.nomePapel || p.nome || '').toUpperCase() === 'MONITOR')?.id ?? null;
   }
 
+  get papelSelecionadoAdministrador(): boolean {
+    const papel = this.papeis.find(p => p.id === this.formColaborador.get('idPapel')?.value);
+    return (papel?.nomePapel || papel?.nome || '').toUpperCase() === 'ADMINISTRADOR';
+  }
+
+  private atualizarCampoUnidades(): void {
+    const unidades = this.formColaborador.get('idsUnidades')!;
+    if (this.papelSelecionadoAdministrador) unidades.disable({ emitEvent: false });
+    else unidades.enable({ emitEvent: false });
+  }
+
   carregarPapeis(): void {
     this.papelService.listarTodos().subscribe({
       next: (dados: Papel[]) => {
@@ -326,6 +342,7 @@ export class ColaboradorComponent
         this.papeisDisponiveis = this.papeis
           .map((papel) => this.obterNomePapel(papel))
           .filter((nome): nome is string => Boolean(nome));
+        this.atualizarCampoUnidades();
         this.cdr.detectChanges();
       },
       error: (err: any) => {

@@ -52,8 +52,7 @@ import {
   mapearErrosFormulario,
   obterMensagemErro,
   validarArquivo,
-  validarExtensaoArquivo,
-  TAMANHO_MAXIMO_ARQUIVO_BYTES
+  validarExtensaoArquivo
 } from 'src/app/shared/utils/form-validations';
 import { formatarCpf, formatarTelefone } from 'src/app/shared/utils/masks';
 
@@ -213,7 +212,8 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
   arquivosSaudeSalvos: ArquivoSaudeDTO[] = [];
   arquivosSaudeCarregados = false;
   erroArquivos = '';
-  readonly limiteArquivo = TAMANHO_MAXIMO_ARQUIVO_BYTES;
+  // Quatro anexos somam até 28 MB, com margem para o multipart no limite de 30 MB do back.
+  readonly limiteArquivo = 7 * 1024 * 1024;
   readonly etapas = ['Dados pessoais', 'Contatos', 'Dados socioeconômicos', 'Dados complementares', 'Matrícula'];
   readonly periodosEscolares = [
     { value: 'MANHA', label: 'Manhã' }, { value: 'TARDE', label: 'Tarde' },

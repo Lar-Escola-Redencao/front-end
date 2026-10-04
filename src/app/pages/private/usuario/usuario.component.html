@@ -326,7 +326,7 @@
           <span class="upload-foto-titulo">{{ arquivosSaude.length ? (arquivosSaude.length === 1 ? '1 arquivo
             selecionado' : arquivosSaude.length + ' arquivos selecionados') : 'Anexe documentos de saúde (Receitas,
             Laudos, etc.)' }}</span>
-          <span class="upload-foto-formatos">PDF, JPG, PNG · até 4 arquivos</span>
+          <span class="upload-foto-formatos">PDF, JPG, PNG · até 4 arquivos de 7 MB cada</span>
         </div>
         <button type="button" class="btn-procurar" (click)="inputSaude.click()">Procurar</button>
         <input #inputSaude type="file" class="upload-foto-input" multiple accept=".pdf,.jpg,.jpeg,.png" tabindex="-1"

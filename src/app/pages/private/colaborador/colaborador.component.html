@@ -161,7 +161,7 @@
       {{ erros['idPapel'] }}
     </span>
 
-    <div class="form-group">
+    <div class="form-group" *ngIf="!papelSelecionadoAdministrador">
       <label class="unidades-label">Unidades vinculadas</label>
       <div class="unidades-box">
         <div *ngIf="unidadesDisponiveis.length === 0" class="sem-unidades">
