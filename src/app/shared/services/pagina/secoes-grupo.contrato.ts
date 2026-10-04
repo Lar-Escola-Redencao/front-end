@@ -39,6 +39,7 @@ export const CONTRATO_SECOES_GRUPO = {
     titulo: 'titulo',
     conteudo: 'conteudo',
     grupo: 'grupo',
+    ativo: 'ativo',
   },
 
   /** Nome da parte do multipart que carrega o arquivo. */
@@ -54,5 +55,6 @@ export const CONTRATO_SECOES_GRUPO = {
     conteudo: 'conteudo',
     imagem: 'imagem',
     grupo: 'grupo',
+    ativo: 'ativo',
   },
 } as const;

@@ -9,6 +9,7 @@ export interface SecaoGrupo {
   titulo: string | null;
   conteudo: string | null;
   imagem: string | null;
+  ativo: boolean;
 }
 
 /**
@@ -20,6 +21,7 @@ export interface SalvarSecaoGrupoDTO {
   titulo?: string;
   conteudo?: string;
   imagem?: File;
+  ativo?: boolean;
 }
 
 const { rotas, camposEnvio, camposResposta, parteArquivo } = CONTRATO_SECOES_GRUPO;
@@ -76,6 +78,10 @@ export class SecoesGrupoService {
 
     formData.append(camposEnvio.grupo, dto.grupo);
 
+    if (dto.ativo !== undefined) {
+      formData.append(camposEnvio.ativo, String(dto.ativo));
+    }
+
     if (dto.imagem) {
       formData.append(parteArquivo, dto.imagem);
     }
@@ -90,6 +96,7 @@ export class SecoesGrupoService {
       titulo: item[camposResposta.titulo] ?? null,
       conteudo: item[camposResposta.conteudo] ?? null,
       imagem: item[camposResposta.imagem] ?? null,
+      ativo: item[camposResposta.ativo] ?? true,
     };
   }
 }

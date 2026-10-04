@@ -14,7 +14,7 @@
         <mat-option value="redes-sociais">Redes Sociais</mat-option>
         <mat-option value="transparencia">Transparência</mat-option>
         <mat-option value="sobre">Conheça a OSC</mat-option>
-        @for (pagina of paginasSecoes; track pagina.secao) {
+        @for (pagina of captacaoRecursos; track pagina.secao) {
           <mat-option [value]="pagina.secao">{{ pagina.rotulo }}</mat-option>
         }
       </mat-select>
@@ -43,10 +43,10 @@
         <app-sobre></app-sobre>
     }
     @default{
-        @if (paginaSecoesSelecionada; as pagina) {
+        @if (captacaoRecursosSelecionada; as pagina) {
             <!-- O @for de um item só recria o componente ao trocar entre páginas configuradas. -->
             @for (paginaAtual of [pagina]; track paginaAtual.secao) {
-                <app-pagina-secoes [config]="paginaAtual"></app-pagina-secoes>
+                <app-captacao-recursos [config]="paginaAtual"></app-captacao-recursos>
             }
         } @else {
             <p class="mensagem-vazia">Nenhuma página selecionada</p>

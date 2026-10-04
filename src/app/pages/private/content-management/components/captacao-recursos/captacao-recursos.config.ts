@@ -20,7 +20,7 @@ export interface CampoTextoConfig {
   rotulo: string;
   obrigatorio: boolean;
   /** `telefone` aplica máscara na tela e envia só os dígitos. */
-  tipo: 'texto' | 'telefone';
+  tipo: 'texto' | 'telefone' | 'telefoneOuEmail';
 }
 
 export interface CampoImagemConfig {
@@ -48,9 +48,11 @@ export interface GrupoSecaoConfig {
   permiteExcluir?: boolean;
   /** Só na exibição `tabela`: imagem antes dos campos de texto, na tabela e no modal. */
   imagemPrimeiro?: boolean;
+  /** Mostra e envia a flag de exibição do item. */
+  controlaAtivo?: boolean;
 }
 
-export interface PaginaSecoesConfig {
+export interface CaptacaoRecursosConfig {
   /** Segmento da rota /dashboard/conteudo-publico/:secao. */
   secao: string;
   /** Texto exibido no dropdown do CMS. */
@@ -59,27 +61,12 @@ export interface PaginaSecoesConfig {
   grupos: GrupoSecaoConfig[];
 }
 
-export const PAGINAS_SECOES_CONFIG: PaginaSecoesConfig[] = [
+export const CAPTACAO_RECURSOS_CONFIG: CaptacaoRecursosConfig[] = [
   {
     secao: 'grafica',
     rotulo: 'Gráfica',
     idPagina: ID_PAGINA_GRAFICA,
     grupos: [
-      {
-        grupo: GRUPOS_SECAO.telefone,
-        rotuloAba: 'Telefone',
-        exibicao: 'formulario',
-        nomeItem: 'telefone',
-        campos: [
-          { campo: 'titulo', rotulo: 'WhatsApp', obrigatorio: true, tipo: 'telefone' },
-          {
-            campo: 'conteudo',
-            rotulo: 'Telefone alternativo',
-            obrigatorio: false,
-            tipo: 'telefone',
-          },
-        ],
-      },
       {
         grupo: GRUPOS_SECAO.produtos,
         rotuloAba: 'Produtos',
@@ -87,6 +74,22 @@ export const PAGINAS_SECOES_CONFIG: PaginaSecoesConfig[] = [
         nomeItem: 'produto',
         campos: [{ campo: 'titulo', rotulo: 'Nome do produto', obrigatorio: true, tipo: 'texto' }],
         imagem: { rotulo: 'Imagem do produto', obrigatoria: true },
+        controlaAtivo: true,
+      },
+      {
+        grupo: GRUPOS_SECAO.telefone,
+        rotuloAba: 'Contato',
+        exibicao: 'formulario',
+        nomeItem: 'contato',
+        campos: [
+          { campo: 'titulo', rotulo: 'WhatsApp', obrigatorio: true, tipo: 'telefone' },
+          {
+            campo: 'conteudo',
+            rotulo: 'Contato secundário (Telefone ou E-mail)',
+            obrigatorio: false,
+            tipo: 'telefoneOuEmail',
+          },
+        ],
       },
     ],
   },

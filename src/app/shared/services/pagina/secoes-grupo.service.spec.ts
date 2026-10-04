@@ -48,7 +48,14 @@ describe('SecoesGrupoService', () => {
     ]);
 
     expect(resultado).toEqual([
-      { id: 2, grupo: 'produtos', titulo: 'Caneca', conteudo: null, imagem: '/uploads/caneca.png' },
+      {
+        id: 2,
+        grupo: 'produtos',
+        titulo: 'Caneca',
+        conteudo: null,
+        imagem: '/uploads/caneca.png',
+        ativo: true,
+      },
     ]);
   });
 
@@ -65,6 +72,15 @@ describe('SecoesGrupoService', () => {
     expect(corpo.get('grupo')).toBe('telefone');
     expect(corpo.has('imagem')).toBe(false);
     req.flush({ id: 1, grupo: 'telefone', titulo: '11999998888' });
+  });
+
+  it('sends ativo when provided', () => {
+    service.criar(3, { grupo: 'produtos', titulo: 'Caneca', ativo: false }).subscribe();
+
+    const req = httpMock.expectOne(`${base}/3/secoes`);
+    const corpo = req.request.body as FormData;
+    expect(corpo.get('ativo')).toBe('false');
+    req.flush({ id: 1, grupo: 'produtos', titulo: 'Caneca', ativo: false });
   });
 
   it('updates through PUT on the section id, sending the file in the imagem part', () => {

@@ -10,10 +10,10 @@ import {
   validarObrigatorioSemEspacos,
   validarTelefone,
 } from 'src/app/shared/utils/form-validations';
-import { formatarTelefone } from 'src/app/shared/utils/masks';
+import { formatarTelefone, pareceEmail } from 'src/app/shared/utils/masks';
 import { environment } from 'src/environments/environment';
 
-import { CampoTextoConfig, GrupoSecaoConfig } from './paginas-secoes.config';
+import { CampoTextoConfig, GrupoSecaoConfig } from './captacao-recursos.config';
 
 /** Nome do controle de arquivo nos formulários (o nome enviado ao back vem do contrato). */
 export const CONTROLE_IMAGEM = 'imagem';
@@ -22,6 +22,7 @@ export const MENSAGEM_IMAGEM_OBRIGATORIA = 'Selecione uma imagem.';
 
 /** "(00) 00000-0000" */
 const TAMANHO_TELEFONE_MASCARADO = 15;
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /** Monta o FormGroup só com os campos que o grupo usa, a partir da configuração. */
 export function criarFormularioGrupo(fb: FormBuilder, grupo: GrupoSecaoConfig): FormGroup {
@@ -36,6 +37,8 @@ export function criarFormularioGrupo(fb: FormBuilder, grupo: GrupoSecaoConfig): 
 
     if (campo.tipo === 'telefone') {
       validadores.push(validarTelefone());
+    } else if (campo.tipo === 'telefoneOuEmail') {
+      validadores.push(validarTelefoneOuEmail());
     } else if (campo.campo === 'titulo') {
       const { minimo, maximo } = CONTRATO_SECOES_GRUPO.tamanhoTitulo;
       validadores.push(Validators.minLength(minimo), Validators.maxLength(maximo));
@@ -46,6 +49,10 @@ export function criarFormularioGrupo(fb: FormBuilder, grupo: GrupoSecaoConfig): 
 
   if (grupo.imagem) {
     controles[CONTROLE_IMAGEM] = [null, [validarImagem()]];
+  }
+
+  if (grupo.controlaAtivo) {
+    controles['ativo'] = [true, []];
   }
 
   return fb.group(controles);
@@ -60,11 +67,18 @@ export function valoresIniciaisGrupo(
 
   for (const campo of grupo.campos) {
     const valor = secao?.[campo.campo] ?? '';
-    valores[campo.campo] = campo.tipo === 'telefone' ? formatarTelefone(valor) : valor;
+    valores[campo.campo] =
+      campo.tipo === 'telefone' || (campo.tipo === 'telefoneOuEmail' && !pareceEmail(valor))
+        ? formatarTelefone(valor)
+        : valor;
   }
 
   if (grupo.imagem) {
     valores[CONTROLE_IMAGEM] = null;
+  }
+
+  if (grupo.controlaAtivo) {
+    valores['ativo'] = secao?.ativo ?? true;
   }
 
   return valores;
@@ -72,7 +86,10 @@ export function valoresIniciaisGrupo(
 
 /** Só os campos de texto, pra comparar com o estado original sem o File. */
 export function valoresTextoGrupo(grupo: GrupoSecaoConfig, form: FormGroup): string {
-  return JSON.stringify(grupo.campos.map((campo) => form.get(campo.campo)?.value ?? ''));
+  return JSON.stringify([
+    ...grupo.campos.map((campo) => form.get(campo.campo)?.value ?? ''),
+    ...(grupo.controlaAtivo ? [form.get('ativo')?.value ?? true] : []),
+  ]);
 }
 
 /**
@@ -93,6 +110,10 @@ export function montarDtoGrupo(
 
   if (grupo.imagem && arquivo) {
     dto.imagem = arquivo;
+  }
+
+  if (grupo.controlaAtivo) {
+    dto.ativo = form.get('ativo')?.value ?? true;
   }
 
   return dto;
@@ -144,6 +165,49 @@ export function aplicarMascaraTelefone(controle: AbstractControl | null): void {
   if (formatado !== controle.value) {
     controle.setValue(formatado, { emitEvent: false });
   }
+}
+
+export function aplicarMascaraTelefoneOuEmail(controle: AbstractControl | null): void {
+  if (!controle) {
+    return;
+  }
+
+  const valor = String(controle.value ?? '');
+
+  if (pareceEmail(valor)) {
+    const limpo = removerMascaraTelefoneSeVirouEmail(valor);
+    if (limpo !== valor) {
+      controle.setValue(limpo, { emitEvent: false });
+    }
+    return;
+  }
+
+  aplicarMascaraTelefone(controle);
+}
+
+function removerMascaraTelefoneSeVirouEmail(valor: string): string {
+  const prefixoNumerico = valor.match(/^[\d()\-\s]*/)?.[0] ?? '';
+  const resto = valor.slice(prefixoNumerico.length);
+  return prefixoNumerico.replace(/\D/g, '') + resto;
+}
+
+export function validarTelefoneOuEmail(): ValidatorFn {
+  return (control: AbstractControl) => {
+    const valor = String(control.value ?? '').trim();
+
+    if (!valor) {
+      return null;
+    }
+
+    if (pareceEmail(valor)) {
+      return EMAIL_PATTERN.test(valor) ? null : { email: true };
+    }
+
+    const digitos = valor.replace(/\D/g, '');
+    return digitos.length === 10 || digitos.length === 11
+      ? null
+      : { telefoneInvalido: { digitos } };
+  };
 }
 
 /** Mesma regra das demais seções do CMS: caminho relativo ganha o apiUrl na frente. */
