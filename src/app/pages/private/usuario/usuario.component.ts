@@ -226,8 +226,8 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
   ];
   readonly tiposMoradia = [
     { value: 'ALUGADA', label: 'Alugada' }, { value: 'PROPRIA', label: 'Própria' },
-    { value: 'APARTAMENTO_ALUGADO', label: 'Apartamento alugado' },
-    { value: 'APARTAMENTO_PROPRIO', label: 'Apartamento próprio' }, { value: 'OUTRO', label: 'Outro' }
+    { value: 'APARTAMENTO_ALUGADO', label: 'Apto. alugado' },
+    { value: 'APARTAMENTO_PROPRIO', label: 'Apto. próprio' }, { value: 'OUTRO', label: 'Outro' }
   ];
   readonly escolaridades = [
     { value: 'ANALFABETO', label: 'Analfabeto' }, { value: 'ALFABETIZADO', label: 'Alfabetizado' },
