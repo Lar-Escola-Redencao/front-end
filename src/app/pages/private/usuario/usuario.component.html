@@ -90,7 +90,8 @@
       <h3>Endereço</h3>
       <div class="step-grid">
         <mat-form-field appearance="outline"><mat-label>CEP</mat-label><input matInput
-            formControlName="cep"></mat-form-field>
+            formControlName="cep" inputmode="numeric" maxlength="9"
+            (input)="aplicarMascaraCep($event)"></mat-form-field>
         <mat-form-field appearance="outline"><mat-label>Bairro*</mat-label><input matInput
             formControlName="bairro"><mat-error>{{ mensagemErro(formUsuario.get('bairro'))
             }}</mat-error></mat-form-field>

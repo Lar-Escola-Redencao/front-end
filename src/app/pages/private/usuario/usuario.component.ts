@@ -54,7 +54,7 @@ import {
   validarArquivo,
   validarExtensaoArquivo
 } from 'src/app/shared/utils/form-validations';
-import { formatarCpf, formatarTelefone } from 'src/app/shared/utils/masks';
+import { formatarCep, formatarCpf, formatarTelefone } from 'src/app/shared/utils/masks';
 
 import {
   CampoOrdenacao,
@@ -741,7 +741,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
           nomeCompleto: dadosCompletos.nomeCompleto,
           dataNascimento: dadosCompletos.dataNascimento ? dadosCompletos.dataNascimento.split('T')[0] : '',
           endereco: dadosCompletos.endereco,
-          bairro: dadosCompletos.bairro || '', cep: dadosCompletos.cep || '',
+          bairro: dadosCompletos.bairro || '', cep: formatarCep(dadosCompletos.cep),
           escola: dadosCompletos.escola || '', periodoEscolar: dadosCompletos.periodoEscolar || '',
           serieEscolar: dadosCompletos.serieEscolar || '', raEscolar: dadosCompletos.raEscolar || '',
           cadUnico: dadosCompletos.cadUnico || '',
@@ -1178,6 +1178,11 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
     if (e['servidor']) return typeof e['servidor'] === 'string' ? e['servidor'] : (chaveServidor && this.erros[chaveServidor]) || 'Valor inválido.';
     if (e['minlength'] && rotulo) return `${rotulo} incompleto.`;
     return obterMensagemErro(e);
+  }
+
+  aplicarMascaraCep(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.formUsuario.get('cep')?.setValue(formatarCep(input.value), { emitEvent: false });
   }
 
   aplicarMascaraCpf(event: Event) {
