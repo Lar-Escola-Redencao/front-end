@@ -49,6 +49,7 @@ import {
 } from 'src/app/shared/models/contato.model';
 import { Alertas } from 'src/app/shared/utils/alerts';
 import {
+  TAMANHO_MAXIMO_ARQUIVO_BYTES,
   mapearErrosFormulario,
   obterMensagemErro,
   validarArquivo,
@@ -212,8 +213,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
   arquivosSaudeSalvos: ArquivoSaudeDTO[] = [];
   arquivosSaudeCarregados = false;
   erroArquivos = '';
-  // Quatro anexos somam até 28 MB, com margem para o multipart no limite de 30 MB do back.
-  readonly limiteArquivo = 7 * 1024 * 1024;
+  readonly limiteArquivo = TAMANHO_MAXIMO_ARQUIVO_BYTES;
   readonly etapas = ['Dados pessoais', 'Contatos', 'Dados socioeconômicos', 'Dados complementares', 'Matrícula'];
   readonly periodosEscolares = [
     { value: 'MANHA', label: 'Manhã' }, { value: 'TARDE', label: 'Tarde' },
@@ -246,7 +246,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
     { campo: 'utilizaCarro', valor: 'gastoCarro', label: 'Carro' },
     { campo: 'utilizaMoto', valor: 'gastoMoto', label: 'Moto' },
     { campo: 'utilizaTransportePublico', valor: 'gastoTransportePublico', label: 'Transporte público' },
-    { campo: 'utilizaVan', valor: 'gastoVan', label: 'Van / transporte particular' },
+    { campo: 'utilizaVan', valor: 'gastoVan', label: 'Van / Transporte particular' },
     { campo: 'andandoOuBicicleta', valor: '', label: 'Caminhando / bicicleta' }
   ];
   readonly perguntasSaude = [
@@ -575,6 +575,14 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
         controle.updateValueAndValidity();
       }));
     }
+    for (const transporte of this.transportes.filter(item => item.valor)) {
+      this.formSubs.push(this.formUsuario.get(`complementares.${transporte.campo}`)!.valueChanges.subscribe(ativo => {
+        const controle = this.formUsuario.get(`complementares.${transporte.valor}`)!;
+        controle.setValidators(ativo ? [Validators.required, Validators.min(0)] : []);
+        if (!ativo) controle.setValue(null, { emitEvent: false });
+        controle.updateValueAndValidity();
+      }));
+    }
 
     const usarOutroDocumentoSub = this.formUsuario.get('usarOutroDocumento')?.valueChanges.subscribe((usarOutro) => {
       const cpfCtrl = this.formUsuario.get('cpf');
@@ -637,6 +645,19 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
 
   get totalDespesasMensais(): number {
     return this.despesas.reduce((total, despesa) => total + (Number(this.formUsuario.get('socioeconomico.' + despesa.campo)?.value) || 0), 0);
+  }
+
+  get conflitoPeriodoMatricula(): boolean {
+    const turmaId = this.formUsuario.get('idTurma')?.value;
+    const periodoEscolar = this.formUsuario.get('periodoEscolar')?.value;
+    const turma = this.turmasDisponiveis.find(item => item.id === turmaId);
+    return !!turma?.periodo && !!periodoEscolar && turma.periodo === periodoEscolar;
+  }
+
+  get avisoConflitoPeriodoMatricula(): string {
+    const periodo = this.formUsuario.get('periodoEscolar')?.value;
+    const label = this.periodosEscolares.find(item => item.value === periodo)?.label?.toLowerCase() || 'mesmo periodo';
+    return `Conflito de horário identificado. O estudante declarou que estuda de ${label}, e a turma selecionada também e nesse período.`;
   }
 
   selecionarArquivosSaude(event: Event): void {
@@ -1031,17 +1052,22 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
   alternarBuscaContato(index: number, buscar: boolean, preservarSelecionado = false): void {
     const grupo = this.contatosArray.at(index) as FormGroup;
     grupo.get('buscarExistente')?.setValue(buscar, { emitEvent: false });
-    if (!preservarSelecionado || !grupo.get('id')?.value) {
+    const temSelecionado = !!grupo.get('id')?.value;
+    const deveLimparContato = !preservarSelecionado && temSelecionado;
+    if (deveLimparContato) {
       this.contatosOriginais.delete(grupo);
       grupo.get('id')?.setValue(null, { emitEvent: false });
       grupo.get('busca')?.setValue('', { emitEvent: false });
       grupo.patchValue({ nomeCompleto: '', telefone: '', email: '', endereco: '', cpf: '', localTrabalho: '' }, { emitEvent: false });
-      this.opcoesAutocomplete[index] = [];
       for (const campo of this.camposCompartilhadosContato) {
         grupo.get(campo)?.markAsUntouched();
         grupo.get(campo)?.markAsPristine();
       }
     }
+    if (buscar && !preservarSelecionado && !temSelecionado) {
+      grupo.get('busca')?.setValue('', { emitEvent: false });
+    }
+    this.opcoesAutocomplete[index] = [];
     for (const campo of ['nomeCompleto', 'telefone', 'email', 'endereco', 'cpf', 'localTrabalho']) {
       const controle = grupo.get(campo)!;
       if (buscar && !grupo.get('id')?.value) controle.disable({ emitEvent: false });

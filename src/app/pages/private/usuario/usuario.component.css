@@ -797,6 +797,10 @@ h1 {
   display: none;
 }
 
+.stepper-indicador .step.linha-ativa:not(:last-child)::after {
+  background: var(--primary-color);
+}
+
 .cadastro-form {
   gap: 0;
 }
@@ -806,12 +810,16 @@ h1 {
 }
 
 .cadastro-form h3 {
-  margin: 6px 0 1px;
+  margin: 20px 0 1px;
   color: #222;
   font-family: var(--fonte-texto);
   font-size: 1rem;
   font-weight: 700;
   text-align: left;
+}
+
+.cadastro-form .etapa-container h3:first-of-type {
+  margin-top: 0;
 }
 
 .cadastro-form .step-grid {
@@ -863,6 +871,41 @@ h1 {
   padding-bottom: 10px;
 }
 
+:host ::ng-deep app-modal-layout.cadastro-modal .currency-field .mat-mdc-form-field-infix {
+  position: relative;
+}
+
+:host ::ng-deep app-modal-layout.cadastro-modal .currency-field .mat-mdc-form-field-infix::before {
+  content: 'R$';
+  position: absolute;
+  left: 0;
+  top: 23px;
+  color: #242424;
+  font-family: var(--fonte-texto);
+  font-size: 0.95rem;
+  line-height: 1;
+  opacity: 0;
+  pointer-events: none;
+}
+
+:host ::ng-deep app-modal-layout.cadastro-modal .currency-field:focus-within .mat-mdc-form-field-infix::before,
+:host ::ng-deep app-modal-layout.cadastro-modal .currency-field.tem-valor .mat-mdc-form-field-infix::before {
+  opacity: 1;
+  margin-top: 2px;
+}
+
+:host ::ng-deep app-modal-layout.cadastro-modal .currency-field:focus-within input.mat-mdc-input-element,
+:host ::ng-deep app-modal-layout.cadastro-modal .currency-field.tem-valor input.mat-mdc-input-element {
+  box-sizing: border-box !important;
+  padding-left: 24px !important;
+}
+
+:host ::ng-deep app-modal-layout.cadastro-modal .currency-field:focus-within input,
+:host ::ng-deep app-modal-layout.cadastro-modal .currency-field.tem-valor input {
+  box-sizing: border-box !important;
+  padding-left: 24px !important;
+}
+
 :host ::ng-deep app-modal-layout.cadastro-modal .mat-mdc-form-field.mat-form-field-disabled .mdc-text-field {
   background: #d5d5d5;
 }
@@ -911,40 +954,43 @@ h1 {
 
 .cadastro-form .contato-card,
 .cadastro-form .familiar-card {
-  margin: 0 0 8px;
+  margin: 0 0 14px;
   padding: 0;
   border: 0;
-  background: #fff;
-  overflow: visible;
+  border-radius: 12px;
+  background: var(--branco);
+  box-shadow: var(--sombra-padrao);
+  overflow: hidden;
 }
 
 .cadastro-form .contato-card.compacto,
 .cadastro-form .familiar-card.compacto {
-  border: 1px solid #d5d5d5;
-  border-radius: 5px;
+  border: 0;
+  border-radius: 12px;
 }
 
 .cadastro-form .contato-resumo,
 .cadastro-form .familiar-resumo {
   display: flex;
-  min-height: 36px;
+  min-height: 60px;
   align-items: center;
   justify-content: space-between;
-  padding: 4px 0;
-  background: #fff;
+  box-sizing: border-box;
+  padding: 14px 16px;
+  background: var(--branco);
   color: #242424;
   cursor: pointer;
 }
 
 .cadastro-form .compacto .contato-resumo,
 .cadastro-form .compacto .familiar-resumo {
-  min-height: 46px;
-  padding: 9px 12px;
+  min-height: 60px;
+  padding: 14px 16px;
 }
 
 .cadastro-form .contato-resumo:hover,
 .cadastro-form .familiar-resumo:hover {
-  background: #fff;
+  background: #fafafa;
 }
 
 .cadastro-form .contato-detalhe,
@@ -952,8 +998,8 @@ h1 {
   display: flex;
   flex-direction: column;
   gap: 9px;
-  padding: 0;
-  border: 0;
+  padding: 12px 16px 16px;
+  border-top: 1px solid #eee;
 }
 
 .cadastro-form .aviso-contato-edicao {
@@ -974,13 +1020,28 @@ h1 {
 }
 
 .cadastro-form .resumo-acoes .btn-remover-icon {
-  width: 28px;
-  height: 28px;
-  padding: 2px;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: rgb(182, 43, 43);
 }
 
 .cadastro-form .resumo-acoes .btn-remover-icon mat-icon {
-  color: #bc3434;
+  width: 21px;
+  height: 21px;
+  color: rgb(182, 43, 43) !important;
+  font-size: 21px;
+}
+
+.cadastro-form .resumo-acoes .btn-remover-icon:hover {
+  background: transparent;
+  color: rgb(104, 5, 5);
+}
+
+.cadastro-form .resumo-acoes .btn-remover-icon:hover mat-icon {
+  color: rgb(104, 5, 5) !important;
 }
 
 .cadastro-form .contato-cpf-repetido {
@@ -1070,15 +1131,10 @@ h1 {
   align-items: start;
 }
 
-:host ::ng-deep app-modal-layout.cadastro-modal .despesas-grid .mat-mdc-form-field:not(.mat-form-field-should-float) .mat-mdc-form-field-text-prefix,
-:host ::ng-deep app-modal-layout.cadastro-modal .opcao-linha .mat-mdc-form-field:not(.mat-form-field-should-float) .mat-mdc-form-field-text-prefix {
-  display: none;
-}
-
 .cadastro-form .total-despesas {
   align-self: flex-end;
-  margin: 0;
-  font-size: 0.76rem;
+  margin-top: 10px;
+  font-size: 0.85rem;
 }
 
 .cadastro-form .total-despesas strong {
@@ -1126,39 +1182,66 @@ h1 {
   grid-template-columns: 1fr;
 }
 
-.cadastro-form .arquivos-lista {
+.arquivos-lista {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 3px;
+  flex-wrap: wrap;         
+  justify-content: center;
+  gap: 12px;
+  margin-top: 8px;
 }
-
-.cadastro-form .arquivo-selecionado {
+.arquivo-selecionado {
   position: relative;
-  display: flex;
-  width: 105px;
-  min-height: 80px;
-  align-items: flex-start;
-  padding: 9px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 0.73rem;
-  overflow-wrap: anywhere;
+  display: block;
+  box-sizing: border-box;
+  width: 140px;             
+  height: 140px;            
+  padding: 12px;
+  border: 1px solid #d5d5d5;
+  border-radius: 12px;
+  text-align: center;
 }
 
-.cadastro-form .arquivo-selecionado button {
+.arquivo-tipo-icone {
+  display: block;
+  margin: 32px auto 0; 
+  color: var(--primary-color);
+  font-size: 36px;     
+  width: 36px;
+  height: 36px;
+}
+
+.arquivo-selecionado span {
   position: absolute;
-  top: 2px;
-  right: 2px;
-  border: 0;
-  background: #fff;
-  cursor: pointer;
+  bottom: 12px;
+  left: 8px;
+  right: 8px;
+  font-size: 0.85rem;
+  color: #888;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-break: break-word;
 }
 
-.cadastro-form .arquivo-selecionado button mat-icon {
-  width: 16px;
-  height: 16px;
-  font-size: 16px;
+.arquivo-selecionado button {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--error-color);
+  cursor: pointer;
+  z-index: 2;
+}
+
+.arquivo-selecionado button mat-icon {
+  font-size: 22px;
+  width: 22px;
+  height: 22px;
 }
 
 .cadastro-acoes {
@@ -1245,14 +1328,31 @@ h1 {
   position: relative;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
   box-sizing: border-box;
-  min-height: 55px;
+  width: 100%;
+  min-height: 72px;
   margin-top: 5px;
-  padding: 10px 14px 10px 12px;
-  border: 1px dashed #d9d9d9;
-  border-radius: 6px;
+  padding: 12px 14px;
+  border: 1px dashed #dcdcdc;
+  border-radius: 8px;
   background: #fafafa;
+  text-align: center;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.cadastro-form .upload-foto:hover {
+  border-color: var(--primary-hover-color, #4b80d5);
+  background-color: #f7faff;
+}
+
+.cadastro-form .upload-foto.upload-foto-selecionada {
+  border-color: var(--primary-color, #3486e5);
+  background-color: #f7faff;
 }
 
 .cadastro-form .upload-foto+.error-text {
@@ -1264,20 +1364,20 @@ h1 {
 
 .cadastro-form .upload-foto-icone {
   display: inline-flex;
-  flex: 0 0 32px;
-  width: 32px;
-  height: 32px;
+  flex: 0 0 42px;
+  width: 42px;
+  height: 42px;
   align-items: center;
   justify-content: center;
-  border-radius: 6px;
-  background: #e8f0fc;
-  color: var(--primary-color, #3486e5);
+  border-radius: 8px;
+  background: #eef4fc;
+  color: var(--primary-color, #4b80d5);
 }
 
 .cadastro-form .upload-foto-icone mat-icon {
-  width: 20px;
-  height: 20px;
-  font-size: 20px;
+  width: 24px;
+  height: 24px;
+  font-size: 24px;
 }
 
 .cadastro-form .upload-foto-textos {
@@ -1286,45 +1386,47 @@ h1 {
   min-width: 0;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
+  gap: 3px;
   text-align: center;
 }
 
 .cadastro-form .upload-foto-titulo {
   max-width: 100%;
   overflow: hidden;
-  color: #2b2b2b;
-  font-family: var(--fonte-texto);
-  font-size: 0.8rem;
-  line-height: 1.2;
+  color: #333;
+  font-family: 'Poppins', var(--fonte-texto);
+  font-size: 0.85rem;
+  font-weight: 500;
+  line-height: 1.25;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .cadastro-form .upload-foto-formatos {
-  color: #9a9a9a;
-  font-family: var(--fonte-texto);
-  font-size: 0.7rem;
+  color: #888;
+  font-family: 'Poppins', var(--fonte-texto);
+  font-size: 0.75rem;
   line-height: 1.2;
 }
 
 .cadastro-form .btn-procurar {
   flex: 0 0 auto;
-  height: 28px;
-  padding: 0 14px;
+  min-height: 32px;
+  padding: 7px 12px;
   border: 0;
-  border-radius: 4px;
+  border-radius: 6px;
   background: var(--primary-color, #3486e5);
   color: #fff;
   cursor: pointer;
   font-family: var(--fonte-texto);
   font-size: 0.85rem;
   font-weight: 500;
-  transition: filter 0.2s;
+  transition: background-color 0.15s ease;
 }
 
+.cadastro-form .upload-foto:hover .btn-procurar,
 .cadastro-form .btn-procurar:hover {
-  filter: brightness(0.94);
+  background: var(--primary-hover-color, #1661bd);
 }
 
 .cadastro-form .btn-procurar:focus-visible {
@@ -1345,6 +1447,16 @@ h1 {
   display: flex;
   justify-content: center;
   margin-top: 12px;
+}
+
+.cadastro-form .aviso-conflito-matricula {
+  display: block;
+  margin: 2px 0 0 2px;
+  color: var(--mat-form-field-error-text-color, #d32f2f);
+  font-family: var(--fonte-texto);
+  font-size: 0.78rem;
+  line-height: 1.35;
+  text-align: left;
 }
 
 /*  Selects do cadastro  */

@@ -32,10 +32,14 @@
 @if (modalAberto) {
 <app-modal-layout class="cadastro-modal" [class.tremer]="modalTremendo"
   [titulo]="modoEdicao ? 'Editar usuário' : 'Novo usuário'" (closed)="fecharModal()">
+  
   <div class="stepper-indicador" aria-label="Etapas do cadastro">
     <ng-container *ngFor="let etapa of etapas; let i = index">
-      <div class="step" [class.ativo]="etapaModal >= i + 1" [attr.aria-current]="etapaModal === i + 1 ? 'step' : null">
-        <div class="step-numero">{{ i + 1 }}</div>
+    <div class="step" 
+     [class.ativo]="etapaModal >= i + 1" 
+     [class.linha-ativa]="etapaModal > i + 1" 
+     [attr.aria-current]="etapaModal === i + 1 ? 'step' : null">
+      <div class="step-numero">{{ i + 1 }}</div>
         <span class="step-texto">
           <ng-container *ngIf="etapa.startsWith('Dados '); else tituloUnico">
             <span>Dados</span>
@@ -116,15 +120,15 @@
         <mat-form-field appearance="outline"><mat-label>RA (Registro do Aluno)</mat-label><input matInput
             formControlName="raEscolar"></mat-form-field>
       </div>
-      <div class="upload-foto" [class.upload-foto-selecionada]="!!fotoSelecionada">
+      <div class="upload-foto" [class.upload-foto-selecionada]="!!fotoSelecionada" (click)="inputFoto.click()">
         <span class="upload-foto-icone" aria-hidden="true"><mat-icon>upload_file</mat-icon></span>
         <div class="upload-foto-textos">
           <span class="upload-foto-titulo" [attr.title]="fotoSelecionada?.name || null">{{ fotoSelecionada?.name ||
             'Selecione a foto de perfil' }}</span>
           <span class="upload-foto-formatos">PNG, JPEG, JPG</span>
         </div>
-        <button type="button" class="btn-procurar" (click)="inputFoto.click()">Procurar</button>
-        <input #inputFoto type="file" class="upload-foto-input" accept="image/png,image/jpeg" tabindex="-1"
+        <button type="button" class="btn-procurar" (click)="$event.stopPropagation(); inputFoto.click()">Procurar</button>
+        <input #inputFoto type="file" class="upload-foto-input" accept="image/png,image/jpeg" tabindex="-1" (click)="$event.stopPropagation()"
           (change)="onFotoSelecionada($event)">
       </div>
       <span class="error-text" *ngIf="erros['foto']">{{ erros['foto'] }}</span>
@@ -235,10 +239,12 @@
                   formControlName="escolaridade"><mat-option *ngFor="let e of escolaridades" [value]="e.value">{{
                     e.label }}</mat-option></mat-select><mat-error>{{ mensagemErro(membro.get('escolaridade'))
                   }}</mat-error></mat-form-field>
-              <mat-form-field appearance="outline"><mat-label>Renda (R$)</mat-label><input matInput type="number"
+              <mat-form-field appearance="outline" class="currency-field"
+                [class.tem-valor]="membro.get('renda')?.value !== null && membro.get('renda')?.value !== ''"><mat-label>Renda</mat-label><input matInput type="number"
                   min="0" formControlName="renda"><mat-error>{{ mensagemErro(membro.get('renda'))
                   }}</mat-error></mat-form-field>
-              <mat-form-field appearance="outline"><mat-label>Benefícios (R$)</mat-label><input matInput type="number"
+              <mat-form-field appearance="outline" class="currency-field"
+                [class.tem-valor]="membro.get('beneficios')?.value !== null && membro.get('beneficios')?.value !== ''"><mat-label>Benefícios</mat-label><input matInput type="number"
                   min="0" formControlName="beneficios"><mat-error>{{ mensagemErro(membro.get('beneficios'))
                   }}</mat-error></mat-form-field>
             </div>
@@ -258,25 +264,23 @@
         </fieldset>
         <mat-form-field
           *ngIf="['ALUGADA', 'APARTAMENTO_ALUGADO'].includes(formUsuario.get('socioeconomico.tipoMoradia')?.value)"
-          appearance="outline"><mat-label>Valor do aluguel*</mat-label><input matInput type="number" min="0"
+          appearance="outline" class="currency-field" [class.tem-valor]="formUsuario.get('socioeconomico.valorAluguel')?.value !== null && formUsuario.get('socioeconomico.valorAluguel')?.value !== ''"><mat-label>Valor do aluguel*</mat-label><input matInput type="number" min="0"
             formControlName="valorAluguel"><mat-error>{{ mensagemErro(formUsuario.get('socioeconomico.valorAluguel'))
             }}</mat-error></mat-form-field>
         <mat-form-field
           *ngIf="['PROPRIA', 'APARTAMENTO_PROPRIO'].includes(formUsuario.get('socioeconomico.tipoMoradia')?.value)"
-          appearance="outline"><mat-label>Valor do financiamento</mat-label><input matInput type="number" min="0"
+          appearance="outline" class="currency-field" [class.tem-valor]="formUsuario.get('socioeconomico.valorFinanciamento')?.value !== null && formUsuario.get('socioeconomico.valorFinanciamento')?.value !== ''"><mat-label>Valor do financiamento (opcional)</mat-label><input matInput type="number" min="0"
             formControlName="valorFinanciamento"><mat-error>{{
             mensagemErro(formUsuario.get('socioeconomico.valorFinanciamento')) }}</mat-error></mat-form-field>
       </div>
 
       <h3>Despesas mensais</h3>
-      <div class="despesas-grid"><mat-form-field *ngFor="let despesa of despesas" appearance="outline"><mat-label>{{
-            despesa.label }}</mat-label><span matTextPrefix>R$&nbsp;</span><input matInput type="number" min="0"
+      <div class="despesas-grid"><mat-form-field *ngFor="let despesa of despesas" appearance="outline" class="currency-field" [class.tem-valor]="formUsuario.get('socioeconomico.' + despesa.campo)?.value !== null && formUsuario.get('socioeconomico.' + despesa.campo)?.value !== ''"><mat-label>{{
+            despesa.label }}</mat-label><input matInput type="number" min="0"
             [formControlName]="despesa.campo"><mat-error>{{ mensagemErro(formUsuario.get('socioeconomico.' +
             despesa.campo)) }}</mat-error></mat-form-field></div>
-      <p class="total-despesas">Total aproximado das despesas <strong>{{ totalDespesasMensais | currency:'BRL'
-          }}</strong></p>
-    </div>
-
+          <p class="total-despesas">Total aproximado das despesas <strong>{{ totalDespesasMensais | currency:'BRL':'R$ ':'1.2-2':'pt-BR' }}</strong></p>
+      </div>
     <div *ngIf="etapaModal === 4" class="etapa-container" formGroupName="complementares">
       <h3>Transporte</h3>
       <div class="opcao-linha" *ngFor="let transporte of transportes"
@@ -287,8 +291,7 @@
           </div>
         </div>
         <mat-form-field *ngIf="transporte.valor && formUsuario.get('complementares.' + transporte.campo)?.value"
-          appearance="outline"><mat-label>Gasto mensal ({{ transporte.label }})</mat-label><span
-            matTextPrefix>R$&nbsp;</span><input matInput type="number" min="0"
+          appearance="outline" class="currency-field" [class.tem-valor]="formUsuario.get('complementares.' + transporte.valor)?.value !== null && formUsuario.get('complementares.' + transporte.valor)?.value !== ''"><mat-label>Gasto mensal ({{ transporte.label }})</mat-label><input matInput type="number" min="0"
             [formControlName]="transporte.valor"><mat-error>{{ mensagemErro(formUsuario.get('complementares.' +
             transporte.valor)) }}</mat-error></mat-form-field>
       </div>
@@ -321,28 +324,33 @@
             [formControlName]="saude.descricao"><mat-error>{{ mensagemErro(formUsuario.get('complementares.' +
             saude.descricao)) }}</mat-error></mat-form-field>
       </div>
-      <div class="upload-foto">
+      <div class="upload-foto" (click)="inputSaude.click()">
         <span class="upload-foto-icone" aria-hidden="true"><mat-icon>upload_file</mat-icon></span>
         <div class="upload-foto-textos">
           <span class="upload-foto-titulo">{{ arquivosSaude.length ? (arquivosSaude.length === 1 ? '1 arquivo
             selecionado' : arquivosSaude.length + ' arquivos selecionados') : 'Anexe documentos de saúde (Receitas,
             Laudos, etc.)' }}</span>
-          <span class="upload-foto-formatos">PDF, JPG, PNG · até 4 arquivos de 7 MB cada</span>
+          <span class="upload-foto-formatos">PDF, JPG, PNG · até 4 arquivos de 10 MB cada</span>
         </div>
-        <button type="button" class="btn-procurar" (click)="inputSaude.click()">Procurar</button>
-        <input #inputSaude type="file" class="upload-foto-input" multiple accept=".pdf,.jpg,.jpeg,.png" tabindex="-1"
+        <button type="button" class="btn-procurar" (click)="$event.stopPropagation(); inputSaude.click()">Procurar</button>
+        <input #inputSaude type="file" class="upload-foto-input" multiple accept=".pdf,.jpg,.jpeg,.png" tabindex="-1" (click)="$event.stopPropagation()"
           (change)="selecionarArquivosSaude($event)">
       </div>
       <span class="error-text" *ngIf="erroArquivos">{{ erroArquivos }}</span>
-      <div class="arquivos-lista">
-        <div *ngFor="let arquivo of arquivosSaudeSalvos" class="arquivo-selecionado"><span>{{ arquivo.titulo
-            }}</span><button type="button" (click)="removerArquivoSaudeSalvo(arquivo)"
-            aria-label="Excluir anexo salvo"><mat-icon>delete</mat-icon></button></div>
-      </div>
-      <div class="arquivos-lista">
-        <div *ngFor="let arquivo of arquivosSaude; let i = index" class="arquivo-selecionado"><span>{{ arquivo.name
-            }}</span><button type="button" (click)="removerArquivoSaude(i)"
-            aria-label="Remover arquivo"><mat-icon>close</mat-icon></button></div>
+      <div class="arquivos-lista" [class.quatro-arquivos]="arquivosSaudeSalvos.length + arquivosSaude.length === 4"
+        *ngIf="arquivosSaudeSalvos.length || arquivosSaude.length">
+        <div *ngFor="let arquivo of arquivosSaudeSalvos" class="arquivo-selecionado">
+          <button type="button" (click)="removerArquivoSaudeSalvo(arquivo)"
+            aria-label="Excluir anexo salvo"><mat-icon>delete</mat-icon></button>
+          <mat-icon class="arquivo-tipo-icone">{{ (arquivo.titulo || '').toLowerCase().endsWith('.pdf') ? 'description' : 'image' }}</mat-icon>
+          <span>{{ arquivo.titulo }}</span>
+        </div>
+        <div *ngFor="let arquivo of arquivosSaude; let i = index" class="arquivo-selecionado">
+          <button type="button" (click)="removerArquivoSaude(i)"
+            aria-label="Remover arquivo"><mat-icon>delete</mat-icon></button>
+          <mat-icon class="arquivo-tipo-icone">{{ arquivo.type.startsWith('image/') ? 'image' : 'description' }}</mat-icon>
+          <span>{{ arquivo.name }}</span>
+        </div>
       </div>
     </div>
 
@@ -357,6 +365,7 @@
               'MANHA' ? 'Manhã' : 'Tarde' }} ({{ t.horaInicio }} às {{ t.horaFim
               }})</mat-option></mat-select><mat-error>{{ mensagemErro(formUsuario.get('idTurma'))
             }}</mat-error></mat-form-field></div>
+      <span class="aviso-conflito-matricula" *ngIf="conflitoPeriodoMatricula">{{ avisoConflitoPeriodoMatricula }}</span>
     </div>
 
     <div class="acoes-modal cadastro-acoes">

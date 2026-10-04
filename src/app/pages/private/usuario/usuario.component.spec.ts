@@ -89,13 +89,35 @@ describe('Contrato de edição de usuários', () => {
     expect(upload).toHaveBeenCalledTimes(1);
   });
 
-  it('começa com busca desmarcada e limpa imediatamente ao ativar', () => {
+  it('começa com busca desmarcada e preserva o que foi digitado ao ativar', () => {
     const contato = component.contatosArray.at(0);
+    contato.patchValue({ id: null, nomeCompleto: 'Responsável digitado', telefone: '(11) 97777-7777' });
     expect(contato.get('buscarExistente')?.value).toBe(false);
     component.alternarBuscaContato(0, true);
     expect(contato.get('id')?.value).toBeNull();
-    expect(contato.get('telefone')?.value).toBe('');
-    expect(contato.get('nomeCompleto')?.value).toBe('');
+    expect(contato.get('telefone')?.value).toBe('(11) 97777-7777');
+    expect(contato.get('nomeCompleto')?.value).toBe('Responsável digitado');
+  });
+
+  it('exige gasto de transporte ao marcar sim, aceitando zero como valor declarado', () => {
+    const utilizaCarro = component.formUsuario.get('complementares.utilizaCarro')!;
+    const gastoCarro = component.formUsuario.get('complementares.gastoCarro')!;
+    gastoCarro.setValue(null);
+    utilizaCarro.setValue(true);
+    expect(gastoCarro.hasError('required')).toBe(true);
+    gastoCarro.setValue(0);
+    expect(gastoCarro.valid).toBe(true);
+    utilizaCarro.setValue(false);
+    expect(gastoCarro.validator).toBeNull();
+  });
+
+  it('identifica conflito quando o período escolar informado bate com a turma escolhida', () => {
+    component.turmasDisponiveis = [
+      { id: 2, periodo: 'MANHA', horaInicio: '08:00', horaFim: '12:00', unidade: { id: 1 } }
+    ];
+    component.formUsuario.get('periodoEscolar')?.setValue('MANHA');
+    component.formUsuario.get('idTurma')?.setValue(2);
+    expect(component.conflitoPeriodoMatricula).toBe(true);
   });
 
   it('bloqueia resposta incompleta, mas aceita ausência explícita de registros', () => {
@@ -295,26 +317,26 @@ describe('Contrato de edição de usuários', () => {
     expect(component.erroArquivos).toContain('4');
   });
 
-  it('rejeita anexo de saúde acima de 7 MB e informa o novo limite', () => {
+  it('rejeita anexo de saúde acima do limite padrão e informa o limite', () => {
     const arquivo = new File(['png'], 'laudo.png', { type: 'image/png' });
-    Object.defineProperty(arquivo, 'size', { value: 7 * 1024 * 1024 + 1 });
+    Object.defineProperty(arquivo, 'size', { value: 10 * 1024 * 1024 + 1 });
     const input = { files: [arquivo], value: 'laudo.png' };
     component.selecionarArquivosSaude({ target: input } as unknown as Event);
     expect(component.arquivosSaude).toHaveLength(0);
-    expect(component.erroArquivos).toContain('7MB');
+    expect(component.erroArquivos).toContain('10MB');
     expect(input.value).toBe('');
   });
 
-  it('aceita quatro anexos de 7 MB, deixando margem no limite total do back', () => {
+  it('aceita quatro anexos dentro do limite padrão', () => {
     const arquivos = [1, 2, 3, 4].map(id => {
       const arquivo = new File(['png'], `laudo${id}.png`, { type: 'image/png' });
-      Object.defineProperty(arquivo, 'size', { value: 7 * 1024 * 1024 });
+      Object.defineProperty(arquivo, 'size', { value: 10 * 1024 * 1024 });
       return arquivo;
     });
     const input = { files: arquivos, value: 'laudos' };
     component.selecionarArquivosSaude({ target: input } as unknown as Event);
     expect(component.arquivosSaude).toHaveLength(4);
     expect(component.erroArquivos).toBe('');
-    expect(component.arquivosSaude.reduce((total, arquivo) => total + arquivo.size, 0)).toBe(28 * 1024 * 1024);
+    expect(component.arquivosSaude.reduce((total, arquivo) => total + arquivo.size, 0)).toBe(40 * 1024 * 1024);
   });
 });
