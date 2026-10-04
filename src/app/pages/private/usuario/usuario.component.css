@@ -702,8 +702,32 @@ h1 {
   box-sizing: border-box;
   width: min(100%, 800px);
   max-width: 800px;
+  overflow-y: auto;
   padding: 26px 30px 30px;
   border-radius: 18px;
+  scroll-behavior: smooth;
+  overscroll-behavior: contain;
+  scrollbar-color: rgba(0, 0, 0, 0.16) transparent;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+}
+
+:host ::ng-deep app-modal-layout.cadastro-modal .modal-card::-webkit-scrollbar {
+  width: 4px;
+}
+
+:host ::ng-deep app-modal-layout.cadastro-modal .modal-card::-webkit-scrollbar-track {
+  margin: 20px 0;
+  background: transparent;
+}
+
+:host ::ng-deep app-modal-layout.cadastro-modal .modal-card::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.16);
+}
+
+:host ::ng-deep app-modal-layout.cadastro-modal .modal-card::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.24);
 }
 
 :host ::ng-deep app-modal-layout.cadastro-modal .modal-header {
@@ -716,7 +740,19 @@ h1 {
 }
 
 :host ::ng-deep app-modal-layout.cadastro-modal .modal-close {
-  display: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  border-radius: 50%;
+  font-size: 1.7rem;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+:host ::ng-deep app-modal-layout.cadastro-modal .modal-close:hover {
+  background: #f5f5f5;
 }
 
 .stepper-indicador {
@@ -799,6 +835,7 @@ h1 {
 
 .stepper-indicador .step.linha-ativa:not(:last-child)::after {
   background: var(--primary-color);
+  height: 2px;
 }
 
 .cadastro-form {
@@ -1184,28 +1221,38 @@ h1 {
 
 .arquivos-lista {
   display: flex;
-  flex-wrap: wrap;         
+  flex-wrap: wrap;
   justify-content: center;
   gap: 12px;
   margin-top: 8px;
 }
+
+.arquivos-lista.quatro-arquivos {
+  justify-content: space-between;
+}
+
 .arquivo-selecionado {
   position: relative;
   display: block;
   box-sizing: border-box;
-  width: 140px;             
-  height: 140px;            
+  width: 176px;
+  height: 176px;
   padding: 12px;
   border: 1px solid #d5d5d5;
   border-radius: 12px;
   text-align: center;
 }
 
+.quatro-arquivos .arquivo-selecionado {
+  width: 176px;
+  height: 176px;
+}
+
 .arquivo-tipo-icone {
   display: block;
-  margin: 32px auto 0; 
+  margin: 48px auto 0;
   color: var(--primary-color);
-  font-size: 36px;     
+  font-size: 36px;
   width: 36px;
   height: 36px;
 }
@@ -1242,6 +1289,12 @@ h1 {
   font-size: 22px;
   width: 22px;
   height: 22px;
+}
+
+@media (max-width: 820px) {
+  .arquivos-lista.quatro-arquivos {
+    justify-content: center;
+  }
 }
 
 .cadastro-acoes {

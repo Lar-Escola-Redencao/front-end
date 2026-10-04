@@ -258,17 +258,20 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
   readonly religioes = ['Católica', 'Evangélica', 'Espírita', 'Religião de Matriz Africana', 'Sem Religião', 'Outra'];
 
   readonly opcoesParentesco = [
-    { label: 'Avô / Avó', value: 'AVO' },
-    { label: 'Primo / Prima', value: 'PRIMO' },
-    { label: 'Irmão / Irmã', value: 'IRMAO' },
-    { label: 'Tio / Tia', value: 'TIO' },
-    { label: 'Pai', value: 'PAI' },
     { label: 'Mãe', value: 'MAE' },
+    { label: 'Pai', value: 'PAI' },
+    { label: 'Avô/Avó', value: 'AVO' },
+    { label: 'Irmão/Irmã', value: 'IRMAO' },
+    { label: 'Tio/Tia', value: 'TIO' },
+    { label: 'Primo/Prima', value: 'PRIMO' },
+    { label: 'Padrasto/Madrasta', value: 'PADRASTO_MADRASTA'},
+    { label: 'Vizinho', value: 'VIZINHO'},
     { label: 'Outro', value: 'OUTRO' }
   ];
 
   readonly tiposDocumento = [
-    { label: 'Cert. de nascimento', value: 'CERTIDAO_NASCIMENTO' },
+    { label: 'Certidão de Nascimento', value: 'CERTIDAO_NASCIMENTO' },
+    { label: 'CRNM/RNE', value: 'CRNM_RNE' },
     { label: 'Outro', value: 'OUTRO' }
   ];
 
@@ -645,6 +648,13 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
 
   get totalDespesasMensais(): number {
     return this.despesas.reduce((total, despesa) => total + (Number(this.formUsuario.get('socioeconomico.' + despesa.campo)?.value) || 0), 0);
+  }
+
+  formatarMoeda(valor: number): string {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(valor);
   }
 
   get conflitoPeriodoMatricula(): boolean {
