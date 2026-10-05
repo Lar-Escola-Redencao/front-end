@@ -92,13 +92,13 @@ export class CaptacaoRecursos implements OnInit, OnDestroy, ComponentComAlteraco
   ) {}
 
   ngOnInit(): void {
-    this.grupoAtivo = this.config.grupos[0];
-
+    // A aba ativa fica no query param `aba`; mudanças vindas da URL (carga
+    // inicial, voltar/avançar do navegador) passam por aqui.
     this.routeSub = this.route.queryParamMap.subscribe((params) => {
       const aba = params.get('aba');
-      this.grupoAtivo =
+      const destino =
         this.config.grupos.find((grupo) => grupo.grupo === aba) ?? this.config.grupos[0];
-      this.prepararGrupoAtivo();
+      this.trocarParaGrupo(destino);
     });
   }
 
@@ -107,21 +107,73 @@ export class CaptacaoRecursos implements OnInit, OnDestroy, ComponentComAlteraco
     this.liberarPreviewNovaImagem();
   }
 
+  /** Clique na aba: confirma antes de navegar, então cancelar nem altera a URL. */
   mudarAba(grupo: GrupoSecaoConfig): void {
     if (grupo === this.grupoAtivo) {
       return;
     }
 
+    this.confirmarDescarteSeNecessario((confirmado) => {
+      if (confirmado) {
+        // Ativa antes de navegar: a emissão do query param cai no `destino === grupoAtivo`.
+        this.ativarGrupo(grupo);
+        this.navegarParaAba(grupo);
+      }
+    });
+  }
+
+  private navegarParaAba(grupo: GrupoSecaoConfig, substituirHistorico = false): void {
     this.router.navigate([], {
       relativeTo: this.route,
       queryParams: { aba: grupo.grupo },
       queryParamsHandling: 'merge',
+      replaceUrl: substituirHistorico,
     });
+  }
+
+  /**
+   * Mudança de aba vinda da URL (carga inicial, voltar/avançar do navegador).
+   * Aqui a URL já mudou; se o descarte for recusado, ela volta para a aba atual.
+   */
+  private trocarParaGrupo(destino: GrupoSecaoConfig): void {
+    if (destino === this.grupoAtivo) {
+      return;
+    }
+
+    this.confirmarDescarteSeNecessario((confirmado) => {
+      if (confirmado) {
+        this.ativarGrupo(destino);
+      } else {
+        this.navegarParaAba(this.grupoAtivo, true);
+      }
+    });
+  }
+
+  /** Sem alterações pendentes, segue na hora (síncrono); com alterações, pergunta antes. */
+  private confirmarDescarteSeNecessario(continuar: (confirmado: boolean) => void): void {
+    if (!this.formularioTemAlteracoesNaoSalvas()) {
+      continuar(true);
+      return;
+    }
+
+    Alertas.confirmarDescarte().then((confirmado) => {
+      continuar(confirmado);
+      this.cdr.detectChanges();
+    });
+  }
+
+  private ativarGrupo(grupo: GrupoSecaoConfig): void {
+    this.grupoAtivo = grupo;
+    this.prepararGrupoAtivo();
   }
 
   private prepararGrupoAtivo(): void {
     this.form = criarFormularioGrupo(this.fb, this.grupoAtivo);
     this.erros = {};
+    // Registros da aba anterior não podem vazar: o id do contato era
+    // reaproveitado ao criar um produto, virando PUT em vez de POST.
+    this.itens = [];
+    this.secaoContato = null;
     this.itemEditando = null;
     this.modalAberto = false;
     this.editandoContato = false;
@@ -427,7 +479,9 @@ export class CaptacaoRecursos implements OnInit, OnDestroy, ComponentComAlteraco
     this.salvando = true;
     const dto = montarDtoGrupo(this.grupoAtivo, this.form, this.arquivoSelecionado);
 
-    const id = this.itemEditando?.id ?? this.secaoContato?.id;
+    // Contato edita o registro único do grupo; nas tabelas, só há id ao editar
+    // um item — criar é sempre POST.
+    const id = this.ehContato ? this.secaoContato?.id : this.itemEditando?.id;
     const request = id
       ? this.secoesGrupoService.atualizar(this.config.idPagina, id, dto)
       : this.secoesGrupoService.criar(this.config.idPagina, dto);

@@ -92,7 +92,7 @@ describe('captacao-recursos.util', () => {
     expect(form.get('conteudo')?.hasError('email')).toBe(true);
   });
 
-  it('maps Produtos to titulo + imagem, without conteudo', () => {
+  it('maps Produtos to titulo + imagem + ativo, without conteudo', () => {
     const grupo = grupoPorNome('produtos');
     const form = criarFormularioGrupo(fb, grupo);
     form.patchValue({ titulo: '  Caneca  ' });
@@ -102,6 +102,7 @@ describe('captacao-recursos.util', () => {
       grupo: 'produtos',
       titulo: 'Caneca',
       imagem: arquivo,
+      ativo: true,
     });
   });
 
