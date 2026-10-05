@@ -581,7 +581,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
     for (const transporte of this.transportes.filter(item => item.valor)) {
       this.formSubs.push(this.formUsuario.get(`complementares.${transporte.campo}`)!.valueChanges.subscribe(ativo => {
         const controle = this.formUsuario.get(`complementares.${transporte.valor}`)!;
-        controle.setValidators(ativo ? [Validators.required, Validators.min(0)] : []);
+        controle.setValidators(ativo ? [Validators.min(0)] : []);
         if (!ativo) controle.setValue(null, { emitEvent: false });
         controle.updateValueAndValidity();
       }));
