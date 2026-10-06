@@ -1,0 +1,99 @@
+<section class="usuario-perfil">
+  @if (carregando) {
+    <div class="estado estado-carregando">
+      <span class="spinner-primario" aria-hidden="true"></span>
+    </div>
+  } @else if (erro) {
+    <div class="estado estado-erro">
+      <p>{{ erro }}</p>
+      <button type="button" class="btn-tentar-novamente" (click)="carregarPerfil()">Tentar novamente</button>
+    </div>
+  } @else if (usuario) {
+    <div class="perfil-layout">
+      <button type="button" class="voltar" (click)="voltarParaUsuarios()">
+        <mat-icon>arrow_back</mat-icon>
+        <span>Voltar para “Usuários”</span>
+      </button>
+      <span class="voltar-espaco" aria-hidden="true"></span>
+
+      <aside class="perfil-lateral">
+        <article class="perfil-card">
+          <div class="avatar">
+            @if (fotoPerfil) {
+              <img [src]="fotoPerfil" [alt]="'Foto de ' + usuario.nomeCompleto">
+            } @else {
+              <mat-icon>person</mat-icon>
+            }
+          </div>
+
+          <h1>{{ usuario.nomeCompleto }}</h1>
+
+          <dl class="perfil-resumo">
+            <div>
+              <dt><span class="material-symbols-outlined">cake</span></dt>
+              <dd>{{ idade }}</dd>
+            </div>
+            <div>
+              <dt><span class="material-symbols-outlined">sentiment_excited</span></dt>
+              <dd>{{ desde }}</dd>
+            </div>
+            <div>
+              <dt><span class="material-symbols-outlined">family_group</span></dt>
+              <dd>{{ usuario.nomeUnidade || 'Unidade não informada' }}</dd>
+            </div>
+            <div>
+              <dt><span class="material-symbols-outlined">schedule</span></dt>
+              <dd>{{ turma }}</dd>
+            </div>
+          </dl>
+        </article>
+
+        <div class="acoes-principais">
+          <button type="button" class="btn-primary">Desligamento</button>
+          <button type="button" class="btn-primary">Transferência</button>
+        </div>
+
+        <button type="button" class="excluir-usuario">Excluir usuário</button>
+      </aside>
+
+      <main class="perfil-dados">
+        <nav class="abas-container" aria-label="Dados do usuário">
+          @for (aba of abas; track aba.id) {
+            <button type="button" class="aba-btn" [class.ativa]="abaAtiva === aba.id" (click)="selecionarAba(aba.id)">
+              {{ aba.label }}
+            </button>
+          }
+        </nav>
+
+        <div class="aba-painel">
+          @switch (abaAtiva) {
+            @case ('dados-pessoais') {
+              <app-usuario-perfil-dados-pessoais
+                [usuario]="usuario"
+                (usuarioAtualizado)="atualizarUsuario($event)"
+              ></app-usuario-perfil-dados-pessoais>
+            }
+            @case ('saude') {
+              <app-usuario-perfil-saude
+                [usuario]="usuario"
+                (usuarioAtualizado)="atualizarUsuario($event)"
+              ></app-usuario-perfil-saude>
+            }
+            @case ('dados-socioeconomicos') {
+              <app-usuario-perfil-dados-socioeconomicos [usuario]="usuario"></app-usuario-perfil-dados-socioeconomicos>
+            }
+            @case ('contatos') {
+              <app-usuario-perfil-aba-placeholder titulo="Contatos" descricao="Os responsáveis e vínculos do usuário serão organizados nesta aba."></app-usuario-perfil-aba-placeholder>
+            }
+            @case ('acompanhamento') {
+              <app-usuario-perfil-aba-placeholder titulo="Acompanhamento" descricao="Os registros de acompanhamento entrarão nesta área."></app-usuario-perfil-aba-placeholder>
+            }
+            @case ('matricula') {
+              <app-usuario-perfil-aba-placeholder titulo="Matrícula" descricao="Os dados e histórico de matrícula serão tratados aqui."></app-usuario-perfil-aba-placeholder>
+            }
+          }
+        </div>
+      </main>
+    </div>
+  }
+</section>

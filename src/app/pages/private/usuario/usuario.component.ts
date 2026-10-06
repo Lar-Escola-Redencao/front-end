@@ -65,6 +65,7 @@ import {
 } from 'src/app/shared/utils/paginacao-url';
 import { UnidadeService } from 'src/app/shared/services/unidade/unidade.service';
 import { TurmaService } from 'src/app/shared/services/turma/turma.service';
+import { environment } from 'src/environments/environment';
 
 @Component({
   selector: 'app-usuario',
@@ -294,13 +295,13 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
   ];
 
   private readonly acoesTabelaUsuarios: TabelaAcao<UsuarioResponseDTO>[] = [
-    { icone: 'visibility', tooltip: 'Visualizar detalhes', acao: 'ver' },
+    { icone: 'badge', tooltip: 'Visualizar detalhes', acao: 'ver' },
     { icone: 'edit', tooltip: 'Editar', acao: 'editar' },
     { icone: 'delete', tooltip: 'Excluir', acao: 'excluir' }
   ];
 
   private readonly acoesTabelaUsuariosSomenteView: TabelaAcao<UsuarioResponseDTO>[] = [
-    { icone: 'visibility', tooltip: 'Visualizar detalhes', acao: 'ver' }
+    { icone: 'badge', tooltip: 'Visualizar detalhes', acao: 'ver' }
   ];
 
   // Colunas da tabela de Contatos: Nome, Telefone, E-mail, Vínculos
@@ -410,7 +411,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
     if (this.carregandoLista) return;
     this.carregandoLista = true;
     this.erroLista = false;
-    this.cdr.markForCheck();
+    this.atualizarTela();
 
     this.usuarioService.listarUsuarios().subscribe({
       next: (resposta) => {
@@ -438,6 +439,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
     if (this.carregandoLista) return;
     this.carregandoLista = true;
     this.erroLista = false;
+    this.atualizarTela();
 
     const consulta = this.ordenacao?.campo === 'quantidadeVinculos'
       ? this.contatoService.listarOrdenadosPorVinculos(this.pagina, this.tamanho, this.ordenacao.direcao)
@@ -707,6 +709,12 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
 
   removerArquivoSaude(index: number): void {
     this.arquivosSaude.splice(index, 1);
+  }
+
+  urlArquivoSaude(arquivo: ArquivoSaudeDTO): string {
+    const caminho = arquivo.caminhoArquivo || '';
+    if (caminho.startsWith('http://') || caminho.startsWith('https://')) return caminho;
+    return `${environment.apiUrl}${caminho.startsWith('/') ? '' : '/'}${caminho}`;
   }
 
   abrirCadastro() {
@@ -1573,7 +1581,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
   // ações da tabela
   executarAcao(evento: { tipo: string; linha: any }) {
     if (this.abaAtiva === 'usuarios') {
-      if (evento.tipo === 'ver' || evento.tipo === 'visualizar') this.abrirPreviewUsuario(evento.linha);
+      if (evento.tipo === 'ver' || evento.tipo === 'visualizar') this.router.navigate(['/dashboard/usuarios', evento.linha.id]);
       if (evento.tipo === 'editar') this.abrirEdicao(evento.linha);
       if (evento.tipo === 'excluir') this.excluirUsuario(evento.linha);
       return;

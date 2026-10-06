@@ -1070,6 +1070,9 @@ h1 {
   height: 21px;
   color: rgb(182, 43, 43) !important;
   font-size: 21px;
+  font-family: 'Material Symbols Outlined';
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  line-height: 1;
 }
 
 .cadastro-form .resumo-acoes .btn-remover-icon:hover {
@@ -1279,18 +1282,77 @@ h1 {
   position: absolute;
   top: 8px;
   right: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
   padding: 0;
   border: 0;
+  border-radius: 50%;
   background: transparent;
-  color: var(--error-color);
+  color: rgb(182, 43, 43);
   cursor: pointer;
   z-index: 2;
 }
 
+.arquivo-selecionado button:hover {
+  color: rgb(104, 5, 5);
+}
+
 .arquivo-selecionado button mat-icon {
-  font-size: 22px;
-  width: 22px;
-  height: 22px;
+  width: 21px;
+  height: 21px;
+  color: currentColor !important;
+  font-size: 21px;
+  font-family: 'Material Symbols Outlined';
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  line-height: 1;
+}
+
+.arquivo-acoes {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+
+.arquivo-selecionado:hover .arquivo-acoes {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.arquivo-acoes a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--primary-color);
+  color: var(--primary-color-text, #fff);
+  text-decoration: none;
+}
+
+.arquivo-acoes a:last-child {
+  box-sizing: border-box;
+  border: 1px solid var(--primary-color);
+  background: #fff;
+  color: var(--primary-color);
+}
+
+.arquivo-acoes mat-icon {
+  width: 19px;
+  height: 19px;
+  color: currentColor !important;
+  font-size: 19px;
+  font-family: 'Material Symbols Outlined';
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  line-height: 1;
 }
 
 @media (max-width: 820px) {
@@ -1499,10 +1561,13 @@ h1 {
   pointer-events: none;
 }
 
-.cadastro-form .preview-foto {
+.preview-foto {
   display: flex;
   justify-content: center;
-  margin-top: 12px;
+  align-items: center;
+  flex-direction: column;
+  margin-top: 10px;
+  gap: 10px;
 }
 
 .cadastro-form .aviso-conflito-matricula {

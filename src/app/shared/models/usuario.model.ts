@@ -82,6 +82,7 @@ export interface UsuarioResponseDTO {
   idUnidade?: number;
   nomeTurma?: string;
   nomeUnidade?: string;
+  dataIngresso?: string;
   periodo?: string;
   status?: string;
 }

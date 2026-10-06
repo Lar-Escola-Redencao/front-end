@@ -133,6 +133,7 @@
       </div>
       <span class="error-text" *ngIf="erros['foto']">{{ erros['foto'] }}</span>
       <div class="preview-foto" *ngIf="fotoPreviewUrl">
+        <h3>Foto de perfil</h3>
         <img [src]="fotoPreviewUrl" class="avatar-preview-inferior" alt="Prévia da foto de perfil">
       </div>
     </div>
@@ -324,15 +325,15 @@
             [formControlName]="saude.descricao"><mat-error>{{ mensagemErro(formUsuario.get('complementares.' +
             saude.descricao)) }}</mat-error></mat-form-field>
       </div>
+      <h3>Laudos, exames e receitas</h3>
       <div class="upload-foto" (click)="inputSaude.click()">
         <span class="upload-foto-icone" aria-hidden="true"><mat-icon>upload_file</mat-icon></span>
         <div class="upload-foto-textos">
           <span class="upload-foto-titulo">{{ arquivosSaude.length ? (arquivosSaude.length === 1 ? '1 arquivo
-            selecionado' : arquivosSaude.length + ' arquivos selecionados') : 'Anexe documentos de saúde (Receitas,
-            Laudos, etc.)' }}</span>
+            selecionado' : arquivosSaude.length + ' arquivos selecionados') : 'Anexe laudos, exames e receitas' }}</span>
           <span class="upload-foto-formatos">PDF, JPG, PNG · até 4 arquivos de 10 MB cada</span>
         </div>
-        <button type="button" class="btn-procurar" (click)="$event.stopPropagation(); inputSaude.click()">Procurar</button>
+        <button type="button" class="btn-procurar" (click)="$event.stopPropagation(); inputSaude.click()">Anexar</button>
         <input #inputSaude type="file" class="upload-foto-input" multiple accept=".pdf,.jpg,.jpeg,.png" tabindex="-1" (click)="$event.stopPropagation()"
           (change)="selecionarArquivosSaude($event)">
       </div>
@@ -342,6 +343,12 @@
         <div *ngFor="let arquivo of arquivosSaudeSalvos" class="arquivo-selecionado">
           <button type="button" (click)="removerArquivoSaudeSalvo(arquivo)"
             aria-label="Excluir anexo salvo"><mat-icon>delete</mat-icon></button>
+          <div class="arquivo-acoes">
+            <a [href]="urlArquivoSaude(arquivo)" target="_blank" rel="noopener noreferrer" title="Visualizar"
+              aria-label="Visualizar anexo"><mat-icon>visibility</mat-icon></a>
+            <a [href]="urlArquivoSaude(arquivo)" download title="Baixar"
+              aria-label="Baixar anexo"><mat-icon>download</mat-icon></a>
+          </div>
           <mat-icon class="arquivo-tipo-icone">{{ (arquivo.titulo || '').toLowerCase().endsWith('.pdf') ? 'description' : 'image' }}</mat-icon>
           <span>{{ arquivo.titulo }}</span>
         </div>
@@ -381,7 +388,7 @@
 }
 
 @if (modalContatoAberto) {
-<app-modal-layout titulo="Editar contato centralizado" (closed)="fecharModalContato()">
+<app-modal-layout titulo="Editar contato" (closed)="fecharModalContato()">
   <form class="form-modal" [formGroup]="formEdicaoContato" (ngSubmit)="salvarEdicaoContato()">
 
     <mat-form-field appearance="outline">

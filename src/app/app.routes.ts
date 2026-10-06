@@ -23,6 +23,7 @@ export const routes: Routes = [
             { path: 'conteudo-publico/:secao', loadComponent: () => import('./pages/private/content-management/content-management').then(m => m.ContentManagement), canActivate: [roleGuard], data: { modulo: 'conteudo-publico' } },
             { path: 'colaboradores', loadComponent: () => import('@pages/private/colaborador/colaborador.component').then(m => m.ColaboradorComponent), canActivate: [roleGuard], data: { modulo: 'colaboradores' } },
             { path: 'usuarios', canDeactivate: [canDeactivateGuard], loadComponent: () => import('@pages/private/usuario/usuario.component').then(m => m.UsuarioComponent), canActivate: [roleGuard], data: { modulo: 'usuarios' } },
+            { path: 'usuarios/:id', loadComponent: () => import('@pages/private/usuario/usuario-perfil/usuario-perfil').then(m => m.UsuarioPerfil), canActivate: [roleGuard], data: { modulo: 'usuarios' } },
             { path: 'diario', loadComponent: () => import('@pages/private/diario/diario').then(m => m.Diario), canActivate: [roleGuard], data: { modulo: 'diario' } },
             { path: 'unidades-turmas', loadComponent: () => import('@pages/private/unidades-turmas/unidades-turmas').then(m => m.UnidadesTurmas), canActivate: [roleGuard], data: { modulo: 'unidades-turmas' } },
             { path: 'perfil', loadComponent: () => import('@pages/private/perfil/perfil').then(m => m.Perfil)}

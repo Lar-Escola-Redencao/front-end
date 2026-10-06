@@ -1,0 +1,30 @@
+.aba-conteudo {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.aba-cabecalho {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.aba-cabecalho span,
+.aba-placeholder {
+  color: #777;
+  font-family: var(--fonte-texto);
+}
+
+.aba-cabecalho h2 {
+  margin: 4px 0 0;
+  color: #222;
+  font-family: var(--fonte-texto);
+  font-size: 1.25rem;
+}
+
+.aba-placeholder {
+  margin: 0;
+  line-height: 1.5;
+}

@@ -1,0 +1,137 @@
+<section class="aba-conteudo">
+  <form class="form-dados-pessoais" [class.form-disabled]="!editando" [formGroup]="form" (ngSubmit)="salvar()">
+    <div class="aba-cabecalho">
+
+      @if (!editando) {
+        <button type="button" class="btn-primary" (click)="editar()">Editar</button>
+      } @else {
+        <div class="acoes-edicao">
+          <button type="button" class="btn-cancelar" [disabled]="salvando" (click)="cancelar()">Cancelar</button>
+          <button type="submit" class="btn-primary" [disabled]="salvando || form.invalid || !temAlteracoes">
+            <span *ngIf="salvando" class="spinner" aria-hidden="true"></span>
+            <span>{{ salvando ? 'Salvando...' : 'Salvar' }}</span>
+          </button>
+        </div>
+      }
+    </div>
+
+    <h3>Dados pessoais</h3>
+    <div class="step-grid">
+      <mat-form-field appearance="outline">
+        <mat-label>Nome completo*</mat-label>
+        <input matInput formControlName="nomeCompleto">
+        <mat-error>{{ mensagemErro('nomeCompleto') }}</mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Data nascimento*</mat-label>
+        <input matInput type="date" formControlName="dataNascimento">
+        <mat-error>{{ mensagemErro('dataNascimento') }}</mat-error>
+      </mat-form-field>
+
+      @if (!usaOutroDocumento) {
+        <mat-form-field appearance="outline">
+          <mat-label>CPF/CIN*</mat-label>
+          <input matInput formControlName="cpf" inputmode="numeric" maxlength="14" (input)="aplicarMascaraCpf($event)">
+        </mat-form-field>
+      } @else {
+        <div class="documento-duplo">
+          <mat-form-field appearance="outline">
+            <mat-label>Tipo documento*</mat-label>
+            <mat-select formControlName="tipoDocumento">
+              <mat-option *ngFor="let tipo of tiposDocumento" [value]="tipo.value">{{ tipo.label }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Documento*</mat-label>
+            <input matInput formControlName="documentoAuxiliar">
+          </mat-form-field>
+        </div>
+      }
+
+      <mat-form-field appearance="outline">
+        <mat-label>CadÚnico</mat-label>
+        <input matInput formControlName="cadUnico">
+      </mat-form-field>
+    </div>
+
+    @if (editando) {
+      <label class="checkbox-inline checkbox-discreto">
+        <input type="checkbox" formControlName="usarOutroDocumento">
+        <span>Usar outro documento</span>
+      </label>
+    }
+
+    <h3>Endereço</h3>
+    <div class="step-grid">
+      <mat-form-field appearance="outline">
+        <mat-label>CEP</mat-label>
+        <input matInput formControlName="cep" inputmode="numeric" maxlength="9" (input)="aplicarMascaraCep($event)">
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Bairro*</mat-label>
+        <input matInput formControlName="bairro">
+        <mat-error>{{ mensagemErro('bairro') }}</mat-error>
+      </mat-form-field>
+
+      <mat-form-field class="wide" appearance="outline">
+        <mat-label>Endereço*</mat-label>
+        <input matInput formControlName="endereco">
+        <mat-error>{{ mensagemErro('endereco') }}</mat-error>
+      </mat-form-field>
+    </div>
+
+    <h3>Dados escolares</h3>
+    <div class="step-grid">
+      <mat-form-field appearance="outline">
+        <mat-label>Escola*</mat-label>
+        <input matInput formControlName="escola">
+        <mat-error>{{ mensagemErro('escola') }}</mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Período escolar*</mat-label>
+        <mat-select formControlName="periodoEscolar">
+          <mat-option *ngFor="let periodo of periodosEscolares" [value]="periodo.value">{{ periodo.label }}</mat-option>
+        </mat-select>
+        <mat-error>{{ mensagemErro('periodoEscolar') }}</mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Série escolar*</mat-label>
+        <mat-select formControlName="serieEscolar">
+          <mat-option *ngFor="let serie of seriesEscolares" [value]="serie.value">{{ serie.label }}</mat-option>
+        </mat-select>
+        <mat-error>{{ mensagemErro('serieEscolar') }}</mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>RA (Registro do Aluno)</mat-label>
+        <input matInput formControlName="raEscolar">
+      </mat-form-field>
+    </div>
+
+    @if (editando) {
+      <div class="upload-foto" [class.upload-foto-selecionada]="!!fotoSelecionada" (click)="inputFoto.click()">
+        <span class="upload-foto-icone" aria-hidden="true"><mat-icon>upload_file</mat-icon></span>
+        <div class="upload-foto-textos">
+          <span class="upload-foto-titulo" [attr.title]="fotoSelecionada?.name || null">{{ fotoSelecionada?.name || 'Selecione a foto de perfil' }}</span>
+          <span class="upload-foto-formatos">PNG, JPEG, JPG</span>
+        </div>
+        <button type="button" class="btn-procurar" (click)="$event.stopPropagation(); inputFoto.click()">Procurar</button>
+        <input #inputFoto type="file" class="upload-foto-input" accept="image/png,image/jpeg" tabindex="-1"
+          (click)="$event.stopPropagation()" (change)="onFotoSelecionada($event)">
+      </div>
+      <span class="error-text" *ngIf="erroFoto">{{ erroFoto }}</span>
+    }
+
+    @if (fotoPreview) {
+      <div class="preview-foto">
+        <h3>Foto de perfil</h3>
+        <img [src]="fotoPreview" class="avatar-preview-inferior" alt="Prévia da foto de perfil">
+      </div>
+    }
+  </form>
+</section>

@@ -13,7 +13,6 @@
 
   <div class="tabela-carregando">
     <span class="spinner" aria-hidden="true"></span>
-    <p>Carregando...</p>
   </div>
 
   } @else if (dados.length > 0) {
@@ -186,7 +185,7 @@
               @for (acao of acoesVisiveis(linha); track acao.acao) {
               <button type="button" class="botao-acao" [class.botao-excluir]="acao.acao === 'excluir'"
                 [title]="acao.tooltip" (click)="executarAcao(acao, linha)">
-                <mat-icon>
+                <mat-icon class="material-symbols-outlined">
                   {{ acao.icone }}
                 </mat-icon>
               </button>
