@@ -86,7 +86,10 @@
               ></app-usuario-perfil-dados-socioeconomicos>
             }
             @case ('contatos') {
-              <app-usuario-perfil-contatos [usuario]="usuario"></app-usuario-perfil-contatos>
+              <app-usuario-perfil-contatos
+                [usuario]="usuario"
+                (usuarioAtualizado)="atualizarUsuario($event)"
+              ></app-usuario-perfil-contatos>
             }
             @case ('acompanhamento') {
               <app-usuario-perfil-aba-placeholder titulo="Acompanhamento" descricao="Os registros de acompanhamento entrarão nesta área."></app-usuario-perfil-aba-placeholder>

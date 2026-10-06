@@ -144,7 +144,10 @@
         <div class="contato-resumo" role="button" tabindex="0" [attr.aria-expanded]="contatoExpandidoIndex === i"
           (click)="expandirContato(i)" (keydown.enter)="expandirContato(i)"
           (keydown.space)="$event.preventDefault(); expandirContato(i)">
-          <strong>{{ contato.get('principal')?.value ? 'Contato principal' : 'Contato adicional ' + i }}</strong>
+          <strong>
+            {{ contato.get('principal')?.value ? 'Contato principal' : 'Contato adicional ' + i }}
+            <span *ngIf="contato.get('principal')?.value" class="material-symbols-outlined contato-principal-icone">kid_star</span>
+          </strong>
           <span class="resumo-acoes">
             <span class="contato-cpf-repetido"
               *ngIf="contatoExpandidoIndex !== i && contato.get('cpf')?.hasError('cpfDuplicadoContato')">CPF já
@@ -159,6 +162,9 @@
           <label class="checkbox-inline checkbox-discreto"><input type="checkbox" formControlName="buscarExistente"
               (change)="alternarBuscaContato(i, $any($event.target).checked)"><span>Buscar por contato
               existente</span></label>
+          <span class="error-text busca-contato-error"
+            *ngIf="contato.touched && contato.get('buscarExistente')?.value && !contato.get('id')?.value">Selecione um
+            contato existente.</span>
           <div *ngIf="contato.get('buscarExistente')?.value" class="busca-contato">
             <mat-form-field appearance="outline"><mat-label>Buscar por</mat-label><mat-select
                 formControlName="tipoBusca"><mat-option *ngFor="let opcao of opcoesBuscaContato" [value]="opcao">{{
@@ -168,16 +174,13 @@
                 (input)="onBuscaContatoAlterada(i, $any($event.target).value)"><mat-autocomplete
                 #autoContato="matAutocomplete" [displayWith]="exibirNomeContatoBusca"
                 (optionSelected)="selecionarContatoExistente(i, $event.option.value)"><mat-option
-                  *ngFor="let op of opcoesAutocomplete[i]" [value]="op">{{ op.nomeCompleto }} — {{ op.telefone
+                  *ngFor="let op of opcoesAutocomplete[i]" [value]="op">{{ op.nomeCompleto }} - {{ formatarTelefoneContato(op.telefone)
                   }}</mat-option></mat-autocomplete></mat-form-field>
             <mat-form-field appearance="outline"><mat-label>Parentesco*</mat-label><mat-select
                 formControlName="parentesco"><mat-option *ngFor="let p of opcoesParentesco" [value]="p.value">{{ p.label
                   }}</mat-option></mat-select><mat-error>{{ mensagemErro(contato.get('parentesco'))
                 }}</mat-error></mat-form-field>
           </div>
-          <span class="error-text"
-            *ngIf="contato.touched && contato.get('buscarExistente')?.value && !contato.get('id')?.value">Selecione um
-            contato existente.</span>
           <mat-form-field *ngIf="!contato.get('buscarExistente')?.value"
             appearance="outline"><mat-label>Parentesco*</mat-label><mat-select formControlName="parentesco"><mat-option
                 *ngFor="let p of opcoesParentesco" [value]="p.value">{{ p.label
@@ -389,16 +392,23 @@
 
 @if (modalContatoAberto) {
 <app-modal-layout titulo="Editar contato" (closed)="fecharModalContato()">
-  <form class="form-modal" [formGroup]="formEdicaoContato" (ngSubmit)="salvarEdicaoContato()">
+  <form class="form-modal contato-edicao-form" [formGroup]="formEdicaoContato" (ngSubmit)="salvarEdicaoContato()">
 
+    <div class="step-grid">
     <mat-form-field appearance="outline">
-      <mat-label>Nome completo</mat-label>
+      <mat-label>Nome completo*</mat-label>
       <input matInput formControlName="nomeCompleto">
       <mat-error>{{ mensagemErro(formEdicaoContato.get('nomeCompleto')) }}</mat-error>
     </mat-form-field>
 
     <mat-form-field appearance="outline">
-      <mat-label>Telefone</mat-label>
+      <mat-label>CPF</mat-label>
+      <input matInput formControlName="cpf" inputmode="numeric" maxlength="14" (input)="aplicarMascaraCpfEdicao($event)">
+      <mat-error>{{ mensagemErro(formEdicaoContato.get('cpf'), 'CPF') }}</mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Telefone*</mat-label>
       <input matInput formControlName="telefone" maxlength="15" (input)="aplicarMascaraTelefoneEdicao($event)">
       <mat-error>{{ mensagemErro(formEdicaoContato.get('telefone'), 'Telefone') }}</mat-error>
     </mat-form-field>
@@ -413,6 +423,16 @@
       <mat-label>Endereço</mat-label>
       <input matInput formControlName="endereco">
     </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Local de trabalho</mat-label>
+      <input matInput formControlName="localTrabalho">
+    </mat-form-field>
+    </div>
+
+    <span class="aviso-contato-edicao" role="alert">
+      Ao editar estes dados, todos os outros vínculos deste contato também serão alterados.
+    </span>
 
     <div class="acoes-modal">
       <button type="button" class="btn-cancelar" (click)="fecharModalContato()" [disabled]="isLoading">Cancelar</button>
@@ -486,41 +506,35 @@
 
 <!-- MODAL DE PREVIEW DE CONTATO -->
 @if (modalPreviewContatoAberto) {
-<app-modal-layout titulo="Detalhes do contato" (closed)="fecharPreviewContato()">
+<app-modal-layout [titulo]="contatoPreview?.nomeCompleto || 'Contato'" (closed)="fecharPreviewContato()">
   <div class="contato-preview" *ngIf="contatoPreview as contato" [attr.aria-busy]="carregandoPreviewContato">
-    <header class="contato-preview-cabecalho">
-      <div class="contato-preview-avatar" aria-hidden="true"><mat-icon>person</mat-icon></div>
-      <div><span class="contato-preview-legenda">Contato</span>
-        <h2>{{ contato.nomeCompleto }}</h2>
-      </div>
-    </header>
     <p class="contato-preview-status" role="status" *ngIf="carregandoPreviewContato">Carregando dados completos...</p>
     <div class="contato-preview-erro" role="alert" *ngIf="erroPreviewContato">
       <p>{{ erroPreviewContato }}</p><button type="button" class="btn-cancelar"
         (click)="abrirPreviewContato(contato)">Tentar novamente</button>
     </div>
-    <dl class="contato-preview-dados" *ngIf="!carregandoPreviewContato && !erroPreviewContato">
+    <div class="contato-preview-dados" *ngIf="!carregandoPreviewContato && !erroPreviewContato">
       <div>
-        <dt><mat-icon>phone</mat-icon> Telefone</dt>
-        <dd>{{ contato.telefone || 'Não informado' }}</dd>
-      </div>
-      <div>
-        <dt><mat-icon>badge</mat-icon> CPF</dt>
-        <dd>{{ contato.cpf || 'Não informado' }}</dd>
+        <span class="material-symbols-outlined contato-preview-icone">call</span>
+        <span>{{ contato.telefone || 'Telefone não informado' }}</span>
       </div>
       <div>
-        <dt><mat-icon>email</mat-icon> E-mail</dt>
-        <dd>{{ contato.email || 'Não informado' }}</dd>
+        <span class="material-symbols-outlined contato-preview-icone">mail</span>
+        <span>{{ contato.email || 'E-mail não informado' }}</span>
       </div>
       <div>
-        <dt><mat-icon>work_outline</mat-icon> Local de trabalho</dt>
-        <dd>{{ contato.localTrabalho || 'Não informado' }}</dd>
+        <span class="material-symbols-outlined contato-preview-icone">badge</span>
+        <span>{{ contato.cpf || 'CPF não informado' }}</span>
       </div>
-      <div class="contato-preview-endereco">
-        <dt><mat-icon>location_on</mat-icon> Endereço</dt>
-        <dd>{{ contato.endereco || 'Não informado' }}</dd>
+      <div>
+        <span class="material-symbols-outlined contato-preview-icone">home</span>
+        <span>{{ contato.endereco || 'Endereço não informado' }}</span>
       </div>
-    </dl>
+      <div>
+        <span class="material-symbols-outlined contato-preview-icone">work</span>
+        <span>{{ contato.localTrabalho || 'Local de trabalho não informado' }}</span>
+      </div>
+    </div>
   </div>
 </app-modal-layout>
 }
@@ -553,14 +567,20 @@
         </ng-template>
         <div class="vinculo-textos">
           <span class="vinculo-nome-detalhe">{{ nomeVinculo(vinculo) }}</span>
-          <span class="vinculo-parentesco">{{ labelParentesco(vinculo.parentesco) }}{{ vinculo.principal ? ' - contato
-            principal' : '' }}</span>
+          <span class="vinculo-parentesco">
+            {{ labelParentesco(vinculo.parentesco) }}
+            <ng-container *ngIf="vinculo.principal">
+              -
+              <mat-icon class="material-symbols-outlined vinculo-principal-icone">kid_star</mat-icon>
+              Contato Principal
+            </ng-container>
+          </span>
         </div>
       </div>
 
-      <button type="button" class="btn-remover-icon" *ngIf="podeRemoverEsteVinculo(vinculo)"
-        (click)="removerVinculo(vinculo)" title="Remover vínculo">
-        <mat-icon>person_remove</mat-icon>
+      <button type="button" class="btn-remover-vinculo" *ngIf="podeRemoverEsteVinculo(vinculo)"
+        (click)="removerVinculo(vinculo)" title="Remover vínculo" aria-label="Remover vínculo">
+        <mat-icon class="material-symbols-outlined">person_remove</mat-icon>
       </button>
     </div>
     }

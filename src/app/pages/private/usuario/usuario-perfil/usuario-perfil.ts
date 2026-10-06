@@ -12,7 +12,7 @@ import { UsuarioPerfilDadosPessoais } from './components/dados-pessoais/dados-pe
 import { UsuarioPerfilDadosSocioeconomicos } from './components/dados-socioeconomicos/dados-socioeconomicos';
 import { UsuarioPerfilSaude } from './components/saude/saude';
 
-type AbaPerfil = 'contatos' | 'acompanhamento' | 'dados-pessoais' | 'saude' | 'dados-socioeconomicos' | 'matricula';
+type AbaPerfil =  'acompanhamento' | 'contatos' | 'saude' | 'dados-pessoais' | 'dados-socioeconomicos' | 'matricula';
 
 @Component({
   selector: 'app-usuario-perfil',
@@ -40,13 +40,14 @@ export class UsuarioPerfil implements OnInit, OnDestroy {
   usuario: UsuarioResponseDTO | null = null;
   carregando = true;
   erro = '';
-  abaAtiva: AbaPerfil = 'dados-pessoais';
+  abaAtiva: AbaPerfil = 'acompanhamento';
 
   readonly abas: { id: AbaPerfil; label: string }[] = [
-    { id: 'contatos', label: 'Contatos' },
+
     { id: 'acompanhamento', label: 'Acompanhamento' },
-    { id: 'dados-pessoais', label: 'Dados pessoais' },
+    { id: 'contatos', label: 'Contatos' },
     { id: 'saude', label: 'Saúde' },
+    { id: 'dados-pessoais', label: 'Dados pessoais' },
     { id: 'dados-socioeconomicos', label: 'Dados socioeconômicos' },
     { id: 'matricula', label: 'Matrícula' }
   ];

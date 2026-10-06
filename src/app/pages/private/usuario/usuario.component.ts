@@ -165,7 +165,9 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
     nomeCompleto: ['', [Validators.required, Validators.minLength(3)]],
     telefone: ['', [Validators.required, Validators.minLength(14)]],
     email: ['', Validators.email],
-    endereco: ['']
+    endereco: [''],
+    cpf: ['', Validators.minLength(14)],
+    localTrabalho: ['']
   });
 
   // Modal de Preview do Usuário
@@ -295,9 +297,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
   ];
 
   private readonly acoesTabelaUsuarios: TabelaAcao<UsuarioResponseDTO>[] = [
-    { icone: 'badge', tooltip: 'Visualizar detalhes', acao: 'ver' },
-    { icone: 'edit', tooltip: 'Editar', acao: 'editar' },
-    { icone: 'delete', tooltip: 'Excluir', acao: 'excluir' }
+    { icone: 'badge', tooltip: 'Visualizar detalhes', acao: 'ver' }
   ];
 
   private readonly acoesTabelaUsuariosSomenteView: TabelaAcao<UsuarioResponseDTO>[] = [
@@ -317,7 +317,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
     { icone: 'visibility', tooltip: 'Visualizar detalhes', acao: 'ver_contato' },
     { icone: 'account_child_invert', tooltip: 'Usuários vinculados', acao: 'ver_vinculos' },
     { icone: 'edit', tooltip: 'Editar contato', acao: 'editar_contato' },
-    { icone: 'delete', tooltip: 'Excluir', acao: 'excluir_contato' }
+    { icone: 'delete', tooltip: 'Excluir', acao: 'excluir_contato', visivel: contato => contato.quantidadeVinculos === 0 }
   ];
 
   private readonly acoesTabelaContatosSomenteView: TabelaAcao<ContatoListagemDTO>[] = [
@@ -822,7 +822,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
               telefone: [formatarTelefone(c.telefone), [Validators.required, Validators.minLength(14)]],
               email: [c.email, Validators.email],
               endereco: [c.endereco], cpf: [formatarCpf(c.cpf), Validators.minLength(14)], localTrabalho: [c.localTrabalho || ''],
-              busca: [''], tipoBusca: ['CPF'], buscarExistente: [false], principal: [c.principal]
+              busca: [''], tipoBusca: ['Nome'], buscarExistente: [false], principal: [c.principal]
             });
 
             this.contatosArray.push(contatoForm);
@@ -1034,7 +1034,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
       telefone: ['', [Validators.required, Validators.minLength(14)]],
       email: ['', Validators.email],
       endereco: [''], cpf: ['', Validators.minLength(14)], localTrabalho: [''],
-      busca: [''], tipoBusca: ['CPF'], buscarExistente: [false], principal: [isPrincipal]
+      busca: [''], tipoBusca: ['Nome'], buscarExistente: [false], principal: [isPrincipal]
     });
 
     this.contatosArray.push(contatoForm);
@@ -1068,13 +1068,40 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
     ).subscribe(({ termo, resultados }) => {
       const indiceAtual = this.contatosArray.controls.indexOf(contatoForm);
       if (indiceAtual >= 0 && contatoForm.get('buscarExistente')?.value && !contatoForm.get('id')?.value && contatoForm.get('busca')?.value === termo) {
-        this.opcoesAutocomplete[indiceAtual] = resultados;
+        const idsJaAdicionados = new Set(
+          this.contatosArray.controls
+            .filter((_, i) => i !== indiceAtual)
+            .map(contato => contato.get('id')?.value)
+            .filter((id): id is number => typeof id === 'number')
+        );
+        this.opcoesAutocomplete[indiceAtual] = resultados
+          .filter(contato => !idsJaAdicionados.has(contato.id))
+          .filter(contato => this.contatoCorrespondeTipoBusca(contato, contatoForm.get('tipoBusca')?.value, termo));
       }
       this.atualizarTela();
     });
+    const tipoBuscaSub = contatoForm.get('tipoBusca')!.valueChanges.subscribe(() => {
+      contatoForm.patchValue({
+        id: null,
+        busca: '',
+        nomeCompleto: '',
+        telefone: '',
+        email: '',
+        endereco: '',
+        cpf: '',
+        localTrabalho: ''
+      }, { emitEvent: false });
+      const indiceAtual = this.contatosArray.controls.indexOf(contatoForm);
+      if (indiceAtual >= 0) this.opcoesAutocomplete[indiceAtual] = [];
+      if (contatoForm.get('buscarExistente')?.value) {
+        for (const campo of this.camposCompartilhadosContato) {
+          contatoForm.get(campo)?.disable({ emitEvent: false });
+        }
+      }
+    });
     const cpfSub = contatoForm.get('cpf')!.valueChanges.subscribe(() => this.validarCpfsContatos());
-    this.subsPorContato.set(contatoForm, [sub, cpfSub]);
-    this.formSubs.push(sub, cpfSub);
+    this.subsPorContato.set(contatoForm, [sub, tipoBuscaSub, cpfSub]);
+    this.formSubs.push(sub, tipoBuscaSub, cpfSub);
   }
 
   alternarBuscaContato(index: number, buscar: boolean, preservarSelecionado = false): void {
@@ -1093,7 +1120,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
       }
     }
     if (buscar && !preservarSelecionado && !temSelecionado) {
-      grupo.get('busca')?.setValue('', { emitEvent: false });
+      grupo.patchValue({ busca: '', tipoBusca: 'Nome' }, { emitEvent: false });
     }
     this.opcoesAutocomplete[index] = [];
     for (const campo of ['nomeCompleto', 'telefone', 'email', 'endereco', 'cpf', 'localTrabalho']) {
@@ -1208,6 +1235,26 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
     return typeof contato === 'string' ? contato : contato?.nomeCompleto || '';
   }
 
+  formatarTelefoneContato(valor?: string | null): string {
+    return valor ? formatarTelefone(valor) : '-';
+  }
+
+  private contatoCorrespondeTipoBusca(contato: ContatoListagemDTO, tipoBusca: unknown, termo: string): boolean {
+    const texto = termo.trim().toLowerCase();
+    const numeros = termo.replace(/\D/g, '');
+    switch (tipoBusca) {
+      case 'CPF':
+        return !!numeros && (contato.cpf || '').replace(/\D/g, '').includes(numeros);
+      case 'Telefone':
+        return !!numeros && (contato.telefone || '').replace(/\D/g, '').includes(numeros);
+      case 'E-mail':
+        return (contato.email || '').toLowerCase().includes(texto);
+      case 'Nome':
+      default:
+        return contato.nomeCompleto.toLowerCase().includes(texto);
+    }
+  }
+
   // Validações e Máscaras
   verificarErros() {
     const errosServidor = Object.fromEntries(
@@ -1248,6 +1295,11 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
   aplicarMascaraTelefoneEdicao(event: Event): void {
     const input = event.target as HTMLInputElement;
     this.formEdicaoContato.get('telefone')?.setValue(formatarTelefone(input.value));
+  }
+
+  aplicarMascaraCpfEdicao(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.formEdicaoContato.get('cpf')?.setValue(formatarCpf(input.value));
   }
 
   aplicarMascaraTelefoneContato(index: number, event: Event) {
@@ -1592,7 +1644,6 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
   executarAcao(evento: { tipo: string; linha: any }) {
     if (this.abaAtiva === 'usuarios') {
       if (evento.tipo === 'ver' || evento.tipo === 'visualizar') this.router.navigate(['/dashboard/usuarios', evento.linha.id]);
-      if (evento.tipo === 'editar') this.abrirEdicao(evento.linha);
       if (evento.tipo === 'excluir') this.excluirUsuario(evento.linha);
       return;
     }
@@ -1612,7 +1663,9 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
       nomeCompleto: contato.nomeCompleto,
       telefone: formatarTelefone(contato.telefone),
       email: contato.email || '',
-      endereco: (contato as any).endereco || ''
+      endereco: contato.endereco || '',
+      cpf: contato.cpf ? formatarCpf(contato.cpf) : '',
+      localTrabalho: contato.localTrabalho || ''
     });
     this.formEdicaoContato.markAsPristine();
     this.formEdicaoContato.markAsUntouched();
@@ -1648,7 +1701,9 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
       nomeCompleto: dados.nomeCompleto!,
       telefone: dados.telefone?.replace(/\D/g, '') || '',
       email: dados.email || undefined,
-      endereco: dados.endereco || undefined
+      endereco: dados.endereco || undefined,
+      cpf: dados.cpf?.replace(/\D/g, '') || undefined,
+      localTrabalho: dados.localTrabalho || undefined
     };
 
     this.isLoading = true;

@@ -5,6 +5,9 @@ import { vi } from 'vitest';
 
 import { UsuarioPerfil } from './usuario-perfil';
 import { UsuarioService } from 'src/app/shared/services/usuario/usuario.service';
+import { ContatoService } from 'src/app/shared/services/usuario/contato.service';
+import { ToastrService } from 'ngx-toastr';
+import { SessaoService } from 'src/app/shared/services/auth/sessao.service';
 
 describe('UsuarioPerfil', () => {
   let component: UsuarioPerfil;
@@ -27,6 +30,9 @@ describe('UsuarioPerfil', () => {
       imports: [UsuarioPerfil],
       providers: [
         { provide: UsuarioService, useValue: usuarioService },
+        { provide: ContatoService, useValue: { buscarAutocomplete: vi.fn(() => of([])), atualizarContato: vi.fn() } },
+        { provide: ToastrService, useValue: { success: vi.fn(), warning: vi.fn(), error: vi.fn() } },
+        { provide: SessaoService, useValue: { podeRemoverVinculo: vi.fn(() => true) } },
         { provide: ActivatedRoute, useValue: { paramMap: of({ get: (chave: string) => chave === 'id' ? '7' : null }) } },
         { provide: Router, useValue: { navigate: vi.fn() } }
       ]
@@ -64,6 +70,6 @@ describe('UsuarioPerfil', () => {
     component.selecionarAba('contatos');
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('app-usuario-perfil-contatos')).toBeTruthy();
-    expect(fixture.nativeElement.textContent).toContain('Adicionar contato');
+    expect(fixture.nativeElement.textContent).toContain('Novo contato');
   });
 });
