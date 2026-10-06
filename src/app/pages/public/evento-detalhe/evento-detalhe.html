@@ -32,17 +32,17 @@
               <p class="imagem-overlay-texto">Acompanhe o que aconteceu através das nossas redes</p>
 
               <nav class="redes-sociais-overlay" aria-label="Redes sociais do evento">
-                @for (rede of redesSociais; track rede.idRedeSocial) {
+                @for (rede of redesSociais; track rede.id) {
                   <a
                     class="rede-social-link"
-                    [href]="rede.urlLink"
+                    [href]="rede.url"
                     target="_blank"
                     rel="noopener noreferrer"
                     [attr.aria-label]="rede.nome"
                     [title]="rede.nome"
                   >
                     @if (rede.icone) {
-                      <img [src]="rede.icone" [alt]="rede.nome" (error)="onIconeRedeError($event)" />
+                      <img [src]="obterUrlImagem(rede.icone)" [alt]="rede.nome" (error)="onIconeRedeError($event)" />
                     }
                     <span
                       class="material-symbols-outlined rede-social-fallback"

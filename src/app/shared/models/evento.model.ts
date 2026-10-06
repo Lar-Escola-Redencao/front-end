@@ -8,27 +8,6 @@ export interface Evento {
   valor?: number;
   tipoEvento: TipoEvento;
   parceiros: Parceiro[];
-  // Imagem alternativa (Drive) para a capa do detalhe; quando ausente vale `imagem`.
-  urlImagemDrive?: string;
-  // Postagens oficiais do evento nas redes sociais (GET /evento/{id}/redes-sociais).
-  redesSociais?: EventoRedeSocial[];
-}
-
-export interface EventoRedeSocial {
-  idRedeSocial: number;
-  nome: string;
-  icone: string;
-  urlLink: string;
-}
-
-// Formato bruto retornado pela API; aceita camelCase e snake_case.
-export interface EventoRedeSocialDTO {
-  idRedeSocial?: number;
-  id_rede_social?: number;
-  nome: string;
-  icone: string;
-  urlLink?: string;
-  url_link?: string;
 }
 
 export interface CriarEventoDTO {
