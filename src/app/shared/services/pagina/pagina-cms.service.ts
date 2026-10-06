@@ -8,6 +8,7 @@ import { construirHttpParams } from 'src/app/shared/utils/paginacao-url';
 /** Ids fixos das páginas institucionais cadastradas no banco. */
 export const ID_PAGINA_TRANSPARENCIA = 1;
 export const ID_PAGINA_SOBRE = 2;
+export const ID_PAGINA_GRAFICA = 3;
 
 export type GrupoSecao = 'texto-sobre' | 'historia' | 'carrossel' | 'nenhum';
 
