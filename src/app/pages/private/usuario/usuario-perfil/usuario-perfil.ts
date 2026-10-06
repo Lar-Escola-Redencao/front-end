@@ -7,6 +7,7 @@ import { environment } from 'src/environments/environment';
 import { UsuarioResponseDTO } from 'src/app/shared/models/usuario.model';
 import { UsuarioService } from 'src/app/shared/services/usuario/usuario.service';
 import { UsuarioPerfilAbaPlaceholder } from './components/aba-placeholder/aba-placeholder';
+import { UsuarioPerfilContatos } from './components/contatos/contatos';
 import { UsuarioPerfilDadosPessoais } from './components/dados-pessoais/dados-pessoais';
 import { UsuarioPerfilDadosSocioeconomicos } from './components/dados-socioeconomicos/dados-socioeconomicos';
 import { UsuarioPerfilSaude } from './components/saude/saude';
@@ -20,6 +21,7 @@ type AbaPerfil = 'contatos' | 'acompanhamento' | 'dados-pessoais' | 'saude' | 'd
     CommonModule,
     MatIconModule,
     UsuarioPerfilAbaPlaceholder,
+    UsuarioPerfilContatos,
     UsuarioPerfilDadosPessoais,
     UsuarioPerfilDadosSocioeconomicos,
     UsuarioPerfilSaude

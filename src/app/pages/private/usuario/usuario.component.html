@@ -218,7 +218,7 @@
           <div class="familiar-resumo" role="button" tabindex="0" [attr.aria-expanded]="familiarExpandidoIndex === i"
             (click)="expandirFamiliar(i)" (keydown.enter)="expandirFamiliar(i)"
             (keydown.space)="$event.preventDefault(); expandirFamiliar(i)">
-            <strong>Membro {{ i + 1 }}</strong>
+            <strong>{{ tituloFamiliar(i) }} <small *ngIf="vinculoFamiliar(i)">{{ vinculoFamiliar(i) }}</small></strong>
             <span class="resumo-acoes"><button type="button" class="btn-remover-icon" title="Remover membro"
                 aria-label="Remover membro" (keydown)="$event.stopPropagation()"
                 (click)="$event.stopPropagation(); removerFamiliar(i)"><mat-icon>delete</mat-icon></button><mat-icon>{{

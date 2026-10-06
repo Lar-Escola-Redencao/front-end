@@ -1,10 +1,193 @@
 <section class="aba-conteudo">
-  <div class="aba-cabecalho">
-    <div>
-      <span>Dados socioeconômicos</span>
-      <h2>Ficha socioeconômica</h2>
+  <form class="form-socioeconomico" [class.form-disabled]="!editando" [formGroup]="form">
+    <div class="aba-cabecalho">
+      @if (!editando) {
+        <button type="button" class="btn-primary" (click)="editar()">Editar</button>
+      } @else {
+        <div class="acoes-edicao">
+          <button type="button" class="btn-cancelar" [disabled]="salvando" (click)="cancelar()">Cancelar</button>
+          <button type="button" class="btn-primary" [disabled]="salvando || !temAlteracoes" (click)="salvar()">
+            <span *ngIf="salvando" class="spinner" aria-hidden="true"></span>
+            <span>{{ salvando ? 'Salvando...' : 'Salvar' }}</span>
+          </button>
+        </div>
+      }
     </div>
-    <button type="button" class="btn-primary">Editar</button>
-  </div>
-  <p class="aba-placeholder">A ficha socioeconômica do cadastro será reaproveitada aqui.</p>
+
+    <h3>Composição familiar</h3>
+    <p class="descricao-etapa">Registrar as pessoas que convivem com a criança/adolescente, inclusive quando não possuem parentesco.</p>
+
+    <div formArrayName="composicaoFamiliar">
+      @for (membro of familiaresArray.controls; track $index) {
+        <div class="familiar-card" [formGroupName]="$index" [class.compacto]="familiarExpandidoIndex !== $index">
+          <div class="familiar-resumo" role="button" tabindex="0" [attr.aria-expanded]="familiarExpandidoIndex === $index"
+            (click)="expandirFamiliar($index)" (keydown.enter)="expandirFamiliar($index)"
+            (keydown.space)="$event.preventDefault(); expandirFamiliar($index)">
+            <strong>
+              {{ tituloFamiliar($index) }}
+              @if (vinculoFamiliar($index)) {
+                <small>{{ vinculoFamiliar($index) }}</small>
+              }
+            </strong>
+            <span class="resumo-acoes">
+              @if (editando) {
+                <button type="button" class="btn-remover-icon" title="Remover membro" aria-label="Remover membro"
+                  (keydown)="$event.stopPropagation()" (click)="$event.stopPropagation(); removerFamiliar($index)">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              }
+              <mat-icon>{{ familiarExpandidoIndex === $index ? 'expand_less' : 'expand_more' }}</mat-icon>
+            </span>
+          </div>
+
+          @if (familiarExpandidoIndex === $index) {
+            <div class="familiar-detalhe">
+              <div class="familia-grid">
+                <mat-form-field appearance="outline">
+                  <mat-label>Nome completo*</mat-label>
+                  <input matInput formControlName="nomeCompleto">
+                  <mat-error>{{ mensagemErro(membro.get('nomeCompleto')) }}</mat-error>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Idade</mat-label>
+                  <input matInput type="number" min="0" formControlName="idade">
+                  <mat-error>{{ mensagemErro(membro.get('idade')) }}</mat-error>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Parentesco / vínculo*</mat-label>
+                  <mat-select formControlName="parentescoVinculo">
+                    <mat-option *ngFor="let p of opcoesParentesco" [value]="p.value">{{ p.label }}</mat-option>
+                  </mat-select>
+                  <mat-error>{{ mensagemErro(membro.get('parentescoVinculo')) }}</mat-error>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Escolaridade*</mat-label>
+                  <mat-select formControlName="escolaridade">
+                    <mat-option *ngFor="let e of escolaridades" [value]="e.value">{{ e.label }}</mat-option>
+                  </mat-select>
+                  <mat-error>{{ mensagemErro(membro.get('escolaridade')) }}</mat-error>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="currency-field" [class.tem-valor]="temValorNumerico(membro.get('renda')?.value)">
+                  <mat-label>Renda</mat-label>
+                  <input matInput type="number" min="0" formControlName="renda">
+                  <mat-error>{{ mensagemErro(membro.get('renda')) }}</mat-error>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="currency-field" [class.tem-valor]="temValorNumerico(membro.get('beneficios')?.value)">
+                  <mat-label>Benefícios</mat-label>
+                  <input matInput type="number" min="0" formControlName="beneficios">
+                  <mat-error>{{ mensagemErro(membro.get('beneficios')) }}</mat-error>
+                </mat-form-field>
+              </div>
+            </div>
+          }
+        </div>
+      } @empty {
+        <p class="texto-vazio">Nenhum membro familiar informado.</p>
+      }
+    </div>
+
+    @if (editando) {
+      <button type="button" class="btn-add-contato" (click)="adicionarFamiliar()">
+        <mat-icon>add</mat-icon>
+        Adicionar membro
+      </button>
+    }
+
+    <h3>Habitação</h3>
+    <div class="habitacao-linha">
+      <fieldset class="moradia-opcoes">
+        <legend>Tipo de moradia</legend>
+        <label *ngFor="let tipo of tiposMoradia">
+          <input type="radio" formControlName="tipoMoradia" [value]="tipo.value">
+          {{ tipo.label }}
+        </label>
+        <span class="erro-campo" *ngIf="form.get('tipoMoradia')?.invalid && form.get('tipoMoradia')?.touched">
+          {{ mensagemErro(form.get('tipoMoradia')) }}
+        </span>
+      </fieldset>
+
+      @if (['ALUGADA', 'APARTAMENTO_ALUGADO'].includes(form.get('tipoMoradia')?.value || '')) {
+        <mat-form-field appearance="outline" class="currency-field" [class.tem-valor]="temValorNumerico(form.get('valorAluguel')?.value)">
+          <mat-label>Valor do aluguel*</mat-label>
+          <input matInput type="number" min="0" formControlName="valorAluguel">
+          <mat-error>{{ mensagemErro(form.get('valorAluguel')) }}</mat-error>
+        </mat-form-field>
+      }
+
+      @if (['PROPRIA', 'APARTAMENTO_PROPRIO'].includes(form.get('tipoMoradia')?.value || '')) {
+        <mat-form-field appearance="outline" class="currency-field" [class.tem-valor]="temValorNumerico(form.get('valorFinanciamento')?.value)">
+          <mat-label>Valor do financiamento (opcional)</mat-label>
+          <input matInput type="number" min="0" formControlName="valorFinanciamento">
+          <mat-error>{{ mensagemErro(form.get('valorFinanciamento')) }}</mat-error>
+        </mat-form-field>
+      }
+    </div>
+
+    <h3>Despesas mensais</h3>
+    <div class="despesas-grid">
+      <mat-form-field *ngFor="let despesa of despesas" appearance="outline" class="currency-field" [class.tem-valor]="temValorNumerico(form.get(despesa.campo)?.value)">
+        <mat-label>{{ despesa.label }}</mat-label>
+        <input matInput type="number" min="0" [formControlName]="despesa.campo">
+        <mat-error>{{ mensagemErro(form.get(despesa.campo)) }}</mat-error>
+      </mat-form-field>
+    </div>
+    <p class="total-despesas">Total aproximado das despesas <strong>{{ formatarMoeda(totalDespesasMensais) }}</strong></p>
+
+    <h3>Transporte</h3>
+    @for (transporte of transportes; track transporte.campo) {
+      <div class="opcao-linha" [class.tem-campo]="!!transporte.valor && !!form.get(transporte.campo)?.value">
+        <div class="opcao-pergunta">
+          <span>{{ transporte.label }}</span>
+          <div class="radio-opcoes">
+            <label><input type="radio" [formControlName]="transporte.campo" [value]="false"> Não</label>
+            <label><input type="radio" [formControlName]="transporte.campo" [value]="true"> Sim</label>
+          </div>
+        </div>
+
+        @if (transporte.valor && form.get(transporte.campo)?.value) {
+          <mat-form-field appearance="outline" class="currency-field" [class.tem-valor]="temValorNumerico(form.get(transporte.valor)?.value)">
+            <mat-label>Gasto mensal ({{ transporte.label }})</mat-label>
+            <input matInput type="number" min="0" [formControlName]="transporte.valor">
+            <mat-error>{{ mensagemErro(form.get(transporte.valor)) }}</mat-error>
+          </mat-form-field>
+        }
+      </div>
+    }
+
+    <h3>Religião</h3>
+    <div class="opcao-linha" [class.tem-campo]="form.get('professaReligiao')?.value">
+      <div class="opcao-pergunta">
+        <span>A família professa alguma religião?</span>
+        <div class="radio-opcoes">
+          <label><input type="radio" formControlName="professaReligiao" [value]="false"> Não</label>
+          <label><input type="radio" formControlName="professaReligiao" [value]="true"> Sim</label>
+        </div>
+      </div>
+
+      @if (form.get('professaReligiao')?.value) {
+        <div class="religiao-campos">
+          <mat-form-field appearance="outline">
+            <mat-label>Qual religião?*</mat-label>
+            <mat-select formControlName="religiao">
+              <mat-option *ngFor="let r of religioes" [value]="r">{{ r }}</mat-option>
+            </mat-select>
+            <mat-error>{{ mensagemErro(form.get('religiao')) }}</mat-error>
+          </mat-form-field>
+
+          @if (form.get('religiao')?.value === 'Outra') {
+            <mat-form-field appearance="outline">
+              <mat-label>Nome da religião*</mat-label>
+              <input matInput formControlName="outraReligiao">
+              <mat-error>{{ mensagemErro(form.get('outraReligiao')) }}</mat-error>
+            </mat-form-field>
+          }
+        </div>
+      }
+    </div>
+  </form>
 </section>

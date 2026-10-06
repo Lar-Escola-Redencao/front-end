@@ -1,0 +1,31 @@
+.aba-conteudo {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.aba-cabecalho {
+  display: block;
+  min-height: 38px;
+}
+
+.aba-cabecalho > .btn-primary {
+  position: absolute;
+  top: 0;
+  right: 0;
+}
+
+:host ::ng-deep app-tabela-layout .tabela-wrapper {
+  box-shadow: none;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+}
+
+:host ::ng-deep app-tabela-layout .tabela-carregando,
+:host ::ng-deep app-tabela-layout .tabela-erro,
+:host ::ng-deep app-tabela-layout .tabela-vazia {
+  box-shadow: none;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+}

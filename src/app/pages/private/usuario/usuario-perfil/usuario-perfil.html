@@ -80,10 +80,13 @@
               ></app-usuario-perfil-saude>
             }
             @case ('dados-socioeconomicos') {
-              <app-usuario-perfil-dados-socioeconomicos [usuario]="usuario"></app-usuario-perfil-dados-socioeconomicos>
+              <app-usuario-perfil-dados-socioeconomicos
+                [usuario]="usuario"
+                (usuarioAtualizado)="atualizarUsuario($event)"
+              ></app-usuario-perfil-dados-socioeconomicos>
             }
             @case ('contatos') {
-              <app-usuario-perfil-aba-placeholder titulo="Contatos" descricao="Os responsáveis e vínculos do usuário serão organizados nesta aba."></app-usuario-perfil-aba-placeholder>
+              <app-usuario-perfil-contatos [usuario]="usuario"></app-usuario-perfil-contatos>
             }
             @case ('acompanhamento') {
               <app-usuario-perfil-aba-placeholder titulo="Acompanhamento" descricao="Os registros de acompanhamento entrarão nesta área."></app-usuario-perfil-aba-placeholder>

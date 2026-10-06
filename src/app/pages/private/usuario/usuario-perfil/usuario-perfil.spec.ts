@@ -46,7 +46,7 @@ describe('UsuarioPerfil', () => {
     const texto = fixture.nativeElement.textContent;
     expect(usuarioService.buscarPorId).toHaveBeenCalledWith(7);
     expect(texto).toContain('Aluno Sales da Silva');
-    expect(texto).toContain('08 anos');
+    expect(texto).toContain('08 anos (11 set. 2018)');
     expect(texto).toContain('Desde não informado');
     expect(texto).toContain('SOS Bombeiros');
     expect(texto).toContain('Manhã');
@@ -58,5 +58,12 @@ describe('UsuarioPerfil', () => {
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('Saúde');
     expect(fixture.nativeElement.querySelector('app-usuario-perfil-saude')).toBeTruthy();
+  });
+
+  it('exibe a tabela de contatos vinculados na aba contatos', () => {
+    component.selecionarAba('contatos');
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('app-usuario-perfil-contatos')).toBeTruthy();
+    expect(fixture.nativeElement.textContent).toContain('Adicionar contato');
   });
 });

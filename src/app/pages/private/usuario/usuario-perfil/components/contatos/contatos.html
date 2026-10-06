@@ -1,0 +1,11 @@
+<section class="aba-conteudo">
+  <div class="aba-cabecalho">
+    <button type="button" class="btn-primary" (click)="adicionarContato()">Novo contato</button>
+  </div>
+
+  <app-tabela-layout
+    [colunas]="colunas"
+    [dados]="contatos"
+    mensagemVazia="Nenhum contato vinculado a este usuário.">
+  </app-tabela-layout>
+</section>

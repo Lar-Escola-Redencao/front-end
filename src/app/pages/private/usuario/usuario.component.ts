@@ -648,6 +648,16 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
     else if (this.familiarExpandidoIndex > index) this.familiarExpandidoIndex--;
   }
 
+  tituloFamiliar(index: number): string {
+    const nome = this.familiaresArray.at(index)?.get('nomeCompleto')?.value;
+    return nome ? String(nome) : `Membro ${index + 1}`;
+  }
+
+  vinculoFamiliar(index: number): string {
+    const valor = this.familiaresArray.at(index)?.get('parentescoVinculo')?.value;
+    return valor ? this.opcoesParentesco.find(item => item.value === valor)?.label ?? String(valor) : '';
+  }
+
   get totalDespesasMensais(): number {
     return this.despesas.reduce((total, despesa) => total + (Number(this.formUsuario.get('socioeconomico.' + despesa.campo)?.value) || 0), 0);
   }

@@ -1030,6 +1030,18 @@ h1 {
   background: #fafafa;
 }
 
+.cadastro-form .familiar-resumo strong {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.cadastro-form .familiar-resumo small {
+  color: #888;
+  font-size: 12px;
+  font-weight: 500;
+}
+
 .cadastro-form .contato-detalhe,
 .cadastro-form .familiar-detalhe {
   display: flex;
@@ -1412,7 +1424,10 @@ h1 {
     grid-template-columns: 1fr;
   }
 
-  .cadastro-form .familia-grid,
+  .cadastro-form .familia-grid {
+    grid-template-columns: 1fr;
+  }
+
   .cadastro-form .despesas-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }

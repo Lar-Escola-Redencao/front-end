@@ -1,30 +1,490 @@
-.aba-conteudo {
+.aba-conteudo,
+.form-socioeconomico {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+}
+
+.form-socioeconomico {
+  position: relative;
+  gap: 10px;
+  --campo-desabilitado-bg: #eeeeee;
 }
 
 .aba-cabecalho {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
+  display: block;
+  margin-bottom: 6px;
+}
+
+.form-socioeconomico h3 {
+  margin: 20px 0 0;
+  color: #222;
+  font-family: var(--fonte-texto);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.acoes-edicao {
+  display: inline-flex;
+  align-items: center;
   gap: 16px;
 }
 
-.aba-cabecalho span,
-.aba-placeholder {
-  color: #777;
-  font-family: var(--fonte-texto);
+.aba-cabecalho > .btn-primary,
+.aba-cabecalho .acoes-edicao {
+  position: absolute;
+  top: 0;
+  right: 0;
 }
 
-.aba-cabecalho h2 {
-  margin: 4px 0 0;
-  color: #222;
+.btn-cancelar {
+  border: 0;
+  background: transparent;
+  color: var(--input-color);
+  cursor: pointer;
   font-family: var(--fonte-texto);
-  font-size: 1.25rem;
+  font-size: 14px;
+  font-weight: 700;
 }
 
-.aba-placeholder {
+.descricao-etapa,
+.texto-vazio {
   margin: 0;
-  line-height: 1.5;
+  color: #555;
+  font-family: var(--fonte-texto);
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.texto-vazio {
+  color: #777;
+}
+
+.familiar-card {
+  margin-bottom: 8px;
+  border: 1px solid #eee;
+  border-radius: 10px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
+
+.familiar-card.compacto {
+  border-color: #f0f0f0;
+}
+
+.familiar-resumo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 58px;
+  padding: 0 16px;
+  cursor: pointer;
+  font-family: var(--fonte-texto);
+}
+
+.familiar-resumo strong {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 16px;
+}
+
+.familiar-resumo small {
+  color: #888;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.familiar-resumo:hover {
+  background: #fafafa;
+}
+
+.familiar-detalhe {
+  padding: 12px 16px 16px;
+  border-top: 1px solid #eee;
+}
+
+.resumo-acoes {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.resumo-acoes > mat-icon {
+  color: #242424;
+}
+
+.btn-remover-icon {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: rgb(182, 43, 43);
+  cursor: pointer;
+}
+
+.btn-remover-icon mat-icon {
+  width: 21px;
+  height: 21px;
+  color: rgb(182, 43, 43) !important;
+  font-size: 21px;
+  font-family: 'Material Symbols Outlined';
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  line-height: 1;
+}
+
+.btn-remover-icon:hover mat-icon {
+  color: rgb(104, 5, 5) !important;
+}
+
+.btn-add-contato {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: 4px;
+  margin: 2px 0 6px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #999;
+  cursor: pointer;
+  font-family: var(--fonte-texto);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.btn-add-contato mat-icon {
+  width: 18px;
+  height: 18px;
+  font-size: 18px;
+}
+
+.familia-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  align-items: start;
+}
+
+.familia-grid > :nth-child(3),
+.familia-grid > :nth-child(4) {
+  grid-column: span 2;
+}
+
+.habitacao-linha,
+.opcao-linha {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+}
+
+.moradia-opcoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  align-items: center;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  color: #333;
+  font-family: var(--fonte-texto);
+  font-size: 13px;
+}
+
+.moradia-opcoes legend {
+  width: 100%;
+  margin-bottom: 7px;
+  color: #333;
+  font-size: 12px;
+}
+
+.moradia-opcoes label,
+.radio-opcoes label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.form-disabled .moradia-opcoes label,
+.form-disabled .radio-opcoes label {
+  cursor: not-allowed;
+}
+
+input[type='radio'] {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--primary-color);
+}
+
+.despesas-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  align-items: start;
+}
+
+.total-despesas {
+  align-self: flex-end;
+  margin: 0;
+  color: #333;
+  font-family: var(--fonte-texto);
+  font-size: 14px;
+}
+
+.total-despesas strong {
+  margin-left: 4px;
+  color: var(--primary-color);
+  font-weight: 500;
+}
+
+.opcao-linha {
+  min-height: 31px;
+}
+
+.opcao-pergunta {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 108px;
+  gap: 12px;
+  align-items: center;
+  min-height: 31px;
+  color: #333;
+  font-family: var(--fonte-texto);
+  font-size: 13px;
+}
+
+.opcao-linha.tem-campo .opcao-pergunta {
+  min-height: 47px;
+}
+
+.radio-opcoes {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.religiao-campos {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  align-items: start;
+}
+
+.religiao-campos:has(> :only-child) {
+  grid-template-columns: 1fr;
+}
+
+.erro-campo {
+  width: 100%;
+  color: var(--mat-form-field-error-text-color, #d32f2f);
+  font-family: var(--fonte-texto);
+  font-size: 12px;
+}
+
+:host ::ng-deep .mat-mdc-form-field-subscript-wrapper {
+  display: block !important;
+}
+
+:host ::ng-deep .mat-mdc-form-field-subscript-wrapper::before {
+  display: none;
+}
+
+:host ::ng-deep .mat-mdc-form-field-error-wrapper {
+  position: static;
+  padding: 0 2px;
+}
+
+:host ::ng-deep .mat-mdc-form-field-error {
+  display: block;
+  padding-top: 3px;
+  color: var(--mat-form-field-error-text-color, #d32f2f);
+  font-family: var(--fonte-texto);
+  font-size: 12px;
+  line-height: 1.25;
+  text-align: left;
+}
+
+:host ::ng-deep .mat-mdc-text-field-wrapper {
+  height: 47px;
+  background: #fff;
+}
+
+:host ::ng-deep .mat-mdc-form-field-infix {
+  min-height: 47px;
+  padding-top: 11px;
+  padding-bottom: 10px;
+}
+
+:host ::ng-deep .form-socioeconomico .mat-mdc-text-field-wrapper {
+  height: 47px !important;
+}
+
+:host ::ng-deep .form-socioeconomico .mat-mdc-form-field-infix {
+  min-height: 47px !important;
+  padding-top: 11px !important;
+  padding-bottom: 10px !important;
+}
+
+:host ::ng-deep .form-socioeconomico .currency-field .mat-mdc-form-field-infix {
+  position: relative !important;
+}
+
+:host ::ng-deep .form-socioeconomico .currency-field .mat-mdc-form-field-infix::before {
+  content: 'R$';
+  position: absolute;
+  left: 0;
+  top: 23px !important;
+  color: #242424;
+  font-family: var(--fonte-texto);
+  font-size: 14px;
+  line-height: 1;
+  opacity: 0;
+  pointer-events: none;
+}
+
+:host ::ng-deep .form-socioeconomico .currency-field:focus-within .mat-mdc-form-field-infix::before,
+:host ::ng-deep .form-socioeconomico .currency-field.tem-valor .mat-mdc-form-field-infix::before {
+  opacity: 1;
+  margin-top: 2px;
+}
+
+:host ::ng-deep .form-socioeconomico .currency-field:focus-within input.mat-mdc-input-element,
+:host ::ng-deep .form-socioeconomico .currency-field.tem-valor input.mat-mdc-input-element {
+  box-sizing: border-box !important;
+  margin-top: 10px !important;
+  padding-left: 24px !important;
+}
+
+:host ::ng-deep .form-socioeconomico .currency-field:focus-within input,
+:host ::ng-deep .form-socioeconomico .currency-field.tem-valor input {
+  box-sizing: border-box !important;
+  margin-top: 10px !important;
+  padding-left: 24px !important;
+}
+
+:host ::ng-deep .mat-mdc-form-field.mat-form-field-disabled .mdc-text-field {
+  background-color: var(--campo-desabilitado-bg) !important;
+  opacity: 1;
+}
+
+:host ::ng-deep .mat-mdc-form-field.mat-form-field-disabled input,
+:host ::ng-deep .mat-mdc-form-field.mat-form-field-disabled .mat-mdc-select-value {
+  color: var(--input-color) !important;
+  -webkit-text-fill-color: var(--input-color) !important;
+  cursor: not-allowed;
+}
+
+:host ::ng-deep .mat-mdc-form-field.mat-form-field-disabled .mat-mdc-floating-label {
+  padding: 0 4px;
+  background-color: var(--campo-desabilitado-bg) !important;
+  color: var(--input-color) !important;
+  z-index: 2;
+}
+
+:host ::ng-deep .mat-mdc-form-field-required-marker,
+:host ::ng-deep .mdc-floating-label--required::after {
+  display: none;
+  content: none;
+}
+
+:host ::ng-deep .mat-mdc-select-arrow svg {
+  display: none;
+}
+
+:host ::ng-deep .mat-mdc-select {
+  margin-top: 10px;
+}
+
+:host ::ng-deep .mat-mdc-select-arrow {
+  width: 9px;
+  height: 9px;
+  margin: -4px 4px 0 0;
+  border-right: 2px solid #222;
+  border-bottom: 2px solid #222;
+  transform: rotate(45deg);
+  transition: transform 0.2s, margin 0.2s;
+}
+
+:host ::ng-deep .mat-mdc-select[aria-expanded='true'] .mat-mdc-select-arrow {
+  margin-top: 4px;
+  transform: rotate(225deg);
+}
+
+:host ::ng-deep .mat-mdc-select-disabled .mat-mdc-select-arrow {
+  border-color: #888;
+}
+
+:host ::ng-deep .mat-mdc-form-field .mdc-floating-label:not(.mdc-floating-label--float-above) {
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+}
+
+:host ::ng-deep .mat-mdc-form-field .mdc-floating-label {
+  transition: transform 150ms cubic-bezier(0.4, 0, 0.2, 1), top 150ms cubic-bezier(0.4, 0, 0.2, 1), color 150ms linear;
+}
+
+:host ::ng-deep .mat-mdc-form-field.mat-form-field-should-float .mat-mdc-select-value {
+  position: relative;
+  top: 7px;
+}
+
+:host ::ng-deep .mat-mdc-form-field.mat-form-field-should-float .mdc-floating-label {
+  background: #fff;
+  padding: 0 4px;
+}
+
+.spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: girar 0.7s linear infinite;
+}
+
+@keyframes girar {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 900px) {
+  .familia-grid,
+  .despesas-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 650px) {
+  .familia-grid,
+  .habitacao-linha,
+  .opcao-linha,
+  .opcao-pergunta,
+  .religiao-campos {
+    grid-template-columns: 1fr;
+  }
+
+  .familia-grid > :nth-child(3),
+  .familia-grid > :nth-child(4) {
+    grid-column: auto;
+  }
+
+  .aba-cabecalho,
+  .acoes-edicao {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .aba-cabecalho > .btn-primary,
+  .aba-cabecalho .acoes-edicao {
+    position: static;
+    margin-top: 10px;
+  }
 }
