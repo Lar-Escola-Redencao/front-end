@@ -211,16 +211,16 @@
     }
 
     @if (modoOcorrencia === 'NOVO' || modoOcorrencia === 'EDITAR' || modoOcorrencia === 'VER') {
-      <form class="form-modal" [formGroup]="formOcorrencia" (ngSubmit)="salvarOcorrencia()">
+      <form class="form-modal form-ocorrencia" [class.somente-visualizacao]="modoOcorrencia === 'VER'" [formGroup]="formOcorrencia" (ngSubmit)="salvarOcorrencia()">
         
         <div class="form-row-2">
-          <mat-form-field appearance="outline" class="campo-hora">
+          <mat-form-field appearance="outline" class="campo-hora" [hideRequiredMarker]="modoOcorrencia === 'VER'">
             <mat-label>Hora de registro</mat-label>
             <input matInput type="time" formControlName="horaStr" readonly>
             <mat-icon matSuffix class="icone-relogio">schedule</mat-icon>
           </mat-form-field>
           
-          <mat-form-field appearance="outline">
+          <mat-form-field appearance="outline" [hideRequiredMarker]="modoOcorrencia === 'VER'">
             <mat-label>Tipo de ocorrência</mat-label>
             <mat-select formControlName="tipoOcorrencia">
               @for (t of tiposOcorrencia; track t.value) {
@@ -230,10 +230,14 @@
           </mat-form-field>
         </div>
 
-        <mat-form-field appearance="outline" class="campo-textarea">
+        <mat-form-field appearance="outline" class="campo-textarea" [hideRequiredMarker]="modoOcorrencia === 'VER'">
           <mat-label>Descrição</mat-label>
           <textarea matInput rows="4" formControlName="descricao"></textarea>
         </mat-form-field>
+
+        @if (modoOcorrencia === 'VER') {
+          <p class="aviso-visualizacao">Esta ocorrência está em modo de visualização. Os dados não podem ser alterados aqui.</p>
+        }
 
         <div class="acoes-modal">
           <button type="button" class="btn-cancelar" [disabled]="salvando" (click)="voltarParaLista()">{{ modoOcorrencia === 'VER' ? 'Voltar' : 'Cancelar' }}</button>
