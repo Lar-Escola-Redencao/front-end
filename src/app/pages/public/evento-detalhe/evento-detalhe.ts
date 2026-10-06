@@ -75,8 +75,10 @@ export class EventoDetalhe implements OnInit, OnDestroy {
     return this.evento?.imagem ?? '';
   }
 
-  get possuiRedesSociais(): boolean {
-    return this.redesSociais.length > 0;
+  // O overlay "acompanhe pelas redes" só faz sentido depois que o evento
+  // encerrou e existe ao menos uma rede social cadastrada para divulgar.
+  get exibirOverlayRedesSociais(): boolean {
+    return this.eventoEncerrado() && this.redesSociais.length > 0;
   }
 
   get parceiros(): Parceiro[] {

@@ -130,6 +130,15 @@ describe('EventoDetalhe', () => {
     });
   });
 
+  describe('evento ainda nao encerrado, com redes sociais ativas', () => {
+    beforeEach(() => montar(criarEvento({ dataEvento: new Date('2099-01-01T12:00:00') }), redesSociais));
+
+    it('nao exibe o overlay de redes sociais', () => {
+      expect(elemento.querySelector('.imagem-overlay')).toBeNull();
+      expect(elemento.querySelector('.rede-social-link')).toBeNull();
+    });
+  });
+
   describe('imagem principal', () => {
     it('exibe fallback com texto quando a imagem principal falha', async () => {
       await montar(criarEvento());
