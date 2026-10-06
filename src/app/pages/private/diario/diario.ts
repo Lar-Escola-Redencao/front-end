@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, inject, NgZone, ChangeDetectorRef, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Subscription, combineLatest, debounceTime, filter, switchMap, tap, startWith } from 'rxjs';
+import { EMPTY, Subject, Subscription, catchError, finalize, interval, merge, of, switchMap, tap, startWith } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
 
 import { UnidadeService } from 'src/app/shared/services/unidade/unidade.service';
@@ -54,6 +54,7 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
   declaracaoAceita = false;
 
   private subs: Subscription = new Subscription();
+  private recarregar = new Subject<void>();
 
   modalOcorrenciaAberto = false;
   modoOcorrencia: 'LISTA' | 'NOVO' | 'EDITAR' | 'VER' = 'LISTA';
@@ -64,7 +65,7 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
   formOcorrencia: FormGroup = this.fb.group({
     horaStr: ['', Validators.required],
     tipoOcorrencia: ['COMPORTAMENTO', Validators.required],
-    descricao: ['', Validators.required]
+    descricao: ['', [Validators.required, Validators.pattern(/\S/)]]
   });
   errosOcorrencia: { [key: string]: string } = {};
 
@@ -76,58 +77,64 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
   ];
 
   ngOnInit(): void {
-    this.sessao.carregar().subscribe(() => {
+    this.subs.add(this.sessao.carregar().subscribe(() => {
       this.carregarUnidades();
-      this.cdr.detectChanges();
-    });
+      this.cdr.markForCheck();
+    }));
+    this.subs.add(interval(1000).subscribe(() => this.cdr.markForCheck()));
 
     this.subs.add(
-      this.filtroForm.get('idUnidade')?.valueChanges.subscribe(id => {
-        this.filtroForm.get('idTurma')?.setValue(null);
-        if (id) {
-          this.turmaService.listar(id).subscribe(turmas => {
-            this.turmas = turmas.filter(t => t.unidade.id === id);
-            this.filtroForm.get('idTurma')?.enable();
-          });
-        } else {
+      this.filtroForm.get('idUnidade')!.valueChanges.pipe(
+        tap(() => {
           this.turmas = [];
           this.filtroForm.get('idTurma')?.disable();
-        }
+          this.filtroForm.get('idTurma')?.setValue(null);
+        }),
+        switchMap(id => id ? this.turmaService.listar(id).pipe(
+          catchError(() => {
+            this.toastr.error('Erro ao carregar as turmas.');
+            return of([]);
+          })
+        ) : of([]))
+      ).subscribe(turmas => {
+        const id = this.filtroForm.get('idUnidade')?.value;
+        this.turmas = turmas.filter(t => t.unidade.id === id);
+        if (id) this.filtroForm.get('idTurma')?.enable({ emitEvent: false });
+        this.cdr.markForCheck();
       })
     );
 
     this.subs.add(
-      combineLatest([
-        this.filtroForm.get('idTurma')!.valueChanges,
-        this.filtroForm.get('data')!.valueChanges.pipe(startWith(this.filtroForm.get('data')!.value))
-      ]).pipe(
-        debounceTime(300),
-        tap(() => {
-          this.carregando = true;
+      merge(this.filtroForm.valueChanges, this.recarregar).pipe(
+        startWith(null),
+        switchMap(() => {
+          this.carregando = false;
           this.usuarios = [];
           this.estadoTela = 'VAZIO';
           this.declaracaoAceita = false;
-        }),
-        filter(([idTurma, data]) => !!idTurma && !!data),
-        switchMap(([idTurma, data]) => {
-          this.cdr.detectChanges();
-          return this.diarioService.listarFrequencia(idTurma, data);
+          this.executarFechamentoModal();
+          const { idUnidade, idTurma, data } = this.filtroForm.getRawValue();
+          if (!idUnidade || !idTurma || !data || !this.turmas.some(t => t.id === idTurma && t.unidade.id === idUnidade)) {
+            this.cdr.markForCheck();
+            return EMPTY;
+          }
+          this.carregando = true;
+          this.cdr.markForCheck();
+          return this.diarioService.listarFrequencia(idTurma, data).pipe(
+            catchError(() => {
+              this.toastr.error('Erro ao carregar o diário de turma. Altere os filtros para tentar novamente.');
+              return EMPTY;
+            }),
+            finalize(() => {
+              this.carregando = false;
+              this.cdr.markForCheck();
+            })
+          );
         })
-      ).subscribe({
-        next: (dados) => {
-          this.ngZone.run(() => {
-            this.usuarios = dados;
-            const jaPreenchido = this.usuarios.some(u => u.idFrequencia !== null);
-            this.estadoTela = jaPreenchido ? 'SALVO' : 'INICIAL';
-            this.carregando = false;
-            this.cdr.detectChanges();
-          });
-        },
-        error: () => {
-          this.carregando = false;
-          this.toastr.error('Erro ao carregar o diário de turma.');
-          this.cdr.detectChanges();
-        }
+      ).subscribe(dados => {
+        this.usuarios = dados;
+        this.estadoTela = dados.some(u => u.idFrequencia !== null) ? 'SALVO' : 'INICIAL';
+        this.cdr.markForCheck();
       })
     );
   }
@@ -137,10 +144,11 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
   }
 
   private carregarUnidades() {
-    this.unidadeService.listarTodas().subscribe(dados => {
+    this.subs.add(this.unidadeService.listarTodas().subscribe({ next: dados => {
       const permitidas = this.sessao.unidadesPermitidasIds();
       this.unidades = permitidas === null ? dados : dados.filter((u: any) => permitidas.includes(u.id));
-    });
+      this.cdr.markForCheck();
+    }, error: () => this.toastr.error('Erro ao carregar as unidades.') }));
   }
 
   get isMonitor(): boolean {
@@ -150,127 +158,94 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
   get podeIniciarChamada(): boolean {
     const idTurma = this.filtroForm.get('idTurma')?.value;
     const dataSelecionada = this.filtroForm.get('data')?.value;
-    if (!idTurma || !dataSelecionada || this.estadoTela !== 'INICIAL') return false;
+    if (!idTurma || !dataSelecionada || this.estadoTela !== 'INICIAL' || this.salvando || !this.usuarios.length) return false;
 
     const turmaSelecionada = this.turmas.find(t => t.id === idTurma);
     if (!turmaSelecionada) return false;
 
-    const hojeStr = this.hojeFormatada();
-    if (dataSelecionada > hojeStr) return false; 
-    if (dataSelecionada < hojeStr) return true; 
+    return this.perfilEstrategico || (this.isMonitor && Date.now() >= this.inicioDaTurma);
+  }
 
-    const agora = new Date();
-    const horaTurmaSplit = turmaSelecionada.horaInicio.split(':');
-    const dataHoraTurma = new Date();
-    dataHoraTurma.setHours(Number(horaTurmaSplit[0]), Number(horaTurmaSplit[1]), 0, 0);
+  private get perfilEstrategico(): boolean {
+    return this.sessao.isAdministrador() || this.sessao.isCoordenador();
+  }
 
-    return agora >= dataHoraTurma;
+  private get inicioDaTurma(): number {
+    const turma = this.turmas.find(t => t.id === this.filtroForm.get('idTurma')?.value);
+    return this.instanteBrasilia(`${this.filtroForm.get('data')?.value}T${turma?.horaInicio}`);
   }
 
   get podeEditarFrequencia(): boolean {
-    if (!this.isMonitor) return true;
-    const dataSelecionada = new Date(this.filtroForm.get('data')?.value + 'T23:59:59');
-    const agora = new Date();
-    const diffHoras = (agora.getTime() - dataSelecionada.getTime()) / (1000 * 60 * 60);
-    return diffHoras <= 48;
+    if (this.perfilEstrategico) return true;
+    return this.isMonitor && Date.now() - this.inicioDaTurma <= 48 * 60 * 60 * 1000;
+  }
+
+  get podePreencherFrequencia(): boolean {
+    return !this.salvando && this.estadoTela === 'PREENCHENDO'
+      && (this.podeEditarFrequencia || !this.usuarios.some(u => u.idFrequencia !== null));
   }
 
   get podeAdicionarOcorrencia(): boolean {
-    if (this.usuarioSelecionado?.statusMatricula === 'EXCLUIDO' || this.usuarioSelecionado?.statusMatricula === 'EGRESSO') return false;
-    if (!this.isMonitor) return true;
-    const dataSelecionada = new Date(this.filtroForm.get('data')?.value + 'T00:00:00');
-    const hoje = new Date();
-    hoje.setHours(0,0,0,0);
-    const diffDias = Math.floor((hoje.getTime() - dataSelecionada.getTime()) / (1000 * 60 * 60 * 24));
-    return diffDias <= 7;
+    if (this.perfilEstrategico) return true;
+    const data = this.filtroForm.get('data')?.value;
+    const diffDias = (Date.parse(this.hojeFormatada()) - Date.parse(data)) / (24 * 60 * 60 * 1000);
+    return this.isMonitor && diffDias >= 0 && diffDias <= 7;
   }
 
   podeEditarExcluirOcorrencia(oc: OcorrenciaResponseDTO): boolean {
-    if (this.usuarioSelecionado?.statusMatricula === 'EXCLUIDO' || this.usuarioSelecionado?.statusMatricula === 'EGRESSO') return false;
-    if (!this.isMonitor) return true;
-    const criacao = new Date(oc.dataCriacao);
-    const agora = new Date();
-    const diffHoras = (agora.getTime() - criacao.getTime()) / (1000 * 60 * 60);
-    return diffHoras <= 24;
+    return this.perfilEstrategico || (this.isMonitor && Date.now() - this.instanteBrasilia(oc.dataCriacao) <= 24 * 60 * 60 * 1000);
+  }
+
+  get podeSalvarOcorrencia(): boolean {
+    return !this.salvando && !!this.usuarioSelecionado && (
+      this.modoOcorrencia === 'NOVO' ? this.podeAdicionarOcorrencia
+        : this.modoOcorrencia === 'EDITAR' && !!this.ocorrenciaSelecionada && this.podeEditarExcluirOcorrencia(this.ocorrenciaSelecionada)
+    );
   }
 
   alterarData(dias: number) {
-    const dataAtual = new Date(this.filtroForm.get('data')?.value + 'T12:00:00');
+    const dataAtual = new Date((this.filtroForm.get('data')?.value || this.hojeFormatada()) + 'T12:00:00');
     dataAtual.setDate(dataAtual.getDate() + dias);
     this.filtroForm.get('data')?.setValue(dataAtual.toISOString().split('T')[0]);
   }
 
   iniciarChamada() {
+    if (!this.podeIniciarChamada) return;
     this.estadoTela = 'PREENCHENDO';
-    this.usuarios.forEach(u => u.presente = u.statusMatricula === 'EXCLUIDO' ? false : true); 
+    this.declaracaoAceita = false;
+    this.usuarios.forEach(u => u.presente = true);
   }
 
   editarChamada() {
+    if (this.estadoTela !== 'SALVO' || !this.podeEditarFrequencia || this.salvando) return;
     this.estadoTela = 'PREENCHENDO';
+    this.usuarios.forEach(u => u.presente ??= true);
     this.declaracaoAceita = false;
   }
 
   cancelarPreenchimento() {
+    if (this.salvando) return;
     Alertas.confirmarDescarte().then(confirmado => {
-      if (confirmado) {
-        this.ngZone.run(() => {
-          this.carregando = true;
-          this.cdr.detectChanges();
-          
-          const idTurma = this.filtroForm.get('idTurma')?.value;
-          const data = this.filtroForm.get('data')?.value;
-
-          this.diarioService.listarFrequencia(idTurma, data).subscribe({
-            next: (dados) => {
-              this.ngZone.run(() => {
-                this.usuarios = dados;
-                const jaPreenchido = this.usuarios.some(u => u.idFrequencia !== null);
-                this.estadoTela = jaPreenchido ? 'SALVO' : 'INICIAL';
-                this.declaracaoAceita = false;
-                this.carregando = false;
-                this.cdr.detectChanges();
-              });
-            },
-            error: () => {
-              this.ngZone.run(() => {
-                this.carregando = false;
-                this.toastr.error('Erro ao restaurar a chamada original.');
-                this.cdr.detectChanges();
-              });
-            }
-          });
-        });
+      if (confirmado && !this.salvando) {
+        this.recarregar.next();
       }
     });
   }
 
   marcarFrequencia(usuario: FrequenciaUsuarioResponseDTO, presente: boolean) {
-    if (!this.podeEditarFrequencia || usuario.statusMatricula === 'EXCLUIDO') return;
-
-    if (this.estadoTela === 'SALVO') {
-      if (usuario.idFrequencia) {
-        this.diarioService.atualizarFrequencia(usuario.idFrequencia, presente).subscribe({
-          next: () => {
-             usuario.presente = presente;
-             this.toastr.success('Frequência atualizada.');
-          },
-          error: () => this.toastr.error('Erro ao atualizar frequência.')
-        });
-      }
-    } else {
-      usuario.presente = presente;
-    }
+    if (!this.podePreencherFrequencia) return;
+    usuario.presente = presente;
   }
 
   salvarDiarioLote() {
-    if (!this.declaracaoAceita) return;
+    if (!this.declaracaoAceita || !this.podePreencherFrequencia || !this.usuarios.length) return;
 
     this.salvando = true;
+    this.cdr.markForCheck();
     const dto = {
       idTurma: this.filtroForm.get('idTurma')?.value,
       data: this.filtroForm.get('data')?.value,
       frequencias: this.usuarios
-        .filter(u => u.statusMatricula !== 'EXCLUIDO' && u.statusMatricula !== 'EGRESSO')
         .map(u => ({
           idMatricula: u.idMatricula,
           presente: u.presente!
@@ -281,11 +256,15 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
       next: () => {
         this.toastr.success('Diário salvo com sucesso!');
         this.salvando = false;
-        this.filtroForm.get('data')?.updateValueAndValidity(); 
+        this.estadoTela = 'SALVO';
+        this.declaracaoAceita = false;
+        this.cdr.markForCheck();
+        this.recarregar.next();
       },
       error: () => {
         this.toastr.error('Erro ao salvar diário.');
         this.salvando = false;
+        this.cdr.markForCheck();
       }
     });
   }
@@ -314,6 +293,7 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
   }
 
   abrirGerenciadorOcorrencias(usuario: FrequenciaUsuarioResponseDTO) {
+    if (this.salvando || (!usuario.ocorrencias.length && !this.podeAdicionarOcorrencia)) return;
     this.usuarioSelecionado = usuario;
     if (usuario.ocorrencias && usuario.ocorrencias.length > 0) {
       this.modoOcorrencia = 'LISTA';
@@ -324,6 +304,7 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
   }
 
   fecharModalOcorrencia() {
+    if (this.salvando) return;
     if (!this.temAlteracoesNoModalOcorrencia) {
       this.executarFechamentoModal();
       return;
@@ -332,7 +313,7 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
       this.ngZone.run(() => {
         if (confirmado) this.executarFechamentoModal();
         else this.dispararTremorModal();
-        this.cdr.detectChanges();
+        this.cdr.markForCheck();
       });
     });
   }
@@ -345,6 +326,7 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
   }
 
   voltarParaLista() {
+    if (this.salvando) return;
     if (!this.temAlteracoesNoModalOcorrencia) {
       this.executarVoltarParaLista();
       return;
@@ -353,7 +335,7 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
       this.ngZone.run(() => {
         if (confirmado) this.executarVoltarParaLista();
         else this.dispararTremorModal();
-        this.cdr.detectChanges();
+        this.cdr.markForCheck();
       });
     });
   }
@@ -371,11 +353,13 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
     this.modalTremendo = true;
     setTimeout(() => {
       this.modalTremendo = false;
-      this.cdr.detectChanges();
+      this.cdr.markForCheck();
     }, 400);
   }
 
   abrirFormOcorrencia(oc: OcorrenciaResponseDTO | null, modo: 'NOVO' | 'EDITAR' | 'VER') {
+    if (this.salvando || (modo === 'NOVO' && !this.podeAdicionarOcorrencia)
+      || (modo === 'EDITAR' && (!oc || !this.podeEditarExcluirOcorrencia(oc)))) return;
     this.modoOcorrencia = modo;
     this.ocorrenciaSelecionada = oc;
     this.errosOcorrencia = {};
@@ -388,7 +372,7 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
         descricao: ''
       });
     } else if (oc) {
-      const hora = new Date(oc.dataCriacao).toTimeString().substring(0, 5); 
+      const hora = new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit' }).format(this.instanteBrasilia(oc.dataCriacao));
       this.formOcorrencia.patchValue({
         horaStr: hora,
         tipoOcorrencia: oc.tipoOcorrencia,
@@ -405,12 +389,14 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
   }
 
   salvarOcorrencia() {
+    if (!this.podeSalvarOcorrencia) return;
     if (this.formOcorrencia.invalid) {
       this.errosOcorrencia = mapearErrosFormulario(this.formOcorrencia);
       return;
     }
 
     this.salvando = true;
+    this.cdr.markForCheck();
     const { tipoOcorrencia, descricao } = this.formOcorrencia.getRawValue();
     const dataSelecionada = this.filtroForm.get('data')?.value;
     
@@ -430,14 +416,14 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
             this.toastr.success('Ocorrência registrada com sucesso.', 'Sucesso');
             this.salvando = false;
             this.executarVoltarParaLista();
-            this.cdr.detectChanges();
+            this.cdr.markForCheck();
           });
         },
         error: () => { 
           this.ngZone.run(() => {
             this.toastr.error('Erro ao registrar ocorrência.'); 
             this.salvando = false; 
-            this.cdr.detectChanges();
+            this.cdr.markForCheck();
           });
         }
       });
@@ -452,14 +438,14 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
             this.toastr.success('Ocorrência atualizada com sucesso.', 'Sucesso');
             this.salvando = false;
             this.executarVoltarParaLista();
-            this.cdr.detectChanges();
+            this.cdr.markForCheck();
           });
         },
         error: () => { 
           this.ngZone.run(() => {
             this.toastr.error('Erro ao atualizar ocorrência.'); 
             this.salvando = false; 
-            this.cdr.detectChanges();
+            this.cdr.markForCheck();
           });
         }
       });
@@ -467,24 +453,29 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
   }
 
   excluirOcorrencia(oc: OcorrenciaResponseDTO) {
+    if (this.salvando || !this.podeEditarExcluirOcorrencia(oc)) return;
     Alertas.confirmarExclusao().then(confirma => {
-      if (!confirma) return;
+      if (!confirma || !this.usuarioSelecionado || !this.podeEditarExcluirOcorrencia(oc)) return;
+      this.salvando = true;
+      this.cdr.markForCheck();
       
       this.diarioService.deletarOcorrencia(oc.id).subscribe({
         next: () => {
           this.ngZone.run(() => {
+            this.salvando = false;
             this.usuarioSelecionado!.ocorrencias = this.usuarioSelecionado!.ocorrencias.filter(o => o.id !== oc.id);
             this.toastr.success('Ocorrência excluída com sucesso.', 'Sucesso');
             if (this.usuarioSelecionado!.ocorrencias.length === 0) {
               this.executarFechamentoModal();
             }
-            this.cdr.detectChanges();
+            this.cdr.markForCheck();
           });
         },
         error: () => {
           this.ngZone.run(() => {
+             this.salvando = false;
              this.toastr.error('Erro ao excluir ocorrência.', 'Erro');
-             this.cdr.detectChanges();
+             this.cdr.markForCheck();
           });
         }
       });
@@ -492,26 +483,25 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
   }
 
   private hojeFormatada(): string {
-    const d = new Date();
-    const ano = d.getFullYear();
-    const mes = String(d.getMonth() + 1).padStart(2, '0');
-    const dia = String(d.getDate()).padStart(2, '0');
-    return `${ano}-${mes}-${dia}`;
+    return new Intl.DateTimeFormat('sv-SE', { timeZone: 'America/Sao_Paulo' }).format(new Date());
   }
 
   private agoraFormatada(): string {
-    const d = new Date();
-    return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+    return new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit' }).format(new Date());
+  }
+
+  private instanteBrasilia(iso: string): number {
+    return Date.parse(/(Z|[+-]\d{2}:\d{2})$/.test(iso) ? iso : `${iso}-03:00`);
   }
 
   formatarData(isoStr: string): string {
+    if (!isoStr) return 'Selecione uma data';
     const d = new Date(isoStr + 'T12:00:00');
     return new Intl.DateTimeFormat('pt-BR', { day: 'numeric', month: 'short', year: 'numeric' }).format(d);
   }
 
   formatarDataHora(isoStr: string): string {
-    const d = new Date(isoStr);
-    return new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(d).replace(':', 'h');
+    return new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(this.instanteBrasilia(isoStr)).replace(':', 'h');
   }
 
   obterLabelOcorrencia(tipo: string): string {

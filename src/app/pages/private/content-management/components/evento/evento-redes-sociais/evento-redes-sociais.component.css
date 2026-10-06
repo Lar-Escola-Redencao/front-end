@@ -1,0 +1,386 @@
+/* A tabela precisa de mais espaço que o modal padrão (560px). */
+:host ::ng-deep .modal-card {
+  width: min(calc(100vw - 64px), 980px) !important;
+}
+
+.vinculo-redes {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  font-family: var(--fonte-texto);
+}
+
+.vinculo-cabecalho {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.vinculo-evento {
+  margin: 0;
+  color: var(--preto);
+  text-align: left;
+}
+
+.vinculo-resumo {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--input-border);
+}
+
+.vinculo-estado {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 32px 16px;
+  text-align: center;
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.vinculo-estado p {
+  margin: 0;
+}
+
+.vinculo-estado-erro p {
+  color: rgb(182, 43, 43);
+}
+
+.botao-tentar-novamente {
+  border: 1px solid var(--primary-color);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--primary-color);
+  padding: 8px 16px;
+  cursor: pointer;
+  font-family: var(--fonte-texto);
+}
+
+.botao-tentar-novamente:hover {
+  background: var(--primary-color);
+  color: var(--branco);
+}
+
+.vinculo-tabela {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: var(--sombra-padrao);
+}
+
+.vinculo-tabela th {
+  padding: 14px 16px;
+  text-align: left;
+  font-size: 0.85rem;
+  font-weight: bold;
+  color: rgba(0, 0, 0, 0.6);
+  white-space: nowrap;
+  border-bottom: 1px solid #ddd;
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.coluna-icone,
+.celula-icone {
+  width: 56px;
+  text-align: center;
+}
+
+.coluna-rede,
+.celula-rede {
+  width: 220px;
+  text-align: left;
+}
+
+.col-acoes {
+  width: 126px;
+}
+
+.vinculo-tabela td {
+  padding: 12px 16px;
+  vertical-align: middle;
+  border-bottom: 1px solid #eee;
+}
+
+.vinculo-tabela tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+
+.rede-icone {
+  width: 20px;
+  height: 20px;
+  box-sizing: border-box;
+  object-fit: contain;
+  filter: brightness(0) saturate(100%) invert(45%) sepia(62%) saturate(1034%) hue-rotate(184deg) brightness(88%) contrast(88%);
+  flex-shrink: 0;
+  vertical-align: middle;
+}
+
+.rede-nome {
+  display: inline-block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.coluna-status {
+  width: 132px;
+  text-align: left;
+}
+
+.badge-vinculo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 92px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  color: rgba(0, 0, 0, 0.55);
+  background-color: rgba(0, 0, 0, 0.08);
+}
+
+.badge-vinculo.ativo {
+  color: #139445;
+  background-color: #dcfce7;
+}
+
+.celula-link {
+  width: auto;
+}
+
+.campo-link {
+  display: block;
+  width: 100%;
+}
+
+.input-link {
+  font-family: var(--fonte-texto);
+}
+
+.input-link:disabled {
+  opacity: 0.6;
+}
+
+:host ::ng-deep .campo-link .mat-mdc-form-field-subscript-wrapper {
+  display: none;
+}
+
+:host ::ng-deep .campo-link .mat-mdc-text-field-wrapper {
+  min-height: 58px;
+}
+
+:host ::ng-deep .campo-link .mat-mdc-form-field-infix {
+  min-height: 58px;
+}
+
+:host ::ng-deep .campo-link.campo-link-erro .mdc-notched-outline__leading,
+:host ::ng-deep .campo-link.campo-link-erro .mdc-notched-outline__notch,
+:host ::ng-deep .campo-link.campo-link-erro .mdc-notched-outline__trailing {
+  border-color: var(--error-color) !important;
+}
+
+.celula-link .error-text {
+  display: block;
+  width: 100%;
+  margin-top: 4px;
+  font-size: 0.8rem;
+  line-height: 1.25;
+}
+
+.coluna-acoes {
+  width: 126px;
+  white-space: nowrap;
+  text-align: center;
+}
+
+.acoes {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  width: 100%;
+  min-height: 36px;
+}
+
+.botao-acao {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--primary-color);
+  cursor: pointer;
+}
+
+.botao-acao:hover {
+  color: var(--primary-hover-color);
+}
+
+.botao-acao mat-icon {
+  font-size: 21px;
+}
+
+.botao-excluir {
+  color: rgb(182, 43, 43);
+}
+
+.botao-excluir:hover {
+  color: rgb(104, 5, 5);
+}
+
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(75, 128, 213, 0.25);
+  border-top-color: var(--primary-color);
+  border-radius: 50%;
+  display: inline-block;
+  animation: girar 0.7s linear infinite;
+}
+
+@keyframes girar {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 980px) {
+  :host ::ng-deep .modal-backdrop {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  :host ::ng-deep .modal-card {
+    width: 100% !important;
+    max-height: 90vh;
+    border-radius: 24px 24px 0 0;
+    animation: slideUp 0.25s ease;
+  }
+
+  .vinculo-tabela thead {
+    display: none;
+  }
+
+  .vinculo-tabela,
+  .vinculo-tabela tbody {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .vinculo-tabela {
+    margin-right: 0;
+    border-radius: 0;
+    box-shadow: none;
+    overflow: visible;
+  }
+
+  .vinculo-tabela tbody {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .vinculo-tabela tr,
+  .vinculo-tabela td {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .vinculo-tabela tr {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) max-content;
+    align-items: center;
+    column-gap: 8px;
+    row-gap: 10px;
+    padding: 20px 24px;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    box-shadow: var(--sombra-padrao);
+    background: var(--branco);
+  }
+
+  .vinculo-tabela tbody tr:last-child {
+    border-bottom: 1px solid #eee;
+  }
+
+  .vinculo-tabela td {
+    padding: 0;
+    border-bottom: 0;
+  }
+
+  .celula-icone {
+    grid-column: 1;
+    grid-row: 2;
+    width: auto;
+    text-align: left;
+  }
+
+  .celula-rede {
+    grid-column: 2;
+    grid-row: 2;
+    width: auto;
+    min-width: 0;
+  }
+
+  .rede-icone {
+    width: 32px;
+    height: 32px;
+  }
+
+
+  .coluna-status {
+    grid-column: 1 / 3;
+    grid-row: 1;
+    width: auto;
+    text-align: left;
+  }
+
+  .celula-link {
+    grid-column: 1 / -1;
+    grid-row: 3;
+    margin: 0;
+  }
+
+  .input-link {
+    font-size: 1rem;
+  }
+
+  :host ::ng-deep .campo-link .mat-mdc-text-field-wrapper,
+  :host ::ng-deep .campo-link .mat-mdc-form-field-infix {
+    min-height: 64px;
+  }
+
+  .celula-link .error-text {
+    margin-top: 8px;
+    line-height: 1.35;
+  }
+
+  .coluna-acoes {
+    grid-column: 3;
+    grid-row: 1;
+    width: auto;
+  }
+
+  .acoes {
+    justify-content: flex-end;
+    min-height: 40px;
+  }
+
+  .botao-acao {
+    width: 32px;
+    height: 32px;
+  }
+}

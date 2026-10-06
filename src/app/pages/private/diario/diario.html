@@ -1,16 +1,16 @@
 <section class="diario-page">
-  <div class="diario-header" [formGroup]="filtroForm">
+  <div class="diario-header" [formGroup]="filtroForm" [attr.inert]="salvando ? '' : null">
     <div class="titulo-linha">
       <h1>Diário de turma</h1>
       
       <div class="data-nav">
-        <button type="button" class="btn-icon" (click)="alterarData(-1)"><mat-icon>chevron_left</mat-icon></button>
+        <button type="button" class="btn-icon" aria-label="Dia anterior" (click)="alterarData(-1)"><mat-icon>chevron_left</mat-icon></button>
         <span class="data-atual">{{ formatarData(filtroForm.get('data')?.value) }}</span>
-        <button type="button" class="btn-icon" (click)="alterarData(1)"><mat-icon>chevron_right</mat-icon></button>
+        <button type="button" class="btn-icon" aria-label="Próximo dia" (click)="alterarData(1)"><mat-icon>chevron_right</mat-icon></button>
         
         <div class="input-data-wrapper">
           <mat-icon class="icon-calendar">calendar_month</mat-icon>
-          <input type="date" formControlName="data" class="input-data-invisivel">
+          <input type="date" aria-label="Data do diário" formControlName="data" class="input-data-invisivel">
         </div>
       </div>
     </div>
@@ -92,7 +92,9 @@
                     <button 
                       type="button" 
                       class="toggle-fp" 
-                      [class.disabled]="!podeEditarFrequencia || usuario.statusMatricula === 'EXCLUIDO'"
+                      [disabled]="!podePreencherFrequencia"
+                      [class.disabled]="!podePreencherFrequencia"
+                      [attr.aria-label]="'Presença de ' + usuario.nomeUsuario"
                       (click)="marcarFrequencia(usuario, !usuario.presente)">
                       <span 
                         class="btn-falta" 
@@ -105,14 +107,14 @@
                 </td>
 
                 <td class="col-ocorrencia">
-                  @if (usuario.statusMatricula !== 'EXCLUIDO' || usuario.ocorrencias.length > 0) {
+                  @if (podeAdicionarOcorrencia || usuario.ocorrencias.length > 0) {
                     <button type="button" class="btn-badge-ocorrencia" 
+                      [disabled]="salvando"
+                      [attr.aria-label]="'Ocorrências de ' + usuario.nomeUsuario"
                       [class.vazio]="usuario.ocorrencias.length === 0"
                       (click)="abrirGerenciadorOcorrencias(usuario)">
                       {{ usuario.ocorrencias.length > 0 ? usuario.ocorrencias.length : '+' }}
                     </button>
-                  } @else {
-                    <button type="button" class="btn-badge-ocorrencia vazio" disabled style="opacity: 0.5; cursor: not-allowed;">+</button>
                   }
                 </td>
               </tr>
@@ -148,8 +150,8 @@
             <span>Declaro que o diário foi preenchido corretamente</span>
           </label>
           <div class="acoes">
-            <button type="button" class="btn-cancelar" (click)="cancelarPreenchimento()">Cancelar</button>
-            <button type="button" class="btn-primary" [disabled]="!declaracaoAceita || salvando" (click)="salvarDiarioLote()">
+            <button type="button" class="btn-cancelar" [disabled]="salvando" (click)="cancelarPreenchimento()">Cancelar</button>
+            <button type="button" class="btn-primary" [disabled]="!declaracaoAceita || !podePreencherFrequencia" (click)="salvarDiarioLote()">
                <span *ngIf="salvando" class="spinner"></span> Salvar
             </button>
           </div>
@@ -160,7 +162,7 @@
       @if (estadoTela === 'SALVO') {
         @if (podeEditarFrequencia) {
           <div class="rodape-diario rodape-salvo">
-             <button type="button" class="btn-primary btn-editar-diario" (click)="editarChamada()">Editar</button>
+             <button type="button" class="btn-primary btn-editar-diario" [disabled]="salvando" (click)="editarChamada()">Editar</button>
           </div>
         } @else {
            <div class="rodape-diario is-locked">
@@ -213,8 +215,8 @@
         
         <div class="form-row-2">
           <mat-form-field appearance="outline" class="campo-hora">
-            <mat-label>Hora</mat-label>
-            <input matInput type="time" formControlName="horaStr">
+            <mat-label>Hora de registro</mat-label>
+            <input matInput type="time" formControlName="horaStr" readonly>
             <mat-icon matSuffix class="icone-relogio">schedule</mat-icon>
           </mat-form-field>
           
@@ -234,10 +236,10 @@
         </mat-form-field>
 
         <div class="acoes-modal">
-          <button type="button" class="btn-cancelar" (click)="voltarParaLista()">{{ modoOcorrencia === 'VER' ? 'Voltar' : 'Cancelar' }}</button>
+          <button type="button" class="btn-cancelar" [disabled]="salvando" (click)="voltarParaLista()">{{ modoOcorrencia === 'VER' ? 'Voltar' : 'Cancelar' }}</button>
           
           @if (modoOcorrencia !== 'VER') {
-            <button type="submit" class="btn-primary" [disabled]="salvando || formOcorrencia.invalid">
+            <button type="submit" class="btn-primary" [disabled]="!podeSalvarOcorrencia || formOcorrencia.invalid">
               <span *ngIf="salvando" class="spinner"></span> {{ modoOcorrencia === 'NOVO' ? 'Salvar' : 'Salvar alterações' }}
             </button>
           }
