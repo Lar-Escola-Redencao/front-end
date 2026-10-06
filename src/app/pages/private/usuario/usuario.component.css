@@ -634,6 +634,49 @@ h1 {
   font-family: var(--fonte-texto);
   font-size: 14px;
   color: #555;
+  margin: 0 0 16px;
+}
+
+.novo-vinculo-form {
+  gap: 12px;
+}
+
+.novo-vinculo-form .principal-toggle {
+  align-self: flex-start;
+}
+
+:host ::ng-deep app-modal-layout.modal-sobreposto .modal-backdrop {
+  z-index: 2100;
+}
+
+.principal-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 24px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #777;
+  cursor: pointer;
+  font-family: var(--fonte-texto);
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.principal-star {
+  width: 22px;
+  height: 22px;
+  color: var(--primary-color);
+  font-family: 'Material Symbols Outlined' !important;
+  font-size: 22px;
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24 !important;
+  line-height: 1;
+}
+
+.principal-star.preenchida,
+.principal-toggle.ativo .principal-star {
+  font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24 !important;
 }
 
 ::ng-deep .form-modal .mat-mdc-form-field.mat-form-field-disabled .mdc-notched-outline__leading,
@@ -651,6 +694,11 @@ h1 {
 ::ng-deep .form-modal .mat-mdc-form-field.mat-form-field-disabled input,
 ::ng-deep .form-modal .mat-mdc-form-field.mat-form-field-disabled .mat-mdc-select-value {
   color: #9ca3af !important;
+}
+
+::ng-deep .novo-vinculo-form .mat-mdc-form-field.mat-form-field-disabled .mat-mdc-floating-label {
+  padding: 0 4px;
+  background: #f5f5f5;
 }
 
 ::ng-deep .form-modal .mat-mdc-form-field.mat-form-field-disabled .mat-mdc-select-arrow {

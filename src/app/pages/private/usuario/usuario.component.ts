@@ -280,7 +280,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
 
   // Ações da tabela
   colunas: TabelaColuna<UsuarioResponseDTO>[] = [
-    { chave: 'nomeCompleto', titulo: 'Nome do Usuário', principalMobile: true, ordenavel: true },
+    { chave: 'nomeCompleto', titulo: 'Usuário', principalMobile: true, ordenavel: true },
     { chave: 'cpf', titulo: 'CPF/Documento', ordenavel: true, formatar: (v, linha) => v || linha.documentoAuxiliar || '-' },
     {
       chave: 'dataNascimento',
@@ -306,8 +306,8 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
 
   // Colunas da tabela de Contatos: Nome, Telefone, E-mail, Vínculos
   colunasContatos: TabelaColuna<ContatoListagemDTO>[] = [
-    { chave: 'nomeCompleto', titulo: 'Nome do Responsável', principalMobile: true, ordenavel: true },
-    { chave: 'telefone', titulo: 'Telefone', ordenavel: true, formatar: (v) => formatarTelefone(v) },
+    { chave: 'nomeCompleto', titulo: 'Responsável', principalMobile: true, ordenavel: true },
+    { chave: 'telefone', titulo: 'Telefone', ordenavel: true, tipo: 'telefone', formatar: (v) => formatarTelefone(v) },
     { chave: 'email', titulo: 'E-mail', ordenavel: true, formatar: (v) => v || '-' },
     { chave: 'quantidadeVinculos', titulo: 'Vínculos', ordenavel: true }
   ];
@@ -1239,6 +1239,11 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
     return valor ? formatarTelefone(valor) : '-';
   }
 
+  hrefTelefoneContato(valor?: string | null): string | null {
+    const telefone = String(valor ?? '').replace(/\D/g, '');
+    return telefone ? `tel:${telefone}` : null;
+  }
+
   private contatoCorrespondeTipoBusca(contato: ContatoListagemDTO, tipoBusca: unknown, termo: string): boolean {
     const texto = termo.trim().toLowerCase();
     const numeros = termo.replace(/\D/g, '');
@@ -1879,7 +1884,6 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
     if (!this.podeGerenciarContatos || !contato) return;
 
     this.contatoSelecionado = contato;
-    this.modalVinculosAberto = false;
     this.turmasDoVinculo = [];
     this.usuariosParaVinculo = [];
     this.usuarioSelecionadoParaVinculo = null;
@@ -2000,8 +2004,26 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
   private fecharNovoVinculoSemConfirmacao() {
     this.buscaVinculoSub?.unsubscribe();
     this.modalNovoVinculoAberto = false;
-    this.contatoSelecionado = null;
     this.usuarioSelecionadoParaVinculo = null;
+  }
+
+  private recarregarVinculosDoContatoAtual(): void {
+    if (!this.contatoSelecionado) return;
+
+    const contatoAtual = this.contatoSelecionado;
+    this.carregandoVinculos = true;
+    this.contatoService.buscarDetalhe(contatoAtual.id).subscribe({
+      next: detalhe => this.ngZone.run(() => {
+        this.vinculosDoContato = (detalhe.vinculos || []).filter(v => v.idUnidade != null);
+        this.carregandoVinculos = false;
+        this.atualizarTela();
+      }),
+      error: () => this.ngZone.run(() => {
+        this.carregandoVinculos = false;
+        this.toastr.error('Erro ao carregar os usuários vinculados a este contato.', 'Erro');
+        this.atualizarTela();
+      })
+    });
   }
 
   /** Carrega a lista de usuários (uma vez) para alimentar o passo "Usuário" do vínculo. */
@@ -2082,6 +2104,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
           this.toastr.success('Vínculo criado com sucesso!', 'Sucesso');
           this.fecharNovoVinculoSemConfirmacao();
           this.carregarContatos();
+          this.recarregarVinculosDoContatoAtual();
           this.atualizarTela();
         });
       },

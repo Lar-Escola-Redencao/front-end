@@ -590,10 +590,19 @@
 
 <!-- MODAL "NOVO VÍNCULO" -->
 @if (modalNovoVinculoAberto) {
-<app-modal-layout titulo="Novo vínculo" (closed)="fecharNovoVinculo()">
+<app-modal-layout class="modal-sobreposto" titulo="Novo vínculo" (closed)="fecharNovoVinculo()">
   <p class="novo-vinculo-subtitulo" *ngIf="contatoSelecionado">Contato: {{ contatoSelecionado.nomeCompleto }}</p>
 
-  <form class="form-modal" [formGroup]="formNovoVinculo" (ngSubmit)="salvarNovoVinculo()">
+  <form class="form-modal novo-vinculo-form" [formGroup]="formNovoVinculo" (ngSubmit)="salvarNovoVinculo()">
+
+    <button type="button" class="principal-toggle" [class.ativo]="formNovoVinculo.get('principal')?.value"
+      (click)="formNovoVinculo.get('principal')?.setValue(!formNovoVinculo.get('principal')?.value); formNovoVinculo.markAsDirty()">
+      <span class="material-symbols-outlined principal-star"
+        [class.preenchida]="formNovoVinculo.get('principal')?.value">kid_star</span>
+      @if (formNovoVinculo.get('principal')?.value) {
+        <span>Contato principal</span>
+      }
+    </button>
 
     <mat-form-field appearance="outline">
       <mat-label>Parentesco</mat-label>
@@ -604,11 +613,6 @@
     <span class="error-text"
       *ngIf="formNovoVinculo.get('parentesco')?.invalid && formNovoVinculo.get('parentesco')?.touched">O parentesco é
       obrigatório.</span>
-
-    <label class="checkbox-inline">
-      <input type="checkbox" formControlName="principal">
-      <span>Principal</span>
-    </label>
 
     <mat-form-field appearance="outline">
       <mat-label>Unidade</mat-label>

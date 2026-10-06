@@ -79,7 +79,7 @@ export class UsuarioPerfilContatos implements OnDestroy {
       principalMobile: true,
       etiqueta: contato => contato.principal ? 'kid_star' : null
     },
-    { chave: 'telefone', titulo: 'Telefone', formatar: valor => valor ? formatarTelefone(valor) : '-' },
+    { chave: 'telefone', titulo: 'Telefone', tipo: 'telefone', formatar: valor => valor ? formatarTelefone(valor) : '-' },
     { chave: 'parentesco', titulo: 'Parentesco', formatar: valor => this.formatarParentesco(valor) }
   ];
 
@@ -435,6 +435,11 @@ export class UsuarioPerfilContatos implements OnDestroy {
 
   formatarTelefoneContato(valor?: string | null): string {
     return valor ? formatarTelefone(valor) : 'Telefone não informado';
+  }
+
+  hrefTelefoneContato(valor?: string | null): string | null {
+    const telefone = String(valor ?? '').replace(/\D/g, '');
+    return telefone ? `tel:${telefone}` : null;
   }
 
   formatarCpfContato(valor?: string | null): string {

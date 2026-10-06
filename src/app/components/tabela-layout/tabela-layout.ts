@@ -14,7 +14,7 @@ export interface TabelaColuna<T = any> {
   titulo: string;
   formatar?: (valor: any, linha: T) => string;
   principalMobile?: boolean;
-  tipo?: 'texto' | 'status' | 'imagem' | 'documento';
+  tipo?: 'texto' | 'status' | 'imagem' | 'documento' | 'telefone';
   /** Quando true, o cabeçalho fica clicável e emite (ordenar). */
   ordenavel?: boolean;
   /**
@@ -172,6 +172,11 @@ export class TabelaLayout<T = any> {
     }
 
     return `${this.apiUrl}${valorString}`;
+  }
+
+  obterHrefTelefone(valor: any): string | null {
+    const telefone = String(valor ?? '').replace(/\D/g, '');
+    return telefone ? `tel:${telefone}` : null;
   }
 
   obterStatus(valor: any): string {

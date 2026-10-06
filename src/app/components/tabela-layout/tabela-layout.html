@@ -155,6 +155,22 @@
       }
 
       <!-- ============================= -->
+      <!-- TELEFONE -->
+      <!-- ============================= -->
+
+      @else if (coluna.tipo === 'telefone') {
+
+        @if (obterHrefTelefone(linha[coluna.chave])) {
+          <a class="tabela-telefone" [href]="obterHrefTelefone(linha[coluna.chave])">
+            {{ obterValor(linha, coluna) }}
+          </a>
+        } @else {
+          {{ obterValor(linha, coluna) }}
+        }
+
+      }
+
+      <!-- ============================= -->
       <!-- TEXTO -->
       <!-- ============================= -->
 
