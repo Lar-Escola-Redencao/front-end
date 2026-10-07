@@ -1,0 +1,199 @@
+<section class="captacao-recursos">
+  @if (config.grupos.length > 1) {
+    <div class="abas-container">
+      @for (grupo of config.grupos; track grupo.grupo) {
+        <button
+          type="button"
+          class="aba-btn"
+          [class.ativa]="grupo === grupoAtivo"
+          (click)="mudarAba(grupo)"
+        >
+          {{ grupo.rotuloAba }}
+        </button>
+      }
+    </div>
+  }
+
+  @if (ehTabela) {
+    @if (exibeBusca || podeAdicionar) {
+      <div class="acoes-lista">
+        @if (exibeBusca) {
+          <app-barra-busca
+            [placeholder]="'Buscar ' + grupoAtivo.nomeItem + ' por nome...'"
+            [valor]="busca"
+            (buscar)="buscar($event)" />
+        }
+
+        @if (podeAdicionar) {
+          <button type="button" class="btn-primary btn-primary-thick" (click)="abrirModal()">
+            {{ textoBotaoAdicionar }}
+          </button>
+        }
+      </div>
+    }
+
+    <app-tabela-layout
+      [colunas]="colunas"
+      [dados]="itens"
+      [acoes]="acoesTabela"
+      [carregando]="carregando"
+      [erro]="erroCarregamento"
+      [mensagemErro]="'Não foi possível carregar a lista de ' + grupoAtivo.rotuloAba + '.'"
+      [mensagemVazia]="mensagemVazia"
+      (acao)="executarAcao($event)"
+      (tentarNovamente)="carregarTabela()"
+    />
+  }
+
+  @if (ehContato) {
+    @if (carregando) {
+      <div class="estado-pagina">
+        <span class="spinner spinner-escuro" aria-hidden="true"></span>
+        <span>Carregando...</span>
+      </div>
+    } @else {
+      @if (erroCarregamento) {
+        <div class="aviso-carregamento">
+          <p>Não foi possível carregar os dados salvos. Você ainda pode preencher e salvar o formulário.</p>
+          <button type="button" class="botao-tentar-novamente" (click)="carregarContato()">
+            Tentar novamente
+          </button>
+        </div>
+      }
+
+      <form
+        class="form-modal form-contato"
+        [class.form-contato-disabled]="!editandoContato"
+        [formGroup]="form"
+        (ngSubmit)="salvar()"
+      >
+        <div class="campos-contato">
+          @for (campo of grupoAtivo.campos; track campo.campo) {
+            <div class="campo-contato">
+              <mat-form-field appearance="outline">
+                <mat-label>{{ campo.rotulo }}</mat-label>
+                <input
+                  matInput
+                  [formControlName]="campo.campo"
+                  type="tel"
+                  inputmode="tel"
+                  [maxlength]="limiteCaracteres(campo)"
+                  (input)="aoDigitar(campo)"
+                  (blur)="verificarErros()"
+                />
+              </mat-form-field>
+
+              @if (erros[campo.campo]) {
+                <span class="error-text">{{ erros[campo.campo] }}</span>
+              }
+            </div>
+          }
+        </div>
+
+        <div class="acoes-modal acoes-contato">
+          @if (!editandoContato) {
+            <button type="button" class="btn-primary" (click)="editarContato()">Editar</button>
+          } @else {
+            <button type="button" class="btn-cancelar" [disabled]="salvando" (click)="cancelarContato()">
+              Cancelar
+            </button>
+
+            <button type="submit" class="btn-primary" [disabled]="salvando || form.invalid || !temAlteracoes">
+              <span *ngIf="salvando" class="spinner" aria-hidden="true"></span>
+              <span>{{ salvando ? 'Salvando...' : 'Salvar' }}</span>
+            </button>
+          }
+        </div>
+      </form>
+    }
+  }
+</section>
+
+@if (modalAberto) {
+  <app-modal-layout [class.tremer]="modalTremendo" [titulo]="tituloModal" (closed)="fecharModal()">
+    <form class="form-modal" [formGroup]="form" (ngSubmit)="salvar()">
+      @if (grupoAtivo.controlaAtivo && modoEdicao) {
+        <div class="campo-status toggle-wrapper">
+          <span class="status-label">
+            {{ form.get('ativo')?.value ? 'Ativo' : 'Inativo' }}
+          </span>
+          <label class="custom-switch">
+            <input type="checkbox" formControlName="ativo" />
+            <span class="slider"></span>
+          </label>
+        </div>
+      }
+
+      @for (campo of grupoAtivo.campos; track campo.campo) {
+        <mat-form-field appearance="outline">
+          <mat-label>{{ campo.rotulo }}</mat-label>
+          <input
+            matInput
+            [formControlName]="campo.campo"
+            [type]="campo.tipo === 'telefone' ? 'tel' : 'text'"
+            [attr.inputmode]="campo.tipo === 'telefone' ? 'tel' : null"
+            [attr.maxlength]="limiteCaracteres(campo)"
+            (input)="aoDigitar(campo)"
+            (blur)="verificarErros()"
+          />
+        </mat-form-field>
+
+        @if (erros[campo.campo]) {
+          <span class="error-text">{{ erros[campo.campo] }}</span>
+        }
+      }
+
+      @if (grupoAtivo.imagem; as imagem) {
+        <div class="form-group">
+          <input
+            #inputImagem
+            type="file"
+            class="input-arquivo-oculto"
+            accept=".jpg,.jpeg,.png,.webp"
+            (change)="selecionarArquivo($event)"
+          />
+
+          <div
+            class="upload-arquivo"
+            [class.upload-arquivo-erro]="erros[CONTROLE_IMAGEM]"
+            (click)="inputImagem.click()"
+          >
+            <span class="material-symbols-outlined upload-arquivo-icone">upload_file</span>
+
+            <div class="upload-arquivo-texto">
+              <strong>{{ arquivoSelecionado?.name || imagem.rotulo }}</strong>
+              <span>PNG, JPEG, JPG ou WEBP</span>
+            </div>
+
+            <span class="upload-arquivo-botao">Procurar</span>
+          </div>
+        </div>
+
+        @if (erros[CONTROLE_IMAGEM]) {
+          <span class="error-text">{{ erros[CONTROLE_IMAGEM] }}</span>
+        }
+
+        @if (previewNovaImagem || imagemAtual; as imagemPreview) {
+          <div class="imagem-preview-wrapper">
+            <img
+              class="imagem-preview"
+              [src]="imagemPreview"
+              [alt]="'Prévia de ' + imagem.rotulo"
+            />
+          </div>
+        }
+      }
+
+      <div class="acoes-modal">
+        <button type="button" class="btn-cancelar" [disabled]="salvando" (click)="fecharModal()">
+          Cancelar
+        </button>
+
+        <button type="submit" class="btn-primary" [disabled]="salvando || (modoEdicao && !temAlteracoes)">
+          <span *ngIf="salvando" class="spinner" aria-hidden="true"></span>
+          <span>{{ salvando ? 'Salvando...' : 'Salvar' }}</span>
+        </button>
+      </div>
+    </form>
+  </app-modal-layout>
+}

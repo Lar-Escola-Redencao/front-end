@@ -22,6 +22,7 @@ import { ToastrService } from 'ngx-toastr';
 import { CampoBusca } from '@components/campo-busca/campo-busca';
 import { ModalLayout } from '@components/modal-layout/modal-layout';
 import { Paginacao } from '@components/paginacao/paginacao';
+import { BarraBusca } from '@components/barra-busca/barra-busca';
 import { TabelaAcao, TabelaColuna, TabelaLayout } from '@components/tabela-layout/tabela-layout';
 
 import { ComponentComAlteracoesNaoSalvas } from 'src/app/shared/guards/can-deactivate.guard';
@@ -53,7 +54,11 @@ type OpcaoPeriodo = { valor: Periodo; label: string };
     ModalLayout,
     TabelaLayout,
     Paginacao,
+<<<<<<< HEAD
     CampoBusca,
+=======
+    BarraBusca,
+>>>>>>> teste-dev
     MatFormFieldModule,
     MatInputModule,
     MatSelect,
@@ -67,10 +72,15 @@ export class UnidadesTurmas implements OnInit, OnDestroy, ComponentComAlteracoes
 
   private routeSub?: Subscription;
   private listaSub?: Subscription;
+<<<<<<< HEAD
   private readonly destroyRef = inject(DestroyRef);
 
   // Omnisearch: o termo vai para a URL (?search=) e o back busca em todas as colunas.
   readonly campoBusca = new FormControl<string>('');
+=======
+
+  /** Termo da barra de busca, espelhado em ?search= na URL. */
+>>>>>>> teste-dev
   busca = '';
 
   // Paginação compartilhada: sempre descreve a lista da aba ativa no momento
@@ -332,9 +342,12 @@ export class UnidadesTurmas implements OnInit, OnDestroy, ComponentComAlteracoes
         Number.isFinite(unidadeIdBruto) && unidadeIdBruto > 0 ? unidadeIdBruto : null;
 
       this.busca = params.get('search') ?? '';
+<<<<<<< HEAD
       if (this.campoBusca.value !== this.busca) {
         this.campoBusca.setValue(this.busca, { emitEvent: false });
       }
+=======
+>>>>>>> teste-dev
 
       this.carregarListaAtiva();
     });
@@ -379,6 +392,14 @@ export class UnidadesTurmas implements OnInit, OnDestroy, ComponentComAlteracoes
 
   mudarAba(aba: 'unidades' | 'turmas'): void {
     this.navegar({ aba, page: 0, search: null });
+<<<<<<< HEAD
+=======
+  }
+
+  /** Atualiza a URL (?search=termo); o queryParamMap.subscribe refaz o GET sem recarregar a página. */
+  buscar(termo: string): void {
+    this.navegar({ search: termo || null, page: 0 });
+>>>>>>> teste-dev
   }
 
   private navegar(queryParams: Record<string, any>): void {
@@ -499,11 +520,20 @@ export class UnidadesTurmas implements OnInit, OnDestroy, ComponentComAlteracoes
   }
 
   carregarUnidadesTabela(): void {
+<<<<<<< HEAD
     this.carregandoLista = true;
     this.erroLista = false;
 
     // Cancela a requisição anterior para uma resposta antiga não sobrescrever a busca atual.
     this.listaSub?.unsubscribe();
+=======
+    // Uma nova busca cancela a requisição anterior em andamento: vale sempre a mais recente.
+    this.listaSub?.unsubscribe();
+
+    this.carregandoLista = true;
+    this.erroLista = false;
+
+>>>>>>> teste-dev
     this.listaSub = this.unidadeService.listarPaginado(this.pagina, this.tamanho, undefined, this.busca || undefined).subscribe({
       next: (resposta) => {
         this.ngZone.run(() => {
@@ -535,10 +565,18 @@ export class UnidadesTurmas implements OnInit, OnDestroy, ComponentComAlteracoes
   }
 
   carregarTurmas(): void {
+<<<<<<< HEAD
     this.carregandoLista = true;
     this.erroLista = false;
 
     this.listaSub?.unsubscribe();
+=======
+    this.listaSub?.unsubscribe();
+
+    this.carregandoLista = true;
+    this.erroLista = false;
+
+>>>>>>> teste-dev
     this.listaSub = this.turmaService.listarPaginado(this.pagina, this.tamanho, this.unidadeFiltroId, this.busca || undefined).subscribe({
       next: (resposta) => {
         this.ngZone.run(() => {

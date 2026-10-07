@@ -20,6 +20,7 @@ import {
   TabelaAcao
 } from '@components/tabela-layout/tabela-layout';
 import { Paginacao } from '@components/paginacao/paginacao';
+import { BarraBusca } from '@components/barra-busca/barra-busca';
 
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -47,7 +48,11 @@ interface DocumentoExibicao extends DocumentoAdmin {
     ModalLayout,
     TabelaLayout,
     Paginacao,
+<<<<<<< HEAD
     CampoBusca,
+=======
+    BarraBusca,
+>>>>>>> teste-dev
     MatFormFieldModule,
     MatInputModule,
     MatSelect,
@@ -80,10 +85,15 @@ export class Transparencia implements OnInit, OnDestroy, ComponentComAlteracoesN
 
   private routeSub?: Subscription;
   private listaSub?: Subscription;
+<<<<<<< HEAD
   private readonly destroyRef = inject(DestroyRef);
 
   // Omnisearch: o termo vai para a URL (?search=) e o back busca em todas as colunas.
   readonly campoBusca = new FormControl<string>('');
+=======
+
+  /** Termo da barra de busca, espelhado em ?search= na URL. */
+>>>>>>> teste-dev
   busca = '';
 
   // --- TABELAS ---
@@ -174,6 +184,7 @@ export class Transparencia implements OnInit, OnDestroy, ComponentComAlteracoesN
       this.sort = sort;
       this.ordenacao = analisarOrdenacao(sort);
       this.abaAtiva = params.get('aba') === 'secoes' ? 'secoes' : 'documentos';
+      this.busca = params.get('search') ?? '';
 
       this.busca = params.get('search') ?? '';
       if (this.campoBusca.value !== this.busca) {
@@ -205,6 +216,14 @@ export class Transparencia implements OnInit, OnDestroy, ComponentComAlteracoesN
     }
 
     this.navegar({ aba, page: 0, sort: null, search: null });
+<<<<<<< HEAD
+=======
+  }
+
+  /** Atualiza a URL (?search=termo); o queryParamMap.subscribe refaz o GET sem recarregar a página. */
+  buscar(termo: string): void {
+    this.navegar({ page: 0, search: termo || null });
+>>>>>>> teste-dev
   }
 
   get mensagemVazia(): string {
@@ -232,11 +251,20 @@ export class Transparencia implements OnInit, OnDestroy, ComponentComAlteracoesN
   }
 
   carregarDocumentos(): void {
+<<<<<<< HEAD
     this.carregandoLista = true;
     this.erroLista = false;
 
     // Cancela a requisição anterior para uma resposta antiga não sobrescrever a busca atual.
     this.listaSub?.unsubscribe();
+=======
+    // Uma nova busca cancela a requisição anterior em andamento: vale sempre a mais recente.
+    this.listaSub?.unsubscribe();
+
+    this.carregandoLista = true;
+    this.erroLista = false;
+
+>>>>>>> teste-dev
     this.listaSub = this.transparenciaService.listarDocumentosAdmin(this.pagina, this.tamanho, this.sort, this.busca || undefined).subscribe({
       next: (resposta) => {
         this.documentos = resposta.content.map(doc => this.mapearDocumento(doc));
@@ -261,10 +289,18 @@ export class Transparencia implements OnInit, OnDestroy, ComponentComAlteracoesN
   }
 
   carregarSecoes(): void {
+<<<<<<< HEAD
     this.carregandoLista = true;
     this.erroLista = false;
 
     this.listaSub?.unsubscribe();
+=======
+    this.listaSub?.unsubscribe();
+
+    this.carregandoLista = true;
+    this.erroLista = false;
+
+>>>>>>> teste-dev
     this.listaSub = this.transparenciaService.listarSecoesAdmin(this.pagina, this.tamanho, this.sort, this.busca || undefined).subscribe({
       next: (resposta) => {
         this.secoes = resposta.content;

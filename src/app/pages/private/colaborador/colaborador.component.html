@@ -2,7 +2,14 @@
   <h1>Colaboradores</h1>
   <div class="conteudo">
     <div class="acoes-colaboradores">
+<<<<<<< HEAD
       <app-campo-busca [control]="campoBusca" placeholder="Buscar colaborador" />
+=======
+      <app-barra-busca
+        placeholder="Buscar por nome, e-mail, CPF, telefone..."
+        [valor]="busca"
+        (buscar)="buscar($event)" />
+>>>>>>> teste-dev
 
       @if (!somenteMonitores) {
         <mat-form-field appearance="outline" class="filtro-papel">
@@ -163,7 +170,7 @@
       {{ erros['idPapel'] }}
     </span>
 
-    <div class="form-group">
+    <div class="form-group" *ngIf="!papelSelecionadoAdministrador">
       <label class="unidades-label">Unidades vinculadas</label>
       <div class="unidades-box">
         <div *ngIf="unidadesDisponiveis.length === 0" class="sem-unidades">

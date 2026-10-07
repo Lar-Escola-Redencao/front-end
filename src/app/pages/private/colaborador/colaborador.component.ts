@@ -39,6 +39,7 @@ import {
 } from '@components/tabela-layout/tabela-layout';
 
 import { Paginacao } from '@components/paginacao/paginacao';
+import { BarraBusca } from '@components/barra-busca/barra-busca';
 
 import { ComponentComAlteracoesNaoSalvas } from 'src/app/shared/guards/can-deactivate.guard';
 import { AtualizarColaboradorDTO, Colaborador, CriarColaboradorDTO } from 'src/app/shared/models/colaborador.model';
@@ -80,7 +81,11 @@ type Unidade = {
     ModalLayout,
     TabelaLayout,
     Paginacao,
+<<<<<<< HEAD
     CampoBusca,
+=======
+    BarraBusca,
+>>>>>>> teste-dev
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
@@ -100,6 +105,9 @@ export class ColaboradorComponent
   // Filtro por papel agora é feito no back-end (idPapel), não em memória.
   filtroPapel: number | null = null;
 
+  /** Termo da barra de busca, espelhado em ?search= na URL. */
+  busca = '';
+
   unidadesDisponiveis: Unidade[] = [];
 
   // Omnisearch: o termo vai para a URL (?search=) e o back busca em todas as colunas.
@@ -118,6 +126,8 @@ export class ColaboradorComponent
   erroLista = false;
 
   private routeSub?: Subscription;
+  private papelSub?: Subscription;
+  private listaSub?: Subscription;
 
   modalAberto = false;
   modoEdicao = false;
@@ -260,6 +270,9 @@ export class ColaboradorComponent
         Validators.required
       ]
     });
+    this.papelSub = this.formColaborador.get('idPapel')!.valueChanges.subscribe(() => {
+      this.atualizarCampoUnidades();
+    });
   }
 
   ngOnInit(): void {
@@ -282,9 +295,12 @@ export class ColaboradorComponent
         : null;
 
       this.busca = params.get('search') ?? '';
+<<<<<<< HEAD
       if (this.campoBusca.value !== this.busca) {
         this.campoBusca.setValue(this.busca, { emitEvent: false });
       }
+=======
+>>>>>>> teste-dev
 
       this.carregarColaboradores();
     });
@@ -312,6 +328,10 @@ export class ColaboradorComponent
 
   ngOnDestroy(): void {
     this.routeSub?.unsubscribe();
+<<<<<<< HEAD
+=======
+    this.papelSub?.unsubscribe();
+>>>>>>> teste-dev
     this.listaSub?.unsubscribe();
   }
 
@@ -345,6 +365,17 @@ export class ColaboradorComponent
     return this.papeis.find(p => (p.nomePapel || p.nome || '').toUpperCase() === 'MONITOR')?.id ?? null;
   }
 
+  get papelSelecionadoAdministrador(): boolean {
+    const papel = this.papeis.find(p => p.id === this.formColaborador.get('idPapel')?.value);
+    return (papel?.nomePapel || papel?.nome || '').toUpperCase() === 'ADMINISTRADOR';
+  }
+
+  private atualizarCampoUnidades(): void {
+    const unidades = this.formColaborador.get('idsUnidades')!;
+    if (this.papelSelecionadoAdministrador) unidades.disable({ emitEvent: false });
+    else unidades.enable({ emitEvent: false });
+  }
+
   carregarPapeis(): void {
     this.papelService.listarTodos().subscribe({
       next: (dados: Papel[]) => {
@@ -357,6 +388,7 @@ export class ColaboradorComponent
         this.papeisDisponiveis = this.papeis
           .map((papel) => this.obterNomePapel(papel))
           .filter((nome): nome is string => Boolean(nome));
+        this.atualizarCampoUnidades();
         this.cdr.detectChanges();
       },
       error: (err: any) => {
@@ -383,6 +415,12 @@ export class ColaboradorComponent
   }
 
   carregarColaboradores(): void {
+<<<<<<< HEAD
+=======
+    // Uma nova busca/filtro cancela a requisição anterior em andamento: vale sempre a mais recente.
+    this.listaSub?.unsubscribe();
+
+>>>>>>> teste-dev
     // Para o coordenador a lista é sempre restrita a monitores; aguarda os papéis
     // carregarem para saber o id do papel MONITOR (carregarPapeis recarrega a lista).
     if (this.somenteMonitores && this.idPapelMonitor === null) {
@@ -396,8 +434,11 @@ export class ColaboradorComponent
       ? this.idPapelMonitor!
       : this.filtroPapel ?? undefined;
 
+<<<<<<< HEAD
     // Cancela a requisição anterior para uma resposta antiga não sobrescrever a busca atual.
     this.listaSub?.unsubscribe();
+=======
+>>>>>>> teste-dev
     this.listaSub = this.colaboradorService
       .listarTodos(this.pagina, this.tamanho, this.sort, idPapel, this.busca || undefined)
       .subscribe({
@@ -451,6 +492,15 @@ export class ColaboradorComponent
 
   removerFiltroPapel(): void {
     this.filtrarPorPapel(null);
+  }
+
+  /** Atualiza a URL (?search=termo); o queryParamMap.subscribe refaz o GET sem recarregar a página. */
+  buscar(termo: string): void {
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { search: termo || null, page: 0 },
+      queryParamsHandling: 'merge'
+    });
   }
 
   ordenarPor(campo: string): void {

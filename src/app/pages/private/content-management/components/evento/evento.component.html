@@ -1,6 +1,13 @@
 <section class="eventos-admin">
   <div class="acoes-eventos">
+<<<<<<< HEAD
     <app-campo-busca [control]="campoBusca" placeholder="Buscar evento" />
+=======
+    <app-barra-busca
+      placeholder="Buscar por título, descrição, data, endereço..."
+      [valor]="busca"
+      (buscar)="buscar($event)" />
+>>>>>>> teste-dev
 
     <mat-form-field appearance="outline" class="filtro-tipo">
       <mat-label>Categoria</mat-label>
@@ -190,7 +197,12 @@
     </div>
 
     <div class="preview-info">
-      <div class="tag-tipo">{{ formatarTextoExibicao(eventoVisualizacao.tipoEvento) }}</div>
+      <div class="preview-tags">
+        <div class="tag-tipo">{{ formatarTextoExibicao(eventoVisualizacao.tipoEvento) }}</div>
+        @if (eventoVisualizacao.encerrado) {
+        <div class="tag-encerrado">Encerrado</div>
+        }
+      </div>
       <h2>{{ eventoVisualizacao.titulo }}</h2>
 
       <p class="preview-data-local">
@@ -223,4 +235,8 @@
     </div>
   </div>
 </app-modal-layout>
+}
+
+@if (eventoVinculoRedes) {
+<app-evento-redes-sociais [evento]="eventoVinculoRedes" (fechado)="fecharVinculoRedes()" />
 }

@@ -1,6 +1,14 @@
 <section class="partners-manager">
   <div class="acoes-partners">
+<<<<<<< HEAD
     <app-campo-busca [control]="campoBusca" placeholder="Buscar parceiro" />
+=======
+    <app-barra-busca
+      placeholder="Buscar parceiro por nome..."
+      [valor]="busca"
+      (buscar)="buscar($event)" />
+
+>>>>>>> teste-dev
     <button type="button" class="btn-primary btn-primary-thick" (click)="abrirModal()">
       Novo parceiro
     </button>

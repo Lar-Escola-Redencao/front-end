@@ -11,7 +11,14 @@
 
   @if (abaAtiva === 'documentos') {
     <div class="acoes-transparencia">
+<<<<<<< HEAD
       <app-campo-busca [control]="campoBusca" placeholder="Buscar documento" />
+=======
+      <app-barra-busca
+        placeholder="Buscar por título, arquivo ou seção..."
+        [valor]="busca"
+        (buscar)="buscar($event)" />
+>>>>>>> teste-dev
       <button type="button" class="btn-primary btn-primary-thick" (click)="abrirModal('documento')">
         Novo documento
       </button>
@@ -24,7 +31,14 @@
       (tentarNovamente)="tentarNovamente()" />
   } @else {
     <div class="acoes-transparencia">
+<<<<<<< HEAD
       <app-campo-busca [control]="campoBusca" placeholder="Buscar seção" />
+=======
+      <app-barra-busca
+        placeholder="Buscar por título ou conteúdo..."
+        [valor]="busca"
+        (buscar)="buscar($event)" />
+>>>>>>> teste-dev
       <button type="button" class="btn-primary btn-primary-thick" (click)="abrirModal('secao')">
         Nova seção
       </button>

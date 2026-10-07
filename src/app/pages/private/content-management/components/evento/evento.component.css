@@ -4,8 +4,7 @@
 
 .acoes-eventos {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
+  align-items: center;
   gap: 20px;
   flex-wrap: wrap;
   margin-bottom: 24px;
@@ -275,6 +274,22 @@
   border-radius: 6px;
   background: #eef2f7;
   color: var(--primary-color);
+  font-family: var(--fonte-texto);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.preview-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tag-encerrado {
+  padding: 6px 12px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.08);
+  color: rgba(0, 0, 0, 0.6);
   font-family: var(--fonte-texto);
   font-size: 0.8rem;
   font-weight: 700;

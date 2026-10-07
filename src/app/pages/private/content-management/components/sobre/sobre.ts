@@ -20,6 +20,7 @@ import { CampoBusca } from '@components/campo-busca/campo-busca';
 import { ModalLayout } from '@components/modal-layout/modal-layout';
 import { TabelaLayout, TabelaColuna, TabelaAcao } from '@components/tabela-layout/tabela-layout';
 import { Paginacao } from '@components/paginacao/paginacao';
+import { BarraBusca } from '@components/barra-busca/barra-busca';
 
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -59,7 +60,11 @@ interface ClassificacaoSecoes {
     ModalLayout,
     TabelaLayout,
     Paginacao,
+<<<<<<< HEAD
     CampoBusca,
+=======
+    BarraBusca,
+>>>>>>> teste-dev
     MatFormFieldModule,
     MatInputModule,
     MatSlideToggleModule,
@@ -77,6 +82,10 @@ export class Sobre implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalvas
   erroPagina = false;
 
   private routeSub?: Subscription;
+  private listaSub?: Subscription;
+
+  /** Termo da barra de busca da aba Nossa História, espelhado em ?search= na URL. */
+  busca = '';
 
   // ---------------------------------------------------------------
   // ABA 1 — TEXTO SOBRE (só edição, sem adicionar/excluir)
@@ -177,6 +186,7 @@ export class Sobre implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalvas
       this.sort = sort;
       this.ordenacao = analisarOrdenacao(sort);
       this.abaAtiva = this.lerAbaValida(params.get('aba'));
+      this.busca = params.get('search') ?? '';
 
       this.busca = params.get('search') ?? '';
       if (this.campoBusca.value !== this.busca) {
@@ -214,6 +224,14 @@ export class Sobre implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalvas
     }
 
     this.navegar({ aba, page: 0, sort: null, search: null });
+<<<<<<< HEAD
+=======
+  }
+
+  /** Atualiza a URL (?search=termo); o queryParamMap.subscribe refaz o GET sem recarregar a página. */
+  buscar(termo: string): void {
+    this.navegar({ page: 0, search: termo || null });
+>>>>>>> teste-dev
   }
 
   private navegar(queryParams: Record<string, any>): void {
@@ -502,13 +520,18 @@ export class Sobre implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalvas
   }
 
   carregarHistoria(): void {
+    // Uma nova busca cancela a requisição anterior em andamento: vale sempre a mais recente.
+    this.listaSub?.unsubscribe();
     this.carregandoLista = true;
     this.erroLista = false;
 
     // tipo HISTORIA faz o back recortar a consulta nos blocos de ano antes de
     // paginar, então content, totalElements e totalPages já vêm só desta aba.
+<<<<<<< HEAD
     // Cancela a requisição anterior para uma resposta antiga não sobrescrever a busca atual.
     this.listaSub?.unsubscribe();
+=======
+>>>>>>> teste-dev
     this.listaSub = this.sobreService.listarSecoesAdmin(this.pagina, this.tamanho, this.sort, GRUPO_HISTORIA, this.busca || undefined).subscribe({
       next: (resposta) => {
         this.ngZone.run(() => {

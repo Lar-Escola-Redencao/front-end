@@ -11,6 +11,7 @@ import { ToastrService } from 'ngx-toastr';
 import { CampoBusca } from '../../../../../components/campo-busca/campo-busca';
 import { ModalLayout } from '../../../../../components/modal-layout/modal-layout';
 import { Paginacao } from '../../../../../components/paginacao/paginacao';
+import { BarraBusca } from '../../../../../components/barra-busca/barra-busca';
 import { TabelaAcao, TabelaColuna, TabelaLayout } from '../../../../../components/tabela-layout/tabela-layout';
 import { ComponentComAlteracoesNaoSalvas } from '../../../../../shared/guards/can-deactivate.guard';
 import { AtualizarDiretoriaDTO, CriarDiretoriaDTO, Diretoria } from '../../../../../shared/models/diretoria.model';
@@ -33,7 +34,11 @@ import {
     ModalLayout,
     TabelaLayout,
     Paginacao,
+<<<<<<< HEAD
     CampoBusca,
+=======
+    BarraBusca,
+>>>>>>> teste-dev
     MatFormFieldModule,
     MatInputModule,
     MatSlideToggleModule
@@ -57,10 +62,15 @@ export class DiretoriaComponent implements OnInit, OnDestroy, ComponentComAltera
   private routeSub?: Subscription;
   private listaSub?: Subscription;
 
+<<<<<<< HEAD
   // Omnisearch: o termo vai para a URL (?search=) e o back busca em todas as colunas.
   readonly campoBusca = new FormControl<string>('');
   busca = '';
   private readonly destroyRef = inject(DestroyRef);
+=======
+  /** Termo da barra de busca, espelhado em ?search= na URL. */
+  busca = '';
+>>>>>>> teste-dev
 
   colunas: TabelaColuna<Diretoria>[] = [
     { chave: 'foto', titulo: 'Foto', tipo: 'imagem' },
@@ -111,11 +121,15 @@ export class DiretoriaComponent implements OnInit, OnDestroy, ComponentComAltera
       this.tamanho = tamanho;
       this.sort = sort;
       this.ordenacao = analisarOrdenacao(sort);
+<<<<<<< HEAD
 
       this.busca = params.get('search') ?? '';
       if (this.campoBusca.value !== this.busca) {
         this.campoBusca.setValue(this.busca, { emitEvent: false });
       }
+=======
+      this.busca = params.get('search') ?? '';
+>>>>>>> teste-dev
       this.carregarDiretores();
     });
 
@@ -134,6 +148,7 @@ export class DiretoriaComponent implements OnInit, OnDestroy, ComponentComAltera
     this.revogarPreviewSeNecessario();
     this.routeSub?.unsubscribe();
     this.listaSub?.unsubscribe();
+<<<<<<< HEAD
   }
 
   get mensagemVazia(): string {
@@ -148,6 +163,17 @@ export class DiretoriaComponent implements OnInit, OnDestroy, ComponentComAltera
 
     // Cancela a requisição anterior para uma resposta antiga não sobrescrever a busca atual.
     this.listaSub?.unsubscribe();
+=======
+  }
+
+  carregarDiretores(): void {
+    // Uma nova busca cancela a requisição anterior em andamento: vale sempre a mais recente.
+    this.listaSub?.unsubscribe();
+
+    this.carregandoLista = true;
+    this.erroLista = false;
+
+>>>>>>> teste-dev
     this.listaSub = this.diretoriaService.listarTodos(this.pagina, this.tamanho, this.sort, this.busca || undefined).subscribe({
       next: (resposta) => {
         this.diretores = resposta.content;
@@ -169,6 +195,17 @@ export class DiretoriaComponent implements OnInit, OnDestroy, ComponentComAltera
         this.cdr.detectChanges();
       }
     });
+  }
+
+  get mensagemVazia(): string {
+    return this.busca
+      ? `Nenhum membro da diretoria encontrado para "${this.busca}".`
+      : 'Nenhum membro da diretoria cadastrado.';
+  }
+
+  /** Atualiza a URL (?search=termo); o queryParamMap.subscribe refaz o GET sem recarregar a página. */
+  buscar(termo: string): void {
+    this.navegar({ page: 0, search: termo || null });
   }
 
   irParaPagina(pagina: number): void {

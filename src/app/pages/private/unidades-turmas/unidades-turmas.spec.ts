@@ -167,6 +167,31 @@ describe('UnidadesTurmas', () => {
 
     expect(component.unidadeFiltroId).toBe(1);
     expect(turmaService.listarPaginado).toHaveBeenLastCalledWith(0, 10, 1, undefined);
+<<<<<<< HEAD
+=======
+  });
+
+  it('envia o termo da barra de busca como search e volta para a primeira página', () => {
+    component.irParaPagina(2);
+    component.buscar('manha');
+
+    expect(currentParams['search']).toBe('manha');
+    expect(currentParams['page']).toBe('0');
+    expect(turmaService.listarPaginado).toHaveBeenLastCalledWith(0, 10, null, 'manha');
+
+    component.buscar('');
+
+    expect(currentParams['search']).toBeUndefined();
+    expect(turmaService.listarPaginado).toHaveBeenLastCalledWith(0, 10, null, undefined);
+  });
+
+  it('limpa a busca ao trocar de aba', () => {
+    component.buscar('centro');
+    component.mudarAba('unidades');
+
+    expect(component.busca).toBe('');
+    expect(unidadeService.listarPaginado).toHaveBeenLastCalledWith(0, 10, undefined, undefined);
+>>>>>>> teste-dev
   });
 
   it('volta a listar sem unidadeId ao selecionar "Todas as unidades"', () => {
@@ -177,6 +202,7 @@ describe('UnidadesTurmas', () => {
 
     expect(component.unidadeFiltroId).toBeNull();
     expect(turmaService.listarPaginado).toHaveBeenLastCalledWith(0, 10, null, undefined);
+<<<<<<< HEAD
   });
 
   it('só busca na API 500ms depois que o usuário para de digitar', () => {
@@ -196,6 +222,8 @@ describe('UnidadesTurmas', () => {
     } finally {
       vi.useRealTimers();
     }
+=======
+>>>>>>> teste-dev
   });
 
   it('carrega as unidades e desmarca o estado de carregamento', () => {

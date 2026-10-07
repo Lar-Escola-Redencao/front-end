@@ -43,6 +43,7 @@ import {
 } from '@components/tabela-layout/tabela-layout';
 
 import { Paginacao } from '@components/paginacao/paginacao';
+import { BarraBusca } from '@components/barra-busca/barra-busca';
 
 import { CampoBusca } from '@components/campo-busca/campo-busca';
 import { ModalLayout } from '@components/modal-layout/modal-layout';
@@ -78,7 +79,11 @@ import { environment } from '../../../../../../environments/environment';
     ModalLayout,
     TabelaLayout,
     Paginacao,
+<<<<<<< HEAD
     CampoBusca,
+=======
+    BarraBusca,
+>>>>>>> teste-dev
     MatFormFieldModule,
     MatInputModule,
     MatSlideToggleModule
@@ -157,6 +162,12 @@ export class PartnersManager
   busca = '';
   private readonly destroyRef = inject(DestroyRef);
 
+  /** Termo da barra de busca, espelhado em ?search= na URL. */
+  busca = '';
+
+  /** Identifica a requisição mais recente: respostas de buscas anteriores são descartadas. */
+  private requisicaoLista = 0;
+
 
   // =========================================================
   // TABELA
@@ -229,11 +240,15 @@ export class PartnersManager
       this.tamanho = tamanho;
       this.sort = sort;
       this.ordenacao = analisarOrdenacao(sort);
+<<<<<<< HEAD
 
       this.busca = params.get('search') ?? '';
       if (this.campoBusca.value !== this.busca) {
         this.campoBusca.setValue(this.busca, { emitEvent: false });
       }
+=======
+      this.busca = params.get('search') ?? '';
+>>>>>>> teste-dev
       this.carregarPartners();
     });
 
@@ -300,6 +315,17 @@ export class PartnersManager
         );
         this.cdr.detectChanges();
       });
+  }
+
+  get mensagemVazia(): string {
+    return this.busca
+      ? `Nenhum parceiro encontrado para "${this.busca}".`
+      : 'Nenhum parceiro cadastrado.';
+  }
+
+  /** Atualiza a URL (?search=termo); o queryParamMap.subscribe refaz o GET sem recarregar a página. */
+  buscar(termo: string): void {
+    this.navegar({ page: 0, search: termo || null });
   }
 
   irParaPagina(pagina: number): void {
