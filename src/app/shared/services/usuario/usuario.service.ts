@@ -48,6 +48,10 @@ export class UsuarioService {
     return this.http.put<UsuarioResponseDTO>(`${this.apiUrl}/${id}/turma`, { idTurmaNova });
   }
 
+  rematricular(id: number, idTurmaNova: number): Observable<UsuarioResponseDTO> {
+    return this.http.put<UsuarioResponseDTO>(`${this.apiUrl}/${id}/rematricular`, { idTurmaNova });
+  }
+
   inativar(id: number, dto: { dataDesligamento: string; justificativa: string }): Observable<void> {
     return this.http.put<void>(`${this.apiUrl}/${id}/inativar`, dto);
   }

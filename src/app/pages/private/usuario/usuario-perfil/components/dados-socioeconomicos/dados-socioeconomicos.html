@@ -1,5 +1,6 @@
 <section class="aba-conteudo">
   <form class="form-socioeconomico" [class.form-disabled]="!editando" [formGroup]="form">
+    @if (!somenteLeitura) {
     <div class="aba-cabecalho">
       @if (!editando) {
         <button type="button" class="btn-primary" (click)="editar()">Editar</button>
@@ -13,6 +14,7 @@
         </div>
       }
     </div>
+    }
 
     <h3>Composição familiar</h3>
     <p class="descricao-etapa">Registrar as pessoas que convivem com a criança/adolescente, inclusive quando não possuem parentesco.</p>

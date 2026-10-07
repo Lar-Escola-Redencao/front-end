@@ -8,7 +8,7 @@
   <app-tabela-layout
     [colunas]="colunas"
     [dados]="contatos"
-    [acoes]="acoes"
+    [acoes]="acoesVisiveis"
     mensagemVazia="Nenhum contato vinculado a este usuário."
     (acao)="executarAcao($event)">
   </app-tabela-layout>
@@ -181,7 +181,12 @@
             <mat-icon class="material-symbols-outlined">person</mat-icon>
           </div>
           <div class="vinculo-textos">
-            <span class="vinculo-nome-detalhe">{{ vinculo.nomeUsuario || 'Usuário vinculado' }}</span>
+            <span class="vinculo-nome-detalhe">
+              {{ vinculo.nomeUsuario || 'Usuário vinculado' }}
+              @if ((vinculo.statusMatricula || '').toUpperCase() === 'EGRESSO') {
+                <span class="vinculo-status-desligado">Desligado</span>
+              }
+            </span>
             <span class="vinculo-parentesco">{{ formatarParentesco(vinculo.parentesco) }}{{ vinculo.principal ? ' - contato principal' : '' }}</span>
           </div>
         </div>

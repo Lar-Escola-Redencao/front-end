@@ -20,9 +20,9 @@
         <article class="perfil-card">
           <div class="avatar">
             @if (fotoPerfil) {
-              <img [src]="fotoPerfil" [alt]="'Foto de ' + usuario.nomeCompleto">
+              <img [src]="fotoPerfil" [alt]="'Foto de ' + usuario.nomeCompleto" (error)="onErroFotoPerfil()">
             } @else {
-              <mat-icon>sentiment_excited</mat-icon>
+              <mat-icon class="material-symbols-outlined">sentiment_excited</mat-icon>
             }
           </div>
 
@@ -35,6 +35,7 @@
             }
           }
 
+          @if (!desligado) {
           <dl class="perfil-resumo">
             <div>
               <dt><span class="material-symbols-outlined">cake</span></dt>
@@ -53,11 +54,12 @@
               <dd>{{ turma }}</dd>
             </div>
           </dl>
+          }
         </article>
 
         <div class="acoes-principais" [class.acoes-principais--desligado]="desligado">
           @if (desligado) {
-            <button type="button" class="btn-primary btn-rematricular" (click)="matricularNovamente()">Matricular novamente</button>
+            <button type="button" class="btn-primary" (click)="abrirModalRematricula()">Matricular novamente</button>
           } @else {
             <button type="button" class="btn-primary" (click)="abrirModalDesligamento()">Desligamento</button>
             <button type="button" class="btn-primary" (click)="abrirModalTransferencia()">Transferência</button>
@@ -81,24 +83,28 @@
             @case ('dados-pessoais') {
               <app-usuario-perfil-dados-pessoais
                 [usuario]="usuario"
+                [somenteLeitura]="desligado"
                 (usuarioAtualizado)="atualizarUsuario($event)"
               ></app-usuario-perfil-dados-pessoais>
             }
             @case ('saude') {
               <app-usuario-perfil-saude
                 [usuario]="usuario"
+                [somenteLeitura]="desligado"
                 (usuarioAtualizado)="atualizarUsuario($event)"
               ></app-usuario-perfil-saude>
             }
             @case ('dados-socioeconomicos') {
               <app-usuario-perfil-dados-socioeconomicos
                 [usuario]="usuario"
+                [somenteLeitura]="desligado"
                 (usuarioAtualizado)="atualizarUsuario($event)"
               ></app-usuario-perfil-dados-socioeconomicos>
             }
             @case ('contatos') {
               <app-usuario-perfil-contatos
                 [usuario]="usuario"
+                [somenteLeitura]="desligado"
                 (usuarioAtualizado)="atualizarUsuario($event)"
               ></app-usuario-perfil-contatos>
             }
@@ -119,10 +125,10 @@
           <mat-form-field appearance="outline" class="campo-cheio">
             <mat-label>Justificativa*</mat-label>
             <textarea matInput formControlName="justificativa" rows="4"></textarea>
-            @if (formDesligamento.get('justificativa')?.invalid && formDesligamento.get('justificativa')?.touched) {
-              <mat-error>A justificativa é obrigatória.</mat-error>
-            }
           </mat-form-field>
+          @if (formDesligamento.get('justificativa')?.invalid && formDesligamento.get('justificativa')?.touched) {
+            <span class="error-text">A justificativa é obrigatória.</span>
+          }
         </form>
 
         <div class="perfil-modal-acoes">
@@ -135,8 +141,8 @@
     }
 
     @if (modalTransferenciaAberto) {
-      <app-modal-layout class="perfil-modal" titulo="Transferência" (closed)="fecharModalTransferencia()">
-        <form class="perfil-modal-form" [formGroup]="formTransferencia" (ngSubmit)="confirmarTransferencia()">
+      <app-modal-layout class="perfil-modal" [titulo]="modoSelecaoTurma === 'rematricula' ? 'Matricular novamente' : 'Transferência'" (closed)="fecharModalTransferencia()">
+        <form class="perfil-modal-form" [formGroup]="formTransferencia" (ngSubmit)="confirmarSelecaoTurma()">
           <mat-form-field appearance="outline" class="campo-cheio">
             <mat-label>Unidade*</mat-label>
             <mat-select formControlName="idUnidade" (selectionChange)="onUnidadeTransferenciaChange($event.value)">
@@ -178,8 +184,8 @@
 
         <div class="perfil-modal-acoes">
           <button type="button" class="btn-cancelar-modal" (click)="fecharModalTransferencia()" [disabled]="salvandoTransferencia">Cancelar</button>
-          <button type="button" class="btn-primary" (click)="confirmarTransferencia()" [disabled]="salvandoTransferencia">
-            {{ salvandoTransferencia ? 'Enviando...' : 'Confirmar' }}
+          <button type="button" class="btn-primary" (click)="confirmarSelecaoTurma()" [disabled]="salvandoTransferencia">
+            {{ salvandoTransferencia ? 'Enviando...' : (modoSelecaoTurma === 'rematricula' ? 'Matricular' : 'Confirmar') }}
           </button>
         </div>
       </app-modal-layout>

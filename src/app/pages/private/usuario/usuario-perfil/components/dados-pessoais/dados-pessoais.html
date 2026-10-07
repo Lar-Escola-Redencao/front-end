@@ -1,5 +1,6 @@
 <section class="aba-conteudo">
   <form class="form-dados-pessoais" [class.form-disabled]="!editando" [formGroup]="form" (ngSubmit)="salvar()">
+    @if (!somenteLeitura) {
     <div class="aba-cabecalho">
 
       @if (!editando) {
@@ -14,6 +15,7 @@
         </div>
       }
     </div>
+    }
 
     <h3>Dados pessoais</h3>
     <div class="step-grid">
@@ -130,7 +132,7 @@
     @if (fotoPreview) {
       <div class="preview-foto">
         <h3>Foto de perfil</h3>
-        <img [src]="fotoPreview" class="avatar-preview-inferior" alt="Prévia da foto de perfil">
+        <img [src]="fotoPreview" class="avatar-preview-inferior" alt="Prévia da foto de perfil" (error)="onErroFotoPreview()">
       </div>
     }
   </form>

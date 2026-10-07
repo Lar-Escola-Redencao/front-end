@@ -49,6 +49,7 @@ export class UsuarioPerfilContatos implements OnDestroy {
   private buscaSub?: Subscription;
 
   @Input() usuario: UsuarioResponseDTO | null = null;
+  @Input() somenteLeitura = false;
   @Output() usuarioAtualizado = new EventEmitter<UsuarioResponseDTO>();
 
   modalAberto = false;
@@ -89,6 +90,10 @@ export class UsuarioPerfilContatos implements OnDestroy {
     { icone: 'person_remove', tooltip: 'Remover vínculo', acao: 'excluir' }
   ];
 
+  get acoesVisiveis(): TabelaAcao<ContatoResponseDTO>[] {
+    return this.somenteLeitura ? this.acoes.filter(acao => acao.acao === 'visualizar') : this.acoes;
+  }
+
   form = this.fb.group({
     id: [null as number | null],
     nomeCompleto: ['', [Validators.required, Validators.minLength(3)]],
@@ -113,7 +118,7 @@ export class UsuarioPerfilContatos implements OnDestroy {
   }
 
   get podeAdicionarContato(): boolean {
-    return this.contatosOrdenados.length < 4;
+    return !this.somenteLeitura && this.contatosOrdenados.length < 4;
   }
 
   get tituloModal(): string {
@@ -139,6 +144,7 @@ export class UsuarioPerfilContatos implements OnDestroy {
 
   executarAcao(evento: { tipo: string; linha: ContatoResponseDTO }): void {
     if (evento.tipo === 'visualizar') this.abrirVisualizacao(evento.linha);
+    if (this.somenteLeitura) return;
     if (evento.tipo === 'editar') this.abrirFormulario('editar', evento.linha);
     if (evento.tipo === 'excluir') this.removerVinculo(evento.linha);
   }
@@ -163,6 +169,7 @@ export class UsuarioPerfilContatos implements OnDestroy {
   }
 
   abrirFormulario(modo: 'novo' | 'editar', contato?: ContatoResponseDTO): void {
+    if (this.somenteLeitura) return;
     this.buscaSub?.unsubscribe();
     this.modoModal = modo;
     this.contatoSelecionado = contato ?? null;
@@ -312,7 +319,7 @@ export class UsuarioPerfilContatos implements OnDestroy {
   }
 
   async salvar(): Promise<void> {
-    if (!this.usuario?.id || this.salvando || this.modoModal === 'visualizar') return;
+    if (!this.usuario?.id || this.somenteLeitura || this.salvando || this.modoModal === 'visualizar') return;
     this.form.markAllAsTouched();
 
     if (this.form.get('buscarExistente')?.value && !this.form.get('id')?.value) {

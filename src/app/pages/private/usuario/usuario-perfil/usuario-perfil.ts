@@ -8,6 +8,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { Subscription, switchMap } from 'rxjs';
 import Swal from 'sweetalert2';
+import { ToastrService } from 'ngx-toastr';
 import { environment } from 'src/environments/environment';
 import { Turma } from 'src/app/shared/models/turma.model';
 import { Unidade } from 'src/app/shared/models/unidade.model';
@@ -16,7 +17,6 @@ import { TurmaService } from 'src/app/shared/services/turma/turma.service';
 import { UnidadeService } from 'src/app/shared/services/unidade/unidade.service';
 import { UsuarioService } from 'src/app/shared/services/usuario/usuario.service';
 import { SessaoService } from 'src/app/shared/services/auth/sessao.service';
-import { Alertas } from 'src/app/shared/utils/alerts';
 import { ModalLayout } from 'src/app/components/modal-layout/modal-layout';
 import { UsuarioPerfilAbaPlaceholder } from './components/aba-placeholder/aba-placeholder';
 import { UsuarioPerfilContatos } from './components/contatos/contatos';
@@ -56,6 +56,7 @@ export class UsuarioPerfil implements OnInit, OnDestroy {
   private readonly turmaService = inject(TurmaService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly ngZone = inject(NgZone);
+  private readonly toastr = inject(ToastrService);
   private sub?: Subscription;
 
   usuario: UsuarioResponseDTO | null = null;
@@ -64,12 +65,14 @@ export class UsuarioPerfil implements OnInit, OnDestroy {
   abaAtiva: AbaPerfil = 'acompanhamento';
   modalDesligamentoAberto = false;
   modalTransferenciaAberto = false;
+  modoSelecaoTurma: 'transferencia' | 'rematricula' = 'transferencia';
   salvandoDesligamento = false;
   salvandoTransferencia = false;
   carregandoUnidadesTransferencia = false;
   carregandoTurmasTransferencia = false;
   unidadesTransferencia: Unidade[] = [];
   turmasTransferencia: Turma[] = [];
+  fotoPerfilIndisponivel = false;
 
   readonly formDesligamento = this.fb.group({
     justificativa: ['', Validators.required]
@@ -110,6 +113,7 @@ export class UsuarioPerfil implements OnInit, OnDestroy {
       next: usuario => {
         this.ngZone.run(() => {
           this.usuario = usuario;
+          this.fotoPerfilIndisponivel = false;
           this.carregando = false;
           this.atualizarTela();
         });
@@ -130,6 +134,7 @@ export class UsuarioPerfil implements OnInit, OnDestroy {
 
   atualizarUsuario(usuario: UsuarioResponseDTO): void {
     this.usuario = usuario;
+    this.fotoPerfilIndisponivel = false;
   }
 
   voltarParaUsuarios(): void {
@@ -137,8 +142,10 @@ export class UsuarioPerfil implements OnInit, OnDestroy {
   }
 
   get fotoPerfil(): string | null {
-    return this.obterUrlArquivo(this.usuario?.imagemPerfil);
+    return this.fotoPerfilIndisponivel ? null : this.obterUrlArquivo(this.usuario?.imagemPerfil);
   }
+
+  onErroFotoPerfil(): void { this.fotoPerfilIndisponivel = true; }
 
   get idade(): string {
     const anos = this.calcularIdade(this.usuario?.dataNascimento);
@@ -177,19 +184,13 @@ export class UsuarioPerfil implements OnInit, OnDestroy {
     const justificativa = this.formDesligamento.value.justificativa?.trim() || '';
     if (this.formDesligamento.invalid || !justificativa) return;
 
-    const resultado = await Swal.fire({
-      title: 'Confirmar desligamento?',
-      text: 'O usuário será removido do diário atual, mas poderá ser matriculado novamente.',
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonText: 'Confirmar desligamento',
-      cancelButtonText: 'Cancelar',
-      confirmButtonColor: '#3682dc',
-      cancelButtonColor: '#757575',
-      reverseButtons: true
-    });
-
-    if (!resultado.isConfirmed) return;
+    const confirmou = await this.confirmarAcaoCritica(
+      'Confirmar desligamento?',
+      'O usuário será removido do diário atual, mas poderá ser matriculado novamente.',
+      'desligar-usuario',
+      'Confirmar desligamento'
+    );
+    if (!confirmou) return;
 
     const usuarioAtual = this.usuario;
     const dataDesligamento = new Date().toISOString().slice(0, 10);
@@ -218,6 +219,7 @@ export class UsuarioPerfil implements OnInit, OnDestroy {
   abrirModalTransferencia(): void {
     if (!this.usuario?.id || this.desligado) return;
 
+    this.modoSelecaoTurma = 'transferencia';
     this.formTransferencia.reset({
       idUnidade: this.usuario.idUnidade || null,
       idTurmaNova: null
@@ -230,6 +232,16 @@ export class UsuarioPerfil implements OnInit, OnDestroy {
     if (this.usuario.idUnidade) {
       this.carregarTurmasTransferencia(this.usuario.idUnidade);
     }
+  }
+
+  abrirModalRematricula(): void {
+    if (!this.usuario?.id || !this.desligado) return;
+    this.modoSelecaoTurma = 'rematricula';
+    this.formTransferencia.reset({ idUnidade: null, idTurmaNova: null });
+    this.formTransferencia.get('idTurmaNova')?.disable();
+    this.turmasTransferencia = [];
+    this.modalTransferenciaAberto = true;
+    this.carregarUnidadesTransferencia();
   }
 
   fecharModalTransferencia(): void {
@@ -247,7 +259,7 @@ export class UsuarioPerfil implements OnInit, OnDestroy {
   }
 
   get turmasDisponiveisTransferencia(): Turma[] {
-    return this.turmasTransferencia.filter(turma => turma.id !== this.usuario?.idTurma);
+    return this.modoSelecaoTurma === 'rematricula' ? this.turmasTransferencia : this.turmasTransferencia.filter(turma => turma.id !== this.usuario?.idTurma);
   }
 
   get turmaTransferenciaSelecionada(): Turma | undefined {
@@ -281,19 +293,14 @@ export class UsuarioPerfil implements OnInit, OnDestroy {
       ? `Você está trocando o turno do usuário para ${periodo}.`
       : `Você está transferindo o aluno para a unidade ${turma.unidade.nome} no período ${periodo}.`;
 
-    const resultado = await Swal.fire({
-      title: 'Confirmar transferência?',
-      text: texto,
-      icon: mesmaUnidade ? 'question' : 'warning',
-      showCancelButton: true,
-      confirmButtonText: 'Confirmar transferência',
-      cancelButtonText: 'Cancelar',
-      confirmButtonColor: '#3682dc',
-      cancelButtonColor: '#757575',
-      reverseButtons: true
-    });
-
-    if (!resultado.isConfirmed) return;
+    const confirmou = await this.confirmarAcaoCritica(
+      'Confirmar transferência?',
+      texto,
+      'transferir-usuario',
+      'Confirmar transferência',
+      mesmaUnidade ? 'question' : 'warning'
+    );
+    if (!confirmou) return;
 
     this.salvandoTransferencia = true;
     this.usuarioService.transferirTurma(this.usuario.id, turma.id).subscribe({
@@ -301,6 +308,7 @@ export class UsuarioPerfil implements OnInit, OnDestroy {
         this.usuario = usuario;
         this.salvandoTransferencia = false;
         this.modalTransferenciaAberto = false;
+        if (usuario.matriculaCorrigida) this.toastr.success('Matrícula corrigida');
         this.atualizarTela();
       }),
       error: (err) => this.ngZone.run(() => {
@@ -311,12 +319,23 @@ export class UsuarioPerfil implements OnInit, OnDestroy {
     });
   }
 
-  matricularNovamente(): void {
+  confirmarSelecaoTurma(): void {
+    this.modoSelecaoTurma === 'rematricula' ? this.confirmarRematricula() : this.confirmarTransferencia();
+  }
+
+  confirmarRematricula(): void {
     if (!this.usuario?.id) return;
-    this.router.navigate(['/dashboard/usuarios'], {
-      queryParams: { rematricular: this.usuario.id }
+    this.formTransferencia.markAllAsTouched();
+    if (this.formTransferencia.invalid) return;
+    const turma = this.turmaTransferenciaSelecionada;
+    if (!turma) return;
+    this.salvandoTransferencia = true;
+    this.usuarioService.rematricular(this.usuario.id, turma.id).subscribe({
+      next: usuario => this.ngZone.run(() => { this.usuario = usuario; this.salvandoTransferencia = false; this.modalTransferenciaAberto = false; this.atualizarTela(); }),
+      error: err => this.ngZone.run(() => { this.salvandoTransferencia = false; Swal.fire('Erro', err.error?.message || 'Não foi possível matricular o usuário novamente.', 'error'); this.atualizarTela(); })
     });
   }
+
 
   async excluirUsuario(): Promise<void> {
     const usuario = this.usuario;
@@ -327,7 +346,12 @@ export class UsuarioPerfil implements OnInit, OnDestroy {
       return;
     }
 
-    const confirmado = await Alertas.confirmarExclusao('Este usuário e seus dados serão excluídos permanentemente.');
+    const confirmado = await this.confirmarAcaoCritica(
+      'Confirmar exclusão?',
+      'Este usuário e seus dados serão excluídos permanentemente.',
+      'excluir-usuario',
+      'Excluir usuário'
+    );
     if (!confirmado) return;
 
     this.usuarioService.deletar(usuario.id).subscribe({
@@ -339,6 +363,34 @@ export class UsuarioPerfil implements OnInit, OnDestroy {
         Swal.fire('Erro', err.error?.message || 'Não foi possível excluir o usuário.', 'error');
       })
     });
+  }
+
+  private async confirmarAcaoCritica(
+    titulo: string,
+    mensagem: string,
+    textoConfirmacao: string,
+    botaoConfirmar: string,
+    icone: 'warning' | 'question' = 'warning'
+  ): Promise<boolean> {
+    const resultado = await Swal.fire({
+      title: titulo,
+      text: mensagem,
+      icon: icone,
+      input: 'text',
+      inputLabel: `Digite "${textoConfirmacao}" para confirmar.`,
+      inputPlaceholder: textoConfirmacao,
+      showCancelButton: true,
+      confirmButtonText: botaoConfirmar,
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#3682dc',
+      cancelButtonColor: '#757575',
+      reverseButtons: true,
+      inputValidator: valor => valor?.trim() === textoConfirmacao
+        ? undefined
+        : `Digite exatamente: ${textoConfirmacao}`
+    });
+
+    return resultado.isConfirmed;
   }
 
   private carregarUnidadesTransferencia(): void {

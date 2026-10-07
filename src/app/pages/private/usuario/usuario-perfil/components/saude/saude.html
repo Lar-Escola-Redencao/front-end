@@ -1,5 +1,6 @@
 <section class="aba-conteudo">
   <form class="form-saude" [class.form-disabled]="!editando" [formGroup]="form" (ngSubmit)="salvar()">
+    @if (!somenteLeitura) {
     <div class="aba-cabecalho">
       @if (!editando) {
         <button type="button" class="btn-primary" (click)="editar()">Editar</button>
@@ -13,6 +14,7 @@
         </div>
       }
     </div>
+    }
 
     <h3>Saúde</h3>
 

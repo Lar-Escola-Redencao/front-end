@@ -24,6 +24,7 @@ export class UsuarioPerfilDadosSocioeconomicos implements OnChanges, OnDestroy {
   private readonly subs: Subscription[] = [];
 
   @Input() usuario: UsuarioResponseDTO | null = null;
+  @Input() somenteLeitura = false;
   @Output() usuarioAtualizado = new EventEmitter<UsuarioResponseDTO>();
 
   editando = false;
@@ -136,6 +137,7 @@ export class UsuarioPerfilDadosSocioeconomicos implements OnChanges, OnDestroy {
   }
 
   editar(): void {
+    if (this.somenteLeitura) return;
     this.editando = true;
     this.form.enable();
   }
@@ -145,7 +147,7 @@ export class UsuarioPerfilDadosSocioeconomicos implements OnChanges, OnDestroy {
   }
 
   salvar(): void {
-    if (!this.usuario) return;
+    if (!this.usuario || this.somenteLeitura) return;
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;

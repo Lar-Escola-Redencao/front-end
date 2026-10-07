@@ -37,6 +37,7 @@ export class UsuarioPerfilSaude implements OnChanges {
   private readonly ngZone = inject(NgZone);
 
   @Input() usuario: UsuarioResponseDTO | null = null;
+  @Input() somenteLeitura = false;
   @Output() usuarioAtualizado = new EventEmitter<UsuarioResponseDTO>();
 
   editando = false;
@@ -76,6 +77,7 @@ export class UsuarioPerfilSaude implements OnChanges {
   }
 
   editar(): void {
+    if (this.somenteLeitura) return;
     this.editando = true;
     this.form.enable();
   }
@@ -87,7 +89,7 @@ export class UsuarioPerfilSaude implements OnChanges {
   }
 
   salvar(): void {
-    if (!this.usuario || this.form.invalid || !this.temAlteracoes) return;
+    if (!this.usuario || this.somenteLeitura || this.form.invalid || !this.temAlteracoes) return;
 
     this.salvando = true;
     const dto = this.montarDtoAtualizacao();

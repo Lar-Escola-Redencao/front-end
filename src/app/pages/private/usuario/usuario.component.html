@@ -576,11 +576,11 @@
         <img *ngIf="vinculo.imagemPerfil; else semFotoVinculo" [src]="vinculo.imagemPerfil" class="vinculo-avatar"
           alt="Foto de perfil" (error)="onErroImagemVinculo(vinculo)">
         <ng-template #semFotoVinculo>
-          <div class="vinculo-avatar placeholder"><mat-icon>person</mat-icon></div>
+          <div class="vinculo-avatar placeholder"><mat-icon class="material-symbols-outlined">sentiment_excited</mat-icon></div>
         </ng-template>
         <div class="vinculo-textos">
           <span class="vinculo-nome-detalhe">
-            {{ nomeVinculo(vinculo) }}
+            <span class="vinculo-nome-texto">{{ nomeVinculo(vinculo) }}</span>
             <span class="vinculo-status-desligado" *ngIf="vinculoDesligado(vinculo)">Desligado</span>
           </span>
           <span class="vinculo-parentesco">

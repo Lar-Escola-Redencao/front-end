@@ -32,12 +32,14 @@ export class UsuarioPerfilDadosPessoais implements OnChanges {
   private readonly toastr = inject(ToastrService);
 
   @Input() usuario: UsuarioResponseDTO | null = null;
+  @Input() somenteLeitura = false;
   @Output() usuarioAtualizado = new EventEmitter<UsuarioResponseDTO>();
 
   editando = false;
   salvando = false;
   fotoSelecionada: File | null = null;
   fotoPreviewUrl: string | null = null;
+  fotoPreviewIndisponivel = false;
   erroFoto = '';
   private valoresOriginais: unknown = null;
 
@@ -92,10 +94,14 @@ export class UsuarioPerfilDadosPessoais implements OnChanges {
   }
 
   get fotoPreview(): string | null {
-    return this.fotoPreviewUrl || this.obterUrlArquivo(this.usuario?.imagemPerfil);
+    if (this.fotoPreviewUrl) return this.fotoPreviewUrl;
+    return this.fotoPreviewIndisponivel ? null : this.obterUrlArquivo(this.usuario?.imagemPerfil);
   }
 
+  onErroFotoPreview(): void { this.fotoPreviewIndisponivel = true; }
+
   editar(): void {
+    if (this.somenteLeitura) return;
     this.editando = true;
     this.form.enable();
   }
@@ -108,7 +114,7 @@ export class UsuarioPerfilDadosPessoais implements OnChanges {
   }
 
   salvar(): void {
-    if (!this.usuario) return;
+    if (!this.usuario || this.somenteLeitura) return;
 
     this.form.markAllAsTouched();
     if (this.form.invalid || !this.temAlteracoes) return;
@@ -155,6 +161,7 @@ export class UsuarioPerfilDadosPessoais implements OnChanges {
     }
 
     this.fotoSelecionada = arquivo;
+    this.fotoPreviewIndisponivel = false;
     const reader = new FileReader();
     reader.onload = () => {
       this.fotoPreviewUrl = String(reader.result);
@@ -186,6 +193,7 @@ export class UsuarioPerfilDadosPessoais implements OnChanges {
   }
 
   private preencherFormulario(): void {
+    this.fotoPreviewIndisponivel = false;
     this.form.reset({
       nomeCompleto: this.usuario?.nomeCompleto ?? '',
       dataNascimento: this.normalizarData(this.usuario?.dataNascimento),

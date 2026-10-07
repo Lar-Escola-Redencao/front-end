@@ -280,7 +280,13 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
 
   // Ações da tabela
   colunas: TabelaColuna<UsuarioResponseDTO>[] = [
-    { chave: 'nomeCompleto', titulo: 'Usuário', principalMobile: true, ordenavel: true },
+    {
+      chave: 'nomeCompleto',
+      titulo: 'Usuário',
+      principalMobile: true,
+      ordenavel: true,
+      etiqueta: usuario => (usuario.statusMatricula || '').toUpperCase() === 'EGRESSO' ? 'Desligado' : null
+    },
     { chave: 'cpf', titulo: 'CPF/Documento', ordenavel: true, formatar: (v, linha) => v || linha.documentoAuxiliar || '-' },
     {
       chave: 'dataNascimento',

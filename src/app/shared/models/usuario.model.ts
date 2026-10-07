@@ -88,6 +88,7 @@ export interface UsuarioResponseDTO {
   periodo?: string;
   status?: string;
   statusMatricula?: string;
+  matriculaCorrigida?: boolean;
 }
 
 export interface ArquivoSaudeDTO {
