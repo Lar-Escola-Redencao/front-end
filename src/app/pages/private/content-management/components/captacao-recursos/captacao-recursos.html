@@ -15,11 +15,20 @@
   }
 
   @if (ehTabela) {
-    @if (podeAdicionar) {
+    @if (exibeBusca || podeAdicionar) {
       <div class="acoes-lista">
-        <button type="button" class="btn-primary btn-primary-thick" (click)="abrirModal()">
-          {{ textoBotaoAdicionar }}
-        </button>
+        @if (exibeBusca) {
+          <app-barra-busca
+            [placeholder]="'Buscar ' + grupoAtivo.nomeItem + ' por nome...'"
+            [valor]="busca"
+            (buscar)="buscar($event)" />
+        }
+
+        @if (podeAdicionar) {
+          <button type="button" class="btn-primary btn-primary-thick" (click)="abrirModal()">
+            {{ textoBotaoAdicionar }}
+          </button>
+        }
       </div>
     }
 
@@ -30,7 +39,7 @@
       [carregando]="carregando"
       [erro]="erroCarregamento"
       [mensagemErro]="'Não foi possível carregar a lista de ' + grupoAtivo.rotuloAba + '.'"
-      [mensagemVazia]="'Nenhum ' + grupoAtivo.nomeItem + ' cadastrado.'"
+      [mensagemVazia]="mensagemVazia"
       (acao)="executarAcao($event)"
       (tentarNovamente)="carregarTabela()"
     />

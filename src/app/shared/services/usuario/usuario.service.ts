@@ -14,8 +14,9 @@ export class UsuarioService {
   private readonly http = inject(HttpClient);
   private readonly apiUrl = `${environment.apiUrl}/usuarios`;
 
-  listarUsuarios(): Observable<UsuarioResponseDTO[]> {
-    return this.http.get<UsuarioResponseDTO[]>(this.apiUrl);
+  listarUsuarios(search?: string): Observable<UsuarioResponseDTO[]> {
+    const params = search ? { search } : undefined;
+    return this.http.get<UsuarioResponseDTO[]>(this.apiUrl, { params });
   }
 
   buscarAutocomplete(termo: string, unidadeId: number): Observable<UsuarioResponseDTO[]> {

@@ -25,8 +25,8 @@ export class UnidadeService {
   }
 
   // Paginação de verdade (uma página por vez), usada pela tabela de unidades.
-  listarPaginado(pagina: number, tamanho: number, sort?: string): Observable<PaginaResposta<Unidade>> {
-    const params = construirHttpParams({ pagina, tamanho, sort });
+  listarPaginado(pagina: number, tamanho: number, sort?: string, search?: string): Observable<PaginaResposta<Unidade>> {
+    const params = construirHttpParams({ pagina, tamanho, sort, extras: { search } });
     return this.http.get<PaginaResposta<Unidade>>(`${this.apiUrl}/todas`, { params });
   }
 

@@ -1,5 +1,10 @@
 <section class="diretoria-admin">
   <div class="acoes-diretoria">
+    <app-barra-busca
+      placeholder="Buscar por nome ou cargo..."
+      [valor]="busca"
+      (buscar)="buscar($event)" />
+
     <button type="button" class="btn-primary btn-primary-thick" (click)="abrirCadastro()">
       Novo membro
     </button>
@@ -12,7 +17,7 @@
     [carregando]="carregandoLista"
     [erro]="erroLista"
     [ordenacao]="ordenacao"
-    mensagemVazia="Nenhum membro da diretoria cadastrado."
+    [mensagemVazia]="mensagemVazia"
     (acao)="executarAcao($event)"
     (ordenar)="ordenarPor($event)"
     (tentarNovamente)="carregarDiretores()"

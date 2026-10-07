@@ -18,17 +18,18 @@ export class ContatoService {
   private readonly http = inject(HttpClient);
   private readonly apiUrl = `${environment.apiUrl}/contatos`;
 
-  listarContatos(pagina: number, tamanho: number, sort?: string): Observable<PageResponse<ContatoListagemDTO>> {
+  listarContatos(pagina: number, tamanho: number, sort?: string, search?: string): Observable<PageResponse<ContatoListagemDTO>> {
     let params = new HttpParams().set('page', pagina).set('size', tamanho);
     if (sort) params = params.set('sort', sort);
+    if (search) params = params.set('search', search);
     return this.http.get<PageResponse<ContatoListagemDTO>>(this.apiUrl, { params });
   }
 
-  listarOrdenadosPorVinculos(pagina: number, tamanho: number, direcao: 'asc' | 'desc'): Observable<PageResponse<ContatoListagemDTO>> {
+  listarOrdenadosPorVinculos(pagina: number, tamanho: number, direcao: 'asc' | 'desc', search?: string): Observable<PageResponse<ContatoListagemDTO>> {
     // A contagem não é uma propriedade da entidade Contato: ordena antes de paginar.
-    return this.listarContatos(0, 50, 'id,asc').pipe(
+    return this.listarContatos(0, 50, 'id,asc', search).pipe(
       expand(resposta => resposta.page.number + 1 < resposta.page.totalPages
-        ? this.listarContatos(resposta.page.number + 1, 50, 'id,asc')
+        ? this.listarContatos(resposta.page.number + 1, 50, 'id,asc', search)
         : EMPTY),
       reduce((contatos, resposta) => contatos.concat(resposta.content), [] as ContatoListagemDTO[]),
       map(contatos => {
