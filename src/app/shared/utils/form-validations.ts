@@ -41,7 +41,10 @@ const MENSAGENS_GENERICAS: Record<string, (err: any) => string> = {
     `O arquivo deve ter no máximo ${err.tamanhoMaximoMB}MB.`,
 
   anoInvalido: () =>
-    'O título deve ser um ano com 4 dígitos (ex.: 2015).'
+    'O título deve ser um ano com 4 dígitos (ex.: 2015).',
+
+  telefoneInvalido: () =>
+    'Informe um telefone válido com DDD.'
 
 };
 
@@ -256,6 +259,45 @@ export function validarAno(): ValidatorFn {
     }
 
     return null;
+  };
+}
+
+
+// =========================================================
+// VALIDAÇÃO DE TEXTO OBRIGATÓRIO
+// =========================================================
+
+/**
+ * Igual ao Validators.required, mas também recusa texto só com espaços.
+ * Devolve o mesmo erro `required` pra reaproveitar a mensagem genérica.
+ */
+export function validarObrigatorioSemEspacos(): ValidatorFn {
+  return (control: AbstractControl) =>
+    String(control.value ?? '').trim() ? null : { required: true };
+}
+
+
+// =========================================================
+// VALIDAÇÃO DE TELEFONE
+// =========================================================
+
+/**
+ * Valida telefone brasileiro com DDD: 10 (fixo) ou 11 (celular) dígitos,
+ * ignorando a máscara.
+ *
+ * Campo vazio não é responsabilidade deste validator.
+ */
+export function validarTelefone(): ValidatorFn {
+  return (control: AbstractControl) => {
+    const digitos = String(control.value ?? '').replace(/\D/g, '');
+
+    if (!digitos) {
+      return null;
+    }
+
+    return digitos.length === 10 || digitos.length === 11
+      ? null
+      : { telefoneInvalido: { digitos } };
   };
 }
 
