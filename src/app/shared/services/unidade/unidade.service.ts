@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { EMPTY, Observable, expand, reduce } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { AtualizarUnidadeDTO, CriarUnidadeDTO, Unidade } from '../../models/unidade.model';
 import { PaginaResposta } from '../../models/pagina.model';
@@ -15,13 +14,18 @@ export class UnidadeService {
 
   constructor(private http: HttpClient) {}
 
-  // Lote único (limitado a TAMANHO_PAGINA_MAXIMO pelo back) usado onde a tela
-  // precisa de todas as unidades de uma vez, como nos selects de filtro/formulário.
+  // Todas as páginas para os selects de filtro/formulário.
   listarTodas(): Observable<Unidade[]> {
     const params = construirHttpParams({ pagina: 0, tamanho: TAMANHO_PAGINA_MAXIMO });
     return this.http
       .get<PaginaResposta<Unidade>>(`${this.apiUrl}/todas`, { params })
-      .pipe(map((resposta) => resposta.content));
+      .pipe(
+        expand(resposta => resposta.page.number + 1 < resposta.page.totalPages
+          ? this.http.get<PaginaResposta<Unidade>>(`${this.apiUrl}/todas`, {
+            params: params.set('page', resposta.page.number + 1)
+          }) : EMPTY),
+        reduce((unidades, resposta) => unidades.concat(resposta.content), [] as Unidade[])
+      );
   }
 
   // Paginação de verdade (uma página por vez), usada pela tabela de unidades.

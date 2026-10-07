@@ -1,1 +1,259 @@
-<p>diario works!</p>
+<section class="diario-page">
+  <div class="diario-header" [formGroup]="filtroForm" [attr.inert]="salvando || confirmandoTrocaFiltro ? '' : null">
+    <div class="titulo-linha">
+      <h1>Diário de turma</h1>
+      
+      <div class="data-nav">
+        <button type="button" class="btn-icon" aria-label="Dia anterior" (click)="alterarData(-1)"><mat-icon>chevron_left</mat-icon></button>
+        <span class="data-atual">{{ formatarData(filtroForm.get('data')?.value) }}</span>
+        <button type="button" class="btn-icon" aria-label="Próximo dia" (click)="alterarData(1)"><mat-icon>chevron_right</mat-icon></button>
+        
+        <div class="input-data-wrapper">
+          <mat-icon class="icon-calendar">calendar_month</mat-icon>
+          <input type="date" aria-label="Data do diário" formControlName="data" class="input-data-invisivel">
+        </div>
+      </div>
+    </div>
+
+    <div class="filtros-turma">
+      <mat-form-field appearance="outline">
+        <mat-label>Unidade</mat-label>
+        <mat-select formControlName="idUnidade">
+          @for (und of unidades; track und.id) {
+            <mat-option [value]="und.id">{{ und.nome }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Período e Turma</mat-label>
+        <mat-select formControlName="idTurma">
+          @for (t of turmas; track t.id) {
+            <mat-option [value]="t.id">{{ t.periodo === 'MANHA' ? 'Manhã' : 'Tarde' }} ({{ t.horaInicio }} - {{ t.horaFim }})</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+  </div>
+
+  <div class="diario-conteudo">
+    
+    @if (estadoTela === 'VAZIO' && !carregando) {
+      <div class="state-box empty-state">
+        <mat-icon class="empty-icon">rule</mat-icon>
+        <p>Selecione a unidade e a turma acima para carregar o diário.</p>
+      </div>
+    }
+
+    @else if (carregando) {
+      <div class="state-box">
+        <span class="spinner spinner-escuro"></span>
+        <p>Carregando usuários...</p>
+      </div>
+    } 
+    @else if (usuarios.length === 0 && filtroForm.valid) {
+      <div class="state-box">
+        <p>Nenhum usuário matriculado nesta turma para a data selecionada.</p>
+      </div>
+    }
+    @else if (usuarios.length > 0) {
+      <div class="tabela-diario-wrapper">
+        <table class="tabela-diario">
+          <thead>
+            <tr>
+              <th class="col-usuario">Usuário</th>
+              <th class="col-presenca">Presença</th>
+              <th class="col-ocorrencia">Ocorrência</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (usuario of usuarios; track usuario.idMatricula) {
+              <tr>
+                <td class="col-usuario">
+                  <div class="usuario-info">
+                    <img *ngIf="usuario.imagemPerfil; else semFoto" [src]="usuario.imagemPerfil" alt="Foto" class="avatar">
+                    <ng-template #semFoto><div class="avatar placeholder"><mat-icon>image</mat-icon></div></ng-template>
+                    <div class="usuario-nome-linha">
+                      <span class="nome">{{ usuario.nomeUsuario }}</span>
+                      @if (usuario.statusMatricula === 'EXCLUIDO') {
+                        <span class="badge-excluido">Excluído</span>
+                      }
+                    </div>
+                  </div>
+                </td>
+                
+                <td class="col-presenca">
+                  @if (estadoTela === 'INICIAL') {
+                    <div class="toggle-fp disabled" title="Inicie a chamada para preencher">
+                      <span class="btn-falta">F</span>
+                      <span class="btn-presenca">P</span>
+                    </div>
+                  } @else {
+                    <button 
+                      type="button" 
+                      class="toggle-fp" 
+                      [disabled]="!podePreencherFrequencia"
+                      [class.disabled]="!podePreencherFrequencia"
+                      [attr.aria-label]="'Presença de ' + usuario.nomeUsuario"
+                      (click)="marcarFrequencia(usuario, !usuario.presente)">
+                      <span 
+                        class="btn-falta" 
+                        [class.ativo]="usuario.presente === false">F</span>
+                      <span 
+                        class="btn-presenca" 
+                        [class.ativo]="usuario.presente === true">P</span>
+                    </button>
+                  }
+                </td>
+
+                <td class="col-ocorrencia">
+                  @if (podeAdicionarOcorrencia || usuario.ocorrencias.length > 0) {
+                    <button type="button" class="btn-badge-ocorrencia" 
+                      [disabled]="salvando"
+                      [attr.aria-label]="'Ocorrências de ' + usuario.nomeUsuario"
+                      [class.vazio]="usuario.ocorrencias.length === 0"
+                      (click)="abrirGerenciadorOcorrencias(usuario)">
+                      {{ usuario.ocorrencias.length > 0 ? usuario.ocorrencias.length : '+' }}
+                    </button>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Rodapé: INICIAL -->
+      @if (estadoTela === 'INICIAL') {
+        <div class="rodape-diario rodape-inicial">
+          <div class="info-status">
+            <mat-icon>info</mat-icon>
+            <span>A chamada desta turma ainda não foi iniciada.</span>
+          </div>
+          
+          <div class="acoes">
+            @if (!podeIniciarChamada) {
+              <span class="alerta-tempo-vermelho">O registro ficará disponível<br>após o horário de início da aula.</span>
+            }
+            <button type="button" class="btn-primary" [disabled]="!podeIniciarChamada" (click)="iniciarChamada()">
+              Registrar frequências
+            </button>
+          </div>
+        </div>
+      }
+
+      <!-- Rodapé: PREENCHENDO -->
+      @if (estadoTela === 'PREENCHENDO') {
+        <div class="rodape-diario">
+          <label class="checkbox-declaracao">
+            <input type="checkbox" [(ngModel)]="declaracaoAceita">
+            <span>Declaro que o diário foi preenchido corretamente</span>
+          </label>
+          <div class="acoes">
+            <button type="button" class="btn-cancelar" [disabled]="salvando" (click)="cancelarPreenchimento()">Cancelar</button>
+            <button type="button" class="btn-primary" [disabled]="!declaracaoAceita || !podePreencherFrequencia" (click)="salvarDiarioLote()">
+               <span *ngIf="salvando" class="spinner"></span> Salvar
+            </button>
+          </div>
+        </div>
+      }
+
+      <!-- Rodapé: SALVO -->
+      @if (estadoTela === 'SALVO') {
+        @if (podeEditarFrequencia) {
+          <div class="rodape-diario rodape-salvo">
+             <button type="button" class="btn-primary btn-editar-diario" [disabled]="salvando" (click)="editarChamada()">Editar</button>
+          </div>
+        } @else {
+           <div class="rodape-diario is-locked">
+              <p><mat-icon>lock</mat-icon> O período de edição deste diário foi encerrado.</p>
+           </div>
+        }
+      }
+    }
+  </div>
+</section>
+
+@if (modalOcorrenciaAberto && usuarioSelecionado) {
+  <app-modal-layout 
+    [class.tremer]="modalTremendo"
+    [titulo]="modoOcorrencia === 'LISTA' ? 'Ocorrências' : (modoOcorrencia === 'NOVO' ? 'Nova ocorrência' : (modoOcorrencia === 'VER' ? 'Detalhes da ocorrência' : 'Editar ocorrência'))" 
+    (closed)="fecharModalOcorrencia()">
+    
+    <p class="modal-subtitulo">Usuário: {{ usuarioSelecionado.nomeUsuario }} <span *ngIf="modoOcorrencia !== 'LISTA'">- Data: {{ formatarData(filtroForm.get('data')?.value) }}</span></p>
+
+    @if (modoOcorrencia === 'LISTA') {
+      <div class="modal-lista">
+        @if (podeAdicionarOcorrencia) {
+          <button type="button" class="btn-primary btn-nova-oc" (click)="abrirFormOcorrencia(null, 'NOVO')">Nova ocorrência</button>
+        }
+        
+        <div class="lista-ocorrencias">
+          <div class="lista-header">
+            <span>Data de registro</span>
+            <span>Tipo</span>
+            <span>Descrição</span>
+            <span class="col-acoes">Ações</span>
+          </div>
+          @for (oc of usuarioSelecionado.ocorrencias; track oc.id) {
+            <div class="card-ocorrencia-item">
+              <span class="data">{{ formatarDataHora(oc.dataCriacao) }}</span>
+              <span class="tipo">{{ obterLabelOcorrencia(oc.tipoOcorrencia) }}</span>
+              <!-- EXIBE A DESCRIÇÃO REAL DA OCORRÊNCIA -->
+              <span class="desc-resumo">{{ oc.descricao }}</span>
+              
+              <div class="acoes-oc">
+                <button type="button" class="btn-icon icon-view" (click)="abrirFormOcorrencia(oc, 'VER')"><mat-icon>visibility</mat-icon></button>
+                @if (podeEditarExcluirOcorrencia(oc)) {
+                  <button type="button" class="btn-icon icon-edit" (click)="abrirFormOcorrencia(oc, 'EDITAR')"><mat-icon>edit</mat-icon></button>
+                  <button type="button" class="btn-icon icon-delete" (click)="excluirOcorrencia(oc)"><mat-icon>delete</mat-icon></button>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    @if (modoOcorrencia === 'NOVO' || modoOcorrencia === 'EDITAR' || modoOcorrencia === 'VER') {
+      <form class="form-modal form-ocorrencia" [class.somente-visualizacao]="modoOcorrencia === 'VER'" [formGroup]="formOcorrencia" (ngSubmit)="salvarOcorrencia()">
+        
+        <div class="form-row-2">
+          <mat-form-field appearance="outline" class="campo-hora" [hideRequiredMarker]="modoOcorrencia === 'VER'">
+            <mat-label>Hora de registro</mat-label>
+            <input matInput type="time" formControlName="horaStr" readonly>
+            <mat-icon matSuffix class="icone-relogio">schedule</mat-icon>
+          </mat-form-field>
+          
+          <mat-form-field appearance="outline" [hideRequiredMarker]="modoOcorrencia === 'VER'">
+            <mat-label>Tipo de ocorrência</mat-label>
+            <mat-select formControlName="tipoOcorrencia">
+              @for (t of tiposOcorrencia; track t.value) {
+                <mat-option [value]="t.value">{{ t.label }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <mat-form-field appearance="outline" class="campo-textarea" [hideRequiredMarker]="modoOcorrencia === 'VER'">
+          <mat-label>Descrição</mat-label>
+          <textarea matInput rows="4" formControlName="descricao"></textarea>
+        </mat-form-field>
+
+        @if (modoOcorrencia === 'VER') {
+          <p class="aviso-visualizacao">Esta ocorrência está em modo de visualização. Os dados não podem ser alterados aqui.</p>
+        }
+
+        <div class="acoes-modal">
+          <button type="button" class="btn-cancelar" [disabled]="salvando" (click)="voltarParaLista()">{{ modoOcorrencia === 'VER' ? 'Voltar' : 'Cancelar' }}</button>
+          
+          @if (modoOcorrencia !== 'VER') {
+            <button type="submit" class="btn-primary" [disabled]="!podeSalvarOcorrencia || formOcorrencia.invalid">
+              <span *ngIf="salvando" class="spinner"></span> {{ modoOcorrencia === 'NOVO' ? 'Salvar' : 'Salvar alterações' }}
+            </button>
+          }
+        </div>
+      </form>
+    }
+  </app-modal-layout>
+}
