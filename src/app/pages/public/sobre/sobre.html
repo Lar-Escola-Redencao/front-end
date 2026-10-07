@@ -1,0 +1,173 @@
+<app-public-navbar></app-public-navbar>
+
+<main class="sobre-main" [attr.aria-busy]="carregando()">
+  <h1 class="sr-only">Conheça a OSC — Lar Escola Redenção</h1>
+
+  @if (carregando()) {
+    <div class="estado-pagina" role="status" aria-live="polite">
+      <span class="spinner" aria-hidden="true"></span>
+      <p>Carregando a história do Lar Escola Redenção…</p>
+    </div>
+  } @else if (erro()) {
+    <div class="estado-pagina" role="alert">
+      <span class="material-symbols-outlined estado-icone" aria-hidden="true">cloud_off</span>
+      <h2>Não foi possível carregar estas informações.</h2>
+      <p>Tente novamente em alguns instantes.</p>
+      <button type="button" class="btn-primary" (click)="carregarConteudo()">
+        Tentar novamente
+      </button>
+    </div>
+  } @else {
+    <section id="sobre" class="sobre-section" aria-label="Sobre o Lar Escola Redenção">
+      @for (secao of conteudo().texto; track secao.id) {
+        <article class="sobre-texto container">
+          <h2>{{ secao.titulo || 'Sobre o Lar Escola Redenção' }}</h2>
+          <div class="texto-institucional" [innerHTML]="secao.conteudo || ''"></div>
+        </article>
+      } @empty {
+        <div class="sobre-texto container">
+          <h2>Sobre o Lar Escola Redenção</h2>
+          <p class="mensagem-vazia">As informações institucionais estarão disponíveis em breve.</p>
+        </div>
+      }
+
+      @if (colunasFotos().length) {
+        <div
+          class="mosaico"
+          aria-label="Fotos do Lar Escola Redenção"
+          tabindex="0"
+          [class.mosaico-animado]="colunasFotos().length > 1"
+        >
+          <div class="mosaico-trilho" [style.animation-duration.s]="colunasFotos().length * 12">
+            @for (copia of [0, 1]; track copia) {
+              <div class="mosaico-grupo" [attr.aria-hidden]="copia === 1 ? 'true' : null">
+                @for (coluna of colunasFotos(); track $index) {
+                  <div class="mosaico-coluna" [class.coluna-alternada]="$odd">
+                    @for (foto of coluna; track foto.id) {
+                      <figure class="mosaico-foto" [class.foto-alta]="$index === 0">
+                        @if (!imagensComErro().includes(foto.imagem || '')) {
+                          <img
+                            [src]="foto.imagem"
+                            [alt]="foto.conteudo || 'Atividades no Lar Escola Redenção'"
+                            loading="eager"
+                            (error)="imagemFalhou(foto.imagem || '')"
+                          />
+                        } @else {
+                          <span
+                            class="material-symbols-outlined imagem-fallback"
+                            aria-label="Imagem indisponível"
+                            >image</span
+                          >
+                        }
+                      </figure>
+                    }
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        </div>
+      }
+    </section>
+
+    <section id="historia" class="historia-section container" aria-labelledby="titulo-historia">
+      <h2 id="titulo-historia">Nossa História</h2>
+      @if (historiaSelecionada(); as historia) {
+        <div class="linha-tempo">
+          <button
+            type="button"
+            class="seta"
+            aria-label="Marco anterior"
+            [disabled]="indiceHistoria() === 0"
+            (click)="selecionarHistoria(indiceHistoria() - 1)"
+          >
+            <span class="material-symbols-outlined" aria-hidden="true">chevron_left</span>
+          </button>
+          <div class="anos" role="tablist" aria-label="Anos da nossa história">
+            @for (marco of conteudo().historia; track marco.id; let i = $index) {
+              <button
+                #ano
+                type="button"
+                role="tab"
+                class="ano"
+                [class.ativo]="i === indiceHistoria()"
+                [id]="'ano-' + marco.id"
+                aria-controls="marco-historia"
+                [attr.aria-selected]="i === indiceHistoria()"
+                [attr.tabindex]="i === indiceHistoria() ? 0 : -1"
+                (click)="selecionarHistoria(i, ano)"
+                (keydown)="navegarHistoria($event, i)"
+              >
+                {{ marco.titulo }}
+              </button>
+            }
+          </div>
+          <button
+            type="button"
+            class="seta"
+            aria-label="Próximo marco"
+            [disabled]="indiceHistoria() === conteudo().historia.length - 1"
+            (click)="selecionarHistoria(indiceHistoria() + 1)"
+          >
+            <span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
+          </button>
+        </div>
+        <article
+          id="marco-historia"
+          class="historia-card"
+          role="tabpanel"
+          tabindex="0"
+          [attr.aria-labelledby]="'ano-' + historia.id"
+        >
+          <span class="historia-ano">{{ historia.titulo }}</span>
+          <div class="historia-imagem">
+            @if (historia.imagem && !imagensComErro().includes(historia.imagem)) {
+              <img
+                [src]="historia.imagem"
+                [alt]="'Lar Escola Redenção em ' + historia.titulo"
+                loading="lazy"
+                (error)="imagemFalhou(historia.imagem || '')"
+              />
+            } @else {
+              <span
+                class="material-symbols-outlined imagem-fallback"
+                aria-label="Imagem indisponível"
+                >image</span
+              >
+            }
+          </div>
+          <div class="historia-descricao" [innerHTML]="historia.conteudo || ''"></div>
+        </article>
+      } @else {
+        <p class="mensagem-vazia">Nossa história estará disponível em breve.</p>
+      }
+    </section>
+    <section
+      id="numeros"
+      class="numeros-section container"
+      aria-label="Lar Escola Redenção em números"
+    >
+      <div class="numero numero-atendidos">
+        <strong>{{ meninosAtendidos() }}</strong
+        ><span>Meninos atendidos atualmente</span>
+      </div>
+      <div class="numero numero-unidades">
+        <strong>{{ totalUnidades() ?? '—' }}</strong
+        ><span>Unidades</span>
+      </div>
+      <div class="numero numero-anos">
+        <strong>{{ anosOsc() ?? '—' }}</strong
+        ><span>Anos de OSC</span>
+      </div>
+    </section>
+
+    <section id="conheca-osc" aria-label="Composição da diretoria">
+      <app-public-diretoria></app-public-diretoria>
+    </section>
+    <section id="unidades" aria-label="Unidades de atendimento">
+      <app-public-unidades></app-public-unidades>
+    </section>
+  }
+</main>
+
+<app-public-footer></app-public-footer>

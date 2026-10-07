@@ -83,7 +83,7 @@ import { TurmaService } from 'src/app/shared/services/turma/turma.service';
     MatAutocompleteModule
   ],
   templateUrl: './usuario.component.html',
-  styleUrls: ['./usuario.component.css']
+  styleUrls: ['./usuario.component.css', './usuario-formularios.css']
 })
 export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalvas {
 
