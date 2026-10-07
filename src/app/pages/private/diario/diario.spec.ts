@@ -6,6 +6,7 @@ import { Diario } from './diario';
 import { DiarioService } from 'src/app/shared/services/diario/diario.service';
 import { TurmaService } from 'src/app/shared/services/turma/turma.service';
 import { UnidadeService } from 'src/app/shared/services/unidade/unidade.service';
+import { Alertas } from 'src/app/shared/utils/alerts';
 import { SessaoService } from 'src/app/shared/services/auth/sessao.service';
 
 describe('Diário de turma', () => {
@@ -27,6 +28,7 @@ describe('Diário de turma', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-10-06T12:00:00-03:00'));
     papel = 'MONITOR';
+    vi.spyOn(Alertas, 'confirmarDescarte').mockResolvedValue(false);
     api = {
       listarFrequencia: vi.fn(() => of([aluno()])), salvarEmLote: vi.fn(() => of(undefined)),
       criarOcorrencia: vi.fn(() => of(ocorrencia('2026-10-06T12:00:00'))),
@@ -58,9 +60,11 @@ describe('Diário de turma', () => {
     expect(api.listarFrequencia).toHaveBeenLastCalledWith(2, '2026-10-03');
   });
 
-  it('limpa a chamada ao remover turma, sem spinner preso', () => {
+  it('limpa a chamada ao confirmar remoção da turma, sem spinner preso', async () => {
+    vi.mocked(Alertas.confirmarDescarte).mockResolvedValue(true);
     component.iniciarChamada(); component.declaracaoAceita = true;
     component.filtroForm.get('idTurma')!.setValue(null);
+    await Promise.resolve();
     expect(component.usuarios).toEqual([]);
     expect(component.estadoTela).toBe('VAZIO');
     expect(component.declaracaoAceita).toBe(false);
@@ -82,9 +86,9 @@ describe('Diário de turma', () => {
 
   it('descarta resposta de turmas de unidade anterior', () => {
     const antiga = new Subject<any[]>();
-    turmas.listar.mockReturnValueOnce(antiga).mockReturnValueOnce(of([{ id: 3, unidade: { id: 2 } }]));
-    component.filtroForm.get('idUnidade')!.setValue(1);
+    turmas.listar.mockReturnValueOnce(antiga).mockReturnValueOnce(of([{ id: 3, unidade: { id: 3 } }]));
     component.filtroForm.get('idUnidade')!.setValue(2);
+    component.filtroForm.get('idUnidade')!.setValue(3);
     antiga.next([{ id: 9, unidade: { id: 1 } }]);
     expect(component.turmas.map(t => t.id)).toEqual([3]);
   });
@@ -193,4 +197,77 @@ describe('Diário de turma', () => {
     expect(component.podeEditarExcluirOcorrencia(ocorrencia('2026-09-06T08:00:00'))).toBe(true);
     component.editarChamada(); expect(component.estadoTela).toBe('PREENCHENDO');
   });
+
+  it.each([
+    ['data', '2026-10-05'], ['idUnidade', 2], ['idTurma', null]
+  ])('preserva filtros e preenchimento ao cancelar troca de %s', async (campo, valor) => {
+    component.iniciarChamada();
+    component.marcarFrequencia(component.usuarios[0], false);
+    component.declaracaoAceita = true;
+    const filtros = component.filtroForm.getRawValue();
+    const alunos = component.usuarios;
+    const listaTurmas = component.turmas;
+    api.listarFrequencia.mockClear(); turmas.listar.mockClear();
+    component.filtroForm.get(campo as string)!.setValue(valor);
+    await Promise.resolve();
+    expect(Alertas.confirmarDescarte).toHaveBeenCalledTimes(1);
+    expect(component.filtroForm.getRawValue()).toEqual(filtros);
+    expect(component.usuarios).toBe(alunos);
+    expect(component.usuarios[0].presente).toBe(false);
+    expect(component.turmas).toBe(listaTurmas);
+    expect(component.estadoTela).toBe('PREENCHENDO');
+    expect(component.declaracaoAceita).toBe(true);
+    expect(api.listarFrequencia).not.toHaveBeenCalled();
+    expect(turmas.listar).not.toHaveBeenCalled();
+  });
+
+  it('confirma troca pelas setas uma única vez e recarrega a data escolhida', async () => {
+    let responder!: (confirmado: boolean) => void;
+    vi.mocked(Alertas.confirmarDescarte).mockReturnValue(new Promise(resolve => responder = resolve));
+    component.iniciarChamada();
+    component.alterarData(-1); component.alterarData(-1);
+    fixture.detectChanges();
+    expect(Alertas.confirmarDescarte).toHaveBeenCalledTimes(1);
+    expect(component.filtroForm.get('data')!.value).toBe('2026-10-06');
+    expect(fixture.nativeElement.querySelector('.diario-header').hasAttribute('inert')).toBe(true);
+    responder(true); await Promise.resolve(); fixture.detectChanges();
+    expect(api.listarFrequencia).toHaveBeenLastCalledWith(2, '2026-10-05');
+    expect(component.estadoTela).toBe('INICIAL');
+    expect(component.confirmandoTrocaFiltro).toBe(false);
+    expect(fixture.nativeElement.querySelector('.diario-header').hasAttribute('inert')).toBe(false);
+  });
+
+  it('só limpa a turma e carrega a nova unidade depois de confirmar', async () => {
+    vi.mocked(Alertas.confirmarDescarte).mockResolvedValue(true);
+    component.iniciarChamada();
+    turmas.listar.mockClear();
+    component.filtroForm.get('idUnidade')!.setValue(2);
+    expect(component.filtroForm.get('idUnidade')!.value).toBe(1);
+    expect(component.filtroForm.get('idTurma')!.value).toBe(2);
+    expect(turmas.listar).not.toHaveBeenCalled();
+    await Promise.resolve();
+    expect(component.filtroForm.get('idUnidade')!.value).toBe(2);
+    expect(component.filtroForm.get('idTurma')!.value).toBeNull();
+    expect(turmas.listar).toHaveBeenCalledWith(2);
+    expect(component.usuarios).toEqual([]);
+  });
+
+  it('preserva o formulário de ocorrência ao cancelar a troca pelo calendário', async () => {
+    component.abrirGerenciadorOcorrencias(component.usuarios[0]);
+    component.formOcorrencia.get('descricao')!.setValue('Descrição não salva');
+    component.formOcorrencia.markAsDirty();
+    component.filtroForm.get('data')!.setValue('2026-10-05');
+    await Promise.resolve();
+    expect(component.modalOcorrenciaAberto).toBe(true);
+    expect(component.formOcorrencia.get('descricao')!.value).toBe('Descrição não salva');
+    expect(component.formOcorrencia.dirty).toBe(true);
+    expect(component.filtroForm.get('data')!.value).toBe('2026-10-06');
+  });
+
+  it('troca filtros sem confirmação quando não há preenchimento', () => {
+    component.alterarData(-1);
+    expect(Alertas.confirmarDescarte).not.toHaveBeenCalled();
+    expect(api.listarFrequencia).toHaveBeenLastCalledWith(2, '2026-10-05');
+  });
+
 });

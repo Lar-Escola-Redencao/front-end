@@ -1,5 +1,5 @@
 <section class="diario-page">
-  <div class="diario-header" [formGroup]="filtroForm" [attr.inert]="salvando ? '' : null">
+  <div class="diario-header" [formGroup]="filtroForm" [attr.inert]="salvando || confirmandoTrocaFiltro ? '' : null">
     <div class="titulo-linha">
       <h1>Diário de turma</h1>
       
@@ -189,7 +189,12 @@
         }
         
         <div class="lista-ocorrencias">
-          <div class="lista-header"></div>
+          <div class="lista-header">
+            <span>Data de registro</span>
+            <span>Tipo</span>
+            <span>Descrição</span>
+            <span class="col-acoes">Ações</span>
+          </div>
           @for (oc of usuarioSelecionado.ocorrencias; track oc.id) {
             <div class="card-ocorrencia-item">
               <span class="data">{{ formatarDataHora(oc.dataCriacao) }}</span>

@@ -18,6 +18,8 @@ import { Alertas } from 'src/app/shared/utils/alerts';
 import { mapearErrosFormulario } from 'src/app/shared/utils/form-validations';
 import { ComponentComAlteracoesNaoSalvas } from 'src/app/shared/guards/can-deactivate.guard';
 
+type FiltrosDiario = { idUnidade: number | null; idTurma: number | null; data: string };
+
 @Component({
   selector: 'app-diario',
   standalone: true,
@@ -52,9 +54,14 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
   carregando = false;
   salvando = false;
   declaracaoAceita = false;
+  confirmandoTrocaFiltro = false;
 
   private subs: Subscription = new Subscription();
   private recarregar = new Subject<void>();
+  private filtrosAlterados = new Subject<void>();
+  private unidadeAlterada = new Subject<number | null>();
+  private filtrosAplicados: FiltrosDiario = this.filtroForm.getRawValue();
+  private destruido = false;
 
   modalOcorrenciaAberto = false;
   modoOcorrencia: 'LISTA' | 'NOVO' | 'EDITAR' | 'VER' = 'LISTA';
@@ -84,11 +91,10 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
     this.subs.add(interval(1000).subscribe(() => this.cdr.markForCheck()));
 
     this.subs.add(
-      this.filtroForm.get('idUnidade')!.valueChanges.pipe(
+      this.unidadeAlterada.pipe(
         tap(() => {
           this.turmas = [];
-          this.filtroForm.get('idTurma')?.disable();
-          this.filtroForm.get('idTurma')?.setValue(null);
+          this.filtroForm.get('idTurma')?.disable({ emitEvent: false });
         }),
         switchMap(id => id ? this.turmaService.listar(id).pipe(
           catchError(() => {
@@ -104,8 +110,15 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
       })
     );
 
+    this.subs.add(this.filtroForm.valueChanges.subscribe(() => {
+      const novos: FiltrosDiario = this.filtroForm.getRawValue();
+      // Mantenha os filtros da chamada atual até a confirmação do descarte.
+      this.filtroForm.patchValue(this.filtrosAplicados, { emitEvent: false });
+      void this.solicitarTrocaFiltros(novos);
+    }));
+
     this.subs.add(
-      merge(this.filtroForm.valueChanges, this.recarregar).pipe(
+      merge(this.filtrosAlterados, this.recarregar).pipe(
         startWith(null),
         switchMap(() => {
           this.carregando = false;
@@ -140,7 +153,42 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
   }
 
   ngOnDestroy(): void {
+    this.destruido = true;
     this.subs.unsubscribe();
+  }
+
+  private async solicitarTrocaFiltros(novos: FiltrosDiario): Promise<void> {
+    if (this.salvando || this.confirmandoTrocaFiltro ||
+      (novos.idUnidade === this.filtrosAplicados.idUnidade &&
+        novos.idTurma === this.filtrosAplicados.idTurma && novos.data === this.filtrosAplicados.data)) return;
+
+    if (!this.formularioTemAlteracoesNaoSalvas()) {
+      this.aplicarFiltros(novos);
+      return;
+    }
+
+    this.confirmandoTrocaFiltro = true;
+    this.cdr.markForCheck();
+    try {
+      const confirmado = await Alertas.confirmarDescarte();
+      if (confirmado && !this.destruido && !this.salvando) {
+        this.ngZone.run(() => this.aplicarFiltros(novos));
+      }
+    } catch {
+      // Se a confirmação falhar, preserve a chamada e o preenchimento.
+    } finally {
+      this.confirmandoTrocaFiltro = false;
+      if (!this.destruido) this.cdr.markForCheck();
+    }
+  }
+
+  private aplicarFiltros(novos: FiltrosDiario): void {
+    const mudouUnidade = novos.idUnidade !== this.filtrosAplicados.idUnidade;
+    const filtros = { ...novos, idTurma: mudouUnidade ? null : novos.idTurma };
+    this.filtrosAplicados = filtros;
+    this.filtroForm.patchValue(filtros, { emitEvent: false });
+    if (mudouUnidade) this.unidadeAlterada.next(filtros.idUnidade);
+    this.filtrosAlterados.next();
   }
 
   private carregarUnidades() {
