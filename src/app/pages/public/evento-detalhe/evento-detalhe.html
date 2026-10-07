@@ -22,7 +22,14 @@
               <span>Imagem indisponível</span>
             </span>
           } @else if (imagemPrincipal) {
-            <img class="imagem-principal" [src]="imagemPrincipal" [alt]="evento.titulo" (error)="onImagemPrincipalError()" />
+            <img
+              class="imagem-principal"
+              [src]="imagemPrincipal"
+              [alt]="evento.titulo"
+              (error)="onImagemPrincipalError()"
+              (click)="abrirLightbox()"
+            />
+            <span class="imagem-principal-hint material-symbols-outlined" aria-hidden="true">zoom_in</span>
           } @else {
             <span class="imagem-principal-placeholder material-symbols-outlined" aria-hidden="true">image</span>
           }
@@ -32,23 +39,17 @@
               <p class="imagem-overlay-texto">Acompanhe o que aconteceu através das nossas redes</p>
 
               <nav class="redes-sociais-overlay" aria-label="Redes sociais do evento">
-                @for (rede of redesSociais; track rede.id) {
+                @for (rede of redesSociais; track rede.idRedeSocial) {
                   <a
                     class="rede-social-link"
-                    [href]="rede.url"
+                    [href]="rede.urlLink"
                     target="_blank"
                     rel="noopener noreferrer"
                     [attr.aria-label]="rede.nome"
                     [title]="rede.nome"
                   >
-                    @if (rede.icone) {
-                      <img [src]="obterUrlImagem(rede.icone)" [alt]="rede.nome" (error)="onIconeRedeError($event)" />
-                    }
-                    <span
-                      class="material-symbols-outlined rede-social-fallback"
-                      [class.rede-social-fallback-hidden]="rede.icone"
-                      aria-hidden="true"
-                    >
+                    <img [src]="obterUrlImagem(rede.icone)" [alt]="rede.nome" (error)="onIconeRedeError($event)" />
+                    <span class="material-symbols-outlined rede-social-fallback rede-social-fallback-hidden" aria-hidden="true">
                       link
                     </span>
                   </a>
@@ -153,5 +154,15 @@
     </div>
   }
 </main>
+
+@if (lightboxAberto && imagemPrincipal && evento) {
+  <div class="lightbox" (click)="fecharLightbox()">
+    <button type="button" class="lightbox-fechar" (click)="fecharLightbox()" aria-label="Fechar imagem ampliada">
+      <span class="material-symbols-outlined">close</span>
+    </button>
+
+    <img class="lightbox-imagem" [src]="imagemPrincipal" [alt]="evento.titulo" (click)="$event.stopPropagation()" />
+  </div>
+}
 
 <app-public-footer></app-public-footer>

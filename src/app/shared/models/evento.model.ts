@@ -8,6 +8,15 @@ export interface Evento {
   valor?: number;
   tipoEvento: TipoEvento;
   parceiros: Parceiro[];
+  // Redes sociais de cobertura deste evento especificamente (GET /evento/{id}/redes-sociais).
+  redesSociais?: EventoRedeSocial[];
+}
+
+export interface EventoRedeSocial {
+  idRedeSocial: number;
+  nome: string;
+  icone: string;
+  urlLink: string;
 }
 
 export interface CriarEventoDTO {

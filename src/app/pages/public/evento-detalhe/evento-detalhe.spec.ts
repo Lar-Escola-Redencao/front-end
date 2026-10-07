@@ -5,12 +5,11 @@ import { of } from 'rxjs';
 import { EventoDetalhe } from './evento-detalhe';
 import { EventoPublicoService } from 'src/app/shared/services/evento-publico/evento-publico.service';
 import { PublicContentService } from 'src/app/shared/services/public-content/public-content.service';
-import { Evento, TipoEvento } from 'src/app/shared/models/evento.model';
-import { SocialLink } from 'src/app/shared/models/social-link.model';
+import { Evento, EventoRedeSocial, TipoEvento } from 'src/app/shared/models/evento.model';
 
-const redesSociais: SocialLink[] = [
-  { id: 1, nome: 'Facebook', icone: 'facebook.svg', url: 'https://facebook.com/lar', ativo: true },
-  { id: 2, nome: 'Instagram', icone: 'instagram.svg', url: 'https://instagram.com/lar', ativo: true }
+const redesSociais: EventoRedeSocial[] = [
+  { idRedeSocial: 1, nome: 'Facebook', icone: 'facebook.svg', urlLink: 'https://facebook.com/lar/post-1' },
+  { idRedeSocial: 2, nome: 'Instagram', icone: 'instagram.svg', urlLink: 'https://instagram.com/p/abc' }
 ];
 
 function criarEvento(sobrescrever: Partial<Evento> = {}): Evento {
@@ -37,7 +36,7 @@ describe('EventoDetalhe', () => {
     fixture.detectChanges();
   }
 
-  async function montar(evento: Evento, redes: SocialLink[] = []): Promise<void> {
+  async function montar(evento: Evento): Promise<void> {
     await TestBed.configureTestingModule({
       imports: [EventoDetalhe],
       providers: [
@@ -47,7 +46,7 @@ describe('EventoDetalhe', () => {
           provide: PublicContentService,
           useValue: {
             tratarUrlImagem: (url: string | null | undefined) => url ?? '',
-            getRedesSociaisAtivas: () => of(redes)
+            getRedesSociaisAtivas: () => of([])
           }
         }
       ]
@@ -61,8 +60,8 @@ describe('EventoDetalhe', () => {
     elemento = fixture.nativeElement;
   }
 
-  describe('com redes sociais ativas', () => {
-    beforeEach(() => montar(criarEvento(), redesSociais));
+  describe('evento encerrado, com redes sociais cadastradas', () => {
+    beforeEach(() => montar(criarEvento({ redesSociais })));
 
     it('escurece a imagem principal e exibe o texto centralizado no overlay', () => {
       const overlay = elemento.querySelector('.imagem-principal-wrapper .imagem-overlay');
@@ -84,14 +83,14 @@ describe('EventoDetalhe', () => {
     it('abre cada link em uma nova aba', () => {
       const links = Array.from(elemento.querySelectorAll<HTMLAnchorElement>('.rede-social-link'));
 
-      expect(links.map(a => a.getAttribute('href'))).toEqual(redesSociais.map(r => r.url));
+      expect(links.map(a => a.getAttribute('href'))).toEqual(redesSociais.map(r => r.urlLink));
       links.forEach(a => {
         expect(a.getAttribute('target')).toBe('_blank');
         expect(a.getAttribute('rel')).toContain('noopener');
       });
     });
 
-    it('exibe icone generico quando a imagem do icone falha', () => {
+    it('exibe icone generico quando a imagem do icone falha ao carregar', () => {
       const img = elemento.querySelector<HTMLImageElement>('.rede-social-link img')!;
       const fallback = elemento.querySelector<HTMLElement>('.rede-social-link .rede-social-fallback')!;
       expect(fallback.classList.contains('rede-social-fallback-hidden')).toBe(true);
@@ -102,24 +101,14 @@ describe('EventoDetalhe', () => {
       expect(fallback.classList.contains('rede-social-fallback-hidden')).toBe(false);
     });
 
-    it('nao renderiza carrossel de midias, lightbox nem nota pos-evento', () => {
-      const seletores = [
-        '.carrossel-controles',
-        '.miniaturas',
-        '.miniatura',
-        '.imagem-principal-seta',
-        '.lightbox',
-        '.video-preview',
-        '.evento-nota-pos'
-      ];
-
+    it('nao renderiza carrossel de midias nem nota pos-evento', () => {
+      const seletores = ['.carrossel-controles', '.miniaturas', '.miniatura', '.evento-nota-pos'];
       seletores.forEach(seletor => expect(elemento.querySelector(seletor)).toBeNull());
-      expect(elemento.querySelector('.imagem-principal-wrapper')?.tagName).not.toBe('BUTTON');
     });
   });
 
-  describe('sem redes sociais ativas', () => {
-    beforeEach(() => montar(criarEvento(), []));
+  describe('evento encerrado, sem nenhuma rede social com link/icone cadastrado', () => {
+    beforeEach(() => montar(criarEvento({ redesSociais: [] })));
 
     it('exibe a imagem limpa, sem overlay, texto nem icones', () => {
       expect(elemento.querySelector('.imagem-principal')?.getAttribute('src')).toBe('foto-principal.jpg');
@@ -130,8 +119,8 @@ describe('EventoDetalhe', () => {
     });
   });
 
-  describe('evento ainda nao encerrado, com redes sociais ativas', () => {
-    beforeEach(() => montar(criarEvento({ dataEvento: new Date('2099-01-01T12:00:00') }), redesSociais));
+  describe('evento ainda nao encerrado, com redes sociais cadastradas', () => {
+    beforeEach(() => montar(criarEvento({ dataEvento: new Date('2099-01-01T12:00:00'), redesSociais })));
 
     it('nao exibe o overlay de redes sociais', () => {
       expect(elemento.querySelector('.imagem-overlay')).toBeNull();
@@ -155,6 +144,41 @@ describe('EventoDetalhe', () => {
 
       expect(elemento.querySelector('.imagem-principal')).toBeNull();
       expect(elemento.querySelector('.imagem-principal-placeholder')).toBeTruthy();
+    });
+  });
+
+  describe('lightbox', () => {
+    beforeEach(() => montar(criarEvento()));
+
+    it('expande a imagem principal ao clicar nela', () => {
+      expect(elemento.querySelector('.lightbox')).toBeNull();
+
+      elemento.querySelector<HTMLImageElement>('.imagem-principal')!.click();
+      fixture.detectChanges();
+
+      const lightbox = elemento.querySelector('.lightbox');
+      expect(lightbox).toBeTruthy();
+      expect(lightbox?.querySelector<HTMLImageElement>('.lightbox-imagem')?.getAttribute('src')).toBe('foto-principal.jpg');
+    });
+
+    it('fecha ao clicar no botao de fechar', () => {
+      elemento.querySelector<HTMLImageElement>('.imagem-principal')!.click();
+      fixture.detectChanges();
+
+      elemento.querySelector<HTMLButtonElement>('.lightbox-fechar')!.click();
+      fixture.detectChanges();
+
+      expect(elemento.querySelector('.lightbox')).toBeNull();
+    });
+
+    it('fecha ao clicar fora da imagem', () => {
+      elemento.querySelector<HTMLImageElement>('.imagem-principal')!.click();
+      fixture.detectChanges();
+
+      elemento.querySelector<HTMLElement>('.lightbox')!.click();
+      fixture.detectChanges();
+
+      expect(elemento.querySelector('.lightbox')).toBeNull();
     });
   });
 });

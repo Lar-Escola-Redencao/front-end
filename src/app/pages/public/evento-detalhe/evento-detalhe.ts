@@ -1,11 +1,9 @@
 import { ChangeDetectorRef, Component, HostListener, OnDestroy, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { forkJoin } from 'rxjs';
 import { PublicNavbar } from '@components/public-navbar/public-navbar';
 import { PublicFooter } from '@components/public-footer/public-footer';
-import { Evento, Parceiro, TipoEvento } from 'src/app/shared/models/evento.model';
-import { SocialLink } from 'src/app/shared/models/social-link.model';
+import { Evento, EventoRedeSocial, Parceiro, TipoEvento } from 'src/app/shared/models/evento.model';
 import { EventoPublicoService } from 'src/app/shared/services/evento-publico/evento-publico.service';
 import { PublicContentService } from 'src/app/shared/services/public-content/public-content.service';
 
@@ -29,11 +27,11 @@ export class EventoDetalhe implements OnInit, OnDestroy {
   };
 
   evento: Evento | null = null;
-  redesSociais: SocialLink[] = [];
   carregando = true;
   naoEncontrado = false;
 
   imagemPrincipalIndisponivel = false;
+  lightboxAberto = false;
   indiceParceiroAtual = 0;
   parceirosEmTransicao = true;
   parceirosAnimando = false;
@@ -48,13 +46,9 @@ export class EventoDetalhe implements OnInit, OnDestroy {
       return;
     }
 
-    forkJoin({
-      evento: this.eventoPublicoService.buscarPorId(id),
-      redesSociais: this.publicContentService.getRedesSociaisAtivas()
-    }).subscribe({
-      next: ({ evento, redesSociais }) => {
+    this.eventoPublicoService.buscarPorId(id).subscribe({
+      next: (evento) => {
         this.evento = evento;
-        this.redesSociais = redesSociais;
         this.iniciarAutoPlayParceiros();
         this.carregando = false;
         this.cdr.detectChanges();
@@ -69,14 +63,19 @@ export class EventoDetalhe implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.pararAutoPlayParceiros();
+    document.body.style.overflow = '';
   }
 
   get imagemPrincipal(): string {
     return this.evento?.imagem ?? '';
   }
 
+  get redesSociais(): EventoRedeSocial[] {
+    return this.evento?.redesSociais ?? [];
+  }
+
   // O overlay "acompanhe pelas redes" só faz sentido depois que o evento
-  // encerrou e existe ao menos uma rede social cadastrada para divulgar.
+  // encerrou e existe ao menos uma rede social (com ícone) cadastrada para divulgar.
   get exibirOverlayRedesSociais(): boolean {
     return this.eventoEncerrado() && this.redesSociais.length > 0;
   }
@@ -194,6 +193,17 @@ export class EventoDetalhe implements OnInit, OnDestroy {
 
   onImagemPrincipalError(): void {
     this.imagemPrincipalIndisponivel = true;
+  }
+
+  abrirLightbox(): void {
+    if (!this.imagemPrincipal || this.imagemPrincipalIndisponivel) return;
+    this.lightboxAberto = true;
+    document.body.style.overflow = 'hidden';
+  }
+
+  fecharLightbox(): void {
+    this.lightboxAberto = false;
+    document.body.style.overflow = '';
   }
 
   onIconeRedeError(event: Event): void {
