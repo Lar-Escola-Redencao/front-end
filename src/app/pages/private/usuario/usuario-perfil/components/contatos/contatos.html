@@ -39,7 +39,13 @@
         <div class="contato-preview-dados">
           <div>
             <mat-icon class="material-symbols-outlined">call</mat-icon>
-            <span>{{ formatarTelefoneContato(contatoSelecionado.telefone) }}</span>
+            <a *ngIf="hrefTelefoneContato(contatoSelecionado.telefone); else telefonePerfilContatoIndisponivel"
+              class="telefone-link" [href]="hrefTelefoneContato(contatoSelecionado.telefone)">
+              {{ formatarTelefoneContato(contatoSelecionado.telefone) }}
+            </a>
+            <ng-template #telefonePerfilContatoIndisponivel>
+              <span>Telefone não informado</span>
+            </ng-template>
           </div>
           <div>
             <mat-icon class="material-symbols-outlined">mail</mat-icon>

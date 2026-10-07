@@ -573,6 +573,9 @@ h1 {
 }
 
 .vinculo-nome-detalhe {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-family: var(--fonte-texto);
   color: var(--preto);
   font-size: 15px;
@@ -580,6 +583,17 @@ h1 {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.vinculo-status-desligado {
+  flex: 0 0 auto;
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: #8f8f8f;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
 }
 
 .vinculo-parentesco {
@@ -1710,10 +1724,11 @@ h1 {
 
 .cadastro-form .aviso-conflito-matricula {
   display: block;
-  margin: 2px 0 0 2px;
-  color: var(--mat-form-field-error-text-color, #d32f2f);
+  margin-top: -4px;
+  color: #d98200;
   font-family: var(--fonte-texto);
-  font-size: 0.78rem;
+  font-size: 13px;
+  font-weight: 700;
   line-height: 1.35;
   text-align: left;
 }
@@ -1814,6 +1829,17 @@ h1 {
 .contato-preview-erro {
   color: #b3261e;
   padding: 16px 0;
+}
+
+.telefone-link {
+  color: inherit;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.telefone-link:hover {
+  color: var(--primary-color);
+  text-decoration: underline;
 }
 
 @media (max-width: 600px) {

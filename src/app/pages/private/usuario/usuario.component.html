@@ -491,7 +491,14 @@
           <div class="contato-nome-preview">{{ c.nomeCompleto }} <span class="parentesco-tag">({{ c.parentesco
               }})</span></div>
           <div class="contato-dados-preview">
-            <span><mat-icon>phone</mat-icon> {{ c.telefone }}</span>
+            <span>
+              <mat-icon>phone</mat-icon>
+              <a *ngIf="hrefTelefoneContato(c.telefone); else telefonePreviewUsuarioIndisponivel"
+                class="telefone-link" [href]="hrefTelefoneContato(c.telefone)">
+                {{ formatarTelefoneContato(c.telefone) }}
+              </a>
+              <ng-template #telefonePreviewUsuarioIndisponivel>Telefone não informado</ng-template>
+            </span>
             <span *ngIf="c.email"><mat-icon>email</mat-icon> {{ c.email }}</span>
           </div>
         </div>
@@ -516,7 +523,13 @@
     <div class="contato-preview-dados" *ngIf="!carregandoPreviewContato && !erroPreviewContato">
       <div>
         <span class="material-symbols-outlined contato-preview-icone">call</span>
-        <span>{{ contato.telefone || 'Telefone não informado' }}</span>
+        <a *ngIf="hrefTelefoneContato(contato.telefone); else telefonePreviewContatoIndisponivel"
+          class="telefone-link" [href]="hrefTelefoneContato(contato.telefone)">
+          {{ formatarTelefoneContato(contato.telefone) }}
+        </a>
+        <ng-template #telefonePreviewContatoIndisponivel>
+          <span>Telefone não informado</span>
+        </ng-template>
       </div>
       <div>
         <span class="material-symbols-outlined contato-preview-icone">mail</span>
@@ -566,7 +579,10 @@
           <div class="vinculo-avatar placeholder"><mat-icon>person</mat-icon></div>
         </ng-template>
         <div class="vinculo-textos">
-          <span class="vinculo-nome-detalhe">{{ nomeVinculo(vinculo) }}</span>
+          <span class="vinculo-nome-detalhe">
+            {{ nomeVinculo(vinculo) }}
+            <span class="vinculo-status-desligado" *ngIf="vinculoDesligado(vinculo)">Desligado</span>
+          </span>
           <span class="vinculo-parentesco">
             {{ labelParentesco(vinculo.parentesco) }}
             <ng-container *ngIf="vinculo.principal">

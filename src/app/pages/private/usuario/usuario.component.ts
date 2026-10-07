@@ -679,7 +679,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
   get avisoConflitoPeriodoMatricula(): string {
     const periodo = this.formUsuario.get('periodoEscolar')?.value;
     const label = this.periodosEscolares.find(item => item.value === periodo)?.label?.toLowerCase() || 'mesmo periodo';
-    return `Conflito de horário identificado. O estudante declarou que estuda de ${label}, e a turma selecionada também e nesse período.`;
+    return `Conflito de horário identificado. O estudante declarou que estuda de ${label}, e a turma selecionada também é nesse período.`;
   }
 
   selecionarArquivosSaude(event: Event): void {
@@ -1448,6 +1448,10 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
     return vinculo.idUsuario ?? null;
   }
 
+  vinculoDesligado(vinculo: UsuarioVinculadoDTO): boolean {
+    return (vinculo.statusMatricula || '').toUpperCase() === 'EGRESSO';
+  }
+
   private tratarErroSalvarUsuario(err: any, mensagemPadrao: string): void {
     const msgErro = err.error?.message || err.error?.detail || mensagemPadrao;
     const msgNormalizada = msgErro.toString().toLowerCase();
@@ -1813,7 +1817,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
     this.contatoService.buscarDetalhe(contato.id).subscribe({
       next: (detalhe) => {
         this.ngZone.run(() => {
-          this.vinculosDoContato = (detalhe.vinculos || []).filter(v => v.idUnidade != null);
+          this.vinculosDoContato = detalhe.vinculos || [];
           this.carregandoVinculos = false;
           this.atualizarTela();
         });
@@ -2014,7 +2018,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
     this.carregandoVinculos = true;
     this.contatoService.buscarDetalhe(contatoAtual.id).subscribe({
       next: detalhe => this.ngZone.run(() => {
-        this.vinculosDoContato = (detalhe.vinculos || []).filter(v => v.idUnidade != null);
+        this.vinculosDoContato = detalhe.vinculos || [];
         this.carregandoVinculos = false;
         this.atualizarTela();
       }),

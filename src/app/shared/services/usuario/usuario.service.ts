@@ -44,6 +44,14 @@ export class UsuarioService {
     return this.http.post<void>(`${this.apiUrl}/${id}/foto`, formData);
   }
 
+  transferirTurma(id: number, idTurmaNova: number): Observable<UsuarioResponseDTO> {
+    return this.http.put<UsuarioResponseDTO>(`${this.apiUrl}/${id}/turma`, { idTurmaNova });
+  }
+
+  inativar(id: number, dto: { dataDesligamento: string; justificativa: string }): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/${id}/inativar`, dto);
+  }
+
   uploadArquivoSaude(id: number, arquivo: File): Observable<unknown> {
     const formData = new FormData();
     formData.append('titulo', arquivo.name);

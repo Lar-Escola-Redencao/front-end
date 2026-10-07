@@ -12,7 +12,7 @@
     <div class="perfil-layout">
       <button type="button" class="voltar" (click)="voltarParaUsuarios()">
         <mat-icon>arrow_back</mat-icon>
-        <span>Voltar para “Usuários”</span>
+        <span>Voltar para "Usuários"</span>
       </button>
       <span class="voltar-espaco" aria-hidden="true"></span>
 
@@ -22,11 +22,18 @@
             @if (fotoPerfil) {
               <img [src]="fotoPerfil" [alt]="'Foto de ' + usuario.nomeCompleto">
             } @else {
-              <mat-icon>person</mat-icon>
+              <mat-icon>sentiment_excited</mat-icon>
             }
           </div>
 
           <h1>{{ usuario.nomeCompleto }}</h1>
+
+          @if (desligado) {
+            <span class="status-desligado">Desligado</span>
+            @if (usuario.justificativaEgresso) {
+              <p class="justificativa-desligado">{{ usuario.justificativaEgresso }}</p>
+            }
+          }
 
           <dl class="perfil-resumo">
             <div>
@@ -48,12 +55,16 @@
           </dl>
         </article>
 
-        <div class="acoes-principais">
-          <button type="button" class="btn-primary">Desligamento</button>
-          <button type="button" class="btn-primary">Transferência</button>
+        <div class="acoes-principais" [class.acoes-principais--desligado]="desligado">
+          @if (desligado) {
+            <button type="button" class="btn-primary btn-rematricular" (click)="matricularNovamente()">Matricular novamente</button>
+          } @else {
+            <button type="button" class="btn-primary" (click)="abrirModalDesligamento()">Desligamento</button>
+            <button type="button" class="btn-primary" (click)="abrirModalTransferencia()">Transferência</button>
+          }
         </div>
 
-        <button type="button" class="excluir-usuario">Excluir usuário</button>
+        <button type="button" class="excluir-usuario" (click)="excluirUsuario()">Excluir usuário</button>
       </aside>
 
       <main class="perfil-dados">
@@ -101,5 +112,77 @@
         </div>
       </main>
     </div>
+
+    @if (modalDesligamentoAberto) {
+      <app-modal-layout class="perfil-modal" titulo="Desligamento" (closed)="fecharModalDesligamento()">
+        <form class="perfil-modal-form" [formGroup]="formDesligamento" (ngSubmit)="confirmarDesligamento()">
+          <mat-form-field appearance="outline" class="campo-cheio">
+            <mat-label>Justificativa*</mat-label>
+            <textarea matInput formControlName="justificativa" rows="4"></textarea>
+            @if (formDesligamento.get('justificativa')?.invalid && formDesligamento.get('justificativa')?.touched) {
+              <mat-error>A justificativa é obrigatória.</mat-error>
+            }
+          </mat-form-field>
+        </form>
+
+        <div class="perfil-modal-acoes">
+          <button type="button" class="btn-cancelar-modal" (click)="fecharModalDesligamento()" [disabled]="salvandoDesligamento">Cancelar</button>
+          <button type="button" class="btn-primary" (click)="confirmarDesligamento()" [disabled]="salvandoDesligamento">
+            {{ salvandoDesligamento ? 'Enviando...' : 'Confirmar' }}
+          </button>
+        </div>
+      </app-modal-layout>
+    }
+
+    @if (modalTransferenciaAberto) {
+      <app-modal-layout class="perfil-modal" titulo="Transferência" (closed)="fecharModalTransferencia()">
+        <form class="perfil-modal-form" [formGroup]="formTransferencia" (ngSubmit)="confirmarTransferencia()">
+          <mat-form-field appearance="outline" class="campo-cheio">
+            <mat-label>Unidade*</mat-label>
+            <mat-select formControlName="idUnidade" (selectionChange)="onUnidadeTransferenciaChange($event.value)">
+              @for (unidade of unidadesTransferencia; track unidade.id) {
+                <mat-option [value]="unidade.id">{{ unidade.nome }}</mat-option>
+              }
+            </mat-select>
+            @if (formTransferencia.get('idUnidade')?.invalid && formTransferencia.get('idUnidade')?.touched) {
+              <mat-error>A unidade é obrigatória.</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="campo-cheio">
+            <mat-label>Turma*</mat-label>
+            <mat-select formControlName="idTurmaNova">
+              @for (turmaItem of turmasDisponiveisTransferencia; track turmaItem.id) {
+                <mat-option [value]="turmaItem.id">
+                  {{ turmaItem.periodo === 'MANHA' ? 'Manhã' : 'Tarde' }} ({{ turmaItem.horaInicio }} às {{ turmaItem.horaFim }})
+                </mat-option>
+              }
+            </mat-select>
+            @if (formTransferencia.get('idTurmaNova')?.invalid && formTransferencia.get('idTurmaNova')?.touched) {
+              <mat-error>A turma é obrigatória.</mat-error>
+            }
+          </mat-form-field>
+
+          @if (carregandoUnidadesTransferencia || carregandoTurmasTransferencia) {
+            <span class="perfil-modal-info">Carregando opções...</span>
+          }
+
+          @if (!carregandoTurmasTransferencia && formTransferencia.get('idUnidade')?.value && !turmasDisponiveisTransferencia.length) {
+            <span class="perfil-modal-info">Não há outra turma disponível nesta unidade.</span>
+          }
+
+          @if (conflitoPeriodoTransferencia) {
+            <span class="aviso-conflito-transferencia">{{ avisoConflitoPeriodoTransferencia }}</span>
+          }
+        </form>
+
+        <div class="perfil-modal-acoes">
+          <button type="button" class="btn-cancelar-modal" (click)="fecharModalTransferencia()" [disabled]="salvandoTransferencia">Cancelar</button>
+          <button type="button" class="btn-primary" (click)="confirmarTransferencia()" [disabled]="salvandoTransferencia">
+            {{ salvandoTransferencia ? 'Enviando...' : 'Confirmar' }}
+          </button>
+        </div>
+      </app-modal-layout>
+    }
   }
 </section>

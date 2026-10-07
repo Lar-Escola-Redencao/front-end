@@ -83,8 +83,11 @@ export interface UsuarioResponseDTO {
   nomeTurma?: string;
   nomeUnidade?: string;
   dataIngresso?: string;
+  dataDesligamento?: string;
+  justificativaEgresso?: string;
   periodo?: string;
   status?: string;
+  statusMatricula?: string;
 }
 
 export interface ArquivoSaudeDTO {
