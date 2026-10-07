@@ -3,17 +3,10 @@ import { Home } from './pages/public/home/home';
 import { About } from './pages/public/about/about';
 import { Eventos } from './pages/public/eventos/eventos';
 import { EventoDetalhe } from './pages/public/evento-detalhe/evento-detalhe';
-import { Dashboard } from './pages/private/dashboard/dashboard'; 
-import { DashboardHome } from './pages/private/dashboard/dashboard-home/dashboard-home';
-import { ContentManagement } from './pages/private/content-management/content-management';
-import { ColaboradorComponent } from '@pages/private/colaborador/colaborador.component';
-import { UsuarioComponent } from '@pages/private/usuario/usuario.component';
 import { authGuard } from './shared/guards/auth-guard';
 import { guestGuard } from './shared/guards/guest-guard';
+import { canDeactivateGuard } from './shared/guards/can-deactivate.guard';
 import { roleGuard } from './shared/guards/role-guard';
-import { Diario } from '@pages/private/diario/diario';
-import { UnidadesTurmas } from '@pages/private/unidades-turmas/unidades-turmas';
-import { Perfil } from '@pages/private/perfil/perfil';
 
 export const routes: Routes = [
     { path: '', component: Home, canActivate: [guestGuard]},
@@ -23,16 +16,16 @@ export const routes: Routes = [
     {
         path: 'dashboard',
         canActivate: [authGuard],
-        component: Dashboard,
+        loadComponent: () => import('./pages/private/dashboard/dashboard').then(m => m.Dashboard),
         children: [
-            { path: '', component: DashboardHome },
-            { path: 'conteudo-publico', component: ContentManagement, canActivate: [roleGuard], data: { modulo: 'conteudo-publico' } },
-            { path: 'conteudo-publico/:secao', component: ContentManagement, canActivate: [roleGuard], data: { modulo: 'conteudo-publico' } },
-            { path: 'colaboradores', component: ColaboradorComponent, canActivate: [roleGuard], data: { modulo: 'colaboradores' } },
-            { path: 'usuarios', component: UsuarioComponent, canActivate: [roleGuard], data: { modulo: 'usuarios' } },
-            { path: 'diario', component: Diario, canActivate: [roleGuard], data: { modulo: 'diario' } },
-            { path: 'unidades-turmas', component: UnidadesTurmas, canActivate: [roleGuard], data: { modulo: 'unidades-turmas' } },
-            { path: 'perfil', component: Perfil}
+            { path: '', loadComponent: () => import('./pages/private/dashboard/dashboard-home/dashboard-home').then(m => m.DashboardHome) },
+            { path: 'conteudo-publico', loadComponent: () => import('./pages/private/content-management/content-management').then(m => m.ContentManagement), canActivate: [roleGuard], data: { modulo: 'conteudo-publico' } },
+            { path: 'conteudo-publico/:secao', loadComponent: () => import('./pages/private/content-management/content-management').then(m => m.ContentManagement), canActivate: [roleGuard], data: { modulo: 'conteudo-publico' } },
+            { path: 'colaboradores', loadComponent: () => import('@pages/private/colaborador/colaborador.component').then(m => m.ColaboradorComponent), canActivate: [roleGuard], data: { modulo: 'colaboradores' } },
+            { path: 'usuarios', canDeactivate: [canDeactivateGuard], loadComponent: () => import('@pages/private/usuario/usuario.component').then(m => m.UsuarioComponent), canActivate: [roleGuard], data: { modulo: 'usuarios' } },
+            { path: 'diario', loadComponent: () => import('@pages/private/diario/diario').then(m => m.Diario), canActivate: [roleGuard], data: { modulo: 'diario' } },
+            { path: 'unidades-turmas', loadComponent: () => import('@pages/private/unidades-turmas/unidades-turmas').then(m => m.UnidadesTurmas), canActivate: [roleGuard], data: { modulo: 'unidades-turmas' } },
+            { path: 'perfil', loadComponent: () => import('@pages/private/perfil/perfil').then(m => m.Perfil)}
         ]
     },
     {

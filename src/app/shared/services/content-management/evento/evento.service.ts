@@ -2,7 +2,14 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
-import { AtualizarEventoDTO, CriarEventoDTO, Evento, TipoEvento } from 'src/app/shared/models/evento.model';
+import {
+  AtualizarEventoDTO,
+  CriarEventoDTO,
+  Evento,
+  EventoRedeSocial,
+  TipoEvento,
+  VincularRedeSocialEventoDTO
+} from 'src/app/shared/models/evento.model';
 import { PaginaResposta } from 'src/app/shared/models/pagina.model';
 import { construirHttpParams } from 'src/app/shared/utils/paginacao-url';
 
@@ -63,5 +70,18 @@ export class EventoService {
 
   deletar(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
+  }
+
+  listarRedesSociais(idEvento: number): Observable<EventoRedeSocial[]> {
+    return this.http.get<EventoRedeSocial[]>(`${this.apiUrl}/${idEvento}/redes-sociais`);
+  }
+
+  /** Cria o vínculo ou, se já existir, atualiza o link. */
+  vincularRedeSocial(idEvento: number, dto: VincularRedeSocialEventoDTO): Observable<EventoRedeSocial> {
+    return this.http.post<EventoRedeSocial>(`${this.apiUrl}/${idEvento}/redes-sociais`, dto);
+  }
+
+  desvincularRedeSocial(idEvento: number, idRedeSocial: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${idEvento}/redes-sociais/${idRedeSocial}`);
   }
 }

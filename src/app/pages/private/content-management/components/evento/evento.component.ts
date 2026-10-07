@@ -23,6 +23,7 @@ import {
 import { EventoService } from 'src/app/shared/services/content-management/evento/evento.service';
 import { ParceiroService } from 'src/app/shared/services/content-management/evento/parceiro.service';
 import { environment } from 'src/environments/environment';
+import { EventoRedesSociaisComponent } from './evento-redes-sociais/evento-redes-sociais.component';
 
 @Component({
   selector: 'app-evento',
@@ -37,7 +38,8 @@ import { environment } from 'src/environments/environment';
     MatFormFieldModule,
     MatInputModule,
     MatSelect,
-    MatOption
+    MatOption,
+    EventoRedesSociaisComponent
   ],
   templateUrl: './evento.component.html',
   styleUrls: ['./evento.component.css']
@@ -82,8 +84,16 @@ export class EventoComponent implements OnInit, OnDestroy, ComponentComAlteracoe
   modalVisualizacaoAberto = false;
   eventoVisualizacao: Evento | null = null;
 
+  eventoVinculoRedes: Evento | null = null;
+
   colunas: TabelaColuna<Evento>[] = [
-    { chave: 'titulo', titulo: 'Titulo', principalMobile: true, ordenavel: true },
+    {
+      chave: 'titulo',
+      titulo: 'Titulo',
+      principalMobile: true,
+      ordenavel: true,
+      etiqueta: (evento) => evento.encerrado ? 'Encerrado' : null
+    },
     {
       chave: 'dataEvento',
       titulo: 'Data',
@@ -106,7 +116,9 @@ export class EventoComponent implements OnInit, OnDestroy, ComponentComAlteracoe
 
   acoesTabela: TabelaAcao<Evento>[] = [
     { icone: 'visibility', tooltip: 'Visualizar', acao: 'visualizar' },
-    { icone: 'edit', tooltip: 'Editar', acao: 'editar' },
+    // Evento encerrado não é mais editado: no lugar, gerencia os links do pós-evento.
+    { icone: 'edit', tooltip: 'Editar', acao: 'editar', visivel: (evento) => !evento.encerrado },
+    { icone: 'link', tooltip: 'Vincular redes sociais', acao: 'vincular', visivel: (evento) => !!evento.encerrado },
     { icone: 'delete', tooltip: 'Excluir', acao: 'excluir' }
   ];
 
@@ -312,6 +324,14 @@ export class EventoComponent implements OnInit, OnDestroy, ComponentComAlteracoe
   fecharVisualizacao(): void {
     this.modalVisualizacaoAberto = false;
     this.eventoVisualizacao = null;
+  }
+
+  abrirVinculoRedes(evento: Evento): void {
+    this.eventoVinculoRedes = evento;
+  }
+
+  fecharVinculoRedes(): void {
+    this.eventoVinculoRedes = null;
   }
 
   get temAlteracoes(): boolean {
@@ -557,6 +577,11 @@ export class EventoComponent implements OnInit, OnDestroy, ComponentComAlteracoe
 
     if (evento.tipo === 'editar') {
       this.abrirEdicao(evento.linha);
+      return;
+    }
+
+    if (evento.tipo === 'vincular') {
+      this.abrirVinculoRedes(evento.linha);
       return;
     }
 
