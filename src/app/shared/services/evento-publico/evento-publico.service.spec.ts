@@ -45,14 +45,14 @@ describe('EventoPublicoService.buscarPorId', () => {
 
     httpMock.expectOne(`${api}/7`).flush(eventoApi);
     httpMock.expectOne(`${api}/7/redes-sociais`).flush([
-      { idRedeSocial: 1, nome: 'Facebook', icone: '/uploads/redes-sociais/fb.svg', urlLink: 'https://facebook.com/post' },
+      { idRedeSocial: 1, nome: 'Facebook', icone: '/images/redes-sociais/facebook.svg', urlLink: 'https://facebook.com/post' },
       { idRedeSocial: 2, nome: 'Instagram', icone: 'https://cdn.example/ig.svg', urlLink: 'https://instagram.com/p/1' }
     ]);
 
     expect(resultado()?.imagem).toBe(`${environment.apiUrl}/uploads/eventos/capa.jpg`);
     expect(resultado()?.parceiros[0].logo).toBe(`${environment.apiUrl}/uploads/parceiros/lupo.png`);
     expect(resultado()?.redesSociais).toEqual([
-      { idRedeSocial: 1, nome: 'Facebook', icone: `${environment.apiUrl}/uploads/redes-sociais/fb.svg`, urlLink: 'https://facebook.com/post' },
+      { idRedeSocial: 1, nome: 'Facebook', icone: '/images/redes-sociais/facebook.svg', urlLink: 'https://facebook.com/post' },
       { idRedeSocial: 2, nome: 'Instagram', icone: 'https://cdn.example/ig.svg', urlLink: 'https://instagram.com/p/1' }
     ]);
   });

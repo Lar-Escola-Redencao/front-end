@@ -81,11 +81,20 @@ export class EventoPublicoService {
     return this.http.get<EventoRedeSocial[]>(`${this.apiUrl}/${id}/redes-sociais`).pipe(
       map(redes =>
         (redes ?? [])
-          .map(rede => ({ ...rede, icone: this.tratarImagem(rede.icone) }))
+          .map(rede => ({ ...rede, icone: this.tratarIconeRedeSocial(rede.icone) }))
           .filter(rede => rede.urlLink?.trim() && rede.icone)
       ),
       catchError(() => of([]))
     );
+  }
+
+  private tratarIconeRedeSocial(caminho: string | null | undefined): string {
+    if (!caminho) return '';
+    if (caminho.startsWith('/images/')) {
+      return caminho;
+    }
+
+    return this.tratarImagem(caminho);
   }
 
   private extrairEventos(resposta: Evento[] | EventoPagedResponse): Evento[] {

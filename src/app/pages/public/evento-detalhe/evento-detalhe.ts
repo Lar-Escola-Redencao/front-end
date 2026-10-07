@@ -5,7 +5,6 @@ import { PublicNavbar } from '@components/public-navbar/public-navbar';
 import { PublicFooter } from '@components/public-footer/public-footer';
 import { Evento, EventoRedeSocial, Parceiro, TipoEvento } from 'src/app/shared/models/evento.model';
 import { EventoPublicoService } from 'src/app/shared/services/evento-publico/evento-publico.service';
-import { PublicContentService } from 'src/app/shared/services/public-content/public-content.service';
 
 @Component({
   selector: 'app-evento-detalhe',
@@ -17,7 +16,6 @@ import { PublicContentService } from 'src/app/shared/services/public-content/pub
 export class EventoDetalhe implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly eventoPublicoService = inject(EventoPublicoService);
-  private readonly publicContentService = inject(PublicContentService);
   private readonly cdr = inject(ChangeDetectorRef);
 
   private readonly nomesTipoEvento: Record<TipoEvento, string> = {
@@ -78,6 +76,10 @@ export class EventoDetalhe implements OnInit, OnDestroy {
   // encerrou e existe ao menos uma rede social (com ícone) cadastrada para divulgar.
   get exibirOverlayRedesSociais(): boolean {
     return this.eventoEncerrado() && this.redesSociais.length > 0;
+  }
+
+  get exibirOverlayEventoEncerrado(): boolean {
+    return this.eventoEncerrado() && this.redesSociais.length === 0;
   }
 
   get parceiros(): Parceiro[] {
@@ -182,7 +184,7 @@ export class EventoDetalhe implements OnInit, OnDestroy {
   }
 
   obterUrlImagem(caminho: string | null | undefined): string {
-    return this.publicContentService.tratarUrlImagem(caminho);
+    return this.eventoPublicoService.tratarImagem(caminho);
   }
 
   onParceiroImageError(event: Event): void {

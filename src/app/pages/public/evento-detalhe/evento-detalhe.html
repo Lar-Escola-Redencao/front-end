@@ -15,7 +15,7 @@
   } @else {
     <div class="evento-conteudo">
       <div class="evento-galeria">
-        <div class="imagem-principal-wrapper">
+        <div class="imagem-principal-wrapper" (click)="abrirLightbox()">
           @if (imagemPrincipalIndisponivel) {
             <span class="imagem-principal-fallback">
               <span class="material-symbols-outlined" aria-hidden="true">image</span>
@@ -27,7 +27,6 @@
               [src]="imagemPrincipal"
               [alt]="evento.titulo"
               (error)="onImagemPrincipalError()"
-              (click)="abrirLightbox()"
             />
             <span class="imagem-principal-hint material-symbols-outlined" aria-hidden="true">zoom_in</span>
           } @else {
@@ -36,7 +35,7 @@
 
           @if (exibirOverlayRedesSociais) {
             <div class="imagem-overlay">
-              <p class="imagem-overlay-texto">Acompanhe o que aconteceu através das nossas redes</p>
+              <p class="imagem-overlay-texto">Acompanhe o que aconteceu através das nossas redes sociais</p>
 
               <nav class="redes-sociais-overlay" aria-label="Redes sociais do evento">
                 @for (rede of redesSociais; track rede.idRedeSocial) {
@@ -45,16 +44,21 @@
                     [href]="rede.urlLink"
                     target="_blank"
                     rel="noopener noreferrer"
+                    (click)="$event.stopPropagation()"
                     [attr.aria-label]="rede.nome"
                     [title]="rede.nome"
                   >
-                    <img [src]="obterUrlImagem(rede.icone)" [alt]="rede.nome" (error)="onIconeRedeError($event)" />
+                    <img [src]="rede.icone" [alt]="rede.nome" (error)="onIconeRedeError($event)" />
                     <span class="material-symbols-outlined rede-social-fallback rede-social-fallback-hidden" aria-hidden="true">
                       link
                     </span>
                   </a>
                 }
               </nav>
+            </div>
+          } @else if (exibirOverlayEventoEncerrado) {
+            <div class="imagem-overlay imagem-overlay-encerrado">
+              <p class="imagem-overlay-texto">Evento encerrado</p>
             </div>
           }
         </div>

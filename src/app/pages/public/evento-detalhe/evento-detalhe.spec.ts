@@ -41,7 +41,13 @@ describe('EventoDetalhe', () => {
       imports: [EventoDetalhe],
       providers: [
         { provide: ActivatedRoute, useValue: { snapshot: { paramMap: { get: () => '1' } } } },
-        { provide: EventoPublicoService, useValue: { buscarPorId: () => of(evento) } },
+        {
+          provide: EventoPublicoService,
+          useValue: {
+            buscarPorId: () => of(evento),
+            tratarImagem: (url: string | null | undefined) => url ?? ''
+          }
+        },
         {
           provide: PublicContentService,
           useValue: {
@@ -101,6 +107,17 @@ describe('EventoDetalhe', () => {
       expect(fallback.classList.contains('rede-social-fallback-hidden')).toBe(false);
     });
 
+    it('expande a imagem ao clicar sobre a area da imagem mesmo com overlay de redes sociais', () => {
+      expect(elemento.querySelector('.lightbox')).toBeNull();
+
+      elemento.querySelector<HTMLElement>('.imagem-overlay')!.click();
+      fixture.detectChanges();
+
+      const lightbox = elemento.querySelector('.lightbox');
+      expect(lightbox).toBeTruthy();
+      expect(lightbox?.querySelector<HTMLImageElement>('.lightbox-imagem')?.getAttribute('src')).toBe('foto-principal.jpg');
+    });
+
     it('nao renderiza carrossel de midias nem nota pos-evento', () => {
       const seletores = ['.carrossel-controles', '.miniaturas', '.miniatura', '.evento-nota-pos'];
       seletores.forEach(seletor => expect(elemento.querySelector(seletor)).toBeNull());
@@ -110,10 +127,10 @@ describe('EventoDetalhe', () => {
   describe('evento encerrado, sem nenhuma rede social com link/icone cadastrado', () => {
     beforeEach(() => montar(criarEvento({ redesSociais: [] })));
 
-    it('exibe a imagem limpa, sem overlay, texto nem icones', () => {
+    it('escurece a imagem e informa que o evento foi encerrado, sem icones', () => {
       expect(elemento.querySelector('.imagem-principal')?.getAttribute('src')).toBe('foto-principal.jpg');
-      expect(elemento.querySelector('.imagem-overlay')).toBeNull();
-      expect(elemento.querySelector('.imagem-overlay-texto')).toBeNull();
+      expect(elemento.querySelector('.imagem-overlay')).toBeTruthy();
+      expect(elemento.querySelector('.imagem-overlay-texto')?.textContent?.trim()).toBe('Evento encerrado');
       expect(elemento.querySelector('.rede-social-link')).toBeNull();
       expect(elemento.textContent).not.toContain('Acompanhe o que aconteceu');
     });
