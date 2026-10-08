@@ -1,0 +1,100 @@
+<app-public-navbar></app-public-navbar>
+
+<main class="grafica-main">
+  <div class="container">
+    <h1 class="grafica-titulo">Gráfica Redenção</h1>
+  </div>
+
+  @if (isLoading()) {
+    <div class="container">
+      <div class="state-box" role="status" aria-live="polite">
+        <span class="spinner" aria-hidden="true"></span>
+        <p>Carregando produtos...</p>
+      </div>
+    </div>
+  } @else if (errorMessage()) {
+    <div class="container">
+      <div class="state-box state-error" role="alert">
+        <p>{{ errorMessage() }}</p>
+        <button type="button" class="btn-retry" (click)="carregar()">Tentar novamente</button>
+      </div>
+    </div>
+  } @else {
+    @if (produtos().length > 0) {
+      <section class="carrossel-section" aria-label="Produtos gráficos">
+        <button
+          type="button"
+          class="nav-btn prev-btn"
+          (click)="scrollCarrossel(-1)"
+          [class.hidden]="produtos().length <= 1"
+          aria-label="Produto anterior"
+        >
+          <span class="material-symbols-outlined">chevron_left</span>
+        </button>
+
+        <div class="carrossel-track" #track>
+          @for (produto of produtos(); track produto.id) {
+            <article class="produto-card">
+              <div class="produto-imagem-wrapper">
+                @if (obterUrlImagem(produto.imagem)) {
+                  <img
+                    [src]="obterUrlImagem(produto.imagem)"
+                    (error)="onImageError($event)"
+                    [alt]="produto.titulo"
+                    loading="lazy"
+                  />
+                }
+                <span
+                  class="material-icons imagem-fallback"
+                  [class.imagem-fallback-hidden]="obterUrlImagem(produto.imagem)"
+                  aria-hidden="true"
+                >
+                  image
+                </span>
+              </div>
+              <h2 class="produto-titulo">{{ produto.titulo }}</h2>
+            </article>
+          }
+        </div>
+
+        <button
+          type="button"
+          class="nav-btn next-btn"
+          (click)="scrollCarrossel(1)"
+          [class.hidden]="produtos().length <= 1"
+          aria-label="Próximo produto"
+        >
+          <span class="material-symbols-outlined">chevron_right</span>
+        </button>
+      </section>
+    } @else {
+      <div class="container">
+        <p class="mensagem-vazia">Nenhum produto cadastrado no momento.</p>
+      </div>
+    }
+
+    @if (contato()) {
+      <div class="container">
+        <section class="contato-section" aria-label="Contato para orçamento">
+          @if (linkWhatsapp(); as link) {
+            <a class="btn-whatsapp" [href]="link" target="_blank" rel="noopener noreferrer">
+              <span>Solicite um orçamento via WhatsApp</span>
+              <span class="whatsapp-icon-circle">
+                <svg class="whatsapp-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                  <path
+                    d="M12.04 2c-5.52 0-10 4.48-10 10 0 1.77.46 3.45 1.26 4.9L2 22l5.24-1.26A9.96 9.96 0 0 0 12.04 22c5.52 0 10-4.48 10-10s-4.48-10-10-10Zm0 18.2c-1.6 0-3.1-.43-4.4-1.2l-.32-.19-3.1.75.75-3.02-.2-.32A8.18 8.18 0 0 1 3.8 12c0-4.55 3.7-8.24 8.24-8.24 4.55 0 8.24 3.7 8.24 8.24 0 4.55-3.69 8.2-8.24 8.2Zm4.5-6.14c-.25-.12-1.46-.72-1.68-.8-.23-.08-.39-.12-.56.12-.17.25-.63.8-.78.96-.14.17-.29.19-.53.06-.25-.12-1.05-.39-2-1.23-.74-.66-1.24-1.48-1.39-1.73-.14-.25-.02-.38.11-.5.11-.11.25-.29.37-.43.12-.14.17-.25.25-.41.08-.17.04-.31-.02-.43-.06-.12-.56-1.35-.77-1.85-.2-.48-.41-.42-.56-.43h-.48c-.17 0-.43.06-.66.31-.23.25-.86.84-.86 2.05 0 1.2.88 2.37 1 2.53.12.17 1.74 2.66 4.22 3.73.59.25 1.05.4 1.41.51.59.19 1.13.16 1.56.1.48-.07 1.46-.6 1.66-1.17.2-.58.2-1.08.14-1.18-.06-.1-.23-.16-.48-.28Z"
+                  />
+                </svg>
+              </span>
+            </a>
+          }
+          @if (contatoAlternativo(); as textoAlternativo) {
+            <p class="contato-alternativo">{{ textoAlternativo }}</p>
+          }
+        </section>
+      </div>
+    }
+  }
+</main>
+
+<app-public-footer></app-public-footer>
