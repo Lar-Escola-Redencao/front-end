@@ -6,13 +6,13 @@
   } @else if (erro) {
     <div class="estado estado-erro">
       <p>{{ erro }}</p>
-      <button type="button" class="btn-tentar-novamente" (click)="carregarPerfil()">Tentar novamente</button>
+      <button type="button" class="btn-tentar-novamente" (click)="voltar()">Voltar</button>
     </div>
   } @else if (usuario) {
     <div class="perfil-layout">
-      <button type="button" class="voltar" (click)="voltarParaUsuarios()">
+      <button type="button" class="voltar" (click)="voltar()">
         <mat-icon>arrow_back</mat-icon>
-        <span>Voltar para "Usuários"</span>
+        <span>Voltar</span>
       </button>
       <span class="voltar-espaco" aria-hidden="true"></span>
 

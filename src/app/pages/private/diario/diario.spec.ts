@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of, Subject, throwError } from 'rxjs';
 import { vi } from 'vitest';
 import { ToastrService } from 'ngx-toastr';
+import { provideRouter } from '@angular/router';
 import { Diario } from './diario';
 import { DiarioService } from 'src/app/shared/services/diario/diario.service';
 import { TurmaService } from 'src/app/shared/services/turma/turma.service';
@@ -15,9 +16,12 @@ describe('Diário de turma', () => {
   let papel: string;
   let api: any;
   let turmas: any;
+  let toastr: any;
   const aluno = (statusMatricula = 'ATIVO', idMatricula = 1) => ({
     idMatricula, idUsuario: idMatricula, nomeUsuario: 'Aluno ' + idMatricula,
-    imagemPerfil: '', statusMatricula, idFrequencia: null, presente: null, ocorrencias: []
+    imagemPerfil: '', statusMatricula, permiteAcessoPerfil: true,
+    isUsuarioExcluido: statusMatricula === 'EXCLUIDO',
+    idFrequencia: null, presente: null, ocorrencias: []
   });
   const ocorrencia = (dataCriacao: string) => ({
     id: 1, idMatricula: 1, dataCriacao, dataOcorrencia: '2026-10-06',
@@ -35,7 +39,9 @@ describe('Diário de turma', () => {
       atualizarOcorrencia: vi.fn(), deletarOcorrencia: vi.fn()
     };
     turmas = { listar: vi.fn(() => of([{ id: 2, unidade: { id: 1 }, horaInicio: '08:00', horaFim: '12:00', periodo: 'MANHA' }])) };
+    toastr = { success: vi.fn(), error: vi.fn(), warning: vi.fn() };
     TestBed.configureTestingModule({ imports: [Diario], providers: [
+      provideRouter([]),
       { provide: DiarioService, useValue: api }, { provide: TurmaService, useValue: turmas },
       { provide: UnidadeService, useValue: { listarTodas: () => of([{ id: 1, nome: 'Unidade' }]) } },
       { provide: SessaoService, useValue: {
@@ -43,7 +49,7 @@ describe('Diário de turma', () => {
         isMonitor: () => papel === 'MONITOR', isCoordenador: () => papel === 'COORDENADOR',
         isAdministrador: () => papel === 'ADMINISTRADOR'
       } },
-      { provide: ToastrService, useValue: { success: vi.fn(), error: vi.fn() } }
+      { provide: ToastrService, useValue: toastr }
     ] });
     fixture = TestBed.createComponent(Diario);
     component = fixture.componentInstance;
@@ -268,6 +274,35 @@ describe('Diário de turma', () => {
     component.alterarData(-1);
     expect(Alertas.confirmarDescarte).not.toHaveBeenCalled();
     expect(api.listarFrequencia).toHaveBeenLastCalledWith(2, '2026-10-05');
+  });
+
+  it('exibe o nome do aluno como link discreto para o perfil', () => {
+    fixture.detectChanges();
+    const link = fixture.nativeElement.querySelector('.usuario-perfil-link') as HTMLAnchorElement;
+    expect(link).toBeTruthy();
+    expect(link.textContent?.trim()).toBe('Aluno 1');
+    expect(link.getAttribute('href')).toBe('/dashboard/usuarios/1?returnUrl=%2F');
+  });
+
+  it('bloqueia o perfil quando a API nega acesso e mostra aviso', () => {
+    component.usuarios = [{ ...aluno('ATIVO', 1), permiteAcessoPerfil: false }];
+    component.estadoTela = 'INICIAL';
+    fixture.detectChanges();
+    const link = fixture.nativeElement.querySelector('a.usuario-perfil-link');
+    const botao = fixture.nativeElement.querySelector('button.usuario-perfil-link--disabled') as HTMLButtonElement;
+    expect(link).toBeNull();
+    expect(botao.textContent?.trim()).toBe('Aluno 1');
+    botao.click();
+    expect(toastr.warning).toHaveBeenCalledWith(
+      'O perfil deste usuário foi excluído do sistema.'
+    );
+  });
+
+  it('exibe tag de excluído pela flag retroativa, não pelo status histórico', () => {
+    component.usuarios = [{ ...aluno('ATIVO', 1), isUsuarioExcluido: true }];
+    component.estadoTela = 'INICIAL';
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.badge-excluido')?.textContent.trim()).toBe('Excluído');
   });
 
 });

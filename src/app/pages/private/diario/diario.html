@@ -74,8 +74,12 @@
                     <img *ngIf="usuario.imagemPerfil; else semFoto" [src]="usuario.imagemPerfil" alt="Foto" class="avatar">
                     <ng-template #semFoto><div class="avatar placeholder"><mat-icon>image</mat-icon></div></ng-template>
                     <div class="usuario-nome-linha">
-                      <span class="nome">{{ usuario.nomeUsuario }}</span>
-                      @if (usuario.statusMatricula === 'EXCLUIDO') {
+                      @if (perfilAcessivel(usuario)) {
+                        <a class="nome usuario-perfil-link" [routerLink]="['/dashboard/usuarios', usuario.idUsuario]" [queryParams]="perfilQueryParams">{{ usuario.nomeUsuario }}</a>
+                      } @else {
+                        <button type="button" class="nome usuario-perfil-link usuario-perfil-link--disabled" (click)="avisarPerfilInacessivel()">{{ usuario.nomeUsuario }}</button>
+                      }
+                      @if (usuario.isUsuarioExcluido) {
                         <span class="badge-excluido">Excluído</span>
                       }
                     </div>

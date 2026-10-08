@@ -241,6 +241,37 @@
   color: var(--preto);
 }
 
+.tabela-diario .usuario-nome-linha a.nome.usuario-perfil-link,
+.tabela-diario .usuario-nome-linha a.nome.usuario-perfil-link:visited {
+  color: var(--preto);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.tabela-diario .usuario-nome-linha a.nome.usuario-perfil-link:hover,
+.tabela-diario .usuario-nome-linha a.nome.usuario-perfil-link:visited:hover,
+.tabela-diario .usuario-nome-linha a.nome.usuario-perfil-link:focus-visible {
+  color: var(--primary-color);
+  text-decoration: none;
+}
+
+.tabela-diario .usuario-nome-linha button.nome.usuario-perfil-link {
+  appearance: none;
+  background: transparent;
+  border: none;
+  padding: 0;
+  font: inherit;
+  font-size: 0.95rem;
+}
+
+.tabela-diario .usuario-nome-linha .usuario-perfil-link--disabled,
+.tabela-diario .usuario-nome-linha .usuario-perfil-link--disabled:hover,
+.tabela-diario .usuario-nome-linha .usuario-perfil-link--disabled:focus-visible {
+  color: #6b7280;
+  cursor: not-allowed;
+  text-decoration: none;
+}
+
 .badge-excluido {
   background-color: #8c8c8c;
   color: white;

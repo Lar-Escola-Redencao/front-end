@@ -17,7 +17,7 @@ import {
   ReactiveFormsModule,
   Validators
 } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Subscription, of, forkJoin } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap, catchError, map, tap } from 'rxjs/operators';
 
@@ -72,6 +72,7 @@ import { environment } from 'src/environments/environment';
   standalone: true,
   imports: [
     CommonModule,
+    RouterLink,
     FormsModule,
     ReactiveFormsModule,
     ModalLayout,
@@ -330,6 +331,10 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
     { icone: 'account_child_invert', tooltip: 'Usuários vinculados', acao: 'ver_vinculos' }
   ];
 
+
+  get perfilQueryParams(): { returnUrl: string } {
+    return { returnUrl: this.router.url };
+  }
 
   onFotoSelecionada(event: any) {
     const file = event.target.files[0];
@@ -1657,7 +1662,9 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
   // ações da tabela
   executarAcao(evento: { tipo: string; linha: any }) {
     if (this.abaAtiva === 'usuarios') {
-      if (evento.tipo === 'ver' || evento.tipo === 'visualizar') this.router.navigate(['/dashboard/usuarios', evento.linha.id]);
+      if (evento.tipo === 'ver' || evento.tipo === 'visualizar') {
+        this.router.navigate(['/dashboard/usuarios', evento.linha.id], { queryParams: this.perfilQueryParams });
+      }
       if (evento.tipo === 'excluir') this.excluirUsuario(evento.linha);
       return;
     }

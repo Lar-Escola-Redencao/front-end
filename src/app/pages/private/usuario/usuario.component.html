@@ -580,7 +580,7 @@
         </ng-template>
         <div class="vinculo-textos">
           <span class="vinculo-nome-detalhe">
-            <span class="vinculo-nome-texto">{{ nomeVinculo(vinculo) }}</span>
+            <a class="vinculo-nome-texto usuario-perfil-link" [routerLink]="['/dashboard/usuarios', idUsuarioVinculo(vinculo)]" [queryParams]="perfilQueryParams">{{ nomeVinculo(vinculo) }}</a>
             <span class="vinculo-status-desligado" *ngIf="vinculoDesligado(vinculo)">Desligado</span>
           </span>
           <span class="vinculo-parentesco">

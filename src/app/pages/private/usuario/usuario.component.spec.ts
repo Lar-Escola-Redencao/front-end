@@ -272,9 +272,10 @@ describe('Contrato de edição de usuários', () => {
   it('abre o perfil do usuário pela ação de visualização da tabela', () => {
     const router = TestBed.inject(Router);
     const navigate = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+    service.buscarPorId.mockClear();
     component.abaAtiva = 'usuarios';
     component.executarAcao({ tipo: 'ver', linha: usuario });
-    expect(navigate).toHaveBeenCalledWith(['/dashboard/usuarios', usuario.id]);
+    expect(navigate).toHaveBeenCalledWith(['/dashboard/usuarios', usuario.id], { queryParams: { returnUrl: '/' } });
     expect(service.buscarPorId).not.toHaveBeenCalled();
   });
 

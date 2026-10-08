@@ -30,7 +30,7 @@ describe('UsuarioPerfil', () => {
     deletar: ReturnType<typeof vi.fn>;
   };
   let toastr: { success: ReturnType<typeof vi.fn>; warning: ReturnType<typeof vi.fn>; error: ReturnType<typeof vi.fn>; clear: ReturnType<typeof vi.fn> };
-  let router: { navigate: ReturnType<typeof vi.fn> };
+  let router: { navigate: ReturnType<typeof vi.fn>; navigateByUrl: ReturnType<typeof vi.fn> };
   let sessaoService: {
     carregar: ReturnType<typeof vi.fn>;
     isMonitor: ReturnType<typeof vi.fn>;
@@ -57,7 +57,7 @@ describe('UsuarioPerfil', () => {
       deletar: vi.fn(() => of(void 0))
     };
     toastr = { success: vi.fn(), warning: vi.fn(), error: vi.fn(), clear: vi.fn() };
-    router = { navigate: vi.fn() };
+    router = { navigate: vi.fn(), navigateByUrl: vi.fn() };
     sessaoService = {
       carregar: vi.fn(() => of(null)),
       isMonitor: vi.fn(() => false),
@@ -77,7 +77,13 @@ describe('UsuarioPerfil', () => {
         { provide: SessaoService, useValue: sessaoService },
         { provide: UnidadeService, useValue: { listarTodas: vi.fn(() => of([])) } },
         { provide: TurmaService, useValue: { listar: vi.fn(() => of([])) } },
-        { provide: ActivatedRoute, useValue: { paramMap: of({ get: (chave: string) => chave === 'id' ? '7' : null }) } },
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            paramMap: of({ get: (chave: string) => chave === 'id' ? '7' : null }),
+            snapshot: { queryParamMap: { get: () => null } }
+          }
+        },
         { provide: Router, useValue: router }
       ]
     }).compileComponents();
@@ -177,6 +183,15 @@ describe('UsuarioPerfil', () => {
     expect(toastr.success).toHaveBeenCalledWith('Usuário excluído com sucesso.', 'Sucesso');
     expect(router.navigate).toHaveBeenCalledWith(['/dashboard/usuarios']);
     expect(Swal.fire).toHaveBeenCalledTimes(1);
+  });
+
+  it('volta para a URL de origem quando ela existe', () => {
+    (component as any).returnUrl = '/dashboard/usuarios?aba=contatos&page=2';
+
+    component.voltar();
+
+    expect(router.navigateByUrl).toHaveBeenCalledWith('/dashboard/usuarios?aba=contatos&page=2');
+    expect(router.navigate).not.toHaveBeenCalled();
   });
 
   it('restringe as unidades exibidas na rematrícula ao escopo do coordenador', () => {

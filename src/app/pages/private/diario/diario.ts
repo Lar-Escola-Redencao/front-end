@@ -1,5 +1,6 @@
 import { Component, OnInit, OnDestroy, inject, NgZone, ChangeDetectorRef, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router, RouterLink } from '@angular/router';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { EMPTY, Subject, Subscription, catchError, finalize, interval, merge, of, switchMap, tap, startWith } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
@@ -24,7 +25,7 @@ type FiltrosDiario = { idUnidade: number | null; idTurma: number | null; data: s
   selector: 'app-diario',
   standalone: true,
   imports: [
-    CommonModule, FormsModule, ReactiveFormsModule, ModalLayout,
+    CommonModule, RouterLink, FormsModule, ReactiveFormsModule, ModalLayout,
     MatFormFieldModule, MatInputModule, MatSelectModule, MatIconModule
   ],
   templateUrl: './diario.html',
@@ -39,6 +40,7 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
   private toastr = inject(ToastrService);
   private cdr = inject(ChangeDetectorRef);
   private ngZone = inject(NgZone);
+  private router = inject(Router);
 
   filtroForm: FormGroup = this.fb.group({
     idUnidade: [null, Validators.required],
@@ -82,6 +84,20 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
     { value: 'ASSISTENCIA', label: 'Assistência' },
     { value: 'OUTRO', label: 'Outro' }
   ];
+
+  get perfilQueryParams(): { returnUrl: string } {
+    return { returnUrl: this.router.url };
+  }
+
+  perfilAcessivel(usuario: FrequenciaUsuarioResponseDTO): boolean {
+    return usuario.permiteAcessoPerfil !== false;
+  }
+
+  avisarPerfilInacessivel(): void {
+    this.toastr.warning(
+      'O perfil deste usuário foi excluído do sistema.'
+    );
+  }
 
   ngOnInit(): void {
     this.subs.add(this.sessao.carregar().subscribe(() => {

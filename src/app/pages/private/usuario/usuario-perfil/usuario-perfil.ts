@@ -80,6 +80,7 @@ export class UsuarioPerfil implements OnInit, OnDestroy {
   unidadesTransferencia: Unidade[] = [];
   turmasTransferencia: Turma[] = [];
   fotoPerfilIndisponivel = false;
+  private returnUrl: string | null = null;
 
   readonly formDesligamento = this.fb.group({
     justificativa: ['', Validators.required]
@@ -100,6 +101,7 @@ export class UsuarioPerfil implements OnInit, OnDestroy {
   ];
 
   ngOnInit(): void {
+    this.returnUrl = this.obterReturnUrl();
     this.sessao.carregar().subscribe(() => this.carregarPerfil());
   }
 
@@ -130,16 +132,16 @@ export class UsuarioPerfil implements OnInit, OnDestroy {
           if (erro.status === 403) {
             this.toastr.clear();
             this.toastr.error(
-              'Você não tem acesso a este perfil porque o usuário não pertence a uma unidade vinculada ao seu acesso.',
+              'Este usuário pertence a outra unidade ou foi transferido.',
               'Acesso negado'
             );
-            this.voltarAposAcessoNegado();
+            this.voltarAposAcessoNegado('Você não tem acesso a este perfil.');
             return;
           }
           if (erro.status === 404) {
             this.toastr.clear();
             this.toastr.error('O usuário informado não foi encontrado.', 'Usuário não encontrado');
-            this.voltarAposAcessoNegado();
+            this.voltarAposAcessoNegado('O usuário informado não foi encontrado.');
             return;
           }
           this.erro = 'Não foi possível carregar o perfil do usuário.';
@@ -170,16 +172,23 @@ export class UsuarioPerfil implements OnInit, OnDestroy {
     this.fotoPerfilIndisponivel = false;
   }
 
-  voltarParaUsuarios(): void {
+  voltar(): void {
+    if (this.returnUrl) {
+      this.router.navigateByUrl(this.returnUrl);
+      return;
+    }
     this.router.navigate([this.monitor ? '/dashboard/diario' : '/dashboard/usuarios']);
   }
 
-  private voltarAposAcessoNegado(): void {
+  private voltarAposAcessoNegado(mensagem?: string): void {
     this.carregando = false;
-    this.router.navigate(
-      [this.monitor ? '/dashboard/diario' : '/dashboard/usuarios'],
-      { replaceUrl: true }
-    );
+    this.usuario = null;
+    if (this.returnUrl) {
+      this.router.navigateByUrl(this.returnUrl, { replaceUrl: true });
+      return;
+    }
+    this.erro = mensagem || 'Não foi possí­vel carregar o perfil do usuário.';
+    this.atualizarTela();
   }
 
   private obterAbaEditavelAtual(): UsuarioPerfilDadosPessoais | UsuarioPerfilDadosSocioeconomicos | UsuarioPerfilSaude | undefined {
@@ -187,6 +196,12 @@ export class UsuarioPerfil implements OnInit, OnDestroy {
     if (this.abaAtiva === 'dados-socioeconomicos') return this.dadosSocioeconomicos;
     if (this.abaAtiva === 'saude') return this.saude;
     return undefined;
+  }
+
+  private obterReturnUrl(): string | null {
+    const snapshot = this.route.snapshot;
+    const valor = snapshot?.queryParamMap?.get('returnUrl') || null;
+    return valor?.startsWith('/dashboard/') ? valor : null;
   }
 
   get fotoPerfil(): string | null {
