@@ -18,14 +18,14 @@
   <app-modal-layout class="contato-modal" [titulo]="tituloModal" (closed)="fecharModal()">
     @if (modoModal === 'visualizar' && contatoSelecionado?.principal) {
       <span modal-title-extra class="principal-title ativo" title="Contato principal">
-        <span class="material-symbols-outlined principal-star preenchida">kid_star</span>
+        <img class="principal-star preenchida" src="/icons/kid-star-filled.svg" alt="Contato principal">
       </span>
     }
 
     @if (modoModal !== 'visualizar') {
       <button type="button" modal-title-extra class="principal-toggle" [class.ativo]="form.get('principal')?.value"
         (click)="form.get('principal')?.setValue(!form.get('principal')?.value); form.markAsDirty()">
-        <span class="material-symbols-outlined principal-star" [class.preenchida]="form.get('principal')?.value">kid_star</span>
+        <img class="principal-star" [src]="form.get('principal')?.value ? '/icons/kid-star-filled.svg' : '/icons/kid-star-outline.svg'" alt="">
         @if (form.get('principal')?.value) {
           <span>Contato principal</span>
         }

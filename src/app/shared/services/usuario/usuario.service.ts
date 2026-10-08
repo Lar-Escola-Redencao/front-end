@@ -1,13 +1,14 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpContext } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
-import { ArquivoSaudeDTO, CadastroUsuarioCompletoDTO, UsuarioResponseDTO } from '../../models/usuario.model';
+import { ArquivoSaudeDTO, CadastroUsuarioCompletoDTO, MatriculaHistoricoDTO, UsuarioResponseDTO } from '../../models/usuario.model';
 import {
   AtualizarVinculoDTO,
   ContatoDTO,
   VincularContatoExistenteDTO
 } from '../../models/contato.model';
+import { SILENCIAR_TOAST_ACESSO } from '../../interceptors/acesso-toast.context';
 
 @Injectable({ providedIn: 'root' })
 export class UsuarioService {
@@ -22,8 +23,15 @@ export class UsuarioService {
     return this.http.get<UsuarioResponseDTO[]>(`${this.apiUrl}/buscar`, { params: { termo, unidadeId } });
   }
 
-  buscarPorId(id: number): Observable<UsuarioResponseDTO> {
-    return this.http.get<UsuarioResponseDTO>(`${this.apiUrl}/${id}`);
+  buscarPorId(id: number, silenciarToastAcesso = false): Observable<UsuarioResponseDTO> {
+    const options = silenciarToastAcesso
+      ? { context: new HttpContext().set(SILENCIAR_TOAST_ACESSO, true) }
+      : {};
+    return this.http.get<UsuarioResponseDTO>(`${this.apiUrl}/${id}`, options);
+  }
+
+  listarMatriculas(id: number): Observable<MatriculaHistoricoDTO[]> {
+    return this.http.get<MatriculaHistoricoDTO[]>(`${this.apiUrl}/${id}/matriculas`);
   }
 
   criar(dto: CadastroUsuarioCompletoDTO, arquivosSaude: File[] = []): Observable<UsuarioResponseDTO> {

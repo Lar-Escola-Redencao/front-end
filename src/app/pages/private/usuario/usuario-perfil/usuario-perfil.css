@@ -96,7 +96,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 40px;
+  min-height: 30px;
   margin: -4px 0 14px;
   padding: 0 20px;
   border-radius: 999px;
@@ -110,12 +110,16 @@
 }
 
 .justificativa-desligado {
+  display: block;
+  max-width: 100%;
   margin: 0 0 18px;
   color: #888;
   font-family: var(--fonte-texto);
   font-size: 15px;
   font-style: italic;
   line-height: 1.35;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .perfil-resumo {
@@ -415,7 +419,7 @@
   .perfil-lateral {
     max-width: 360px;
     width: 100%;
-    margin: 0 auto;
+    margin: 20px auto;
   }
 }
 

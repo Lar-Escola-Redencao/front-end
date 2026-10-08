@@ -57,9 +57,10 @@
           }
         </article>
 
+        @if (!monitor) {
         <div class="acoes-principais" [class.acoes-principais--desligado]="desligado">
           @if (desligado) {
-            <button type="button" class="btn-primary" (click)="abrirModalRematricula()">Matricular novamente</button>
+            <button type="button" class="btn-primary" (click)="abrirModalRematricula()">Rematrícula após desligamento</button>
           } @else {
             <button type="button" class="btn-primary" (click)="abrirModalDesligamento()">Desligamento</button>
             <button type="button" class="btn-primary" (click)="abrirModalTransferencia()">Transferência</button>
@@ -67,11 +68,12 @@
         </div>
 
         <button type="button" class="excluir-usuario" (click)="excluirUsuario()">Excluir usuário</button>
+        }
       </aside>
 
       <main class="perfil-dados">
         <nav class="abas-container" aria-label="Dados do usuário">
-          @for (aba of abas; track aba.id) {
+          @for (aba of abasVisiveis; track aba.id) {
             <button type="button" class="aba-btn" [class.ativa]="abaAtiva === aba.id" (click)="selecionarAba(aba.id)">
               {{ aba.label }}
             </button>
@@ -83,28 +85,28 @@
             @case ('dados-pessoais') {
               <app-usuario-perfil-dados-pessoais
                 [usuario]="usuario"
-                [somenteLeitura]="desligado"
+                [somenteLeitura]="desligado || monitor"
                 (usuarioAtualizado)="atualizarUsuario($event)"
               ></app-usuario-perfil-dados-pessoais>
             }
             @case ('saude') {
               <app-usuario-perfil-saude
                 [usuario]="usuario"
-                [somenteLeitura]="desligado"
+                [somenteLeitura]="desligado || monitor"
                 (usuarioAtualizado)="atualizarUsuario($event)"
               ></app-usuario-perfil-saude>
             }
             @case ('dados-socioeconomicos') {
               <app-usuario-perfil-dados-socioeconomicos
                 [usuario]="usuario"
-                [somenteLeitura]="desligado"
+                [somenteLeitura]="desligado || monitor"
                 (usuarioAtualizado)="atualizarUsuario($event)"
               ></app-usuario-perfil-dados-socioeconomicos>
             }
             @case ('contatos') {
               <app-usuario-perfil-contatos
                 [usuario]="usuario"
-                [somenteLeitura]="desligado"
+                [somenteLeitura]="desligado || monitor"
                 (usuarioAtualizado)="atualizarUsuario($event)"
               ></app-usuario-perfil-contatos>
             }
@@ -112,7 +114,7 @@
               <app-usuario-perfil-aba-placeholder titulo="Acompanhamento" descricao="Os registros de acompanhamento entrarão nesta área."></app-usuario-perfil-aba-placeholder>
             }
             @case ('matricula') {
-              <app-usuario-perfil-aba-placeholder titulo="Matrícula" descricao="Os dados e histórico de matrícula serão tratados aqui."></app-usuario-perfil-aba-placeholder>
+              <app-usuario-perfil-matriculas [usuario]="usuario"></app-usuario-perfil-matriculas>
             }
           }
         </div>
@@ -146,7 +148,7 @@
           <mat-form-field appearance="outline" class="campo-cheio">
             <mat-label>Unidade*</mat-label>
             <mat-select formControlName="idUnidade" (selectionChange)="onUnidadeTransferenciaChange($event.value)">
-              @for (unidade of unidadesTransferencia; track unidade.id) {
+              @for (unidade of unidadesDisponiveisTransferencia; track unidade.id) {
                 <mat-option [value]="unidade.id">{{ unidade.nome }}</mat-option>
               }
             </mat-select>

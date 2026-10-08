@@ -1,0 +1,30 @@
+<section class="aba-conteudo">
+  <app-tabela-layout
+    [colunas]="colunas"
+    [dados]="matriculas"
+    [acoes]="acoes"
+    [carregando]="carregando"
+    [erro]="erro"
+    mensagemVazia="Nenhuma matrícula encontrada para este usuário."
+    (acao)="executarAcao($event)"
+    (tentarNovamente)="carregar()">
+  </app-tabela-layout>
+</section>
+
+@if (matriculaSelecionada) {
+  <app-modal-layout class="matricula-modal" titulo="Detalhes da matrícula" (closed)="fecharModal()">
+    <div class="matricula-preview">
+      <div><mat-icon class="material-symbols-outlined">flag</mat-icon><span class="badge-status" [ngClass]="classeStatus(matriculaSelecionada.status)">{{ formatarStatus(matriculaSelecionada.status) }}</span></div>
+      <div><span class="material-symbols-outlined">family_group</span><span>{{ matriculaSelecionada.nomeUnidade }}</span></div>
+      <div><span class="material-symbols-outlined">schedule</span><span>{{ formatarTurma(matriculaSelecionada) }}</span></div>
+      <div><mat-icon class="material-symbols-outlined">event_available</mat-icon><span>Início em {{ formatarData(matriculaSelecionada.dataIngresso) }}</span></div>
+      <div><mat-icon class="material-symbols-outlined">event_busy</mat-icon><span>{{ matriculaSelecionada.status === 'ATIVO' ? '-' : 'Fim em '+formatarData(matriculaSelecionada.dataDesligamento) }}</span></div>
+    </div>
+    @if (matriculaSelecionada.justificativaEgresso) {
+      <div class="justificativa-matricula">
+        <p>Justificativa</p>
+        <em>{{ matriculaSelecionada.justificativaEgresso }}</em>
+      </div>
+    }
+  </app-modal-layout>
+}

@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
@@ -30,6 +30,7 @@ export class UsuarioPerfilDadosPessoais implements OnChanges {
   private readonly fb = inject(FormBuilder);
   private readonly usuarioService = inject(UsuarioService);
   private readonly toastr = inject(ToastrService);
+  private readonly changeDetectorRef = inject(ChangeDetectorRef);
 
   @Input() usuario: UsuarioResponseDTO | null = null;
   @Input() somenteLeitura = false;
@@ -39,7 +40,7 @@ export class UsuarioPerfilDadosPessoais implements OnChanges {
   salvando = false;
   fotoSelecionada: File | null = null;
   fotoPreviewUrl: string | null = null;
-  fotoPreviewIndisponivel = false;
+  fotoPerfilValidadaUrl: string | null = null;
   erroFoto = '';
   private valoresOriginais: unknown = null;
 
@@ -94,11 +95,13 @@ export class UsuarioPerfilDadosPessoais implements OnChanges {
   }
 
   get fotoPreview(): string | null {
-    if (this.fotoPreviewUrl) return this.fotoPreviewUrl;
-    return this.fotoPreviewIndisponivel ? null : this.obterUrlArquivo(this.usuario?.imagemPerfil);
+    return this.fotoPreviewUrl || this.fotoPerfilValidadaUrl;
   }
 
-  onErroFotoPreview(): void { this.fotoPreviewIndisponivel = true; }
+  onErroFotoPreview(): void {
+    this.fotoPreviewUrl = null;
+    this.fotoPerfilValidadaUrl = null;
+  }
 
   editar(): void {
     if (this.somenteLeitura) return;
@@ -161,7 +164,6 @@ export class UsuarioPerfilDadosPessoais implements OnChanges {
     }
 
     this.fotoSelecionada = arquivo;
-    this.fotoPreviewIndisponivel = false;
     const reader = new FileReader();
     reader.onload = () => {
       this.fotoPreviewUrl = String(reader.result);
@@ -193,7 +195,7 @@ export class UsuarioPerfilDadosPessoais implements OnChanges {
   }
 
   private preencherFormulario(): void {
-    this.fotoPreviewIndisponivel = false;
+    this.fotoPerfilValidadaUrl = null;
     this.form.reset({
       nomeCompleto: this.usuario?.nomeCompleto ?? '',
       dataNascimento: this.normalizarData(this.usuario?.dataNascimento),
@@ -215,6 +217,7 @@ export class UsuarioPerfilDadosPessoais implements OnChanges {
     this.editando = false;
     this.salvando = false;
     this.erroFoto = '';
+    this.validarFotoPerfilExistente();
   }
 
   private montarDtoAtualizacao(): Partial<CadastroUsuarioCompletoDTO> {
@@ -270,5 +273,18 @@ export class UsuarioPerfilDadosPessoais implements OnChanges {
       return valor;
     }
     return `${environment.apiUrl}${valor}`;
+  }
+
+  private validarFotoPerfilExistente(): void {
+    const url = this.obterUrlArquivo(this.usuario?.imagemPerfil);
+    if (!url) return;
+
+    const imagem = new Image();
+    imagem.onload = () => {
+      if (this.obterUrlArquivo(this.usuario?.imagemPerfil) !== url) return;
+      this.fotoPerfilValidadaUrl = url;
+      this.changeDetectorRef.markForCheck();
+    };
+    imagem.src = url;
   }
 }

@@ -1,10 +1,12 @@
-import { HttpClient, provideHttpClient, withInterceptors } from '@angular/common/http';
+import { HttpClient, HttpContext, provideHttpClient, withInterceptors } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
+import { ToastrService } from 'ngx-toastr';
 
 import { environment } from '../../../environments/environment';
 import { Auth } from '../services/auth/auth';
+import { SILENCIAR_TOAST_ACESSO } from './acesso-toast.context';
 import { authInterceptor } from './auth-interceptor';
 
 function base64url(input: string): string {
@@ -22,12 +24,14 @@ describe('authInterceptor', () => {
   let httpMock: HttpTestingController;
   let authStub: { getToken: ReturnType<typeof vi.fn>; logout: ReturnType<typeof vi.fn> };
   let router: Router;
+  let toastr: { error: ReturnType<typeof vi.fn> };
 
   beforeEach(() => {
     authStub = {
       getToken: vi.fn(),
       logout: vi.fn(),
     };
+    toastr = { error: vi.fn() };
 
     TestBed.configureTestingModule({
       providers: [
@@ -35,6 +39,7 @@ describe('authInterceptor', () => {
         provideHttpClientTesting(),
         provideRouter([]),
         { provide: Auth, useValue: authStub },
+        { provide: ToastrService, useValue: toastr },
       ],
     });
 
@@ -104,5 +109,36 @@ describe('authInterceptor', () => {
 
     expect(authStub.logout).not.toHaveBeenCalled();
     expect(router.navigate).not.toHaveBeenCalled();
+  });
+
+  it('shows a standardized toast for forbidden API requests', () => {
+    authStub.getToken.mockReturnValue('a-token');
+
+    http.get(`${environment.apiUrl}/usuarios/99`).subscribe({ error: () => {} });
+
+    httpMock.expectOne(`${environment.apiUrl}/usuarios/99`).flush(
+      { message: 'Usuário autenticado não possui permissão para acessar este recurso.' },
+      { status: 403, statusText: 'Forbidden' },
+    );
+
+    expect(toastr.error).toHaveBeenCalledWith(
+      'Usuário autenticado não possui permissão para acessar este recurso.',
+      'Acesso negado',
+    );
+  });
+
+  it('does not duplicate the forbidden toast when a screen provides its own access feedback', () => {
+    authStub.getToken.mockReturnValue('a-token');
+
+    http.get(`${environment.apiUrl}/usuarios/99`, {
+      context: new HttpContext().set(SILENCIAR_TOAST_ACESSO, true)
+    }).subscribe({ error: () => {} });
+
+    httpMock.expectOne(`${environment.apiUrl}/usuarios/99`).flush(
+      { message: 'Acesso negado.' },
+      { status: 403, statusText: 'Forbidden' },
+    );
+
+    expect(toastr.error).not.toHaveBeenCalled();
   });
 });

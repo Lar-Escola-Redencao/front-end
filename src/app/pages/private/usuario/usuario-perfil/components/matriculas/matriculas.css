@@ -1,0 +1,44 @@
+.aba-conteudo { display: block; }
+
+:host ::ng-deep app-tabela-layout .tabela-wrapper,
+:host ::ng-deep app-tabela-layout .tabela-carregando,
+:host ::ng-deep app-tabela-layout .tabela-erro,
+:host ::ng-deep app-tabela-layout .tabela-vazia {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  box-shadow: none;
+}
+
+.matricula-preview { display: flex; flex-direction: column; gap: 16px; }
+.matricula-preview > div { display: flex; align-items: center; gap: 16px; }
+.matricula-preview mat-icon,
+.matricula-preview .material-symbols-outlined { color: var(--primary-color); }
+.matricula-preview .badge-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+}
+.status-matricula--ativo { color: #139445; background: #dcfce7; }
+.status-matricula--inativo,
+.status-matricula--egresso,
+.status-matricula--excluido { color: #555; background: #e8e8e8; }
+.justificativa-matricula {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  width: calc(100% + 56px);
+  box-sizing: border-box;
+  margin: 30px -28px 0;
+  padding: 10px 12px;
+  background: #e8e8e8;
+  color: #555;
+  text-align: center;
+}
+.justificativa-matricula p { margin: 0 0 4px; font-size: 14px; font-weight: 600; }
+.justificativa-matricula em { overflow-wrap: anywhere; }

@@ -287,7 +287,6 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
       ordenavel: true,
       etiqueta: usuario => (usuario.statusMatricula || '').toUpperCase() === 'EGRESSO' ? 'Desligado' : null
     },
-    { chave: 'cpf', titulo: 'CPF/Documento', ordenavel: true, formatar: (v, linha) => v || linha.documentoAuxiliar || '-' },
     {
       chave: 'dataNascimento',
       ordenavel: true,
@@ -303,11 +302,11 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
   ];
 
   private readonly acoesTabelaUsuarios: TabelaAcao<UsuarioResponseDTO>[] = [
-    { icone: 'badge', tooltip: 'Visualizar detalhes', acao: 'ver' }
+    { icone: 'badge', tooltip: 'Acessar perfil', acao: 'ver' }
   ];
 
   private readonly acoesTabelaUsuariosSomenteView: TabelaAcao<UsuarioResponseDTO>[] = [
-    { icone: 'badge', tooltip: 'Visualizar detalhes', acao: 'ver' }
+    { icone: 'badge', tooltip: 'Acessar perfil', acao: 'ver' }
   ];
 
   // Colunas da tabela de Contatos: Nome, Telefone, E-mail, Vínculos

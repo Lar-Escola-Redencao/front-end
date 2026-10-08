@@ -12,7 +12,9 @@
 .modal-card {
   width: min(100%, 560px);
   max-height: calc(100vh - 48px);
-  overflow: auto;
+  box-sizing: border-box;
+  overflow-x: hidden;
+  overflow-y: auto;
   padding: 28px;
   border-radius: 12px;
   background: var(--branco);

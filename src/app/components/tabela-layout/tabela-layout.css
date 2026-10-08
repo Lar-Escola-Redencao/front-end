@@ -196,6 +196,26 @@
   background-color: #fee2e2;
 }
 
+.status-matricula-ativo {
+  color: #139445;
+  background-color: #dcfce7;
+}
+
+.status-matricula-egresso {
+  color: #555;
+  background-color: #e8e8e8;
+}
+
+.status-matricula-excluido {
+  color: #555;
+  background-color: #e8e8e8;
+}
+
+.status-matricula-inativo {
+  color: #555;
+  background-color: #e8e8e8;
+}
+
 .etiqueta-celula {
   display: inline-flex;
   align-items: center;
@@ -211,6 +231,14 @@
   vertical-align: middle;
   color: rgba(0, 0, 0, 0.6);
   background-color: rgba(0, 0, 0, 0.08);
+}
+
+.etiqueta-icone {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  margin-left: 6px;
+  vertical-align: middle;
 }
 
 .header-mobile .etiqueta-celula {
@@ -350,6 +378,11 @@
     text-overflow: ellipsis;
     white-space: nowrap;
     
+  }
+
+  .titulo-mobile--status {
+    display: flex;
+    align-items: center;
   }
 
   /* Ícone da seta */

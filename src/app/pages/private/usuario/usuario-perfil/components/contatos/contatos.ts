@@ -152,8 +152,14 @@ export class UsuarioPerfilContatos implements OnDestroy {
   abrirVisualizacao(contato: ContatoResponseDTO): void {
     this.contatoSelecionado = contato;
     this.modoModal = 'visualizar';
-    this.carregandoVisualizacao = true;
     this.modalAberto = true;
+    if (this.somenteLeitura) {
+      this.carregandoVisualizacao = false;
+      this.atualizarTela();
+      return;
+    }
+
+    this.carregandoVisualizacao = true;
     this.contatoService.buscarDetalhe(contato.id).subscribe({
       next: detalhe => this.ngZone.run(() => {
         this.contatoSelecionado = this.normalizarDetalheContato(contato, detalhe);

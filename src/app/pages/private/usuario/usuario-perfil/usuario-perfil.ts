@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectorRef, Component, NgZone, OnDestroy, OnInit, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, NgZone, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -23,6 +23,8 @@ import { UsuarioPerfilContatos } from './components/contatos/contatos';
 import { UsuarioPerfilDadosPessoais } from './components/dados-pessoais/dados-pessoais';
 import { UsuarioPerfilDadosSocioeconomicos } from './components/dados-socioeconomicos/dados-socioeconomicos';
 import { UsuarioPerfilSaude } from './components/saude/saude';
+import { UsuarioPerfilMatriculas } from './components/matriculas/matriculas';
+import { Alertas } from 'src/app/shared/utils/alerts';
 
 type AbaPerfil = 'acompanhamento' | 'contatos' | 'saude' | 'dados-pessoais' | 'dados-socioeconomicos' | 'matricula';
 
@@ -41,7 +43,8 @@ type AbaPerfil = 'acompanhamento' | 'contatos' | 'saude' | 'dados-pessoais' | 'd
     UsuarioPerfilContatos,
     UsuarioPerfilDadosPessoais,
     UsuarioPerfilDadosSocioeconomicos,
-    UsuarioPerfilSaude
+    UsuarioPerfilSaude,
+    UsuarioPerfilMatriculas
   ],
   templateUrl: './usuario-perfil.html',
   styleUrl: './usuario-perfil.css',
@@ -58,6 +61,10 @@ export class UsuarioPerfil implements OnInit, OnDestroy {
   private readonly ngZone = inject(NgZone);
   private readonly toastr = inject(ToastrService);
   private sub?: Subscription;
+
+  @ViewChild(UsuarioPerfilDadosPessoais) private dadosPessoais?: UsuarioPerfilDadosPessoais;
+  @ViewChild(UsuarioPerfilDadosSocioeconomicos) private dadosSocioeconomicos?: UsuarioPerfilDadosSocioeconomicos;
+  @ViewChild(UsuarioPerfilSaude) private saude?: UsuarioPerfilSaude;
 
   usuario: UsuarioResponseDTO | null = null;
   carregando = true;
@@ -93,7 +100,7 @@ export class UsuarioPerfil implements OnInit, OnDestroy {
   ];
 
   ngOnInit(): void {
-    this.carregarPerfil();
+    this.sessao.carregar().subscribe(() => this.carregarPerfil());
   }
 
   ngOnDestroy(): void {
@@ -107,7 +114,7 @@ export class UsuarioPerfil implements OnInit, OnDestroy {
         this.carregando = true;
         this.erro = '';
         this.atualizarTela();
-        return this.usuarioService.buscarPorId(Number(params.get('id')));
+        return this.usuarioService.buscarPorId(Number(params.get('id')), true);
       })
     ).subscribe({
       next: usuario => {
@@ -118,8 +125,23 @@ export class UsuarioPerfil implements OnInit, OnDestroy {
           this.atualizarTela();
         });
       },
-      error: () => {
+      error: (erro: { status?: number }) => {
         this.ngZone.run(() => {
+          if (erro.status === 403) {
+            this.toastr.clear();
+            this.toastr.error(
+              'Você não tem acesso a este perfil porque o usuário não pertence a uma unidade vinculada ao seu acesso.',
+              'Acesso negado'
+            );
+            this.voltarAposAcessoNegado();
+            return;
+          }
+          if (erro.status === 404) {
+            this.toastr.clear();
+            this.toastr.error('O usuário informado não foi encontrado.', 'Usuário não encontrado');
+            this.voltarAposAcessoNegado();
+            return;
+          }
           this.erro = 'Não foi possível carregar o perfil do usuário.';
           this.carregando = false;
           this.atualizarTela();
@@ -128,7 +150,18 @@ export class UsuarioPerfil implements OnInit, OnDestroy {
     });
   }
 
-  selecionarAba(aba: AbaPerfil): void {
+  async selecionarAba(aba: AbaPerfil): Promise<void> {
+    if (this.monitor && !this.abasVisiveis.some(item => item.id === aba)) return;
+
+    if (aba === this.abaAtiva) return;
+
+    const abaAtual = this.obterAbaEditavelAtual();
+    if (abaAtual?.temAlteracoes) {
+      const confirmou = await Alertas.confirmarDescarte();
+      if (!confirmou) return;
+      abaAtual.cancelar();
+    }
+
     this.abaAtiva = aba;
   }
 
@@ -138,7 +171,22 @@ export class UsuarioPerfil implements OnInit, OnDestroy {
   }
 
   voltarParaUsuarios(): void {
-    this.router.navigate(['/dashboard/usuarios']);
+    this.router.navigate([this.monitor ? '/dashboard/diario' : '/dashboard/usuarios']);
+  }
+
+  private voltarAposAcessoNegado(): void {
+    this.carregando = false;
+    this.router.navigate(
+      [this.monitor ? '/dashboard/diario' : '/dashboard/usuarios'],
+      { replaceUrl: true }
+    );
+  }
+
+  private obterAbaEditavelAtual(): UsuarioPerfilDadosPessoais | UsuarioPerfilDadosSocioeconomicos | UsuarioPerfilSaude | undefined {
+    if (this.abaAtiva === 'dados-pessoais') return this.dadosPessoais;
+    if (this.abaAtiva === 'dados-socioeconomicos') return this.dadosSocioeconomicos;
+    if (this.abaAtiva === 'saude') return this.saude;
+    return undefined;
   }
 
   get fotoPerfil(): string | null {
@@ -154,7 +202,8 @@ export class UsuarioPerfil implements OnInit, OnDestroy {
   }
 
   get desde(): string {
-    return this.usuario?.dataIngresso ? `Desde ${this.formatarMesAno(this.usuario.dataIngresso)}` : 'Desde não informado';
+    const data = this.usuario?.dataPrimeiraMatricula || this.usuario?.dataIngresso;
+    return data ? `Desde ${this.formatarDataCurta(data)}` : 'Desde não informado';
   }
 
   get turma(): string {
@@ -166,8 +215,17 @@ export class UsuarioPerfil implements OnInit, OnDestroy {
     return status === 'EGRESSO';
   }
 
+  get monitor(): boolean {
+    return this.sessao.isMonitor();
+  }
+
+  get abasVisiveis(): { id: AbaPerfil; label: string }[] {
+    if (!this.monitor) return this.abas;
+    return this.abas.filter(aba => ['acompanhamento', 'contatos', 'saude'].includes(aba.id));
+  }
+
   abrirModalDesligamento(): void {
-    if (!this.usuario?.id || this.desligado) return;
+    if (!this.usuario?.id || this.desligado || this.monitor) return;
     this.formDesligamento.reset({ justificativa: '' });
     this.modalDesligamentoAberto = true;
   }
@@ -178,7 +236,7 @@ export class UsuarioPerfil implements OnInit, OnDestroy {
   }
 
   async confirmarDesligamento(): Promise<void> {
-    if (!this.usuario?.id || this.desligado) return;
+    if (!this.usuario?.id || this.desligado || this.monitor) return;
 
     this.formDesligamento.markAllAsTouched();
     const justificativa = this.formDesligamento.value.justificativa?.trim() || '';
@@ -210,14 +268,18 @@ export class UsuarioPerfil implements OnInit, OnDestroy {
       }),
       error: (err) => this.ngZone.run(() => {
         this.salvandoDesligamento = false;
-        Swal.fire('Erro', err.error?.message || 'Não foi possível desligar o usuário.', 'error');
+        if (this.erroJaExibidoPeloInterceptor(err)) {
+          this.atualizarTela();
+          return;
+        }
+        this.toastr.error(err.error?.message || 'Não foi possível desligar o usuário.', 'Erro');
         this.atualizarTela();
       })
     });
   }
 
   abrirModalTransferencia(): void {
-    if (!this.usuario?.id || this.desligado) return;
+    if (!this.usuario?.id || this.desligado || this.monitor) return;
 
     this.modoSelecaoTurma = 'transferencia';
     this.formTransferencia.reset({
@@ -235,7 +297,7 @@ export class UsuarioPerfil implements OnInit, OnDestroy {
   }
 
   abrirModalRematricula(): void {
-    if (!this.usuario?.id || !this.desligado) return;
+    if (!this.usuario?.id || !this.desligado || this.monitor) return;
     this.modoSelecaoTurma = 'rematricula';
     this.formTransferencia.reset({ idUnidade: null, idTurmaNova: null });
     this.formTransferencia.get('idTurmaNova')?.disable();
@@ -260,6 +322,17 @@ export class UsuarioPerfil implements OnInit, OnDestroy {
 
   get turmasDisponiveisTransferencia(): Turma[] {
     return this.modoSelecaoTurma === 'rematricula' ? this.turmasTransferencia : this.turmasTransferencia.filter(turma => turma.id !== this.usuario?.idTurma);
+  }
+
+  get unidadesDisponiveisTransferencia(): Unidade[] {
+    if (this.modoSelecaoTurma !== 'rematricula' || !this.sessao.isCoordenador()) {
+      return this.unidadesTransferencia;
+    }
+
+    const permitidas = this.sessao.unidadesPermitidasIds();
+    return permitidas === null
+      ? this.unidadesTransferencia
+      : this.unidadesTransferencia.filter(unidade => permitidas.includes(unidade.id));
   }
 
   get turmaTransferenciaSelecionada(): Turma | undefined {
@@ -309,11 +382,19 @@ export class UsuarioPerfil implements OnInit, OnDestroy {
         this.salvandoTransferencia = false;
         this.modalTransferenciaAberto = false;
         if (usuario.matriculaCorrigida) this.toastr.success('Matrícula corrigida');
+        if (this.sessao.isCoordenador() && !this.sessao.temAcessoAUnidade(usuario.idUnidade)) {
+          this.router.navigate(['/dashboard/usuarios']);
+          return;
+        }
         this.atualizarTela();
       }),
       error: (err) => this.ngZone.run(() => {
         this.salvandoTransferencia = false;
-        Swal.fire('Erro', err.error?.message || 'Não foi possível transferir o usuário.', 'error');
+        if (this.erroJaExibidoPeloInterceptor(err)) {
+          this.atualizarTela();
+          return;
+        }
+        this.toastr.error(err.error?.message || 'Não foi possível transferir o usuário.', 'Erro');
         this.atualizarTela();
       })
     });
@@ -323,26 +404,44 @@ export class UsuarioPerfil implements OnInit, OnDestroy {
     this.modoSelecaoTurma === 'rematricula' ? this.confirmarRematricula() : this.confirmarTransferencia();
   }
 
-  confirmarRematricula(): void {
+  async confirmarRematricula(): Promise<void> {
     if (!this.usuario?.id) return;
     this.formTransferencia.markAllAsTouched();
     if (this.formTransferencia.invalid) return;
     const turma = this.turmaTransferenciaSelecionada;
     if (!turma) return;
+
+    const confirmou = await this.confirmarAcaoCritica(
+      'Confirmar rematrícula?',
+      `O usuário será matriculado na unidade ${turma.unidade.nome} no período ${this.formatarPeriodoTurma(turma.periodo).toLowerCase()}.`,
+      'matricular-novamente',
+      'Confirmar rematrícula',
+      'question'
+    );
+    if (!confirmou) return;
+
     this.salvandoTransferencia = true;
     this.usuarioService.rematricular(this.usuario.id, turma.id).subscribe({
       next: usuario => this.ngZone.run(() => { this.usuario = usuario; this.salvandoTransferencia = false; this.modalTransferenciaAberto = false; this.atualizarTela(); }),
-      error: err => this.ngZone.run(() => { this.salvandoTransferencia = false; Swal.fire('Erro', err.error?.message || 'Não foi possível matricular o usuário novamente.', 'error'); this.atualizarTela(); })
+      error: err => this.ngZone.run(() => {
+        this.salvandoTransferencia = false;
+        if (this.erroJaExibidoPeloInterceptor(err)) {
+          this.atualizarTela();
+          return;
+        }
+        this.toastr.error(err.error?.message || 'Não foi possível matricular o usuário novamente.', 'Erro');
+        this.atualizarTela();
+      })
     });
   }
 
 
   async excluirUsuario(): Promise<void> {
     const usuario = this.usuario;
-    if (!usuario?.id) return;
+    if (!usuario?.id || this.monitor) return;
 
     if (!this.sessao.podeExcluirUsuario(usuario.idUnidade)) {
-      await Swal.fire('Acesso negado', 'Você não tem acesso à unidade deste usuário.', 'warning');
+      this.toastr.error('Você não tem acesso à unidade deste usuário.', 'Acesso negado');
       return;
     }
 
@@ -360,7 +459,8 @@ export class UsuarioPerfil implements OnInit, OnDestroy {
         this.router.navigate(['/dashboard/usuarios']);
       }),
       error: (err) => this.ngZone.run(() => {
-        Swal.fire('Erro', err.error?.message || 'Não foi possível excluir o usuário.', 'error');
+        if (this.erroJaExibidoPeloInterceptor(err)) return;
+        this.toastr.error(err.error?.message || 'Não foi possível excluir o usuário.', 'Erro');
       })
     });
   }
@@ -374,10 +474,9 @@ export class UsuarioPerfil implements OnInit, OnDestroy {
   ): Promise<boolean> {
     const resultado = await Swal.fire({
       title: titulo,
-      text: mensagem,
+      html: `${this.escaparHtml(mensagem)}<br><br>Digite <em>"${this.escaparHtml(textoConfirmacao)}"</em> para confirmar.`,
       icon: icone,
       input: 'text',
-      inputLabel: `Digite "${textoConfirmacao}" para confirmar.`,
       inputPlaceholder: textoConfirmacao,
       showCancelButton: true,
       confirmButtonText: botaoConfirmar,
@@ -405,7 +504,7 @@ export class UsuarioPerfil implements OnInit, OnDestroy {
       }),
       error: () => this.ngZone.run(() => {
         this.carregandoUnidadesTransferencia = false;
-        Swal.fire('Erro', 'Não foi possível carregar as unidades.', 'error');
+        this.toastr.error('Não foi possível carregar as unidades.', 'Erro');
         this.atualizarTela();
       })
     });
@@ -422,7 +521,7 @@ export class UsuarioPerfil implements OnInit, OnDestroy {
       }),
       error: () => this.ngZone.run(() => {
         this.carregandoTurmasTransferencia = false;
-        Swal.fire('Erro', 'Não foi possível carregar as turmas.', 'error');
+        this.toastr.error('Não foi possível carregar as turmas.', 'Erro');
         this.atualizarTela();
       })
     });
@@ -444,6 +543,18 @@ export class UsuarioPerfil implements OnInit, OnDestroy {
     const data = new Date(`${valor.split('T')[0]}T00:00:00`);
     if (Number.isNaN(data.getTime())) return 'não informado';
     return new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric' }).format(data);
+  }
+
+  private formatarDataCurta(valor: string): string {
+    const data = new Date(`${valor.split('T')[0]}T00:00:00`);
+    if (Number.isNaN(data.getTime())) return 'não informado';
+    const partes = new Intl.DateTimeFormat('pt-BR', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric'
+    }).formatToParts(data);
+    const parte = (tipo: Intl.DateTimeFormatPartTypes) => partes.find(item => item.type === tipo)?.value || '';
+    return `${parte('day')} ${parte('month')} ${parte('year')}`;
   }
 
   private formatarDataNascimentoCurta(valor?: string | null): string {
@@ -475,6 +586,20 @@ export class UsuarioPerfil implements OnInit, OnDestroy {
     if (valor === 'MANHA') return 'manhã';
     if (valor === 'TARDE') return 'tarde';
     return 'mesmo período';
+  }
+
+  private escaparHtml(valor: string): string {
+    return valor.replace(/[&<>'"]/g, caractere => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      "'": '&#39;',
+      '"': '&quot;'
+    })[caractere] || caractere);
+  }
+
+  private erroJaExibidoPeloInterceptor(erro: { status?: number }): boolean {
+    return erro.status === 401 || erro.status === 403;
   }
 
   private obterUrlArquivo(valor?: string | null): string | null {

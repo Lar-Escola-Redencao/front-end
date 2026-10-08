@@ -146,7 +146,7 @@
           (keydown.space)="$event.preventDefault(); expandirContato(i)">
           <strong>
             {{ contato.get('principal')?.value ? 'Contato principal' : 'Contato adicional ' + i }}
-            <span *ngIf="contato.get('principal')?.value" class="material-symbols-outlined contato-principal-icone">kid_star</span>
+            <img *ngIf="contato.get('principal')?.value" class="contato-principal-icone" src="/icons/kid-star-filled.svg" alt="Contato principal">
           </strong>
           <span class="resumo-acoes">
             <span class="contato-cpf-repetido"
@@ -587,7 +587,7 @@
             {{ labelParentesco(vinculo.parentesco) }}
             <ng-container *ngIf="vinculo.principal">
               -
-              <mat-icon class="material-symbols-outlined vinculo-principal-icone">kid_star</mat-icon>
+              <img class="vinculo-principal-icone" src="/icons/kid-star-filled.svg" alt="Contato principal">
               Contato Principal
             </ng-container>
           </span>
@@ -607,18 +607,17 @@
 <!-- MODAL "NOVO VÍNCULO" -->
 @if (modalNovoVinculoAberto) {
 <app-modal-layout class="modal-sobreposto" titulo="Novo vínculo" (closed)="fecharNovoVinculo()">
-  <p class="novo-vinculo-subtitulo" *ngIf="contatoSelecionado">Contato: {{ contatoSelecionado.nomeCompleto }}</p>
+  <p class="novo-vinculo-subtitulo novo-vinculo-subtitulo--novo" *ngIf="contatoSelecionado">Contato: {{ contatoSelecionado.nomeCompleto }}</p>
+
+  <button type="button" modal-title-extra class="principal-toggle" [class.ativo]="formNovoVinculo.get('principal')?.value"
+    (click)="formNovoVinculo.get('principal')?.setValue(!formNovoVinculo.get('principal')?.value); formNovoVinculo.markAsDirty()">
+    <img class="principal-star" [src]="formNovoVinculo.get('principal')?.value ? '/icons/kid-star-filled.svg' : '/icons/kid-star-outline.svg'" alt="">
+    @if (formNovoVinculo.get('principal')?.value) {
+      <span>Contato principal</span>
+    }
+  </button>
 
   <form class="form-modal novo-vinculo-form" [formGroup]="formNovoVinculo" (ngSubmit)="salvarNovoVinculo()">
-
-    <button type="button" class="principal-toggle" [class.ativo]="formNovoVinculo.get('principal')?.value"
-      (click)="formNovoVinculo.get('principal')?.setValue(!formNovoVinculo.get('principal')?.value); formNovoVinculo.markAsDirty()">
-      <span class="material-symbols-outlined principal-star"
-        [class.preenchida]="formNovoVinculo.get('principal')?.value">kid_star</span>
-      @if (formNovoVinculo.get('principal')?.value) {
-        <span>Contato principal</span>
-      }
-    </button>
 
     <mat-form-field appearance="outline">
       <mat-label>Parentesco</mat-label>

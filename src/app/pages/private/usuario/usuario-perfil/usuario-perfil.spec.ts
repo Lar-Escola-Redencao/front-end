@@ -8,11 +8,20 @@ import { UsuarioService } from 'src/app/shared/services/usuario/usuario.service'
 import { ContatoService } from 'src/app/shared/services/usuario/contato.service';
 import { ToastrService } from 'ngx-toastr';
 import { SessaoService } from 'src/app/shared/services/auth/sessao.service';
+import { Unidade } from 'src/app/shared/models/unidade.model';
 
 describe('UsuarioPerfil', () => {
   let component: UsuarioPerfil;
   let fixture: ComponentFixture<UsuarioPerfil>;
   let usuarioService: { buscarPorId: ReturnType<typeof vi.fn> };
+  let sessaoService: {
+    carregar: ReturnType<typeof vi.fn>;
+    isMonitor: ReturnType<typeof vi.fn>;
+    isCoordenador: ReturnType<typeof vi.fn>;
+    unidadesPermitidasIds: ReturnType<typeof vi.fn>;
+    podeRemoverVinculo: ReturnType<typeof vi.fn>;
+    podeExcluirUsuario: ReturnType<typeof vi.fn>;
+  };
 
   beforeEach(async () => {
     usuarioService = {
@@ -25,6 +34,14 @@ describe('UsuarioPerfil', () => {
         nomeTurma: 'MANHA · 08:00-12:00'
       }))
     };
+    sessaoService = {
+      carregar: vi.fn(() => of(null)),
+      isMonitor: vi.fn(() => false),
+      isCoordenador: vi.fn(() => false),
+      unidadesPermitidasIds: vi.fn(() => []),
+      podeRemoverVinculo: vi.fn(() => true),
+      podeExcluirUsuario: vi.fn(() => true)
+    };
 
     await TestBed.configureTestingModule({
       imports: [UsuarioPerfil],
@@ -32,7 +49,7 @@ describe('UsuarioPerfil', () => {
         { provide: UsuarioService, useValue: usuarioService },
         { provide: ContatoService, useValue: { buscarAutocomplete: vi.fn(() => of([])), atualizarContato: vi.fn() } },
         { provide: ToastrService, useValue: { success: vi.fn(), warning: vi.fn(), error: vi.fn() } },
-        { provide: SessaoService, useValue: { podeRemoverVinculo: vi.fn(() => true) } },
+        { provide: SessaoService, useValue: sessaoService },
         { provide: ActivatedRoute, useValue: { paramMap: of({ get: (chave: string) => chave === 'id' ? '7' : null }) } },
         { provide: Router, useValue: { navigate: vi.fn() } }
       ]
@@ -50,7 +67,7 @@ describe('UsuarioPerfil', () => {
   it('carrega o usuário da rota e exibe os dados principais no card lateral', () => {
     fixture.detectChanges();
     const texto = fixture.nativeElement.textContent;
-    expect(usuarioService.buscarPorId).toHaveBeenCalledWith(7);
+    expect(usuarioService.buscarPorId).toHaveBeenCalledWith(7, true);
     expect(texto).toContain('Aluno Sales da Silva');
     expect(texto).toContain('08 anos (11 set. 2018)');
     expect(texto).toContain('Desde não informado');
@@ -71,5 +88,19 @@ describe('UsuarioPerfil', () => {
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('app-usuario-perfil-contatos')).toBeTruthy();
     expect(fixture.nativeElement.textContent).toContain('Novo contato');
+  });
+
+  it('restringe as unidades exibidas na rematrícula ao escopo do coordenador', () => {
+    sessaoService.isCoordenador.mockReturnValue(true);
+    sessaoService.unidadesPermitidasIds.mockReturnValue([2]);
+    component.modoSelecaoTurma = 'rematricula';
+    component.unidadesTransferencia = [
+      { id: 1, nome: 'Unidade A' } as Unidade,
+      { id: 2, nome: 'Unidade B' } as Unidade
+    ];
+
+    expect(component.unidadesDisponiveisTransferencia).toEqual([
+      { id: 2, nome: 'Unidade B' }
+    ]);
   });
 });

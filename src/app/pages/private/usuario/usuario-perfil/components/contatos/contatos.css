@@ -107,6 +107,7 @@
   font-size: 22px;
   font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24 !important;
   line-height: 1;
+  object-fit: contain;
 }
 
 :host ::ng-deep .principal-star.preenchida,

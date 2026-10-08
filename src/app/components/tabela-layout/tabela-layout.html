@@ -56,11 +56,23 @@
           <!-- ================================================= -->
 
           <td class="header-mobile" (click)="toggleLinha($index)">
-            <span class="titulo-mobile">
-              {{ obterValorPrincipal(linha) }}
-            </span>
+            @if (colunaPrincipal.tipo === 'matricula-status') {
+              <span class="titulo-mobile titulo-mobile--status">
+                <span class="badge-status" [ngClass]="'status-matricula-' + obterClasseStatusMatricula(linha[colunaPrincipal.chave])">
+                  {{ obterValorPrincipal(linha) }}
+                </span>
+              </span>
+            } @else {
+              <span class="titulo-mobile">
+                {{ obterValorPrincipal(linha) }}
+              </span>
+            }
             @if (obterEtiquetaPrincipal(linha); as etiqueta) {
-              <span class="etiqueta-celula">{{ etiqueta }}</span>
+              @if (etiqueta === 'kid_star') {
+                <img class="etiqueta-icone" src="/icons/kid-star-filled.svg" alt="Contato principal" />
+              } @else {
+                <span class="etiqueta-celula">{{ etiqueta }}</span>
+              }
             }
             <mat-icon>
               {{
@@ -154,6 +166,18 @@
 
       }
 
+      @else if (coluna.tipo === 'matricula-status') {
+
+        @if (linha[coluna.chave] === 'INATIVO') {
+          <span class="badge-status status-matricula-inativo">TRANSFERIDA</span>
+        } @else {
+          <span class="badge-status" [class]="'badge-status status-matricula-' + obterClasseStatusMatricula(linha[coluna.chave])">
+            {{ obterValor(linha, coluna) }}
+          </span>
+        }
+
+      }
+
       <!-- ============================= -->
       <!-- TELEFONE -->
       <!-- ============================= -->
@@ -179,7 +203,11 @@
         {{ obterValor(linha, coluna) }}
 
         @if (obterEtiqueta(linha, coluna); as etiqueta) {
-          <span class="etiqueta-celula">{{ etiqueta }}</span>
+          @if (etiqueta === 'kid_star') {
+            <img class="etiqueta-icone" src="/icons/kid-star-filled.svg" alt="Contato principal" />
+          } @else {
+            <span class="etiqueta-celula">{{ etiqueta }}</span>
+          }
         }
 
       }

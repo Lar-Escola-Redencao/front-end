@@ -662,6 +662,10 @@ h1 {
   color: #555;
 }
 
+.novo-vinculo-subtitulo--novo {
+  margin-bottom: 12px;
+}
+
 .novo-vinculo-form {
   gap: 12px;
 }
@@ -697,6 +701,7 @@ h1 {
   font-size: 22px;
   font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24 !important;
   line-height: 1;
+  object-fit: contain;
 }
 
 .principal-star.preenchida,

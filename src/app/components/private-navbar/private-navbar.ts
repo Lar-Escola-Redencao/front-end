@@ -58,6 +58,7 @@ export class PrivateNavbar implements OnInit {
 
   irParaPerfil(): void {
     this.menuUsuarioAberto = false;
+    this.fecharMenu();
     this.router.navigateByUrl('/dashboard/perfil');
   }
 
