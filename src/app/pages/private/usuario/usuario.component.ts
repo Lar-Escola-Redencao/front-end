@@ -17,7 +17,7 @@ import {
   ReactiveFormsModule,
   Validators
 } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Subscription, of, forkJoin } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap, catchError, map, tap } from 'rxjs/operators';
 
@@ -65,12 +65,14 @@ import {
 } from 'src/app/shared/utils/paginacao-url';
 import { UnidadeService } from 'src/app/shared/services/unidade/unidade.service';
 import { TurmaService } from 'src/app/shared/services/turma/turma.service';
+import { environment } from 'src/environments/environment';
 
 @Component({
   selector: 'app-usuario',
   standalone: true,
   imports: [
     CommonModule,
+    RouterLink,
     FormsModule,
     ReactiveFormsModule,
     ModalLayout,
@@ -164,7 +166,9 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
     nomeCompleto: ['', [Validators.required, Validators.minLength(3)]],
     telefone: ['', [Validators.required, Validators.minLength(14)]],
     email: ['', Validators.email],
-    endereco: ['']
+    endereco: [''],
+    cpf: ['', Validators.minLength(14)],
+    localTrabalho: ['']
   });
 
   // Modal de Preview do Usuário
@@ -277,8 +281,13 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
 
   // Ações da tabela
   colunas: TabelaColuna<UsuarioResponseDTO>[] = [
-    { chave: 'nomeCompleto', titulo: 'Nome do Usuário', principalMobile: true, ordenavel: true },
-    { chave: 'cpf', titulo: 'CPF/Documento', ordenavel: true, formatar: (v, linha) => v || linha.documentoAuxiliar || '-' },
+    {
+      chave: 'nomeCompleto',
+      titulo: 'Usuário',
+      principalMobile: true,
+      ordenavel: true,
+      etiqueta: usuario => (usuario.statusMatricula || '').toUpperCase() === 'EGRESSO' ? 'Desligado' : null
+    },
     {
       chave: 'dataNascimento',
       ordenavel: true,
@@ -294,19 +303,17 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
   ];
 
   private readonly acoesTabelaUsuarios: TabelaAcao<UsuarioResponseDTO>[] = [
-    { icone: 'visibility', tooltip: 'Visualizar detalhes', acao: 'ver' },
-    { icone: 'edit', tooltip: 'Editar', acao: 'editar' },
-    { icone: 'delete', tooltip: 'Excluir', acao: 'excluir' }
+    { icone: 'badge', tooltip: 'Acessar perfil', acao: 'ver' }
   ];
 
   private readonly acoesTabelaUsuariosSomenteView: TabelaAcao<UsuarioResponseDTO>[] = [
-    { icone: 'visibility', tooltip: 'Visualizar detalhes', acao: 'ver' }
+    { icone: 'badge', tooltip: 'Acessar perfil', acao: 'ver' }
   ];
 
   // Colunas da tabela de Contatos: Nome, Telefone, E-mail, Vínculos
   colunasContatos: TabelaColuna<ContatoListagemDTO>[] = [
-    { chave: 'nomeCompleto', titulo: 'Nome do Responsável', principalMobile: true, ordenavel: true },
-    { chave: 'telefone', titulo: 'Telefone', ordenavel: true, formatar: (v) => formatarTelefone(v) },
+    { chave: 'nomeCompleto', titulo: 'Responsável', principalMobile: true, ordenavel: true },
+    { chave: 'telefone', titulo: 'Telefone', ordenavel: true, tipo: 'telefone', formatar: (v) => formatarTelefone(v) },
     { chave: 'email', titulo: 'E-mail', ordenavel: true, formatar: (v) => v || '-' },
     { chave: 'quantidadeVinculos', titulo: 'Vínculos', ordenavel: true }
   ];
@@ -316,7 +323,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
     { icone: 'visibility', tooltip: 'Visualizar detalhes', acao: 'ver_contato' },
     { icone: 'account_child_invert', tooltip: 'Usuários vinculados', acao: 'ver_vinculos' },
     { icone: 'edit', tooltip: 'Editar contato', acao: 'editar_contato' },
-    { icone: 'delete', tooltip: 'Excluir', acao: 'excluir_contato' }
+    { icone: 'delete', tooltip: 'Excluir', acao: 'excluir_contato', visivel: contato => contato.quantidadeVinculos === 0 }
   ];
 
   private readonly acoesTabelaContatosSomenteView: TabelaAcao<ContatoListagemDTO>[] = [
@@ -324,6 +331,10 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
     { icone: 'account_child_invert', tooltip: 'Usuários vinculados', acao: 'ver_vinculos' }
   ];
 
+
+  get perfilQueryParams(): { returnUrl: string } {
+    return { returnUrl: this.router.url };
+  }
 
   onFotoSelecionada(event: any) {
     const file = event.target.files[0];
@@ -410,7 +421,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
     if (this.carregandoLista) return;
     this.carregandoLista = true;
     this.erroLista = false;
-    this.cdr.markForCheck();
+    this.atualizarTela();
 
     this.usuarioService.listarUsuarios().subscribe({
       next: (resposta) => {
@@ -438,6 +449,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
     if (this.carregandoLista) return;
     this.carregandoLista = true;
     this.erroLista = false;
+    this.atualizarTela();
 
     const consulta = this.ordenacao?.campo === 'quantidadeVinculos'
       ? this.contatoService.listarOrdenadosPorVinculos(this.pagina, this.tamanho, this.ordenacao.direcao)
@@ -646,6 +658,16 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
     else if (this.familiarExpandidoIndex > index) this.familiarExpandidoIndex--;
   }
 
+  tituloFamiliar(index: number): string {
+    const nome = this.familiaresArray.at(index)?.get('nomeCompleto')?.value;
+    return nome ? String(nome) : `Membro ${index + 1}`;
+  }
+
+  vinculoFamiliar(index: number): string {
+    const valor = this.familiaresArray.at(index)?.get('parentescoVinculo')?.value;
+    return valor ? this.opcoesParentesco.find(item => item.value === valor)?.label ?? String(valor) : '';
+  }
+
   get totalDespesasMensais(): number {
     return this.despesas.reduce((total, despesa) => total + (Number(this.formUsuario.get('socioeconomico.' + despesa.campo)?.value) || 0), 0);
   }
@@ -667,7 +689,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
   get avisoConflitoPeriodoMatricula(): string {
     const periodo = this.formUsuario.get('periodoEscolar')?.value;
     const label = this.periodosEscolares.find(item => item.value === periodo)?.label?.toLowerCase() || 'mesmo periodo';
-    return `Conflito de horário identificado. O estudante declarou que estuda de ${label}, e a turma selecionada também e nesse período.`;
+    return `Conflito de horário identificado. O estudante declarou que estuda de ${label}, e a turma selecionada também é nesse período.`;
   }
 
   selecionarArquivosSaude(event: Event): void {
@@ -707,6 +729,12 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
 
   removerArquivoSaude(index: number): void {
     this.arquivosSaude.splice(index, 1);
+  }
+
+  urlArquivoSaude(arquivo: ArquivoSaudeDTO): string {
+    const caminho = arquivo.caminhoArquivo || '';
+    if (caminho.startsWith('http://') || caminho.startsWith('https://')) return caminho;
+    return `${environment.apiUrl}${caminho.startsWith('/') ? '' : '/'}${caminho}`;
   }
 
   abrirCadastro() {
@@ -804,7 +832,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
               telefone: [formatarTelefone(c.telefone), [Validators.required, Validators.minLength(14)]],
               email: [c.email, Validators.email],
               endereco: [c.endereco], cpf: [formatarCpf(c.cpf), Validators.minLength(14)], localTrabalho: [c.localTrabalho || ''],
-              busca: [''], tipoBusca: ['CPF'], buscarExistente: [false], principal: [c.principal]
+              busca: [''], tipoBusca: ['Nome'], buscarExistente: [false], principal: [c.principal]
             });
 
             this.contatosArray.push(contatoForm);
@@ -1016,7 +1044,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
       telefone: ['', [Validators.required, Validators.minLength(14)]],
       email: ['', Validators.email],
       endereco: [''], cpf: ['', Validators.minLength(14)], localTrabalho: [''],
-      busca: [''], tipoBusca: ['CPF'], buscarExistente: [false], principal: [isPrincipal]
+      busca: [''], tipoBusca: ['Nome'], buscarExistente: [false], principal: [isPrincipal]
     });
 
     this.contatosArray.push(contatoForm);
@@ -1050,13 +1078,40 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
     ).subscribe(({ termo, resultados }) => {
       const indiceAtual = this.contatosArray.controls.indexOf(contatoForm);
       if (indiceAtual >= 0 && contatoForm.get('buscarExistente')?.value && !contatoForm.get('id')?.value && contatoForm.get('busca')?.value === termo) {
-        this.opcoesAutocomplete[indiceAtual] = resultados;
+        const idsJaAdicionados = new Set(
+          this.contatosArray.controls
+            .filter((_, i) => i !== indiceAtual)
+            .map(contato => contato.get('id')?.value)
+            .filter((id): id is number => typeof id === 'number')
+        );
+        this.opcoesAutocomplete[indiceAtual] = resultados
+          .filter(contato => !idsJaAdicionados.has(contato.id))
+          .filter(contato => this.contatoCorrespondeTipoBusca(contato, contatoForm.get('tipoBusca')?.value, termo));
       }
       this.atualizarTela();
     });
+    const tipoBuscaSub = contatoForm.get('tipoBusca')!.valueChanges.subscribe(() => {
+      contatoForm.patchValue({
+        id: null,
+        busca: '',
+        nomeCompleto: '',
+        telefone: '',
+        email: '',
+        endereco: '',
+        cpf: '',
+        localTrabalho: ''
+      }, { emitEvent: false });
+      const indiceAtual = this.contatosArray.controls.indexOf(contatoForm);
+      if (indiceAtual >= 0) this.opcoesAutocomplete[indiceAtual] = [];
+      if (contatoForm.get('buscarExistente')?.value) {
+        for (const campo of this.camposCompartilhadosContato) {
+          contatoForm.get(campo)?.disable({ emitEvent: false });
+        }
+      }
+    });
     const cpfSub = contatoForm.get('cpf')!.valueChanges.subscribe(() => this.validarCpfsContatos());
-    this.subsPorContato.set(contatoForm, [sub, cpfSub]);
-    this.formSubs.push(sub, cpfSub);
+    this.subsPorContato.set(contatoForm, [sub, tipoBuscaSub, cpfSub]);
+    this.formSubs.push(sub, tipoBuscaSub, cpfSub);
   }
 
   alternarBuscaContato(index: number, buscar: boolean, preservarSelecionado = false): void {
@@ -1075,7 +1130,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
       }
     }
     if (buscar && !preservarSelecionado && !temSelecionado) {
-      grupo.get('busca')?.setValue('', { emitEvent: false });
+      grupo.patchValue({ busca: '', tipoBusca: 'Nome' }, { emitEvent: false });
     }
     this.opcoesAutocomplete[index] = [];
     for (const campo of ['nomeCompleto', 'telefone', 'email', 'endereco', 'cpf', 'localTrabalho']) {
@@ -1190,6 +1245,31 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
     return typeof contato === 'string' ? contato : contato?.nomeCompleto || '';
   }
 
+  formatarTelefoneContato(valor?: string | null): string {
+    return valor ? formatarTelefone(valor) : '-';
+  }
+
+  hrefTelefoneContato(valor?: string | null): string | null {
+    const telefone = String(valor ?? '').replace(/\D/g, '');
+    return telefone ? `tel:${telefone}` : null;
+  }
+
+  private contatoCorrespondeTipoBusca(contato: ContatoListagemDTO, tipoBusca: unknown, termo: string): boolean {
+    const texto = termo.trim().toLowerCase();
+    const numeros = termo.replace(/\D/g, '');
+    switch (tipoBusca) {
+      case 'CPF':
+        return !!numeros && (contato.cpf || '').replace(/\D/g, '').includes(numeros);
+      case 'Telefone':
+        return !!numeros && (contato.telefone || '').replace(/\D/g, '').includes(numeros);
+      case 'E-mail':
+        return (contato.email || '').toLowerCase().includes(texto);
+      case 'Nome':
+      default:
+        return contato.nomeCompleto.toLowerCase().includes(texto);
+    }
+  }
+
   // Validações e Máscaras
   verificarErros() {
     const errosServidor = Object.fromEntries(
@@ -1230,6 +1310,11 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
   aplicarMascaraTelefoneEdicao(event: Event): void {
     const input = event.target as HTMLInputElement;
     this.formEdicaoContato.get('telefone')?.setValue(formatarTelefone(input.value));
+  }
+
+  aplicarMascaraCpfEdicao(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.formEdicaoContato.get('cpf')?.setValue(formatarCpf(input.value));
   }
 
   aplicarMascaraTelefoneContato(index: number, event: Event) {
@@ -1371,6 +1456,10 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
 
   idUsuarioVinculo(vinculo: UsuarioVinculadoDTO): number | null {
     return vinculo.idUsuario ?? null;
+  }
+
+  vinculoDesligado(vinculo: UsuarioVinculadoDTO): boolean {
+    return (vinculo.statusMatricula || '').toUpperCase() === 'EGRESSO';
   }
 
   private tratarErroSalvarUsuario(err: any, mensagemPadrao: string): void {
@@ -1573,8 +1662,9 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
   // ações da tabela
   executarAcao(evento: { tipo: string; linha: any }) {
     if (this.abaAtiva === 'usuarios') {
-      if (evento.tipo === 'ver' || evento.tipo === 'visualizar') this.abrirPreviewUsuario(evento.linha);
-      if (evento.tipo === 'editar') this.abrirEdicao(evento.linha);
+      if (evento.tipo === 'ver' || evento.tipo === 'visualizar') {
+        this.router.navigate(['/dashboard/usuarios', evento.linha.id], { queryParams: this.perfilQueryParams });
+      }
       if (evento.tipo === 'excluir') this.excluirUsuario(evento.linha);
       return;
     }
@@ -1594,7 +1684,9 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
       nomeCompleto: contato.nomeCompleto,
       telefone: formatarTelefone(contato.telefone),
       email: contato.email || '',
-      endereco: (contato as any).endereco || ''
+      endereco: contato.endereco || '',
+      cpf: contato.cpf ? formatarCpf(contato.cpf) : '',
+      localTrabalho: contato.localTrabalho || ''
     });
     this.formEdicaoContato.markAsPristine();
     this.formEdicaoContato.markAsUntouched();
@@ -1630,7 +1722,9 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
       nomeCompleto: dados.nomeCompleto!,
       telefone: dados.telefone?.replace(/\D/g, '') || '',
       email: dados.email || undefined,
-      endereco: dados.endereco || undefined
+      endereco: dados.endereco || undefined,
+      cpf: dados.cpf?.replace(/\D/g, '') || undefined,
+      localTrabalho: dados.localTrabalho || undefined
     };
 
     this.isLoading = true;
@@ -1735,7 +1829,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
     this.contatoService.buscarDetalhe(contato.id).subscribe({
       next: (detalhe) => {
         this.ngZone.run(() => {
-          this.vinculosDoContato = (detalhe.vinculos || []).filter(v => v.idUnidade != null);
+          this.vinculosDoContato = detalhe.vinculos || [];
           this.carregandoVinculos = false;
           this.atualizarTela();
         });
@@ -1806,7 +1900,6 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
     if (!this.podeGerenciarContatos || !contato) return;
 
     this.contatoSelecionado = contato;
-    this.modalVinculosAberto = false;
     this.turmasDoVinculo = [];
     this.usuariosParaVinculo = [];
     this.usuarioSelecionadoParaVinculo = null;
@@ -1927,8 +2020,26 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
   private fecharNovoVinculoSemConfirmacao() {
     this.buscaVinculoSub?.unsubscribe();
     this.modalNovoVinculoAberto = false;
-    this.contatoSelecionado = null;
     this.usuarioSelecionadoParaVinculo = null;
+  }
+
+  private recarregarVinculosDoContatoAtual(): void {
+    if (!this.contatoSelecionado) return;
+
+    const contatoAtual = this.contatoSelecionado;
+    this.carregandoVinculos = true;
+    this.contatoService.buscarDetalhe(contatoAtual.id).subscribe({
+      next: detalhe => this.ngZone.run(() => {
+        this.vinculosDoContato = detalhe.vinculos || [];
+        this.carregandoVinculos = false;
+        this.atualizarTela();
+      }),
+      error: () => this.ngZone.run(() => {
+        this.carregandoVinculos = false;
+        this.toastr.error('Erro ao carregar os usuários vinculados a este contato.', 'Erro');
+        this.atualizarTela();
+      })
+    });
   }
 
   /** Carrega a lista de usuários (uma vez) para alimentar o passo "Usuário" do vínculo. */
@@ -2009,6 +2120,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
           this.toastr.success('Vínculo criado com sucesso!', 'Sucesso');
           this.fecharNovoVinculoSemConfirmacao();
           this.carregarContatos();
+          this.recarregarVinculosDoContatoAtual();
           this.atualizarTela();
         });
       },

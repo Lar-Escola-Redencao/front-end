@@ -1,0 +1,198 @@
+<section class="usuario-perfil">
+  @if (carregando) {
+    <div class="estado estado-carregando">
+      <span class="spinner-primario" aria-hidden="true"></span>
+    </div>
+  } @else if (erro) {
+    <div class="estado estado-erro">
+      <p>{{ erro }}</p>
+      <button type="button" class="btn-tentar-novamente" (click)="voltar()">Voltar</button>
+    </div>
+  } @else if (usuario) {
+    <div class="perfil-layout">
+      <button type="button" class="voltar" (click)="voltar()">
+        <mat-icon>arrow_back</mat-icon>
+        <span>Voltar</span>
+      </button>
+      <span class="voltar-espaco" aria-hidden="true"></span>
+
+      <aside class="perfil-lateral">
+        <article class="perfil-card">
+          <div class="avatar">
+            @if (fotoPerfil) {
+              <img [src]="fotoPerfil" [alt]="'Foto de ' + usuario.nomeCompleto" (error)="onErroFotoPerfil()">
+            } @else {
+              <mat-icon class="material-symbols-outlined">sentiment_excited</mat-icon>
+            }
+          </div>
+
+          <h1>{{ usuario.nomeCompleto }}</h1>
+
+          @if (desligado) {
+            <span class="status-desligado">Desligado</span>
+            @if (usuario.justificativaEgresso) {
+              <p class="justificativa-desligado">{{ usuario.justificativaEgresso }}</p>
+            }
+          }
+
+          @if (!desligado) {
+          <dl class="perfil-resumo">
+            <div>
+              <dt><span class="material-symbols-outlined">cake</span></dt>
+              <dd>{{ idade }}</dd>
+            </div>
+            <div>
+              <dt><span class="material-symbols-outlined">sentiment_excited</span></dt>
+              <dd>{{ desde }}</dd>
+            </div>
+            <div>
+              <dt><span class="material-symbols-outlined">family_group</span></dt>
+              <dd>{{ usuario.nomeUnidade || 'Unidade não informada' }}</dd>
+            </div>
+            <div>
+              <dt><span class="material-symbols-outlined">schedule</span></dt>
+              <dd>{{ turma }}</dd>
+            </div>
+          </dl>
+          }
+        </article>
+
+        @if (!monitor) {
+        <div class="acoes-principais" [class.acoes-principais--desligado]="desligado">
+          @if (desligado) {
+            <button type="button" class="btn-primary" (click)="abrirModalRematricula()">Rematrícula após desligamento</button>
+          } @else {
+            <button type="button" class="btn-primary" (click)="abrirModalDesligamento()">Desligamento</button>
+            <button type="button" class="btn-primary" (click)="abrirModalTransferencia()">Transferência</button>
+          }
+        </div>
+
+        <button type="button" class="excluir-usuario" (click)="excluirUsuario()">Excluir usuário</button>
+        }
+      </aside>
+
+      <main class="perfil-dados">
+        <nav class="abas-container" aria-label="Dados do usuário">
+          @for (aba of abasVisiveis; track aba.id) {
+            <button type="button" class="aba-btn" [class.ativa]="abaAtiva === aba.id" (click)="selecionarAba(aba.id)">
+              {{ aba.label }}
+            </button>
+          }
+        </nav>
+
+        <div class="aba-painel">
+          @switch (abaAtiva) {
+            @case ('dados-pessoais') {
+              <app-usuario-perfil-dados-pessoais
+                [usuario]="usuario"
+                [somenteLeitura]="desligado || monitor"
+                (usuarioAtualizado)="atualizarUsuario($event)"
+              ></app-usuario-perfil-dados-pessoais>
+            }
+            @case ('saude') {
+              <app-usuario-perfil-saude
+                [usuario]="usuario"
+                [somenteLeitura]="desligado || monitor"
+                (usuarioAtualizado)="atualizarUsuario($event)"
+              ></app-usuario-perfil-saude>
+            }
+            @case ('dados-socioeconomicos') {
+              <app-usuario-perfil-dados-socioeconomicos
+                [usuario]="usuario"
+                [somenteLeitura]="desligado || monitor"
+                (usuarioAtualizado)="atualizarUsuario($event)"
+              ></app-usuario-perfil-dados-socioeconomicos>
+            }
+            @case ('contatos') {
+              <app-usuario-perfil-contatos
+                [usuario]="usuario"
+                [somenteLeitura]="desligado || monitor"
+                (usuarioAtualizado)="atualizarUsuario($event)"
+              ></app-usuario-perfil-contatos>
+            }
+            @case ('acompanhamento') {
+              <app-usuario-perfil-aba-placeholder titulo="Acompanhamento" descricao="Os registros de acompanhamento entrarão nesta área."></app-usuario-perfil-aba-placeholder>
+            }
+            @case ('matricula') {
+              <app-usuario-perfil-matriculas [usuario]="usuario"></app-usuario-perfil-matriculas>
+            }
+          }
+        </div>
+      </main>
+    </div>
+
+    @if (modalDesligamentoAberto) {
+      <app-modal-layout class="perfil-modal" titulo="Desligamento" (closed)="fecharModalDesligamento()">
+        <form class="perfil-modal-form" [formGroup]="formDesligamento" (ngSubmit)="confirmarDesligamento()">
+          <mat-form-field appearance="outline" class="campo-cheio">
+            <mat-label>Justificativa*</mat-label>
+            <textarea matInput formControlName="justificativa" rows="4"></textarea>
+          </mat-form-field>
+          @if (formDesligamento.get('justificativa')?.invalid && formDesligamento.get('justificativa')?.touched) {
+            <span class="error-text">A justificativa é obrigatória.</span>
+          }
+        </form>
+
+        <div class="perfil-modal-acoes">
+          <button type="button" class="btn-cancelar-modal" (click)="fecharModalDesligamento()" [disabled]="salvandoDesligamento">Cancelar</button>
+          <button type="button" class="btn-primary" (click)="confirmarDesligamento()" [disabled]="salvandoDesligamento">
+            {{ salvandoDesligamento ? 'Enviando...' : 'Confirmar' }}
+          </button>
+        </div>
+      </app-modal-layout>
+    }
+
+    @if (modalTransferenciaAberto) {
+      <app-modal-layout class="perfil-modal" [titulo]="modoSelecaoTurma === 'rematricula' ? 'Matricular novamente' : 'Transferência'" (closed)="fecharModalTransferencia()">
+        <form class="perfil-modal-form" [formGroup]="formTransferencia" (ngSubmit)="confirmarSelecaoTurma()">
+          <mat-form-field appearance="outline" class="campo-cheio">
+            <mat-label>Unidade*</mat-label>
+            <mat-select formControlName="idUnidade" (selectionChange)="onUnidadeTransferenciaChange($event.value)">
+              @for (unidade of unidadesDisponiveisTransferencia; track unidade.id) {
+                <mat-option [value]="unidade.id">{{ unidade.nome }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+
+          @if (!formTransferencia.get('idUnidade')?.value && formTransferencia.get('idUnidade')?.touched) {
+            <span class="error-text">A unidade é obrigatória.</span>
+          }
+
+          <mat-form-field appearance="outline" class="campo-cheio">
+            <mat-label>Turma*</mat-label>
+            <mat-select formControlName="idTurmaNova">
+              @for (turmaItem of turmasDisponiveisTransferencia; track turmaItem.id) {
+                <mat-option [value]="turmaItem.id">
+                  {{ turmaItem.periodo === 'MANHA' ? 'Manhã' : 'Tarde' }} ({{ turmaItem.horaInicio }} às {{ turmaItem.horaFim }})
+                </mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+
+          @if (!formTransferencia.get('idTurmaNova')?.value && formTransferencia.get('idTurmaNova')?.touched) {
+            <span class="error-text">A turma é obrigatória.</span>
+          }
+
+          @if (carregandoUnidadesTransferencia || carregandoTurmasTransferencia) {
+            <span class="perfil-modal-info">Carregando opções...</span>
+          }
+
+          @if (!carregandoTurmasTransferencia && formTransferencia.get('idUnidade')?.value && !turmasDisponiveisTransferencia.length) {
+            <span class="perfil-modal-info">Não há outra turma disponível nesta unidade.</span>
+          }
+
+          @if (conflitoPeriodoTransferencia) {
+            <span class="aviso-conflito-transferencia">{{ avisoConflitoPeriodoTransferencia }}</span>
+          }
+        </form>
+
+        <div class="perfil-modal-acoes">
+          <button type="button" class="btn-cancelar-modal" (click)="fecharModalTransferencia()" [disabled]="salvandoTransferencia">Cancelar</button>
+          <button type="button" class="btn-primary" (click)="confirmarSelecaoTurma()" [disabled]="salvandoTransferencia">
+            {{ salvandoTransferencia ? 'Enviando...' : (modoSelecaoTurma === 'rematricula' ? 'Matricular' : 'Confirmar') }}
+          </button>
+        </div>
+      </app-modal-layout>
+    }
+  }
+</section>

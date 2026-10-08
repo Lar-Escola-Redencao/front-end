@@ -1,0 +1,112 @@
+<section class="aba-conteudo">
+  <form class="form-saude" [class.form-disabled]="!editando" [formGroup]="form" (ngSubmit)="salvar()">
+    @if (!somenteLeitura) {
+    <div class="aba-cabecalho">
+      @if (!editando) {
+        <button type="button" class="btn-primary" (click)="editar()">Editar</button>
+      } @else {
+        <div class="acoes-edicao">
+          <button type="button" class="btn-cancelar" [disabled]="salvando" (click)="cancelar()">Cancelar</button>
+          <button type="submit" class="btn-primary" [disabled]="salvando || form.invalid || !temAlteracoes">
+            <span *ngIf="salvando" class="spinner" aria-hidden="true"></span>
+            <span>{{ salvando ? 'Salvando...' : 'Salvar' }}</span>
+          </button>
+        </div>
+      }
+    </div>
+    }
+
+    <h3>Saúde</h3>
+
+    <div class="saude-lista">
+      @for (pergunta of perguntasSaude; track pergunta.campo) {
+        <div class="opcao-linha" [class.tem-campo]="form.get(pergunta.campo)?.value">
+          <div class="opcao-pergunta">
+            <span>{{ pergunta.label }}</span>
+            <div class="radio-opcoes">
+              <label>
+                <input type="radio" [formControlName]="pergunta.campo" [value]="false">
+                Não
+              </label>
+              <label>
+                <input type="radio" [formControlName]="pergunta.campo" [value]="true">
+                Sim
+              </label>
+            </div>
+          </div>
+
+          @if (form.get(pergunta.campo)?.value) {
+            <mat-form-field appearance="outline">
+              <mat-label>Qual ou quais?*</mat-label>
+              <input matInput [formControlName]="pergunta.descricao">
+              <mat-error>Campo obrigatório.</mat-error>
+            </mat-form-field>
+          }
+        </div>
+      }
+    </div>
+
+    <h3>Laudos, exames e receitas</h3>
+
+    @if (editando) {
+      <div class="upload-foto" (click)="inputSaude.click()">
+        <span class="upload-foto-icone" aria-hidden="true"><mat-icon>upload_file</mat-icon></span>
+        <div class="upload-foto-textos">
+          <span class="upload-foto-titulo">
+            {{ arquivosSaude.length ? (arquivosSaude.length === 1 ? '1 arquivo selecionado' : arquivosSaude.length + ' arquivos selecionados') : 'Anexe laudos, exames e receitas' }}
+          </span>
+          <span class="upload-foto-formatos">PDF, JPG, PNG · até 4 arquivos de 10 MB cada</span>
+        </div>
+        <button type="button" class="btn-procurar" (click)="$event.stopPropagation(); inputSaude.click()">Anexar</button>
+        <input #inputSaude type="file" class="upload-foto-input" multiple accept=".pdf,.jpg,.jpeg,.png" tabindex="-1"
+          (click)="$event.stopPropagation()" (change)="selecionarArquivosSaude($event)">
+      </div>
+      <span class="error-text" *ngIf="erroArquivos">{{ erroArquivos }}</span>
+    }
+
+    @if (carregandoArquivos) {
+      <div class="estado-anexos estado-anexos-carregando">
+        <span class="spinner-primario" aria-hidden="true"></span>
+      </div>
+    } @else if (erroCarregarArquivos) {
+      <div class="estado-anexos estado-anexos-erro">
+        <p>{{ erroCarregarArquivos }}</p>
+        <button type="button" class="btn-tentar-novamente" (click)="tentarCarregarArquivosNovamente()">Tentar novamente</button>
+      </div>
+    } @else if (arquivosSaudeSalvos.length || arquivosSaude.length) {
+      <div class="arquivos-lista" [class.quatro-arquivos]="arquivosSaudeSalvos.length + arquivosSaude.length === 4">
+        @for (arquivo of arquivosSaudeSalvos; track arquivo.id) {
+          <div class="arquivo-selecionado">
+            @if (editando) {
+              <button type="button" (click)="removerArquivoSaudeSalvo(arquivo)" aria-label="Excluir anexo salvo">
+                <mat-icon>delete</mat-icon>
+              </button>
+            }
+            <mat-icon class="arquivo-tipo-icone">{{ iconeArquivo(arquivo.titulo) }}</mat-icon>
+            <span>{{ arquivo.titulo }}</span>
+            <div class="documento-acoes">
+              <a [href]="urlArquivo(arquivo)" target="_blank" rel="noopener noreferrer" class="btn-acao" title="Visualizar">
+                <mat-icon>visibility</mat-icon>
+              </a>
+              <a [href]="urlArquivo(arquivo)" download class="btn-acao btn-acao-secundario" title="Baixar">
+                <mat-icon>download</mat-icon>
+              </a>
+            </div>
+          </div>
+        }
+
+        @for (arquivo of arquivosSaude; track $index) {
+          <div class="arquivo-selecionado">
+            <button type="button" (click)="removerArquivoSaude($index)" aria-label="Remover arquivo">
+              <mat-icon>delete</mat-icon>
+            </button>
+            <mat-icon class="arquivo-tipo-icone">{{ arquivo.type.startsWith('image/') ? 'image' : 'description' }}</mat-icon>
+            <span>{{ arquivo.name }}</span>
+          </div>
+        }
+      </div>
+    } @else {
+      <p class="texto-vazio">Nenhum documento de saúde anexado.</p>
+    }
+  </form>
+</section>

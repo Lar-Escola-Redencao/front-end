@@ -1,7 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { Observable, of, tap } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { Observable, catchError, finalize, of, shareReplay, tap } from 'rxjs';
 
 import { environment } from '../../../../environments/environment';
 import { MembroLogadoDTO, Papel } from './sessao.model';
@@ -14,6 +13,7 @@ export class SessaoService {
 
   private readonly _membro = signal<MembroLogadoDTO | null>(null);
   private carregando = false;
+  private carregamentoEmAndamento?: Observable<MembroLogadoDTO | null>;
 
   readonly membro = this._membro.asReadonly();
 
@@ -29,22 +29,30 @@ export class SessaoService {
   });
 
   carregar(): Observable<MembroLogadoDTO | null> {
-    if (this._membro() || this.carregando) return of(this._membro());
+    if (this._membro()) return of(this._membro());
+    if (this.carregamentoEmAndamento) return this.carregamentoEmAndamento;
+
     this.carregando = true;
-    return this.http.get<MembroLogadoDTO>(`${this.apiUrl}/me`).pipe(
+    this.carregamentoEmAndamento = this.http.get<MembroLogadoDTO>(`${this.apiUrl}/me`).pipe(
       tap((membro) => {
         this._membro.set(membro);
-        this.carregando = false;
       }),
       catchError(() => {
-        this.carregando = false;
         return of(null);
-      })
+      }),
+      finalize(() => {
+        this.carregando = false;
+        this.carregamentoEmAndamento = undefined;
+      }),
+      shareReplay({ bufferSize: 1, refCount: false })
     );
+    return this.carregamentoEmAndamento;
   }
 
   limpar(): void {
     this._membro.set(null);
+    this.carregamentoEmAndamento = undefined;
+    this.carregando = false;
   }
 
   temAcessoAUnidade(idUnidade: number | null | undefined): boolean {

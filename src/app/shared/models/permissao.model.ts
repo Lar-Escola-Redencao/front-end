@@ -7,6 +7,7 @@ export const ROLES: readonly Role[] = ['ADMINISTRADOR', 'COORDENADOR', 'MONITOR'
 export type Modulo =
   | 'diario'
   | 'usuarios'
+  | 'perfil-usuario'
   | 'colaboradores'
   | 'unidades-turmas'
   | 'conteudo-publico';
@@ -20,6 +21,7 @@ export type Modulo =
 export const PERMISSOES: Record<Modulo, readonly Role[]> = {
   diario: ['ADMINISTRADOR', 'COORDENADOR', 'MONITOR'],
   usuarios: ['ADMINISTRADOR', 'COORDENADOR'],
+  'perfil-usuario': ['ADMINISTRADOR', 'COORDENADOR', 'MONITOR'],
   colaboradores: ['ADMINISTRADOR', 'COORDENADOR'],
   'unidades-turmas': ['ADMINISTRADOR'],
   'conteudo-publico': ['ADMINISTRADOR'],

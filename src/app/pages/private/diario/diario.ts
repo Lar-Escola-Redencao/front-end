@@ -1,5 +1,6 @@
 import { Component, OnInit, OnDestroy, inject, NgZone, ChangeDetectorRef, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { EMPTY, Subject, Subscription, catchError, finalize, interval, merge, of, switchMap, tap, startWith } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
@@ -24,7 +25,7 @@ type FiltrosDiario = { idUnidade: number | null; idTurma: number | null; data: s
   selector: 'app-diario',
   standalone: true,
   imports: [
-    CommonModule, FormsModule, ReactiveFormsModule, ModalLayout,
+    CommonModule, RouterLink, FormsModule, ReactiveFormsModule, ModalLayout,
     MatFormFieldModule, MatInputModule, MatSelectModule, MatIconModule
   ],
   templateUrl: './diario.html',
@@ -39,6 +40,7 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
   private toastr = inject(ToastrService);
   private cdr = inject(ChangeDetectorRef);
   private ngZone = inject(NgZone);
+  private route = inject(ActivatedRoute);
 
   filtroForm: FormGroup = this.fb.group({
     idUnidade: [null, Validators.required],
@@ -62,6 +64,8 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
   private unidadeAlterada = new Subject<number | null>();
   private filtrosAplicados: FiltrosDiario = this.filtroForm.getRawValue();
   private destruido = false;
+  private idTurmaInicialPendente: number | null = null;
+  private deveAplicarSelecaoInicialTurma = false;
 
   modalOcorrenciaAberto = false;
   modoOcorrencia: 'LISTA' | 'NOVO' | 'EDITAR' | 'VER' = 'LISTA';
@@ -83,11 +87,21 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
     { value: 'OUTRO', label: 'Outro' }
   ];
 
+  get perfilQueryParams(): { returnUrl: string } {
+    return { returnUrl: this.montarReturnUrlDiario() };
+  }
+
+  perfilAcessivel(usuario: FrequenciaUsuarioResponseDTO): boolean {
+    return usuario.permiteAcessoPerfil !== false;
+  }
+
+  avisarPerfilInacessivel(): void {
+    this.toastr.warning(
+      'O perfil deste usuário foi excluído do sistema.'
+    );
+  }
+
   ngOnInit(): void {
-    this.subs.add(this.sessao.carregar().subscribe(() => {
-      this.carregarUnidades();
-      this.cdr.markForCheck();
-    }));
     this.subs.add(interval(1000).subscribe(() => this.cdr.markForCheck()));
 
     this.subs.add(
@@ -106,6 +120,7 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
         const id = this.filtroForm.get('idUnidade')?.value;
         this.turmas = turmas.filter(t => t.unidade.id === id);
         if (id) this.filtroForm.get('idTurma')?.enable({ emitEvent: false });
+        this.aplicarSelecaoInicialTurma();
         this.cdr.markForCheck();
       })
     );
@@ -150,6 +165,11 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
         this.cdr.markForCheck();
       })
     );
+
+    this.subs.add(this.sessao.carregar().subscribe(() => {
+      this.carregarUnidades();
+      this.cdr.markForCheck();
+    }));
   }
 
   ngOnDestroy(): void {
@@ -195,8 +215,95 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
     this.subs.add(this.unidadeService.listarTodas().subscribe({ next: dados => {
       const permitidas = this.sessao.unidadesPermitidasIds();
       this.unidades = permitidas === null ? dados : dados.filter((u: any) => permitidas.includes(u.id));
+      this.aplicarSelecaoInicialUnidade();
       this.cdr.markForCheck();
     }, error: () => this.toastr.error('Erro ao carregar as unidades.') }));
+  }
+
+  private aplicarSelecaoInicialUnidade(): void {
+    const filtrosUrl = this.obterFiltrosDaUrl();
+    const idUnidadeUrlValida = filtrosUrl.idUnidade && this.unidades.some(u => u.id === filtrosUrl.idUnidade)
+      ? filtrosUrl.idUnidade
+      : null;
+    const idUnidadeAuto = this.deveAutoSelecionarUnidade() && this.unidades.length === 1
+      ? this.unidades[0].id
+      : null;
+    const idUnidade = idUnidadeUrlValida ?? idUnidadeAuto;
+
+    if (!idUnidade || this.filtroForm.get('idUnidade')?.value) return;
+
+    const filtros = {
+      ...this.filtrosAplicados,
+      idUnidade,
+      idTurma: null,
+      data: filtrosUrl.data ?? this.filtrosAplicados.data
+    };
+    this.idTurmaInicialPendente = filtrosUrl.idTurma ?? null;
+    this.deveAplicarSelecaoInicialTurma = true;
+    this.filtrosAplicados = filtros;
+    this.filtroForm.patchValue(filtros, { emitEvent: false });
+    this.unidadeAlterada.next(idUnidade);
+  }
+
+  private aplicarSelecaoInicialTurma(): void {
+    if (!this.deveAplicarSelecaoInicialTurma) return;
+
+    const filtrosAtuais: FiltrosDiario = this.filtroForm.getRawValue();
+    const idTurmaUrlValida = this.idTurmaInicialPendente && this.turmas.some(t => t.id === this.idTurmaInicialPendente)
+      ? this.idTurmaInicialPendente
+      : null;
+    const turmaAtual = this.turmas.find(t => this.agoraEstaNoIntervaloDaTurma(t));
+    const idTurmaAuto = !idTurmaUrlValida && turmaAtual ? turmaAtual.id : null;
+    const idTurma = idTurmaUrlValida ?? idTurmaAuto;
+
+    this.deveAplicarSelecaoInicialTurma = false;
+    this.idTurmaInicialPendente = null;
+    if (!idTurma || filtrosAtuais.idTurma) return;
+
+    const filtros = { ...filtrosAtuais, idTurma };
+    this.filtrosAplicados = filtros;
+    this.filtroForm.patchValue(filtros, { emitEvent: false });
+    this.filtrosAlterados.next();
+  }
+
+  private deveAutoSelecionarUnidade(): boolean {
+    return this.sessao.isCoordenador() || this.sessao.isMonitor();
+  }
+
+  private agoraEstaNoIntervaloDaTurma(turma: any): boolean {
+    const data = this.filtroForm.get('data')?.value || this.hojeFormatada();
+    const inicio = this.instanteBrasilia(`${data}T${turma.horaInicio}`);
+    const fim = this.instanteBrasilia(`${data}T${turma.horaFim}`);
+    const agora = Date.now();
+    return agora >= inicio && agora <= fim;
+  }
+
+  private obterFiltrosDaUrl(): Partial<FiltrosDiario> {
+    const params = this.route.snapshot.queryParamMap;
+    const idUnidade = this.numeroQueryParam(params.get('idUnidade'));
+    const idTurma = this.numeroQueryParam(params.get('idTurma'));
+    const data = params.get('data');
+    return {
+      ...(idUnidade ? { idUnidade } : {}),
+      ...(idTurma ? { idTurma } : {}),
+      ...(data && /^\d{4}-\d{2}-\d{2}$/.test(data) ? { data } : {})
+    };
+  }
+
+  private numeroQueryParam(valor: string | null): number | null {
+    if (!valor) return null;
+    const numero = Number(valor);
+    return Number.isInteger(numero) && numero > 0 ? numero : null;
+  }
+
+  private montarReturnUrlDiario(): string {
+    const { idUnidade, idTurma, data } = this.filtroForm.getRawValue();
+    const params = new URLSearchParams();
+    if (idUnidade) params.set('idUnidade', String(idUnidade));
+    if (idTurma) params.set('idTurma', String(idTurma));
+    if (data) params.set('data', data);
+    const query = params.toString();
+    return `/dashboard/diario${query ? `?${query}` : ''}`;
   }
 
   get isMonitor(): boolean {

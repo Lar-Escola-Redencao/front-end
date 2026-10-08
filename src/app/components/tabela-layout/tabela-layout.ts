@@ -1,3 +1,5 @@
+import { CommonModule } from '@angular/common';
+
 import {
   Component,
   EventEmitter,
@@ -14,7 +16,7 @@ export interface TabelaColuna<T = any> {
   titulo: string;
   formatar?: (valor: any, linha: T) => string;
   principalMobile?: boolean;
-  tipo?: 'texto' | 'status' | 'imagem' | 'documento';
+  tipo?: 'texto' | 'status' | 'matricula-status' | 'imagem' | 'documento' | 'telefone';
   /** Quando true, o cabeçalho fica clicável e emite (ordenar). */
   ordenavel?: boolean;
   /**
@@ -45,6 +47,7 @@ export interface TabelaOrdenacao {
   standalone: true,
 
   imports: [
+    CommonModule,
     MatIconModule
   ],
 
@@ -98,7 +101,7 @@ export class TabelaLayout<T = any> {
     return this.obterEtiqueta(linha, this.colunaPrincipal);
   }
 
-  private get colunaPrincipal(): TabelaColuna<T> {
+  get colunaPrincipal(): TabelaColuna<T> {
     return (
       this.colunas.find(c => c.principalMobile) ||
       this.colunas[0]
@@ -174,10 +177,19 @@ export class TabelaLayout<T = any> {
     return `${this.apiUrl}${valorString}`;
   }
 
+  obterHrefTelefone(valor: any): string | null {
+    const telefone = String(valor ?? '').replace(/\D/g, '');
+    return telefone ? `tel:${telefone}` : null;
+  }
+
   obterStatus(valor: any): string {
     return valor === true
       ? 'Ativo'
       : 'Inativo';
+  }
+
+  obterClasseStatusMatricula(valor: unknown): string {
+    return String(valor ?? '').toLowerCase();
   }
 
 

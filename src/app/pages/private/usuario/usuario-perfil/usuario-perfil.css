@@ -1,0 +1,448 @@
+.usuario-perfil {
+  box-sizing: border-box;
+  min-height: calc(100vh - 130px);
+  padding: 32px 24px 48px;
+  background: var(--branco);
+}
+
+.voltar {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  justify-self: start;
+  width: auto;
+  border: 0;
+  background: transparent;
+  color: #222;
+  cursor: pointer;
+  font-family: var(--fonte-texto);
+  font-size: 14px;
+}
+
+.voltar mat-icon {
+  width: 20px;
+  height: 20px;
+  font-size: 20px;
+}
+
+.perfil-layout {
+  display: grid;
+  grid-template-columns: 238px minmax(760px, 1fr);
+  gap: 14px 34px;
+  width: min(100%, 1110px);
+  margin: 0 auto;
+  align-items: start;
+}
+
+.perfil-lateral {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 16px;
+}
+
+.perfil-card,
+.perfil-dados {
+  border: 1px solid #d8d8d8;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.perfil-card {
+  padding: 16px 22px 22px;
+  text-align: center;
+}
+
+.avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 128px;
+  width: 128px;
+  height: 128px;
+  margin: 0 auto 18px;
+  border-radius: 50%;
+  background: rgba(54, 130, 220, 0.12);
+  color: #1661bd;
+  overflow: hidden;
+}
+
+.avatar img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatar mat-icon {
+  width: 52px;
+  height: 52px;
+  font-size: 52px;
+  color: #1661bd;
+  font-family: 'Material Symbols Outlined';
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 48;
+}
+
+.perfil-card h1 {
+  margin: 0 0 18px;
+  color: #222;
+  font-family: var(--fonte-texto);
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.status-desligado {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 30px;
+  margin: -4px 0 14px;
+  padding: 0 20px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.08);
+  color: rgba(0, 0, 0, 0.6);
+  font-family: var(--fonte-texto);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.justificativa-desligado {
+  display: block;
+  max-width: 100%;
+  margin: 0 0 18px;
+  color: #888;
+  font-family: var(--fonte-texto);
+  font-size: 15px;
+  font-style: italic;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.perfil-resumo {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  margin: 0;
+  text-align: left;
+}
+
+.perfil-resumo div {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+}
+
+.perfil-resumo dt,
+.perfil-resumo dd {
+  margin: 0;
+}
+
+.perfil-resumo .material-symbols-outlined {
+  width: 17px;
+  height: 17px;
+  color: var(--primary-color);
+  font-size: 17px;
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  line-height: 1;
+}
+
+.perfil-resumo dd {
+  min-width: 0;
+  color: #333;
+  font-family: var(--fonte-texto);
+  font-size: 14px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.acoes-principais {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.acoes-principais--desligado {
+  grid-template-columns: 1fr;
+}
+
+.acoes-principais .btn-primary {
+  min-height: 34px;
+  padding: 0 10px;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.acoes-principais .btn-rematricular {
+  min-height: 54px;
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.excluir-usuario {
+  align-self: center;
+  border: 0;
+  background: transparent;
+  color: #888;
+  cursor: pointer;
+  font-family: var(--fonte-texto);
+  font-size: 14px;
+}
+
+.excluir-usuario:hover {
+  color: var(--error-color, #b3261e);
+}
+
+.perfil-dados {
+  overflow: hidden;
+}
+
+.abas-container {
+  display: flex;
+  gap: 26px;
+  align-items: center;
+  min-height: 42px;
+  padding: 0 22px;
+  border-bottom: 1px solid #e0e0e0;
+  overflow-x: auto;
+}
+
+.aba-btn {
+  flex: 0 0 auto;
+  align-self: stretch;
+  padding: 0 0;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: #aaa;
+  cursor: pointer;
+  font-family: var(--fonte-texto);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.aba-btn:hover,
+.aba-btn.ativa {
+  color: var(--primary-color);
+}
+
+.aba-btn.ativa {
+  border-bottom-color: var(--primary-color);
+}
+
+.aba-painel {
+  padding: 28px 24px;
+}
+
+.estado {
+  width: min(100%, 1110px);
+  margin: 0 auto;
+  padding: 32px;
+  border: 1px solid #d8d8d8;
+  border-radius: 8px;
+  color: #555;
+  font-family: var(--fonte-texto);
+  text-align: center;
+}
+
+.estado-carregando {
+  display: flex;
+  justify-content: center;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.estado-erro {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  color: var(--error-color, #b3261e);
+}
+
+.estado-erro p {
+  margin: 0;
+}
+
+.spinner-primario {
+  display: inline-block;
+  width: 28px;
+  height: 28px;
+  border: 3px solid rgba(0, 0, 0, 0.1);
+  border-top-color: var(--primary-color);
+  border-radius: 50%;
+  animation: girar 0.8s linear infinite;
+}
+
+.btn-tentar-novamente {
+  border: 1px solid var(--primary-color);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--primary-color);
+  padding: 8px 16px;
+  cursor: pointer;
+  font-family: var(--fonte-texto);
+}
+
+.btn-tentar-novamente:hover {
+  background: var(--primary-color);
+  color: var(--branco);
+}
+
+.perfil-modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.perfil-modal-form .error-text {
+  display: block;
+  margin: -4px 0 2px 2px;
+  color: var(--mat-form-field-error-text-color, #d32f2f);
+  font-family: var(--fonte-texto);
+  font-size: 12px;
+  line-height: 1.2;
+}
+
+.campo-cheio {
+  width: 100%;
+}
+
+.btn-cancelar-modal {
+  border: 0;
+  background: transparent;
+  color: var(--input-color, #777);
+  cursor: pointer;
+  font-family: var(--fonte-texto);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.btn-cancelar-modal:disabled,
+.perfil-modal-form .btn-primary:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.perfil-modal-acoes {
+  display: flex;
+  justify-content: flex-end;
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.perfil-modal-info,
+.aviso-conflito-transferencia {
+  display: block;
+  margin-top: -4px;
+  color: #777;
+  font-family: var(--fonte-texto);
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.aviso-conflito-transferencia {
+  color: #d98200;
+  font-weight: 700;
+}
+
+:host ::ng-deep app-modal-layout.perfil-modal .modal-card {
+  width: min(100%, 560px);
+}
+
+:host ::ng-deep app-modal-layout.perfil-modal .mat-mdc-text-field-wrapper {
+  min-height: 58px;
+  background: var(--branco) !important;
+}
+
+:host ::ng-deep app-modal-layout.perfil-modal .mat-mdc-form-field-flex {
+  min-height: 58px;
+}
+
+:host ::ng-deep app-modal-layout.perfil-modal .mat-mdc-form-field-infix {
+  min-height: 58px;
+  padding-top: 16px;
+  padding-bottom: 6px;
+}
+
+:host ::ng-deep app-modal-layout.perfil-modal .mat-mdc-select {
+  margin-top: 5px;
+}
+
+:host ::ng-deep app-modal-layout.perfil-modal textarea.mat-mdc-input-element {
+  min-height: 104px;
+  margin-top: 0 !important;
+  padding-top: 9px;
+  resize: vertical;
+}
+
+:host ::ng-deep app-modal-layout.perfil-modal .mat-mdc-form-field:has(textarea) .mat-mdc-text-field-wrapper,
+:host ::ng-deep app-modal-layout.perfil-modal .mat-mdc-form-field:has(textarea) .mat-mdc-form-field-flex,
+:host ::ng-deep app-modal-layout.perfil-modal .mat-mdc-form-field:has(textarea) .mat-mdc-form-field-infix {
+  min-height: 136px;
+}
+
+:host ::ng-deep app-modal-layout.perfil-modal .mdc-floating-label--float-above {
+  background: var(--branco) !important;
+}
+
+:host ::ng-deep app-modal-layout.perfil-modal .mat-mdc-form-field-required-marker,
+:host ::ng-deep app-modal-layout.perfil-modal .mdc-floating-label--required::after {
+  display: none;
+  content: none;
+}
+
+@keyframes girar {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 1050px) {
+  .usuario-perfil {
+    padding: 32px 16px;
+  }
+
+  .perfil-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .voltar-espaco {
+    display: none;
+  }
+
+  .perfil-lateral {
+    max-width: 360px;
+    width: 100%;
+    margin: 20px auto;
+  }
+}
+
+@media (max-width: 520px) {
+  .abas-container {
+    gap: 20px;
+    padding: 0 16px;
+  }
+
+  .aba-painel {
+    padding: 22px 16px;
+  }
+
+  .acoes-principais {
+    grid-template-columns: 1fr;
+  }
+
+  .perfil-modal-acoes {
+    flex-direction: column-reverse;
+  }
+
+  .perfil-modal-acoes .btn-primary,
+  .perfil-modal-acoes .btn-cancelar-modal {
+    width: 100%;
+  }
+}

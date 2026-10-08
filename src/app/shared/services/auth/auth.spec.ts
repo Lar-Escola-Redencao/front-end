@@ -4,6 +4,7 @@ import { provideRouter, Router } from '@angular/router';
 
 import { environment } from '../../../../environments/environment';
 import { Auth } from './auth';
+import { SessaoService } from './sessao.service';
 
 function base64url(input: string): string {
   return btoa(input).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
@@ -32,7 +33,10 @@ describe('Auth', () => {
   function createService(): Auth {
     TestBed.configureTestingModule({
       imports: [HttpClientTestingModule],
-      providers: [provideRouter([])],
+      providers: [
+        provideRouter([]),
+        { provide: SessaoService, useValue: { limpar: vi.fn() } }
+      ],
     });
     return TestBed.inject(Auth);
   }

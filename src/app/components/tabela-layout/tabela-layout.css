@@ -150,6 +150,9 @@
 
 .botao-acao mat-icon {
   font-size: 21px;
+  font-family: 'Material Symbols Outlined';
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  line-height: 1;
 }
 
 .botao-excluir {
@@ -158,6 +161,17 @@
 
 .botao-excluir:hover {
   color: rgb(104, 5, 5);
+}
+
+.tabela-telefone {
+  color: inherit;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.tabela-telefone:hover {
+  color: var(--primary-color);
+  text-decoration: underline;
 }
 
 .badge-status {
@@ -182,6 +196,26 @@
   background-color: #fee2e2;
 }
 
+.status-matricula-ativo {
+  color: #139445;
+  background-color: #dcfce7;
+}
+
+.status-matricula-egresso {
+  color: #555;
+  background-color: #e8e8e8;
+}
+
+.status-matricula-excluido {
+  color: #555;
+  background-color: #e8e8e8;
+}
+
+.status-matricula-inativo {
+  color: #555;
+  background-color: #e8e8e8;
+}
+
 .etiqueta-celula {
   display: inline-flex;
   align-items: center;
@@ -197,6 +231,14 @@
   vertical-align: middle;
   color: rgba(0, 0, 0, 0.6);
   background-color: rgba(0, 0, 0, 0.08);
+}
+
+.etiqueta-icone {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  margin-left: 6px;
+  vertical-align: middle;
 }
 
 .header-mobile .etiqueta-celula {
@@ -336,6 +378,11 @@
     text-overflow: ellipsis;
     white-space: nowrap;
     
+  }
+
+  .titulo-mobile--status {
+    display: flex;
+    align-items: center;
   }
 
   /* Ícone da seta */

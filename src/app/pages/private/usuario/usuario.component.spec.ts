@@ -1,6 +1,6 @@
 import { ComponentFixture, ComponentFixtureAutoDetect, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
-import { provideRouter, ActivatedRoute } from '@angular/router';
+import { provideRouter, ActivatedRoute, Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { of, throwError, Subject } from 'rxjs';
 import { vi } from 'vitest';
@@ -267,6 +267,16 @@ describe('Contrato de edição de usuários', () => {
   it('habilita ordenação em todas as colunas de dados', () => {
     expect(component.colunas.every(coluna => coluna.ordenavel)).toBe(true);
     expect(component.colunasContatos.every(coluna => coluna.ordenavel)).toBe(true);
+  });
+
+  it('abre o perfil do usuário pela ação de visualização da tabela', () => {
+    const router = TestBed.inject(Router);
+    const navigate = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+    service.buscarPorId.mockClear();
+    component.abaAtiva = 'usuarios';
+    component.executarAcao({ tipo: 'ver', linha: usuario });
+    expect(navigate).toHaveBeenCalledWith(['/dashboard/usuarios', usuario.id], { queryParams: { returnUrl: '/' } });
+    expect(service.buscarPorId).not.toHaveBeenCalled();
   });
 
   it('ordena pelo documento alternativo e pela unidade exibida antes de paginar', () => {
