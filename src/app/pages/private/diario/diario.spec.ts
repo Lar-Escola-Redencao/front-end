@@ -281,7 +281,13 @@ describe('Diário de turma', () => {
     const link = fixture.nativeElement.querySelector('.usuario-perfil-link') as HTMLAnchorElement;
     expect(link).toBeTruthy();
     expect(link.textContent?.trim()).toBe('Aluno 1');
-    expect(link.getAttribute('href')).toBe('/dashboard/usuarios/1?returnUrl=%2F');
+    expect(link.getAttribute('href')).toBe('/dashboard/usuarios/1?returnUrl=%2Fdashboard%2Fdiario%3FidUnidade%3D1%26idTurma%3D2%26data%3D2026-10-06');
+  });
+
+  it('seleciona unidade única e turma dentro do horário ao abrir o diário', () => {
+    expect(component.filtroForm.get('idUnidade')!.value).toBe(1);
+    expect(component.filtroForm.get('idTurma')!.value).toBe(2);
+    expect(api.listarFrequencia).toHaveBeenCalledWith(2, '2026-10-06');
   });
 
   it('bloqueia o perfil quando a API nega acesso e mostra aviso', () => {
