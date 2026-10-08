@@ -152,10 +152,11 @@
                 <mat-option [value]="unidade.id">{{ unidade.nome }}</mat-option>
               }
             </mat-select>
-            @if (formTransferencia.get('idUnidade')?.invalid && formTransferencia.get('idUnidade')?.touched) {
-              <mat-error>A unidade é obrigatória.</mat-error>
-            }
           </mat-form-field>
+
+          @if (!formTransferencia.get('idUnidade')?.value && formTransferencia.get('idUnidade')?.touched) {
+            <span class="error-text">A unidade é obrigatória.</span>
+          }
 
           <mat-form-field appearance="outline" class="campo-cheio">
             <mat-label>Turma*</mat-label>
@@ -166,10 +167,11 @@
                 </mat-option>
               }
             </mat-select>
-            @if (formTransferencia.get('idTurmaNova')?.invalid && formTransferencia.get('idTurmaNova')?.touched) {
-              <mat-error>A turma é obrigatória.</mat-error>
-            }
           </mat-form-field>
+
+          @if (!formTransferencia.get('idTurmaNova')?.value && formTransferencia.get('idTurmaNova')?.touched) {
+            <span class="error-text">A turma é obrigatória.</span>
+          }
 
           @if (carregandoUnidadesTransferencia || carregandoTurmasTransferencia) {
             <span class="perfil-modal-info">Carregando opções...</span>

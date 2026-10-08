@@ -264,6 +264,7 @@ export class UsuarioPerfil implements OnInit, OnDestroy {
         };
         this.salvandoDesligamento = false;
         this.modalDesligamentoAberto = false;
+        this.toastr.success('Usuário desligado com sucesso.', 'Sucesso');
         this.atualizarTela();
       }),
       error: (err) => this.ngZone.run(() => {
@@ -381,6 +382,7 @@ export class UsuarioPerfil implements OnInit, OnDestroy {
         this.usuario = usuario;
         this.salvandoTransferencia = false;
         this.modalTransferenciaAberto = false;
+        if (!usuario.matriculaCorrigida) this.toastr.success('Usuário transferido com sucesso.', 'Sucesso');
         if (usuario.matriculaCorrigida) this.toastr.success('Matrícula corrigida');
         if (this.sessao.isCoordenador() && !this.sessao.temAcessoAUnidade(usuario.idUnidade)) {
           this.router.navigate(['/dashboard/usuarios']);
@@ -422,7 +424,13 @@ export class UsuarioPerfil implements OnInit, OnDestroy {
 
     this.salvandoTransferencia = true;
     this.usuarioService.rematricular(this.usuario.id, turma.id).subscribe({
-      next: usuario => this.ngZone.run(() => { this.usuario = usuario; this.salvandoTransferencia = false; this.modalTransferenciaAberto = false; this.atualizarTela(); }),
+      next: usuario => this.ngZone.run(() => {
+        this.usuario = usuario;
+        this.salvandoTransferencia = false;
+        this.modalTransferenciaAberto = false;
+        this.toastr.success('Usuário matriculado novamente com sucesso.', 'Sucesso');
+        this.atualizarTela();
+      }),
       error: err => this.ngZone.run(() => {
         this.salvandoTransferencia = false;
         if (this.erroJaExibidoPeloInterceptor(err)) {
@@ -454,9 +462,10 @@ export class UsuarioPerfil implements OnInit, OnDestroy {
     if (!confirmado) return;
 
     this.usuarioService.deletar(usuario.id).subscribe({
-      next: () => this.ngZone.run(async () => {
-        await Swal.fire('Usuário excluído', 'O usuário foi excluído com sucesso.', 'success');
+      next: () => this.ngZone.run(() => {
+        this.toastr.success('Usuário excluído com sucesso.', 'Sucesso');
         this.router.navigate(['/dashboard/usuarios']);
+        return;
       }),
       error: (err) => this.ngZone.run(() => {
         if (this.erroJaExibidoPeloInterceptor(err)) return;
