@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { EMPTY, Observable, expand, map, reduce } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import {
   AtualizarTurmaDTO,
@@ -21,9 +20,7 @@ export class TurmaService {
 
   constructor(private http: HttpClient) {}
 
-  // Lote único (limitado a TAMANHO_PAGINA_MAXIMO pelo back; unidadeId é ignorado
-  // pelo back) usado onde a tela precisa de todas as turmas de uma unidade de
-  // uma vez, como na checagem de conflito de horário.
+  // Carrega todas as páginas para os selects e a checagem de horários.
   listar(unidadeId?: number | null): Observable<Turma[]> {
     let params = new HttpParams().set('page', 0).set('size', TAMANHO_PAGINA_MAXIMO);
 
@@ -33,12 +30,17 @@ export class TurmaService {
 
     return this.http
       .get<PaginaResposta<TurmaBackend>>(`${this.apiUrl}/todas`, { params })
-      .pipe(map((resposta) => resposta.content.map((turma) => this.normalizarTurma(turma))));
+      .pipe(
+        expand(resposta => resposta.page.number + 1 < resposta.page.totalPages
+          ? this.http.get<PaginaResposta<TurmaBackend>>(`${this.apiUrl}/todas`, {
+            params: params.set('page', resposta.page.number + 1)
+          }) : EMPTY),
+        reduce((turmas, resposta) => turmas.concat(resposta.content.map(turma => this.normalizarTurma(turma))), [] as Turma[])
+      );
   }
 
   // Paginação de verdade (uma página por vez), usada pela tabela de turmas.
-  // O back ignora unidadeId (só pagina) — mandamos mesmo assim para o dia em
-  // que passar a filtrar; até lá, quem reforça o filtro é o componente.
+  // O back aplica o filtro unidadeId antes de paginar.
   listarPaginado(
     pagina: number,
     tamanho: number,
@@ -109,10 +111,10 @@ export class TurmaService {
     }
 
     if (Array.isArray(valor)) {
-      const [hora, minuto] = valor;
-      return `${String(hora).padStart(2, '0')}:${String(minuto).padStart(2, '0')}`;
+      const [hora, minuto, segundo = 0] = valor;
+      return `${String(hora).padStart(2, '0')}:${String(minuto).padStart(2, '0')}${segundo ? ':' + String(segundo).padStart(2, '0') : ''}`;
     }
 
-    return valor.substring(0, 5);
+    return valor.substring(6, 8) === '00' ? valor.substring(0, 5) : valor;
   }
 }

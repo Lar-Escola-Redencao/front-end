@@ -22,13 +22,25 @@ describe('TurmaService', () => {
     httpMock.verify();
   });
 
+  it('carrega páginas seguintes preservando o filtro da unidade e os segundos do início', () => {
+    let resultado: any;
+    service.listar(7).subscribe(t => resultado = t);
+    const primeira = httpMock.expectOne(r => r.url.endsWith('/turmas/todas') && r.params.get('page') === '0');
+    primeira.flush({ content: [{ id: 1, unidadeId: 7, unidadeNome: 'Sede', periodo: 'MANHA', horaInicio: '08:00:01', horaFim: '12:00:00' }], page: { number: 0, totalPages: 2 } });
+    expect(resultado).toBeUndefined();
+    const segunda = httpMock.expectOne(r => r.url.endsWith('/turmas/todas') && r.params.get('page') === '1' && r.params.get('unidadeId') === '7');
+    segunda.flush({ content: [{ id: 2, unidadeId: 7, unidadeNome: 'Sede', periodo: 'TARDE', horaInicio: [13, 0, 1], horaFim: [17, 0, 0] }], page: { number: 1, totalPages: 2 } });
+    expect(resultado.map((t: any) => t.id)).toEqual([1, 2]);
+    expect(resultado.map((t: any) => t.horaInicio)).toEqual(['08:00:01', '13:00:01']);
+  });
+
   it('lists turmas without a query param when no unidadeId is given', () => {
     service.listar().subscribe();
 
-    const req = httpMock.expectOne(`${environment.apiUrl}/turmas/todas`);
+    const req = httpMock.expectOne(r => r.url === `${environment.apiUrl}/turmas/todas`);
     expect(req.request.method).toBe('GET');
     expect(req.request.params.has('unidadeId')).toBe(false);
-    req.flush([]);
+    req.flush({content: [], page: {number: 0, totalPages: 1}});
   });
 
   it('sends unidadeId as a query param when filtering by unidade', () => {
@@ -38,7 +50,7 @@ describe('TurmaService', () => {
       (r) => r.url === `${environment.apiUrl}/turmas/todas` && r.params.get('unidadeId') === '7',
     );
     expect(req.request.method).toBe('GET');
-    req.flush([]);
+    req.flush({content: [], page: {number: 0, totalPages: 1}});
   });
 
   it('fetches a turma by id', () => {
@@ -128,8 +140,8 @@ describe('TurmaService', () => {
     let resultado: any;
     service.listar().subscribe((turmas) => (resultado = turmas));
 
-    const req = httpMock.expectOne(`${environment.apiUrl}/turmas/todas`);
-    req.flush([
+    const req = httpMock.expectOne(r => r.url === `${environment.apiUrl}/turmas/todas`);
+    req.flush({content: [
       {
         id: 1,
         unidadeId: 1,
@@ -138,7 +150,7 @@ describe('TurmaService', () => {
         horaInicio: '08:00:00',
         horaFim: '12:00:00',
       },
-    ]);
+    ], page: {number: 0, totalPages: 1}});
 
     expect(resultado[0].horaInicio).toBe('08:00');
     expect(resultado[0].horaFim).toBe('12:00');
@@ -149,8 +161,8 @@ describe('TurmaService', () => {
     let resultado: any;
     service.listar().subscribe((turmas) => (resultado = turmas));
 
-    const req = httpMock.expectOne(`${environment.apiUrl}/turmas/todas`);
-    req.flush([
+    const req = httpMock.expectOne(r => r.url === `${environment.apiUrl}/turmas/todas`);
+    req.flush({content: [
       {
         id: 2,
         unidadeId: 1,
@@ -159,7 +171,7 @@ describe('TurmaService', () => {
         horaInicio: [8, 0, 0],
         horaFim: [12, 30, 0],
       },
-    ]);
+    ], page: {number: 0, totalPages: 1}});
 
     expect(resultado[0].horaInicio).toBe('08:00');
     expect(resultado[0].horaFim).toBe('12:30');
