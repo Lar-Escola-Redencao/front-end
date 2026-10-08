@@ -1,7 +1,6 @@
 import {
   ChangeDetectorRef,
   Component,
-  DestroyRef,
   HostListener,
   NgZone,
   OnDestroy,
@@ -13,21 +12,14 @@ import {
   AbstractControl,
   FormArray,
   FormBuilder,
-  FormControl,
   FormGroup,
   FormsModule,
   ReactiveFormsModule,
   Validators
 } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-<<<<<<< HEAD
-import { Subscription, of } from 'rxjs';
-import { debounceTime, distinctUntilChanged, switchMap, catchError, map, filter } from 'rxjs/operators';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-=======
 import { Subscription, of, forkJoin } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap, catchError, map, tap } from 'rxjs/operators';
->>>>>>> teste-dev
 
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -37,7 +29,6 @@ import { MatAutocompleteModule } from '@angular/material/autocomplete';
 
 import { ToastrService } from 'ngx-toastr';
 
-import { CampoBusca } from '@components/campo-busca/campo-busca';
 import { ModalLayout } from '@components/modal-layout/modal-layout';
 import {
   TabelaAcao,
@@ -86,11 +77,7 @@ import { TurmaService } from 'src/app/shared/services/turma/turma.service';
     ModalLayout,
     TabelaLayout,
     Paginacao,
-<<<<<<< HEAD
-    CampoBusca,
-=======
     BarraBusca,
->>>>>>> teste-dev
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
@@ -134,21 +121,11 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
   carregandoLista = false;
   erroLista = false;
   private routeSub?: Subscription;
-<<<<<<< HEAD
-  private listaSub?: Subscription;
-  private formSubs: Subscription[] = [];
-  private readonly destroyRef = inject(DestroyRef);
-
-  // Omnisearch: o termo vai para a URL (?search=) e o back busca em todas as colunas.
-  readonly campoBusca = new FormControl<string>('');
-  busca = '';
-=======
   private buscaVinculoSub?: Subscription;
   private formSubs: Subscription[] = [];
   private readonly subsPorContato = new Map<FormGroup, Subscription[]>();
   private contatosOriginais = new WeakMap<FormGroup, Record<string, string>>();
   private readonly camposCompartilhadosContato = ['nomeCompleto', 'telefone', 'email', 'endereco', 'cpf', 'localTrabalho'];
->>>>>>> teste-dev
   private readonly mensagemCpfDuplicado = 'Usuário já possui uma matrícula ativa.';
 
   // permissõess
@@ -403,25 +380,12 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
       }
       this.abaAtiva = aba;
 
-<<<<<<< HEAD
-      const busca = params.get('search') ?? '';
-      const buscaMudou = busca !== this.busca;
-      this.busca = busca;
-      if (this.campoBusca.value !== busca) {
-        this.campoBusca.setValue(busca, { emitEvent: false });
-      }
-
-      if (this.abaAtiva === 'usuarios') {
-        // A lista de usuários é paginada no cliente: só vai à API quando o termo muda.
-        if (buscaMudou || (this.todosUsuarios.length === 0 && !this.carregandoLista)) {
-=======
       const novaBusca = params.get('search') ?? '';
       const buscaMudou = novaBusca !== this.busca;
       this.busca = novaBusca;
 
       if (this.abaAtiva === 'usuarios') {
         if (buscaMudou || (this.usuariosListagem.length === 0 && !this.carregandoLista)) {
->>>>>>> teste-dev
            this.carregarUsuarios();
         } else {
            this.aplicarPaginacao();
@@ -430,16 +394,6 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
         this.carregarContatos();
       }
     });
-
-    // Só consulta a API 500ms depois que o usuário para de digitar.
-    this.campoBusca.valueChanges
-      .pipe(
-        debounceTime(500),
-        map(valor => (valor ?? '').trim()),
-        filter(termo => termo !== this.busca),
-        takeUntilDestroyed(this.destroyRef)
-      )
-      .subscribe(termo => this.buscar(termo));
   }
 
   private atualizarTela(): void {
@@ -450,28 +404,9 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
   ngOnDestroy(): void {
     this.routeSub?.unsubscribe();
     this.listaSub?.unsubscribe();
-<<<<<<< HEAD
-  }
-
-  /** Atualiza a URL (?search=termo) voltando para a primeira página; o queryParamMap recarrega a lista. */
-  buscar(termo: string): void {
-    this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: { search: termo || null, page: 0 },
-      queryParamsHandling: 'merge'
-    });
-  }
-
-  get mensagemVazia(): string {
-    if (this.busca) {
-      return `Nenhum ${this.abaAtiva === 'usuarios' ? 'usuário' : 'contato'} encontrado para "${this.busca}".`;
-    }
-    return this.abaAtiva === 'usuarios' ? 'Nenhum usuário cadastrado ainda.' : 'Nenhum contato cadastrado ainda.';
-=======
     this.buscaVinculoSub?.unsubscribe();
     this.previewContatoSub?.unsubscribe();
     this.formSubs.forEach(sub => sub.unsubscribe());
->>>>>>> teste-dev
   }
 
   mudarAba(aba: 'usuarios' | 'contatos') {
@@ -503,23 +438,14 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
   }
 
   carregarUsuarios(): void {
-<<<<<<< HEAD
-=======
     // Uma nova busca cancela a requisição anterior em andamento: vale sempre a mais recente.
     this.listaSub?.unsubscribe();
->>>>>>> teste-dev
     this.carregandoLista = true;
     this.erroLista = false;
     this.cdr.markForCheck();
 
-<<<<<<< HEAD
-    // Cancela a requisição anterior para uma resposta antiga não sobrescrever a busca atual.
-    this.listaSub?.unsubscribe();
-    this.listaSub = this.usuarioService.listarAssistidos(this.busca || undefined).subscribe({
-=======
     const busca = this.busca;
     this.listaSub = this.usuarioService.listarUsuarios(busca || undefined).subscribe({
->>>>>>> teste-dev
       next: (resposta) => {
         this.ngZone.run(() => {
           const ativos = resposta.filter(u => u.status !== 'EXCLUIDO');
@@ -545,13 +471,6 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
   }
 
   carregarContatos(): void {
-<<<<<<< HEAD
-    this.carregandoLista = true;
-    this.erroLista = false;
-
-    this.listaSub?.unsubscribe();
-    this.listaSub = this.contatoService.listarContatos(this.pagina, this.tamanho, this.sort, this.busca || undefined).subscribe({
-=======
     this.listaSub?.unsubscribe();
     this.carregandoLista = true;
     this.erroLista = false;
@@ -561,7 +480,6 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
       ? this.contatoService.listarOrdenadosPorVinculos(this.pagina, this.tamanho, this.ordenacao.direcao, busca)
       : this.contatoService.listarContatos(this.pagina, this.tamanho, this.sort, busca);
     this.listaSub = consulta.subscribe({
->>>>>>> teste-dev
       next: (resposta) => {
         this.ngZone.run(() => {
           this.contatos = resposta.content;

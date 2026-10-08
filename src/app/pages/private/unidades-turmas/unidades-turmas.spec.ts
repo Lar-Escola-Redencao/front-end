@@ -167,8 +167,6 @@ describe('UnidadesTurmas', () => {
 
     expect(component.unidadeFiltroId).toBe(1);
     expect(turmaService.listarPaginado).toHaveBeenLastCalledWith(0, 10, 1, undefined);
-<<<<<<< HEAD
-=======
   });
 
   it('envia o termo da barra de busca como search e volta para a primeira página', () => {
@@ -191,7 +189,6 @@ describe('UnidadesTurmas', () => {
 
     expect(component.busca).toBe('');
     expect(unidadeService.listarPaginado).toHaveBeenLastCalledWith(0, 10, undefined, undefined);
->>>>>>> teste-dev
   });
 
   it('volta a listar sem unidadeId ao selecionar "Todas as unidades"', () => {
@@ -202,28 +199,6 @@ describe('UnidadesTurmas', () => {
 
     expect(component.unidadeFiltroId).toBeNull();
     expect(turmaService.listarPaginado).toHaveBeenLastCalledWith(0, 10, null, undefined);
-<<<<<<< HEAD
-  });
-
-  it('só busca na API 500ms depois que o usuário para de digitar', () => {
-    vi.useFakeTimers();
-    try {
-      turmaService.listarPaginado.mockClear();
-
-      component.campoBusca.setValue('man');
-      vi.advanceTimersByTime(300);
-      component.campoBusca.setValue('manha');
-      vi.advanceTimersByTime(499);
-      expect(turmaService.listarPaginado).not.toHaveBeenCalled();
-
-      vi.advanceTimersByTime(1);
-      expect(turmaService.listarPaginado).toHaveBeenCalledTimes(1);
-      expect(turmaService.listarPaginado).toHaveBeenLastCalledWith(0, 10, null, 'manha');
-    } finally {
-      vi.useRealTimers();
-    }
-=======
->>>>>>> teste-dev
   });
 
   it('carrega as unidades e desmarca o estado de carregamento', () => {

@@ -14,15 +14,9 @@ export class UsuarioService {
   private readonly http = inject(HttpClient);
   private readonly apiUrl = `${environment.apiUrl}/usuarios`;
 
-<<<<<<< HEAD
-  listarAssistidos(search?: string): Observable<AssistidoResponseDTO[]> {
-    const params = search ? { search } : undefined;
-    return this.http.get<AssistidoResponseDTO[]>(this.apiUrl, { params });
-=======
   listarUsuarios(search?: string): Observable<UsuarioResponseDTO[]> {
     const params = search ? { search } : undefined;
     return this.http.get<UsuarioResponseDTO[]>(this.apiUrl, { params });
->>>>>>> teste-dev
   }
 
   buscarAutocomplete(termo: string, unidadeId: number): Observable<UsuarioResponseDTO[]> {

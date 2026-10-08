@@ -1,9 +1,8 @@
-import { Component, DestroyRef, OnInit, OnDestroy, ChangeDetectorRef, HostListener, NgZone, inject } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef, HostListener, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Subscription, debounceTime, filter, map } from 'rxjs';
+import { Subscription } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
 import {
   mapearErrosFormulario,
@@ -12,7 +11,6 @@ import {
 import { Alertas } from 'src/app/shared/utils/alerts';
 
 import { ComponentComAlteracoesNaoSalvas } from 'src/app/shared/guards/can-deactivate.guard';
-import { CampoBusca } from '@components/campo-busca/campo-busca';
 import { ModalLayout } from '@components/modal-layout/modal-layout';
 import {
   TabelaLayout,
@@ -48,11 +46,7 @@ interface DocumentoExibicao extends DocumentoAdmin {
     ModalLayout,
     TabelaLayout,
     Paginacao,
-<<<<<<< HEAD
-    CampoBusca,
-=======
     BarraBusca,
->>>>>>> teste-dev
     MatFormFieldModule,
     MatInputModule,
     MatSelect,
@@ -85,15 +79,8 @@ export class Transparencia implements OnInit, OnDestroy, ComponentComAlteracoesN
 
   private routeSub?: Subscription;
   private listaSub?: Subscription;
-<<<<<<< HEAD
-  private readonly destroyRef = inject(DestroyRef);
-
-  // Omnisearch: o termo vai para a URL (?search=) e o back busca em todas as colunas.
-  readonly campoBusca = new FormControl<string>('');
-=======
 
   /** Termo da barra de busca, espelhado em ?search= na URL. */
->>>>>>> teste-dev
   busca = '';
 
   // --- TABELAS ---
@@ -186,23 +173,8 @@ export class Transparencia implements OnInit, OnDestroy, ComponentComAlteracoesN
       this.abaAtiva = params.get('aba') === 'secoes' ? 'secoes' : 'documentos';
       this.busca = params.get('search') ?? '';
 
-      this.busca = params.get('search') ?? '';
-      if (this.campoBusca.value !== this.busca) {
-        this.campoBusca.setValue(this.busca, { emitEvent: false });
-      }
-
       this.carregarListaAtiva();
     });
-
-    // Só consulta a API 500ms depois que o usuário para de digitar.
-    this.campoBusca.valueChanges
-      .pipe(
-        debounceTime(500),
-        map(valor => (valor ?? '').trim()),
-        filter(termo => termo !== this.busca),
-        takeUntilDestroyed(this.destroyRef)
-      )
-      .subscribe(termo => this.navegar({ search: termo || null, page: 0 }));
   }
 
   ngOnDestroy(): void {
@@ -216,14 +188,11 @@ export class Transparencia implements OnInit, OnDestroy, ComponentComAlteracoesN
     }
 
     this.navegar({ aba, page: 0, sort: null, search: null });
-<<<<<<< HEAD
-=======
   }
 
   /** Atualiza a URL (?search=termo); o queryParamMap.subscribe refaz o GET sem recarregar a página. */
   buscar(termo: string): void {
     this.navegar({ page: 0, search: termo || null });
->>>>>>> teste-dev
   }
 
   get mensagemVazia(): string {
@@ -251,20 +220,12 @@ export class Transparencia implements OnInit, OnDestroy, ComponentComAlteracoesN
   }
 
   carregarDocumentos(): void {
-<<<<<<< HEAD
-    this.carregandoLista = true;
-    this.erroLista = false;
-
-    // Cancela a requisição anterior para uma resposta antiga não sobrescrever a busca atual.
-    this.listaSub?.unsubscribe();
-=======
     // Uma nova busca cancela a requisição anterior em andamento: vale sempre a mais recente.
     this.listaSub?.unsubscribe();
 
     this.carregandoLista = true;
     this.erroLista = false;
 
->>>>>>> teste-dev
     this.listaSub = this.transparenciaService.listarDocumentosAdmin(this.pagina, this.tamanho, this.sort, this.busca || undefined).subscribe({
       next: (resposta) => {
         this.documentos = resposta.content.map(doc => this.mapearDocumento(doc));
@@ -289,18 +250,11 @@ export class Transparencia implements OnInit, OnDestroy, ComponentComAlteracoesN
   }
 
   carregarSecoes(): void {
-<<<<<<< HEAD
-    this.carregandoLista = true;
-    this.erroLista = false;
-
-    this.listaSub?.unsubscribe();
-=======
     this.listaSub?.unsubscribe();
 
     this.carregandoLista = true;
     this.erroLista = false;
 
->>>>>>> teste-dev
     this.listaSub = this.transparenciaService.listarSecoesAdmin(this.pagina, this.tamanho, this.sort, this.busca || undefined).subscribe({
       next: (resposta) => {
         this.secoes = resposta.content;

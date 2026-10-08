@@ -10,33 +10,19 @@
     </div>
 
     <div class="acoes-usuarios">
-<<<<<<< HEAD
-      <app-campo-busca [control]="campoBusca" [placeholder]="abaAtiva === 'usuarios' ? 'Buscar usuário' : 'Buscar contato'" />
-      <button *ngIf="abaAtiva === 'usuarios' && podeCadastrarUsuario" type="button" class="btn-primary btn-primary-thick" (click)="abrirCadastro()">Novo usuário</button>
-=======
       <app-barra-busca
         [placeholder]="abaAtiva === 'usuarios' ? 'Buscar por nome, CPF, documento, escola...' : 'Buscar por nome, telefone, e-mail, CPF...'"
         [valor]="busca" (buscar)="buscar($event)" />
       <button *ngIf="abaAtiva === 'usuarios' && podeCadastrarUsuario" type="button"
         class="btn-primary btn-primary-thick" (click)="abrirCadastro()">Novo usuário</button>
->>>>>>> teste-dev
     </div>
 
     <app-tabela-layout [colunas]="$any(abaAtiva === 'usuarios' ? colunas : colunasContatos)"
       [dados]="$any(abaAtiva === 'usuarios' ? usuarios : contatos)"
       [acoes]="$any(abaAtiva === 'usuarios' ? acoesTabelaUsuariosAtual : acoesTabelaContatosAtual)"
-<<<<<<< HEAD
-      [carregando]="carregandoLista"
-      [erro]="erroLista"
-      [ordenacao]="ordenacao"
-      [mensagemVazia]="mensagemVazia"
-      (acao)="executarAcao($event)"
-      (ordenar)="ordenarPor($event)"
-=======
       [carregando]="carregandoLista" [erro]="erroLista" [ordenacao]="ordenacao"
       [mensagemVazia]="mensagemVaziaLista"
       (acao)="executarAcao($event)" (ordenar)="ordenarPor($event)"
->>>>>>> teste-dev
       (tentarNovamente)="abaAtiva === 'usuarios' ? carregarUsuarios() : carregarContatos()">
     </app-tabela-layout>
 

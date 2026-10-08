@@ -1,18 +1,14 @@
 import {
   ChangeDetectorRef,
   Component,
-  DestroyRef,
   HostListener,
   NgZone,
   OnDestroy,
-  OnInit,
-  inject
+  OnInit
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import {
   FormBuilder,
-  FormControl,
   FormGroup,
   FormsModule,
   ReactiveFormsModule,
@@ -20,7 +16,7 @@ import {
 } from '@angular/forms';
 
 import { ActivatedRoute, Router } from '@angular/router';
-import { Subscription, debounceTime, filter, map } from 'rxjs';
+import { Subscription } from 'rxjs';
 
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -30,7 +26,6 @@ import { MatIconModule } from '@angular/material/icon';
 
 import { ToastrService } from 'ngx-toastr';
 
-import { CampoBusca } from '@components/campo-busca/campo-busca';
 import { ModalLayout } from '@components/modal-layout/modal-layout';
 import {
   TabelaAcao,
@@ -81,11 +76,7 @@ type Unidade = {
     ModalLayout,
     TabelaLayout,
     Paginacao,
-<<<<<<< HEAD
-    CampoBusca,
-=======
     BarraBusca,
->>>>>>> teste-dev
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
@@ -109,12 +100,6 @@ export class ColaboradorComponent
   busca = '';
 
   unidadesDisponiveis: Unidade[] = [];
-
-  // Omnisearch: o termo vai para a URL (?search=) e o back busca em todas as colunas.
-  readonly campoBusca = new FormControl<string>('');
-  busca = '';
-  private readonly destroyRef = inject(DestroyRef);
-  private listaSub?: Subscription;
 
   pagina = 0;
   tamanho = 10;
@@ -295,25 +280,9 @@ export class ColaboradorComponent
         : null;
 
       this.busca = params.get('search') ?? '';
-<<<<<<< HEAD
-      if (this.campoBusca.value !== this.busca) {
-        this.campoBusca.setValue(this.busca, { emitEvent: false });
-      }
-=======
->>>>>>> teste-dev
 
       this.carregarColaboradores();
     });
-
-    // Só consulta a API 500ms depois que o usuário para de digitar.
-    this.campoBusca.valueChanges
-      .pipe(
-        debounceTime(500),
-        map(valor => (valor ?? '').trim()),
-        filter(termo => termo !== this.busca),
-        takeUntilDestroyed(this.destroyRef)
-      )
-      .subscribe(termo => this.buscar(termo));
 
     this.formColaborador
       .get('senha')
@@ -328,10 +297,7 @@ export class ColaboradorComponent
 
   ngOnDestroy(): void {
     this.routeSub?.unsubscribe();
-<<<<<<< HEAD
-=======
     this.papelSub?.unsubscribe();
->>>>>>> teste-dev
     this.listaSub?.unsubscribe();
   }
 
@@ -415,12 +381,9 @@ export class ColaboradorComponent
   }
 
   carregarColaboradores(): void {
-<<<<<<< HEAD
-=======
     // Uma nova busca/filtro cancela a requisição anterior em andamento: vale sempre a mais recente.
     this.listaSub?.unsubscribe();
 
->>>>>>> teste-dev
     // Para o coordenador a lista é sempre restrita a monitores; aguarda os papéis
     // carregarem para saber o id do papel MONITOR (carregarPapeis recarrega a lista).
     if (this.somenteMonitores && this.idPapelMonitor === null) {
@@ -434,11 +397,6 @@ export class ColaboradorComponent
       ? this.idPapelMonitor!
       : this.filtroPapel ?? undefined;
 
-<<<<<<< HEAD
-    // Cancela a requisição anterior para uma resposta antiga não sobrescrever a busca atual.
-    this.listaSub?.unsubscribe();
-=======
->>>>>>> teste-dev
     this.listaSub = this.colaboradorService
       .listarTodos(this.pagina, this.tamanho, this.sort, idPapel, this.busca || undefined)
       .subscribe({
@@ -477,15 +435,6 @@ export class ColaboradorComponent
     this.router.navigate([], {
       relativeTo: this.route,
       queryParams: { papel: idPapel || null, page: 0 },
-      queryParamsHandling: 'merge'
-    });
-  }
-
-  /** Atualiza a URL (?search=termo) voltando para a primeira página; o queryParamMap recarrega a lista. */
-  buscar(termo: string): void {
-    this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: { search: termo || null, page: 0 },
       queryParamsHandling: 'merge'
     });
   }

@@ -1,14 +1,12 @@
-import { Component, DestroyRef, OnInit, OnDestroy, HostListener, ChangeDetectorRef, NgZone, inject } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Component, OnInit, OnDestroy, HostListener, ChangeDetectorRef, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule, FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormsModule, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Subscription, debounceTime, filter, map } from 'rxjs';
+import { Subscription } from 'rxjs';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatOption, MatSelect } from '@angular/material/select';
 import { ToastrService } from 'ngx-toastr';
-import { CampoBusca } from '@components/campo-busca/campo-busca';
 import { ModalLayout } from '@components/modal-layout/modal-layout';
 import { Paginacao } from '@components/paginacao/paginacao';
 import { BarraBusca } from '@components/barra-busca/barra-busca';
@@ -38,11 +36,7 @@ import { EventoRedesSociaisComponent } from './evento-redes-sociais/evento-redes
     ModalLayout,
     TabelaLayout,
     Paginacao,
-<<<<<<< HEAD
-    CampoBusca,
-=======
     BarraBusca,
->>>>>>> teste-dev
     MatFormFieldModule,
     MatInputModule,
     MatSelect,
@@ -77,15 +71,8 @@ export class EventoComponent implements OnInit, OnDestroy, ComponentComAlteracoe
   private routeSub?: Subscription;
   private listaSub?: Subscription;
 
-<<<<<<< HEAD
-  // Omnisearch: o termo vai para a URL (?search=) e o back busca em todas as colunas.
-  readonly campoBusca = new FormControl<string>('');
-  busca = '';
-  private readonly destroyRef = inject(DestroyRef);
-=======
   /** Termo da barra de busca, espelhado em ?search= na URL. */
   busca = '';
->>>>>>> teste-dev
 
   modalAberto = false;
   modoEdicao = false;
@@ -173,27 +160,9 @@ export class EventoComponent implements OnInit, OnDestroy, ComponentComAlteracoe
       this.sort = sort;
       this.ordenacao = analisarOrdenacao(sort);
       this.filtroTipo = (params.get('tipo') as TipoEvento | null) ?? null;
-<<<<<<< HEAD
-
       this.busca = params.get('search') ?? '';
-      if (this.campoBusca.value !== this.busca) {
-        this.campoBusca.setValue(this.busca, { emitEvent: false });
-      }
-=======
-      this.busca = params.get('search') ?? '';
->>>>>>> teste-dev
       this.carregarEventos();
     });
-
-    // Só consulta a API 500ms depois que o usuário para de digitar.
-    this.campoBusca.valueChanges
-      .pipe(
-        debounceTime(500),
-        map(valor => (valor ?? '').trim()),
-        filter(termo => termo !== this.busca),
-        takeUntilDestroyed(this.destroyRef)
-      )
-      .subscribe(termo => this.navegar({ search: termo || null, page: 0 }));
   }
 
   ngOnDestroy(): void {
@@ -240,22 +209,14 @@ export class EventoComponent implements OnInit, OnDestroy, ComponentComAlteracoe
   }
 
   carregarEventos(): void {
-<<<<<<< HEAD
-=======
     // Uma nova busca cancela a requisição anterior em andamento: vale sempre a mais recente.
     this.listaSub?.unsubscribe();
 
->>>>>>> teste-dev
     this.carregandoLista = true;
     this.erroLista = false;
 
     const tipo = this.filtroTipo ? (this.filtroTipo as TipoEvento) : undefined;
 
-<<<<<<< HEAD
-    // Cancela a requisição anterior para uma resposta antiga não sobrescrever a busca atual.
-    this.listaSub?.unsubscribe();
-=======
->>>>>>> teste-dev
     this.listaSub = this.eventoService.listarTodos(this.pagina, this.tamanho, this.sort, tipo, this.busca || undefined).subscribe({
       next: (resposta) => {
         this.ngZone.run(() => {

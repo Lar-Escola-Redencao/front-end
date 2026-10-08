@@ -3,25 +3,21 @@ import {
   OnInit,
   OnDestroy,
   ChangeDetectorRef,
-  DestroyRef,
   HostListener,
-  NgZone,
-  inject
+  NgZone
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { CommonModule } from '@angular/common';
 
 import {
   FormBuilder,
-  FormControl,
   FormGroup,
   ReactiveFormsModule,
   Validators
 } from '@angular/forms';
 
 import { ActivatedRoute, Router } from '@angular/router';
-import { Subscription, debounceTime, filter, map } from 'rxjs';
+import { Subscription } from 'rxjs';
 
 import { ToastrService } from 'ngx-toastr';
 
@@ -45,7 +41,6 @@ import {
 import { Paginacao } from '@components/paginacao/paginacao';
 import { BarraBusca } from '@components/barra-busca/barra-busca';
 
-import { CampoBusca } from '@components/campo-busca/campo-busca';
 import { ModalLayout } from '@components/modal-layout/modal-layout';
 
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -79,11 +74,7 @@ import { environment } from '../../../../../../environments/environment';
     ModalLayout,
     TabelaLayout,
     Paginacao,
-<<<<<<< HEAD
-    CampoBusca,
-=======
     BarraBusca,
->>>>>>> teste-dev
     MatFormFieldModule,
     MatInputModule,
     MatSlideToggleModule
@@ -154,13 +145,6 @@ export class PartnersManager
   totalPaginas = 0;
 
   private routeSub?: Subscription;
-  // listarTodos devolve Promise (não cancelável): respostas de buscas antigas são descartadas pelo contador.
-  private requisicaoLista = 0;
-
-  // Omnisearch: o termo vai para a URL (?search=) e o back busca em todas as colunas.
-  readonly campoBusca = new FormControl<string>('');
-  busca = '';
-  private readonly destroyRef = inject(DestroyRef);
 
   /** Termo da barra de busca, espelhado em ?search= na URL. */
   busca = '';
@@ -240,27 +224,9 @@ export class PartnersManager
       this.tamanho = tamanho;
       this.sort = sort;
       this.ordenacao = analisarOrdenacao(sort);
-<<<<<<< HEAD
-
       this.busca = params.get('search') ?? '';
-      if (this.campoBusca.value !== this.busca) {
-        this.campoBusca.setValue(this.busca, { emitEvent: false });
-      }
-=======
-      this.busca = params.get('search') ?? '';
->>>>>>> teste-dev
       this.carregarPartners();
     });
-
-    // Só consulta a API 500ms depois que o usuário para de digitar.
-    this.campoBusca.valueChanges
-      .pipe(
-        debounceTime(500),
-        map(valor => (valor ?? '').trim()),
-        filter(termo => termo !== this.busca),
-        takeUntilDestroyed(this.destroyRef)
-      )
-      .subscribe(termo => this.navegar({ search: termo || null, page: 0 }));
   }
 
   ngOnDestroy(): void {
@@ -270,12 +236,6 @@ export class PartnersManager
   // =========================================================
   // CARREGAR PARCEIROS
   // =========================================================
-
-  get mensagemVazia(): string {
-    return this.busca
-      ? `Nenhum parceiro encontrado para "${this.busca}".`
-      : 'Nenhum parceiro cadastrado.';
-  }
 
   carregarPartners(): void {
     const requisicao = ++this.requisicaoLista;

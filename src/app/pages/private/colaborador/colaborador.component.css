@@ -159,11 +159,7 @@ h1{
 }
 
 .acoes-colaboradores .filtro-papel{
-<<<<<<< HEAD
-  width: min(100%, 260px);
-=======
   flex: 0 1 260px;
->>>>>>> teste-dev
 }
 
 .colaboradores-card {

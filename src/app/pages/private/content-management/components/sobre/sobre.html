@@ -136,14 +136,10 @@
 
   @if (abaAtiva === 'historia') {
     <div class="acoes-historia">
-<<<<<<< HEAD
-      <app-campo-busca [control]="campoBusca" placeholder="Buscar marco histórico" />
-=======
       <app-barra-busca
         placeholder="Buscar por ano, título ou conteúdo..."
         [valor]="busca"
         (buscar)="buscar($event)" />
->>>>>>> teste-dev
       <button type="button" class="btn-primary btn-primary-thick" (click)="abrirModalHistoria()">
         Novo marco histórico
       </button>

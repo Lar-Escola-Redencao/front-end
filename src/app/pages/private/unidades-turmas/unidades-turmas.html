@@ -22,14 +22,10 @@
 
     @if (abaAtiva === 'unidades') {
       <div class="acoes-unidades">
-<<<<<<< HEAD
-        <app-campo-busca [control]="campoBusca" placeholder="Buscar unidade" />
-=======
         <app-barra-busca
           placeholder="Buscar por nome, endereço, telefone, e-mail..."
           [valor]="busca"
           (buscar)="buscar($event)" />
->>>>>>> teste-dev
         <button type="button" class="btn-primary btn-primary-thick" (click)="abrirCadastro()">Nova unidade</button>
       </div>
 
@@ -47,14 +43,10 @@
 
     @if (abaAtiva === 'turmas') {
       <div class="acoes-unidades acoes-turmas">
-<<<<<<< HEAD
-        <app-campo-busca [control]="campoBusca" placeholder="Buscar turma" />
-=======
         <app-barra-busca
           placeholder="Buscar por período, horário, unidade..."
           [valor]="busca"
           (buscar)="buscar($event)" />
->>>>>>> teste-dev
 
         <mat-form-field appearance="outline" class="filtro-unidade">
           <mat-label>Turmas da unidade</mat-label>
