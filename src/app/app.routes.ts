@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 import { Home } from './pages/public/home/home';
-import { About } from './pages/public/about/about';
+import { Sobre } from './pages/public/sobre/sobre';
 import { Eventos } from './pages/public/eventos/eventos';
 import { EventoDetalhe } from './pages/public/evento-detalhe/evento-detalhe';
 import { authGuard } from './shared/guards/auth-guard';
@@ -10,7 +10,7 @@ import { roleGuard } from './shared/guards/role-guard';
 
 export const routes: Routes = [
     { path: '', component: Home, canActivate: [guestGuard]},
-    { path: 'conheca-a-osc', component: About },
+    { path: 'conheca-a-osc', component: Sobre },
     { path: 'eventos', component: Eventos},
     { path: 'eventos/:id', component: EventoDetalhe},
     {
