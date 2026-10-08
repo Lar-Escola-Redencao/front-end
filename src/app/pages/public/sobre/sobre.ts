@@ -26,6 +26,7 @@ import {
   imports: [PublicNavbar, PublicFooter, PublicDiretoriaComponent, PublicUnidadesComponent],
   templateUrl: './sobre.html',
   styleUrl: './sobre.css',
+  host: { '(window:resize)': 'atualizarLargura()' },
 })
 export class Sobre {
   private readonly sobrePublicoService = inject(SobrePublicoService);
@@ -33,6 +34,7 @@ export class Sobre {
   private readonly injector = inject(Injector);
   private readonly route = inject(ActivatedRoute);
   private readonly botoesAnos = viewChildren<ElementRef<HTMLButtonElement>>('ano');
+  private readonly larguraTela = signal(window.innerWidth);
   protected readonly carregando = signal(false);
   protected readonly erro = signal(false);
   protected readonly conteudo = signal<ConteudoSobre>({ texto: [], historia: [], carrossel: [] });
@@ -62,6 +64,16 @@ export class Sobre {
       fotos.slice(indice * 2, indice * 2 + 2),
     );
   });
+  protected readonly copiasMosaico = computed(() => {
+    const larguraColuna = this.larguraTela() <= 768 ? 280 : 424;
+    const larguraGrupo = Math.max(1, this.colunasFotos().length) * larguraColuna;
+    const quantidade = Math.max(2, Math.ceil(this.larguraTela() / larguraGrupo) + 1);
+    return Array.from({ length: quantidade }, (_, indice) => indice);
+  });
+
+  protected atualizarLargura(): void {
+    this.larguraTela.set(window.innerWidth);
+  }
 
   constructor() {
     this.carregarConteudo();

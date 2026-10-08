@@ -74,7 +74,7 @@ describe('SobrePublicoService', () => {
     expect(status).toBe(503);
   });
 
-  it('limita o carrossel às dez fotos ativas na ordem cadastrada', () => {
+  it('limita o carrossel às oito fotos ativas na ordem cadastrada', () => {
     let resultado!: ConteudoSobre;
     service.obterConteudo().subscribe((conteudo) => {
       resultado = conteudo;
@@ -87,8 +87,8 @@ describe('SobrePublicoService', () => {
       imagem: `/uploads/paginas/foto-${indice}.jpg`,
     }));
     http.expectOne(`${environment.apiUrl}/paginas/2`).flush({ secoes, ativo: true });
-    expect(resultado.carrossel.length).toBe(10);
-    expect(resultado.carrossel.map((foto) => foto.ordem)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+    expect(resultado.carrossel.length).toBe(8);
+    expect(resultado.carrossel.map((foto) => foto.ordem)).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
   });
 
   it('usa o total da paginação para contar todas as unidades', () => {
@@ -99,9 +99,9 @@ describe('SobrePublicoService', () => {
     const request = http.expectOne(`${environment.apiUrl}/unidade/todas?size=1`);
     request.flush({
       content: [{ id: 1 }],
-      page: { size: 1, number: 0, totalElements: 8, totalPages: 8 },
+      page: { size: 1, number: 0, totalElements: 10, totalPages: 10 },
     });
-    expect(total).toBe(8);
+    expect(total).toBe(10);
   });
 
   it('obtém somente os indicadores públicos e a data de fundação', () => {

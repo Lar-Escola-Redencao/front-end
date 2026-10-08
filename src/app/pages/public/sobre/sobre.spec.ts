@@ -142,8 +142,8 @@ describe('Sobre', () => {
     expect(anterior.disabled).toBe(false);
   });
 
-  it('repete as dez imagens para um ciclo contínuo sem controle de pausa', () => {
-    const carrossel = Array.from({ length: 10 }, (_, indice) => ({
+  it('repete as oito imagens para um ciclo contínuo sem controle de pausa', () => {
+    const carrossel = Array.from({ length: 8 }, (_, indice) => ({
       id: indice + 10,
       titulo: 'Foto',
       imagem: `/foto-${indice}.jpg`,
@@ -151,14 +151,33 @@ describe('Sobre', () => {
     }));
     const pagina = carregar({ ...dados, carrossel });
     const grupos = pagina.querySelectorAll('.mosaico-grupo');
-    expect(grupos.length).toBe(2);
-    expect(grupos[0].querySelectorAll('img').length).toBe(10);
+    expect(grupos.length).toBeGreaterThanOrEqual(2);
+    expect(grupos[0].querySelectorAll('img').length).toBe(8);
     expect(grupos[1].getAttribute('aria-hidden')).toBe('true');
     expect(pagina.querySelector('.mosaico button')).toBeNull();
     expect(pagina.querySelector('.mosaico')?.classList.contains('mosaico-animado')).toBe(true);
     expect(
       pagina.querySelector('.historia-ano')?.parentElement?.classList.contains('historia-card'),
     ).toBe(true);
+  });
+
+  it('adiciona cópias suficientes após ampliar a tela além de um grupo de fotos', () => {
+    const carrossel = Array.from({ length: 8 }, (_, indice) => ({
+      id: indice + 10, titulo: 'Foto', imagem: `/foto-${indice}.jpg`, ativo: true,
+    }));
+    const pagina = carregar({ ...dados, carrossel });
+    const larguraOriginal = Object.getOwnPropertyDescriptor(window, 'innerWidth');
+    try {
+      Object.defineProperty(window, 'innerWidth', { configurable: true, value: 3840 });
+      window.dispatchEvent(new Event('resize'));
+      fixture.detectChanges();
+      const grupos = pagina.querySelectorAll('.mosaico-grupo');
+      expect(grupos.length).toBeGreaterThanOrEqual(4);
+      expect(Array.from(grupos).every((grupo) => grupo.querySelectorAll('img').length === 8)).toBe(true);
+    } finally {
+      if (larguraOriginal) Object.defineProperty(window, 'innerWidth', larguraOriginal);
+      window.dispatchEvent(new Event('resize'));
+    }
   });
 
   it('permite navegar na linha do tempo pelo teclado', () => {

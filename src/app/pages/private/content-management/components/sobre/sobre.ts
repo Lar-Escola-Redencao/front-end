@@ -65,7 +65,7 @@ interface ClassificacaoSecoes {
   styleUrl: './sobre.css',
 })
 export class Sobre implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalvas {
-  readonly TOTAL_SLOTS_CARROSSEL = 10;
+  readonly TOTAL_SLOTS_CARROSSEL = 8;
 
   abaAtiva: AbaSobre = 'historia';
 
@@ -217,7 +217,7 @@ export class Sobre implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalvas
     return { texto, carrossel, historia };
   }
 
-  /** A grade do carrossel tem tamanho fixo: sempre 10 slots, nunca derivado da API. */
+  /** A grade do carrossel tem tamanho fixo: sempre 8 slots, nunca derivado da API. */
   montarSlotsCarrossel(secoesCarrossel: Secao[]): (Secao | null)[] {
     const slots: (Secao | null)[] = new Array(this.TOTAL_SLOTS_CARROSSEL).fill(null);
 

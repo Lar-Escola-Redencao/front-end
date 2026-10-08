@@ -38,9 +38,10 @@
           tabindex="0"
           [class.mosaico-animado]="colunasFotos().length > 1"
         >
-          <div class="mosaico-trilho" [style.animation-duration.s]="colunasFotos().length * 12">
-            @for (copia of [0, 1]; track copia) {
-              <div class="mosaico-grupo" [attr.aria-hidden]="copia === 1 ? 'true' : null">
+          <div class="mosaico-trilho" [style.animation-duration.s]="colunasFotos().length * 12"
+            [style.--copias-mosaico]="copiasMosaico().length">
+            @for (copia of copiasMosaico(); track copia) {
+              <div class="mosaico-grupo" [attr.aria-hidden]="copia > 0 ? 'true' : null">
                 @for (coluna of colunasFotos(); track $index) {
                   <div class="mosaico-coluna" [class.coluna-alternada]="$odd">
                     @for (foto of coluna; track foto.id) {

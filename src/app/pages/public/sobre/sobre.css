@@ -86,7 +86,7 @@ h2 {
 }
 @keyframes deslizar-carrossel {
   to {
-    transform: translateX(-50%);
+    transform: translateX(calc(-100% / var(--copias-mosaico, 2)));
   }
 }
 .mosaico-coluna {

@@ -44,7 +44,7 @@ export class SobrePublicoService {
           historia: ativas.filter((secao) => secao.grupo === 'historia'),
           carrossel: ativas
             .filter((secao) => secao.grupo === 'carrossel' && secao.imagem)
-            .slice(0, 10),
+            .slice(0, 8),
         };
       }),
     );
