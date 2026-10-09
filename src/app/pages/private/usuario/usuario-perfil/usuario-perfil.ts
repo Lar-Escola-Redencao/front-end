@@ -380,7 +380,7 @@ export class UsuarioPerfil implements OnInit, OnDestroy {
     const periodo = this.formatarPeriodoTurma(turma.periodo).toLowerCase();
     const texto = mesmaUnidade
       ? `Você está trocando o turno do usuário para ${periodo}.`
-      : `Você está transferindo o aluno para a unidade ${turma.unidade.nome} no período ${periodo}.`;
+      : `Você está transferindo o usuário para a unidade ${turma.unidade.nome} no período ${periodo}.`;
 
     const confirmou = await this.confirmarAcaoCritica(
       'Confirmar transferência?',
@@ -472,7 +472,9 @@ export class UsuarioPerfil implements OnInit, OnDestroy {
       'Confirmar exclusão?',
       'Este usuário e seus dados serão excluídos permanentemente.',
       'excluir-usuario',
-      'Excluir usuário'
+      'Excluir usuário',
+      'warning',
+      '#e04b3a'
     );
     if (!confirmado) return;
 
@@ -494,7 +496,8 @@ export class UsuarioPerfil implements OnInit, OnDestroy {
     mensagem: string,
     textoConfirmacao: string,
     botaoConfirmar: string,
-    icone: 'warning' | 'question' = 'warning'
+    icone: 'warning' | 'question' = 'warning',
+    confirmButtonColor = '#3682dc'
   ): Promise<boolean> {
     const resultado = await Swal.fire({
       title: titulo,
@@ -505,7 +508,7 @@ export class UsuarioPerfil implements OnInit, OnDestroy {
       showCancelButton: true,
       confirmButtonText: botaoConfirmar,
       cancelButtonText: 'Cancelar',
-      confirmButtonColor: '#3682dc',
+      confirmButtonColor,
       cancelButtonColor: '#757575',
       reverseButtons: true,
       inputValidator: valor => valor?.trim() === textoConfirmacao

@@ -9,6 +9,7 @@ import { ToastrService } from 'ngx-toastr';
 import { Subscription } from 'rxjs';
 import { CadastroUsuarioCompletoDTO, ComposicaoFamiliarDTO, UsuarioResponseDTO } from 'src/app/shared/models/usuario.model';
 import { UsuarioService } from 'src/app/shared/services/usuario/usuario.service';
+import { montarBaseAtualizacaoUsuario, montarFichaSocioeconomicaBase } from '../../utils/usuario-atualizacao-dto';
 
 @Component({
   selector: 'app-usuario-perfil-dados-socioeconomicos',
@@ -154,8 +155,16 @@ export class UsuarioPerfilDadosSocioeconomicos implements OnChanges, OnDestroy {
     }
     if (!this.temAlteracoes) return;
 
+    let dto: Partial<CadastroUsuarioCompletoDTO>;
+    try {
+      dto = this.montarDtoAtualizacao();
+    } catch (erro: any) {
+      this.toastr.error(erro.message || 'Revise os campos obrigatórios antes de salvar.', 'Erro');
+      return;
+    }
+
     this.salvando = true;
-    this.usuarioService.atualizar(this.usuario.id, this.montarDtoAtualizacao()).subscribe({
+    this.usuarioService.atualizar(this.usuario.id, dto).subscribe({
       next: usuarioAtualizado => {
         this.usuario = usuarioAtualizado;
         this.preencherFormulario();
@@ -235,7 +244,7 @@ export class UsuarioPerfilDadosSocioeconomicos implements OnChanges, OnDestroy {
     for (const transporte of this.transportes.filter(item => item.valor)) {
       this.subs.push(this.form.get(transporte.campo)!.valueChanges.subscribe(ativo => {
         const controle = this.form.get(transporte.valor)!;
-        controle.setValidators(ativo ? [Validators.min(0)] : []);
+        controle.setValidators(ativo ? [Validators.required, Validators.min(0)] : []);
         if (!ativo) controle.setValue(null, { emitEvent: false });
         controle.updateValueAndValidity({ emitEvent: false });
       }));
@@ -303,35 +312,11 @@ export class UsuarioPerfilDadosSocioeconomicos implements OnChanges, OnDestroy {
 
   private montarDtoAtualizacao(): Partial<CadastroUsuarioCompletoDTO> {
     const dados = this.form.getRawValue();
-    const fichaAtual = this.usuario?.fichaSocioeconomica ?? { tipoMoradia: 'OUTRO' };
+    const fichaAtual = montarFichaSocioeconomicaBase(this.usuario!);
     const religiao = dados.professaReligiao ? (dados.religiao === 'Outra' ? dados.outraReligiao : dados.religiao) : 'Sem Religião';
 
     return {
-      nomeCompleto: this.usuario?.nomeCompleto || '',
-      dataNascimento: this.usuario?.dataNascimento || '',
-      cpf: this.usuario?.cpf || null,
-      documentoAuxiliar: this.usuario?.documentoAuxiliar ?? null,
-      tipoDocumento: this.usuario?.tipoDocumento ?? null,
-      cadUnico: this.usuario?.cadUnico || '',
-      cep: this.usuario?.cep || '',
-      bairro: this.usuario?.bairro || '',
-      endereco: this.usuario?.endereco || '',
-      escola: this.usuario?.escola || '',
-      periodoEscolar: this.usuario?.periodoEscolar || '',
-      serieEscolar: this.usuario?.serieEscolar || '',
-      raEscolar: this.usuario?.raEscolar || '',
-      idTurma: this.usuario?.idTurma ?? 0,
-      contatos: this.usuario?.contatos?.map(contato => ({
-        id: contato.id,
-        nomeCompleto: contato.nomeCompleto,
-        telefone: contato.telefone?.replace(/\D/g, '') || '',
-        email: contato.email,
-        endereco: contato.endereco,
-        cpf: contato.cpf?.replace(/\D/g, '') || undefined,
-        localTrabalho: contato.localTrabalho,
-        parentesco: contato.parentesco || 'OUTRO',
-        principal: !!contato.principal
-      })) ?? [],
+      ...montarBaseAtualizacaoUsuario(this.usuario!),
       composicaoFamiliar: (dados.composicaoFamiliar as ComposicaoFamiliarDTO[]).map(familiar => ({
         nomeCompleto: familiar.nomeCompleto || '',
         idade: Number(familiar.idade) || 0,

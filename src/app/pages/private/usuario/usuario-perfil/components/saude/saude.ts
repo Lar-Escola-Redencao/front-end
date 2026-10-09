@@ -9,6 +9,7 @@ import { forkJoin, of } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { ArquivoSaudeDTO, CadastroUsuarioCompletoDTO, UsuarioResponseDTO } from 'src/app/shared/models/usuario.model';
 import { UsuarioService } from 'src/app/shared/services/usuario/usuario.service';
+import { montarBaseAtualizacaoUsuario, montarFichaSocioeconomicaBase } from '../../utils/usuario-atualizacao-dto';
 import {
   TAMANHO_MAXIMO_ARQUIVO_BYTES,
   obterMensagemErro,
@@ -47,6 +48,7 @@ export class UsuarioPerfilSaude implements OnChanges {
   erroArquivos = '';
   arquivosSaude: File[] = [];
   arquivosSaudeSalvos: ArquivoSaudeDTO[] = [];
+  private descricaoValueChangesRegistrados = false;
   private valoresOriginais: unknown = null;
   readonly limiteArquivo = TAMANHO_MAXIMO_ARQUIVO_BYTES;
 
@@ -89,10 +91,20 @@ export class UsuarioPerfilSaude implements OnChanges {
   }
 
   salvar(): void {
-    if (!this.usuario || this.somenteLeitura || this.form.invalid || !this.temAlteracoes) return;
+    if (!this.usuario || this.somenteLeitura) return;
+
+    this.form.markAllAsTouched();
+    if (this.form.invalid || !this.temAlteracoes) return;
+
+    let dto: Partial<CadastroUsuarioCompletoDTO>;
+    try {
+      dto = this.montarDtoAtualizacao();
+    } catch (erro: any) {
+      this.toastr.error(erro.message || 'Revise os campos obrigatórios antes de salvar.', 'Erro');
+      return;
+    }
 
     this.salvando = true;
-    const dto = this.montarDtoAtualizacao();
     this.usuarioService.atualizar(this.usuario.id, dto).subscribe({
       next: usuarioAtualizado => {
         const uploads = this.arquivosSaude.map(arquivo => this.usuarioService.uploadArquivoSaude(usuarioAtualizado.id, arquivo));
@@ -207,9 +219,12 @@ export class UsuarioPerfilSaude implements OnChanges {
     });
 
     this.atualizarValidadoresDescricao();
-    this.perguntasSaude.forEach(pergunta => {
-      this.form.get(pergunta.campo)?.valueChanges.subscribe(() => this.atualizarValidadoresDescricao());
-    });
+    if (!this.descricaoValueChangesRegistrados) {
+      this.perguntasSaude.forEach(pergunta => {
+        this.form.get(pergunta.campo)?.valueChanges.subscribe(() => this.atualizarValidadoresDescricao());
+      });
+      this.descricaoValueChangesRegistrados = true;
+    }
     this.form.disable();
     this.valoresOriginais = this.form.getRawValue();
     this.editando = false;
@@ -231,35 +246,10 @@ export class UsuarioPerfilSaude implements OnChanges {
 
   private montarDtoAtualizacao(): Partial<CadastroUsuarioCompletoDTO> {
     const dados = this.form.getRawValue();
-    const ficha = this.usuario?.fichaSocioeconomica ?? { tipoMoradia: 'OUTRO' };
+    const ficha = montarFichaSocioeconomicaBase(this.usuario!);
 
     return {
-      nomeCompleto: this.usuario?.nomeCompleto || '',
-      dataNascimento: this.usuario?.dataNascimento || '',
-      cpf: this.usuario?.cpf || null,
-      documentoAuxiliar: this.usuario?.documentoAuxiliar ?? null,
-      tipoDocumento: this.usuario?.tipoDocumento ?? null,
-      cadUnico: this.usuario?.cadUnico || '',
-      cep: this.usuario?.cep || '',
-      bairro: this.usuario?.bairro || '',
-      endereco: this.usuario?.endereco || '',
-      escola: this.usuario?.escola || '',
-      periodoEscolar: this.usuario?.periodoEscolar || '',
-      serieEscolar: this.usuario?.serieEscolar || '',
-      raEscolar: this.usuario?.raEscolar || '',
-      idTurma: this.usuario?.idTurma ?? 0,
-      contatos: this.usuario?.contatos?.map(contato => ({
-        id: contato.id,
-        nomeCompleto: contato.nomeCompleto,
-        telefone: contato.telefone?.replace(/\D/g, '') || '',
-        email: contato.email,
-        endereco: contato.endereco,
-        cpf: contato.cpf?.replace(/\D/g, '') || undefined,
-        localTrabalho: contato.localTrabalho,
-        parentesco: contato.parentesco || 'OUTRO',
-        principal: !!contato.principal
-      })) ?? [],
-      composicaoFamiliar: this.usuario?.composicaoFamiliar ?? [],
+      ...montarBaseAtualizacaoUsuario(this.usuario!),
       fichaSocioeconomica: {
         ...ficha,
         possuiProblemaSaude: !!dados.possuiProblemaSaude,

@@ -1898,6 +1898,17 @@ h1 {
   color: var(--error-color);
 }
 
+.contato-edicao-form .step-grid {
+  align-items: start;
+  gap: 10px 14px;
+}
+
+:host ::ng-deep .contato-edicao-form .mat-mdc-form-field-error {
+  display: block;
+  padding-top: 6px;
+  white-space: normal;
+}
+
 :host ::ng-deep .contato-edicao-form .mat-mdc-form-field-required-marker,
 :host ::ng-deep .contato-edicao-form .mdc-floating-label--required::after {
   display: none;

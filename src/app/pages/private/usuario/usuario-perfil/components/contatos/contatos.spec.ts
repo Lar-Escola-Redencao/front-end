@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { vi } from 'vitest';
 
 import { UsuarioPerfilContatos } from './contatos';
@@ -8,19 +8,33 @@ import { ContatoService } from 'src/app/shared/services/usuario/contato.service'
 import { UsuarioService } from 'src/app/shared/services/usuario/usuario.service';
 import { ToastrService } from 'ngx-toastr';
 import { SessaoService } from 'src/app/shared/services/auth/sessao.service';
+import { Alertas } from 'src/app/shared/utils/alerts';
 
 describe('UsuarioPerfilContatos', () => {
   let component: UsuarioPerfilContatos;
   let fixture: ComponentFixture<UsuarioPerfilContatos>;
+  let contatoService: any;
+  let usuarioService: any;
+  let toastr: any;
 
   beforeEach(async () => {
+    vi.spyOn(Alertas, 'confirmarDescarte').mockResolvedValue(false);
+    contatoService = { buscarAutocomplete: vi.fn(() => of([])), atualizarContato: vi.fn(() => of(void 0)) };
+    usuarioService = {
+      buscarPorId: vi.fn(() => of({ id: 1, nomeCompleto: 'Aluno', contatos: [] })),
+      vincularNovoContato: vi.fn(),
+      vincularContatoExistente: vi.fn(),
+      atualizarVinculo: vi.fn(() => of(void 0)),
+      desvincularContato: vi.fn()
+    };
+    toastr = { success: vi.fn(), warning: vi.fn(), error: vi.fn() };
     await TestBed.configureTestingModule({
       imports: [UsuarioPerfilContatos, NoopAnimationsModule],
       providers: [
-        { provide: ContatoService, useValue: { buscarAutocomplete: vi.fn(() => of([])), atualizarContato: vi.fn() } },
-        { provide: UsuarioService, useValue: { buscarPorId: vi.fn(), vincularNovoContato: vi.fn(), vincularContatoExistente: vi.fn(), atualizarVinculo: vi.fn(), desvincularContato: vi.fn() } },
+        { provide: ContatoService, useValue: contatoService },
+        { provide: UsuarioService, useValue: usuarioService },
         { provide: SessaoService, useValue: { podeRemoverVinculo: vi.fn(() => true) } },
-        { provide: ToastrService, useValue: { success: vi.fn(), warning: vi.fn(), error: vi.fn() } }
+        { provide: ToastrService, useValue: toastr }
       ]
     }).compileComponents();
 
@@ -54,5 +68,67 @@ describe('UsuarioPerfilContatos', () => {
     } as any;
 
     expect(component.podeAdicionarContato).toBe(false);
+  });
+
+  it('confirma descarte antes de fechar edição de contato alterada', async () => {
+    component.usuario = { id: 1, nomeCompleto: 'Aluno', contatos: [] } as any;
+    component.abrirFormulario('editar', {
+      id: 1,
+      nomeCompleto: 'Contato',
+      telefone: '16999999999',
+      parentesco: 'MAE',
+      principal: true
+    } as any);
+    component.form.get('nomeCompleto')?.setValue('Contato alterado');
+
+    await component.fecharModal();
+
+    expect(Alertas.confirmarDescarte).toHaveBeenCalledTimes(1);
+    expect(component.modalAberto).toBe(true);
+    expect(component.form.get('nomeCompleto')?.value).toBe('Contato alterado');
+
+    vi.mocked(Alertas.confirmarDescarte).mockResolvedValue(true);
+    await component.fecharModal();
+
+    expect(component.modalAberto).toBe(false);
+  });
+
+  it('avisa no reload quando formulário de contato tem alterações', () => {
+    component.usuario = { id: 1, nomeCompleto: 'Aluno', contatos: [] } as any;
+    component.abrirFormulario('editar', {
+      id: 1,
+      nomeCompleto: 'Contato',
+      telefone: '16999999999',
+      parentesco: 'MAE',
+      principal: true
+    } as any);
+    component.form.get('telefone')?.setValue('(16) 98888-8888');
+    const event = { preventDefault: vi.fn(), returnValue: undefined as string | undefined } as unknown as BeforeUnloadEvent;
+
+    component.avisarAntesDeFechar(event);
+
+    expect(event.preventDefault).toHaveBeenCalled();
+    expect(event.returnValue).toBe('');
+  });
+
+  it('libera o botão de salvar quando a atualização do vínculo falha', async () => {
+    usuarioService.atualizarVinculo.mockReturnValue(throwError(() => ({
+      error: { message: 'Não é possível remover o status de principal diretamente.' }
+    })));
+    component.usuario = { id: 1, nomeCompleto: 'Aluno', contatos: [] } as any;
+    component.abrirFormulario('editar', {
+      id: 1,
+      nomeCompleto: 'Contato',
+      telefone: '16999999999',
+      parentesco: 'MAE',
+      principal: true
+    } as any);
+    component.form.get('principal')?.setValue(false);
+
+    await component.salvar();
+
+    expect(component.salvando).toBe(false);
+    expect(toastr.error).toHaveBeenCalledWith('Não é possível remover o status de principal diretamente.', 'Erro');
+    expect(component.modalAberto).toBe(true);
   });
 });

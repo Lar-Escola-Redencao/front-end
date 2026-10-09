@@ -309,7 +309,34 @@ describe('Contrato de edição de usuários', () => {
     (TestBed.inject(ContatoService) as any).atualizarContato = vi.fn(() => throwError(() => ({ error: { message: mensagem } })));
     component.salvarEdicaoContato();
     expect(component.mensagemErro(component.formEdicaoContato.get('telefone'))).toBe(mensagem);
+    expect(component.isLoading).toBe(false);
     expect(component.modalContatoAberto).toBe(true);
+  });
+
+  it('confirma descarte antes de fechar edição de contato alterada', async () => {
+    component.abrirEdicaoContato({ id: 8, nomeCompleto: 'Ana', telefone: '11999999999', quantidadeVinculos: 0 });
+    component.formEdicaoContato.get('nomeCompleto')?.setValue('Ana Alterada');
+
+    await component.fecharModalContato();
+
+    expect(Alertas.confirmarDescarte).toHaveBeenCalledTimes(1);
+    expect(component.modalContatoAberto).toBe(true);
+
+    vi.mocked(Alertas.confirmarDescarte).mockResolvedValue(true);
+    await component.fecharModalContato();
+
+    expect(component.modalContatoAberto).toBe(false);
+  });
+
+  it('avisa no reload quando edição de contato tem alterações', () => {
+    component.abrirEdicaoContato({ id: 8, nomeCompleto: 'Ana', telefone: '11999999999', quantidadeVinculos: 0 });
+    component.formEdicaoContato.get('telefone')?.setValue('(11) 98888-8888');
+    const event = { preventDefault: vi.fn(), returnValue: undefined as string | undefined } as unknown as BeforeUnloadEvent;
+
+    component.avisarAntesDeFechar(event);
+
+    expect(event.preventDefault).toHaveBeenCalled();
+    expect(event.returnValue).toBe('');
   });
 
   it('exibe a data de nascimento sem deslocamento de fuso horário', () => {

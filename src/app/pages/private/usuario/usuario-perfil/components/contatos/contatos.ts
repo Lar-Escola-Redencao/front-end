@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectorRef, Component, EventEmitter, Input, NgZone, OnDestroy, Output, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, HostListener, Input, NgZone, OnDestroy, Output, inject } from '@angular/core';
 import { AbstractControl, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -59,6 +59,7 @@ export class UsuarioPerfilContatos implements OnDestroy {
   carregandoVisualizacao = false;
   modalVinculosAberto = false;
   opcoesAutocomplete: ContatoListagemDTO[] = [];
+  private valoresOriginaisFormulario: string | null = null;
 
   readonly opcoesBuscaContato = ['CPF', 'Telefone', 'Nome', 'E-mail'];
   readonly opcoesParentesco = [
@@ -197,17 +198,44 @@ export class UsuarioPerfilContatos implements OnDestroy {
     this.alternarBuscaContato(false);
     this.form.markAsPristine();
     this.form.markAsUntouched();
+    this.valoresOriginaisFormulario = this.snapshotFormulario();
     this.configurarAutocomplete();
     this.modalAberto = true;
   }
 
-  fecharModal(): void {
+  async fecharModal(): Promise<void> {
     if (this.salvando) return;
+    if (this.formularioTemAlteracoesNaoSalvas()) {
+      const confirmado = await Alertas.confirmarDescarte();
+      if (!confirmado) {
+        this.atualizarTela();
+        return;
+      }
+    }
+    this.fecharModalSemConfirmacao();
+    this.atualizarTela();
+  }
+
+  private fecharModalSemConfirmacao(): void {
     this.modalAberto = false;
     this.contatoSelecionado = null;
     this.opcoesAutocomplete = [];
+    this.valoresOriginaisFormulario = null;
     this.buscaSub?.unsubscribe();
     this.form.reset();
+  }
+
+  formularioTemAlteracoesNaoSalvas(): boolean {
+    return this.modalAberto && this.modoModal !== 'visualizar'
+      && this.snapshotFormulario() !== this.valoresOriginaisFormulario;
+  }
+
+  @HostListener('window:beforeunload', ['$event'])
+  avisarAntesDeFechar(event: BeforeUnloadEvent): void {
+    if (this.formularioTemAlteracoesNaoSalvas()) {
+      event.preventDefault();
+      event.returnValue = '';
+    }
   }
 
   alternarBuscaContato(buscar: boolean): void {
@@ -345,6 +373,7 @@ export class UsuarioPerfilContatos implements OnDestroy {
     }
 
     this.salvando = true;
+    this.atualizarTela();
     const idUsuario = this.usuario.id;
 
     const requisicao = this.modoModal === 'novo'
@@ -363,16 +392,18 @@ export class UsuarioPerfilContatos implements OnDestroy {
       );
 
     requisicao.subscribe({
-      next: usuario => {
+      next: usuario => this.ngZone.run(() => {
         this.salvando = false;
         this.toastr.success(this.modoModal === 'novo' ? 'Contato vinculado com sucesso!' : 'Contato atualizado com sucesso!', 'Sucesso');
         this.usuarioAtualizado.emit(usuario);
-        this.fecharModal();
-      },
-      error: err => {
+        this.fecharModalSemConfirmacao();
+        this.atualizarTela();
+      }),
+      error: err => this.ngZone.run(() => {
         this.salvando = false;
         this.toastr.error(err.error?.message || 'Erro ao salvar contato.', 'Erro');
-      }
+        this.atualizarTela();
+      })
     });
   }
 
@@ -571,5 +602,9 @@ export class UsuarioPerfilContatos implements OnDestroy {
   private atualizarTela(): void {
     this.cdr.markForCheck();
     this.cdr.detectChanges();
+  }
+
+  private snapshotFormulario(): string {
+    return JSON.stringify(this.form.getRawValue());
   }
 }

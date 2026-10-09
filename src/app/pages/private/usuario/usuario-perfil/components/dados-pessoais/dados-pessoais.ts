@@ -11,6 +11,7 @@ import { UsuarioService } from 'src/app/shared/services/usuario/usuario.service'
 import { obterMensagemErro, validarArquivo, validarExtensaoArquivo } from 'src/app/shared/utils/form-validations';
 import { formatarCep, formatarCpf } from 'src/app/shared/utils/masks';
 import { environment } from 'src/environments/environment';
+import { montarBaseAtualizacaoUsuario } from '../../utils/usuario-atualizacao-dto';
 
 @Component({
   selector: 'app-usuario-perfil-dados-pessoais',
@@ -122,9 +123,15 @@ export class UsuarioPerfilDadosPessoais implements OnChanges {
     this.form.markAllAsTouched();
     if (this.form.invalid || !this.temAlteracoes) return;
 
-    this.salvando = true;
-    const dto = this.montarDtoAtualizacao();
+    let dto: Partial<CadastroUsuarioCompletoDTO>;
+    try {
+      dto = this.montarDtoAtualizacao();
+    } catch (erro: any) {
+      this.toastr.error(erro.message || 'Revise os campos obrigatórios antes de salvar.', 'Erro');
+      return;
+    }
 
+    this.salvando = true;
     this.usuarioService.atualizar(this.usuario.id, dto).subscribe({
       next: usuarioAtualizado => {
         if (!this.fotoSelecionada) {
@@ -222,7 +229,7 @@ export class UsuarioPerfilDadosPessoais implements OnChanges {
 
   private montarDtoAtualizacao(): Partial<CadastroUsuarioCompletoDTO> {
     const dados = this.form.getRawValue();
-    return {
+    return montarBaseAtualizacaoUsuario(this.usuario!, {
       nomeCompleto: dados.nomeCompleto || '',
       dataNascimento: dados.dataNascimento || '',
       cpf: dados.usarOutroDocumento ? null : dados.cpf?.replace(/\D/g, '') || null,
@@ -235,22 +242,8 @@ export class UsuarioPerfilDadosPessoais implements OnChanges {
       escola: dados.escola || '',
       periodoEscolar: dados.periodoEscolar || '',
       serieEscolar: dados.serieEscolar || '',
-      raEscolar: dados.raEscolar || '',
-      idTurma: this.usuario?.idTurma ?? 0,
-      contatos: this.usuario?.contatos?.map(contato => ({
-        id: contato.id,
-        nomeCompleto: contato.nomeCompleto,
-        telefone: contato.telefone?.replace(/\D/g, '') || '',
-        email: contato.email,
-        endereco: contato.endereco,
-        cpf: contato.cpf?.replace(/\D/g, '') || undefined,
-        localTrabalho: contato.localTrabalho,
-        parentesco: contato.parentesco || 'OUTRO',
-        principal: !!contato.principal
-      })) ?? [],
-      composicaoFamiliar: this.usuario?.composicaoFamiliar ?? [],
-      fichaSocioeconomica: this.usuario?.fichaSocioeconomica ?? { tipoMoradia: 'OUTRO' }
-    };
+      raEscolar: dados.raEscolar || ''
+    });
   }
 
   private finalizarSalvar(usuarioAtualizado: UsuarioResponseDTO): void {

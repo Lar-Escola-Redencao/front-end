@@ -163,6 +163,19 @@ describe('UsuarioPerfil', () => {
     expect(toastr.success).toHaveBeenCalledWith('Usuário transferido com sucesso.', 'Sucesso');
   });
 
+  it('usa usuário no texto de confirmação de transferência para outra unidade', async () => {
+    component.turmasTransferencia = [{ id: 20, periodo: 'TARDE', horaInicio: '13:00', horaFim: '17:00', unidade: { id: 2, nome: 'Unidade B' } }];
+    component.formTransferencia.get('idTurmaNova')?.enable();
+    component.formTransferencia.setValue({ idUnidade: 2, idTurmaNova: 20 });
+
+    await component.confirmarTransferencia();
+
+    const chamadas = vi.mocked(Swal.fire).mock.calls;
+    const html = (chamadas[chamadas.length - 1]?.[0] as any)?.html as string;
+    expect(html).toContain('Você está transferindo o usuário para a unidade Unidade B');
+    expect(html).not.toContain('transferindo o aluno');
+  });
+
   it('exibe toast de sucesso ao matricular novamente usuario', async () => {
     component.usuario = { ...component.usuario!, status: 'EGRESSO', statusMatricula: 'EGRESSO' };
     component.modoSelecaoTurma = 'rematricula';

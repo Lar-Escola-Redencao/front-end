@@ -160,7 +160,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
   // Modal Rápido de Contato
   modalContatoAberto = false;
   contatoEmEdicaoId: number | null = null;
-  private valoresOriginaisContato: unknown = null;
+  private valoresOriginaisContato: string | null = null;
   private valoresOriginaisVinculo: unknown = null;
   formEdicaoContato = this.fb.group({
     nomeCompleto: ['', [Validators.required, Validators.minLength(3)]],
@@ -593,7 +593,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
     for (const transporte of this.transportes.filter(item => item.valor)) {
       this.formSubs.push(this.formUsuario.get(`complementares.${transporte.campo}`)!.valueChanges.subscribe(ativo => {
         const controle = this.formUsuario.get(`complementares.${transporte.valor}`)!;
-        controle.setValidators(ativo ? [Validators.min(0)] : []);
+        controle.setValidators(ativo ? [Validators.required, Validators.min(0)] : []);
         if (!ativo) controle.setValue(null, { emitEvent: false });
         controle.updateValueAndValidity();
       }));
@@ -1690,17 +1690,27 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
     });
     this.formEdicaoContato.markAsPristine();
     this.formEdicaoContato.markAsUntouched();
-    this.valoresOriginaisContato = this.formEdicaoContato.getRawValue();
+    this.valoresOriginaisContato = this.snapshotContatoEdicao();
     this.modalContatoAberto = true;
   }
 
   private contatoTemAlteracoes(): boolean {
-    return JSON.stringify(this.formEdicaoContato.getRawValue()) !== JSON.stringify(this.valoresOriginaisContato);
+    return this.snapshotContatoEdicao() !== this.valoresOriginaisContato;
+  }
+
+  private snapshotContatoEdicao(): string {
+    return JSON.stringify(this.formEdicaoContato.getRawValue());
   }
 
   async fecharModalContato() {
     if (this.isLoading) return;
-    if (this.contatoTemAlteracoes() && !await Alertas.confirmarDescarte()) return;
+    if (this.contatoTemAlteracoes()) {
+      const confirmado = await Alertas.confirmarDescarte();
+      if (!confirmado) {
+        this.atualizarTela();
+        return;
+      }
+    }
     this.fecharModalContatoSemConfirmacao();
     this.atualizarTela();
   }
@@ -1708,6 +1718,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
   private fecharModalContatoSemConfirmacao() {
     this.modalContatoAberto = false;
     this.contatoEmEdicaoId = null;
+    this.valoresOriginaisContato = null;
     this.formEdicaoContato.reset();
   }
 
@@ -1728,6 +1739,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
     };
 
     this.isLoading = true;
+    this.atualizarTela();
     this.contatoService.atualizarContato(this.contatoEmEdicaoId, dto).subscribe({
       next: () => {
         this.ngZone.run(() => {
