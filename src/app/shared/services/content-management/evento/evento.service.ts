@@ -61,7 +61,6 @@ export class EventoService {
     if (evento.imagem) formData.append('imagem', evento.imagem);
     if (evento.valor !== null && evento.valor !== undefined) formData.append('valor', evento.valor.toString());
     if (evento.tipoEvento) formData.append('tipoEvento', evento.tipoEvento);
-    if (evento.comentarioPosEvento) formData.append('comentarioPosEvento', evento.comentarioPosEvento);
     if (evento.parceirosIds !== undefined && evento.parceirosIds !== null) {
       evento.parceirosIds.forEach(id => formData.append('parceirosIds', id.toString()));
     }

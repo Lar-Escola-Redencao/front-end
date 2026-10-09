@@ -11,24 +11,15 @@ export interface Evento {
   encerrado?: boolean;
   comentarioPosEvento?: string;
   parceiros: Parceiro[];
-  // Fotos da cobertura pós-evento (tabela midia_evento), já resolvidas para URLs
-  // pelo EventoPublicoService a partir do array de objetos retornado pela API.
-  midiaEvento?: MidiaEvento[];
+  // Redes sociais de cobertura deste evento especificamente (GET /evento/{id}/redes-sociais).
+  redesSociais?: EventoRedeSocial[];
 }
 
-export type TipoMidiaEvento = 'IMAGEM' | 'VIDEO';
-
-export interface MidiaEvento {
-  url: string;
-  tipo: TipoMidiaEvento;
-}
-
-export interface MidiaEventoDTO {
-  id: number;
-  tipoMidia?: TipoMidiaEvento;
-  urlMidia?: string;
-  tipo_midia?: TipoMidiaEvento;
-  url_midia?: string;
+export interface EventoRedeSocial {
+  idRedeSocial: number;
+  nome: string;
+  icone: string;
+  urlLink: string;
 }
 
 // Link do evento em uma rede social (tabela evento_rede_social), usado no pós-evento.
@@ -64,7 +55,6 @@ export interface AtualizarEventoDTO {
   imagem?: File;
   valor?: number;
   tipoEvento?: TipoEvento;
-  comentarioPosEvento?: string;
   parceirosIds?: number[];
 }
 

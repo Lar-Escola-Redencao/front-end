@@ -15,111 +15,53 @@
   } @else {
     <div class="evento-conteudo">
       <div class="evento-galeria">
-        <button
-          type="button"
-          class="imagem-principal-wrapper"
-          (click)="abrirLightbox()"
-          [attr.aria-label]="'Ampliar imagem do evento ' + evento.titulo"
-        >
-          @if (possuiCarrossel) {
-            <span
-              role="button"
-              tabindex="0"
-              class="imagem-principal-seta imagem-principal-seta-anterior"
-              (click)="midiaAnterior(); $event.stopPropagation()"
-              (keydown.enter)="midiaAnterior(); $event.stopPropagation()"
-              (keydown.space)="midiaAnterior(); $event.preventDefault(); $event.stopPropagation()"
-              aria-label="Mídia anterior"
-            >
-              <span class="material-symbols-outlined" aria-hidden="true">chevron_left</span>
-            </span>
-          }
-
-          @if (midiaPrincipalIndisponivel) {
+        <div class="imagem-principal-wrapper" (click)="abrirLightbox()">
+          @if (imagemPrincipalIndisponivel) {
             <span class="imagem-principal-fallback">
               <span class="material-symbols-outlined" aria-hidden="true">image</span>
-              <span>Mídia indisponível</span>
+              <span>Imagem indisponível</span>
             </span>
-          } @else if (midiaAtualEhVideo) {
-            <span class="video-preview">
-              <video
-                class="video-preview-media"
-                [src]="midiaAtual"
-                [attr.type]="tipoVideo(midiaAtual)"
-                preload="metadata"
-                muted
-                playsinline
-                aria-hidden="true"
-                (error)="onMidiaPrincipalError()"
-              ></video>
-              <span class="video-preview-play" aria-hidden="true"></span>
-            </span>
-          } @else if (midiaAtual && !midiaPrincipalIndisponivel) {
-            <img class="imagem-principal" [src]="midiaAtual" [alt]="evento.titulo" (error)="onMidiaPrincipalError()" />
+          } @else if (imagemPrincipal) {
+            <img
+              class="imagem-principal"
+              [src]="imagemPrincipal"
+              [alt]="evento.titulo"
+              (error)="onImagemPrincipalError()"
+            />
             <span class="imagem-principal-hint material-symbols-outlined" aria-hidden="true">zoom_in</span>
           } @else {
             <span class="imagem-principal-placeholder material-symbols-outlined" aria-hidden="true">image</span>
           }
 
-          @if (possuiCarrossel) {
-            <span
-              role="button"
-              tabindex="0"
-              class="imagem-principal-seta imagem-principal-seta-proxima"
-              (click)="proximaMidia(); $event.stopPropagation()"
-              (keydown.enter)="proximaMidia(); $event.stopPropagation()"
-              (keydown.space)="proximaMidia(); $event.preventDefault(); $event.stopPropagation()"
-              aria-label="Próxima mídia"
-            >
-              <span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
-            </span>
-          }
-        </button>
+          @if (exibirOverlayRedesSociais) {
+            <div class="imagem-overlay">
+              <p class="imagem-overlay-texto">Acompanhe o que aconteceu através das nossas redes sociais</p>
 
-        @if (possuiCarrossel) {
-          <div class="carrossel-controles">
-            <button type="button" class="carrossel-seta" (click)="midiaAnterior()" aria-label="Mídia anterior">
-              <span class="material-symbols-outlined">chevron_left</span>
-            </button>
-
-            <div class="miniaturas">
-              @for (midia of midias; track $index) {
-                <button
-                  #miniaturaPreview
-                  type="button"
-                  class="miniatura"
-                  [class.ativa]="$index === indiceMidiaAtual"
-                  (click)="selecionarMidia($index)"
-                  [attr.aria-label]="'Ver mídia ' + ($index + 1)"
-                >
-                  @if (ehVideo(midia)) {
-                    <span class="miniatura-video">
-                      <video
-                        class="miniatura-video-media"
-                        [src]="midia.url"
-                        [attr.type]="tipoVideo(midia.url)"
-                        preload="metadata"
-                        muted
-                        playsinline
-                        aria-hidden="true"
-                      ></video>
-                      <span class="miniatura-video-play" aria-hidden="true"></span>
+              <nav class="redes-sociais-overlay" aria-label="Redes sociais do evento">
+                @for (rede of redesSociais; track rede.idRedeSocial) {
+                  <a
+                    class="rede-social-link"
+                    [href]="rede.urlLink"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    (click)="$event.stopPropagation()"
+                    [attr.aria-label]="rede.nome"
+                    [title]="rede.nome"
+                  >
+                    <img [src]="rede.icone" [alt]="rede.nome" (error)="onIconeRedeError($event)" />
+                    <span class="material-symbols-outlined rede-social-fallback rede-social-fallback-hidden" aria-hidden="true">
+                      link
                     </span>
-                  } @else {
-                    <img [src]="midia.url" alt="" aria-hidden="true" (error)="onMiniaturaImageError($event)" />
-                    <span class="material-symbols-outlined miniatura-fallback miniatura-fallback-hidden" aria-hidden="true">
-                      image
-                    </span>
-                  }
-                </button>
-              }
+                  </a>
+                }
+              </nav>
             </div>
-
-            <button type="button" class="carrossel-seta" (click)="proximaMidia()" aria-label="Próxima mídia">
-              <span class="material-symbols-outlined">chevron_right</span>
-            </button>
-          </div>
-        }
+          } @else if (exibirOverlayEventoEncerrado) {
+            <div class="imagem-overlay imagem-overlay-encerrado">
+              <p class="imagem-overlay-texto">Evento encerrado</p>
+            </div>
+          }
+        </div>
       </div>
 
       <div class="evento-info">
@@ -147,12 +89,6 @@
           {{ evento.endereco }}
         </p>
 
-        @if (evento.comentarioPosEvento) {
-          <div class="evento-nota-pos">
-            <h3>Nota da organização após encerramento</h3>
-            <p>{{ evento.comentarioPosEvento }}</p>
-          </div>
-        }
         @if (parceiros.length > 0) {
           <section class="evento-parceiros">
             <h2>{{ parceiros.length === 1 ? 'Parceiro' : 'Parceiros' }}</h2>
@@ -223,59 +159,13 @@
   }
 </main>
 
-@if (lightboxAberto && midiaAtual) {
+@if (lightboxAberto && imagemPrincipal && evento) {
   <div class="lightbox" (click)="fecharLightbox()">
     <button type="button" class="lightbox-fechar" (click)="fecharLightbox()" aria-label="Fechar imagem ampliada">
       <span class="material-symbols-outlined">close</span>
     </button>
 
-    @if (possuiCarrossel) {
-      <button
-        type="button"
-        class="lightbox-seta lightbox-seta-anterior"
-        (click)="midiaAnterior(); $event.stopPropagation()"
-        aria-label="Mídia anterior"
-      >
-        <span class="material-symbols-outlined">chevron_left</span>
-      </button>
-    }
-
-    @if (midiaPrincipalIndisponivel) {
-      <div class="lightbox-fallback" (click)="$event.stopPropagation()">
-        <span class="material-symbols-outlined" aria-hidden="true">image</span>
-        <span>Mídia indisponível</span>
-      </div>
-    } @else if (midiaAtualEhVideo) {
-      <video
-        #lightboxVideo
-        class="lightbox-video"
-        [src]="midiaAtual"
-        [attr.type]="tipoVideo(midiaAtual)"
-        controls
-        playsinline
-        (click)="$event.stopPropagation()"
-        (error)="onMidiaPrincipalError()"
-      ></video>
-    } @else {
-      <img
-        class="lightbox-imagem"
-        [src]="midiaAtual"
-        [alt]="evento!.titulo"
-        (click)="$event.stopPropagation()"
-        (error)="onMidiaPrincipalError()"
-      />
-    }
-
-    @if (possuiCarrossel) {
-      <button
-        type="button"
-        class="lightbox-seta lightbox-seta-proxima"
-        (click)="proximaMidia(); $event.stopPropagation()"
-        aria-label="Próxima mídia"
-      >
-        <span class="material-symbols-outlined">chevron_right</span>
-      </button>
-    }
+    <img class="lightbox-imagem" [src]="imagemPrincipal" [alt]="evento.titulo" (click)="$event.stopPropagation()" />
   </div>
 }
 
