@@ -1,0 +1,21 @@
+<mat-form-field appearance="outline" class="barra-busca">
+  <mat-icon matPrefix class="barra-busca-icone">search</mat-icon>
+  <input
+    matInput
+    type="search"
+    autocomplete="off"
+    [formControl]="controle"
+    [placeholder]="placeholder"
+    [attr.aria-label]="placeholder" />
+  @if (controle.value) {
+    <button
+      matSuffix
+      type="button"
+      class="barra-busca-limpar"
+      title="Limpar busca"
+      aria-label="Limpar busca"
+      (click)="limpar()">
+      <mat-icon>close</mat-icon>
+    </button>
+  }
+</mat-form-field>

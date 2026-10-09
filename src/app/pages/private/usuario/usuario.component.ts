@@ -36,6 +36,7 @@ import {
   TabelaLayout
 } from '@components/tabela-layout/tabela-layout';
 import { Paginacao } from '@components/paginacao/paginacao';
+import { BarraBusca } from '@components/barra-busca/barra-busca';
 
 import { ComponentComAlteracoesNaoSalvas } from 'src/app/shared/guards/can-deactivate.guard';
 import { UsuarioService } from 'src/app/shared/services/usuario/usuario.service';
@@ -76,6 +77,7 @@ import { TurmaService } from 'src/app/shared/services/turma/turma.service';
     ModalLayout,
     TabelaLayout,
     Paginacao,
+    BarraBusca,
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
@@ -101,8 +103,14 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
 
   abaAtiva: 'usuarios' | 'contatos' = 'usuarios';
   todosUsuarios: UsuarioResponseDTO[] = [];
+  /** Resultado do GET da listagem (filtrado por ?search= quando há busca); é o que a tabela pagina. */
+  usuariosListagem: UsuarioResponseDTO[] = [];
   usuarios: UsuarioResponseDTO[] = [];
   contatos: ContatoListagemDTO[] = [];
+
+  /** Termo da barra de busca, espelhado em ?search= na URL. */
+  busca = '';
+  private listaSub?: Subscription;
 
   pagina = 0;
   tamanho = 10;
@@ -372,8 +380,12 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
       }
       this.abaAtiva = aba;
 
+      const novaBusca = params.get('search') ?? '';
+      const buscaMudou = novaBusca !== this.busca;
+      this.busca = novaBusca;
+
       if (this.abaAtiva === 'usuarios') {
-        if (this.todosUsuarios.length === 0 && !this.carregandoLista) {
+        if (buscaMudou || (this.usuariosListagem.length === 0 && !this.carregandoLista)) {
            this.carregarUsuarios();
         } else {
            this.aplicarPaginacao();
@@ -391,6 +403,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
 
   ngOnDestroy(): void {
     this.routeSub?.unsubscribe();
+    this.listaSub?.unsubscribe();
     this.buscaVinculoSub?.unsubscribe();
     this.previewContatoSub?.unsubscribe();
     this.formSubs.forEach(sub => sub.unsubscribe());
@@ -401,21 +414,44 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
     if (this.abaAtiva === aba) return;
     this.router.navigate([], {
       relativeTo: this.route,
-      queryParams: { aba: aba, page: 0, sort: null },
+      queryParams: { aba: aba, page: 0, sort: null, search: null },
       queryParamsHandling: 'merge'
     });
   }
 
+  /** Atualiza a URL (?search=termo); o queryParamMap.subscribe refaz o GET sem recarregar a página. */
+  buscar(termo: string): void {
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { search: termo || null, page: 0 },
+      queryParamsHandling: 'merge'
+    });
+  }
+
+  get mensagemVaziaLista(): string {
+    if (this.busca) {
+      return this.abaAtiva === 'usuarios'
+        ? `Nenhum usuário encontrado para "${this.busca}".`
+        : `Nenhum contato encontrado para "${this.busca}".`;
+    }
+    return this.abaAtiva === 'usuarios' ? 'Nenhum usuário cadastrado ainda.' : 'Nenhum contato cadastrado ainda.';
+  }
+
   carregarUsuarios(): void {
-    if (this.carregandoLista) return;
+    // Uma nova busca cancela a requisição anterior em andamento: vale sempre a mais recente.
+    this.listaSub?.unsubscribe();
     this.carregandoLista = true;
     this.erroLista = false;
     this.cdr.markForCheck();
 
-    this.usuarioService.listarUsuarios().subscribe({
+    const busca = this.busca;
+    this.listaSub = this.usuarioService.listarUsuarios(busca || undefined).subscribe({
       next: (resposta) => {
         this.ngZone.run(() => {
-          this.todosUsuarios = resposta.filter(u => u.status !== 'EXCLUIDO');
+          const ativos = resposta.filter(u => u.status !== 'EXCLUIDO');
+          this.usuariosListagem = ativos;
+          // Sem busca, a resposta é a lista completa — reaproveitada na checagem de CPF e nos vínculos.
+          if (!busca) this.todosUsuarios = ativos;
           this.aplicarPaginacao();
           this.carregandoLista = false;
           this.cdr.markForCheck();
@@ -435,14 +471,15 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
   }
 
   carregarContatos(): void {
-    if (this.carregandoLista) return;
+    this.listaSub?.unsubscribe();
     this.carregandoLista = true;
     this.erroLista = false;
 
+    const busca = this.busca || undefined;
     const consulta = this.ordenacao?.campo === 'quantidadeVinculos'
-      ? this.contatoService.listarOrdenadosPorVinculos(this.pagina, this.tamanho, this.ordenacao.direcao)
-      : this.contatoService.listarContatos(this.pagina, this.tamanho, this.sort);
-    consulta.subscribe({
+      ? this.contatoService.listarOrdenadosPorVinculos(this.pagina, this.tamanho, this.ordenacao.direcao, busca)
+      : this.contatoService.listarContatos(this.pagina, this.tamanho, this.sort, busca);
+    this.listaSub = consulta.subscribe({
       next: (resposta) => {
         this.ngZone.run(() => {
           this.contatos = resposta.content;
@@ -464,7 +501,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
   }
 
   aplicarPaginacao(): void {
-    let lista = [...this.todosUsuarios];
+    let lista = [...this.usuariosListagem];
 
     if (this.ordenacao) {
       const { campo, direcao } = this.ordenacao;

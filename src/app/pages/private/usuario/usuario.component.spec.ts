@@ -270,7 +270,7 @@ describe('Contrato de edição de usuários', () => {
   });
 
   it('ordena pelo documento alternativo e pela unidade exibida antes de paginar', () => {
-    component.todosUsuarios = [
+    component.usuariosListagem = [
       { ...usuario, id: 1, cpf: '', documentoAuxiliar: 'DOC-20', nomeUnidade: 'Zulu', nomeTurma: 'MANHA' },
       { ...usuario, id: 2, cpf: '', documentoAuxiliar: 'DOC-3', nomeUnidade: 'Alfa', nomeTurma: 'TARDE' }
     ];

@@ -11,8 +11,8 @@ export class PartnersService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = `${environment.apiUrl}/parceiro`;
 
-  listarTodos(pagina: number, tamanho: number, sort?: string): Promise<PaginaResposta<Partner>> {
-    const params = construirHttpParams({ pagina, tamanho, sort });
+  listarTodos(pagina: number, tamanho: number, sort?: string, search?: string): Promise<PaginaResposta<Partner>> {
+    const params = construirHttpParams({ pagina, tamanho, sort, extras: { search } });
     return firstValueFrom(this.http.get<PaginaResposta<Partner>>(`${this.baseUrl}/todos`, { params }));
   }
 

@@ -18,6 +18,7 @@ import { ComponentComAlteracoesNaoSalvas } from 'src/app/shared/guards/can-deact
 import { ModalLayout } from '@components/modal-layout/modal-layout';
 import { TabelaLayout, TabelaColuna, TabelaAcao } from '@components/tabela-layout/tabela-layout';
 import { Paginacao } from '@components/paginacao/paginacao';
+import { BarraBusca } from '@components/barra-busca/barra-busca';
 
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -57,6 +58,7 @@ interface ClassificacaoSecoes {
     ModalLayout,
     TabelaLayout,
     Paginacao,
+    BarraBusca,
     MatFormFieldModule,
     MatInputModule,
     MatSlideToggleModule,
@@ -74,6 +76,10 @@ export class Sobre implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalvas
   erroPagina = false;
 
   private routeSub?: Subscription;
+  private listaSub?: Subscription;
+
+  /** Termo da barra de busca da aba Nossa História, espelhado em ?search= na URL. */
+  busca = '';
 
   // ---------------------------------------------------------------
   // ABA 1 — TEXTO SOBRE (só edição, sem adicionar/excluir)
@@ -168,6 +174,7 @@ export class Sobre implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalvas
       this.sort = sort;
       this.ordenacao = analisarOrdenacao(sort);
       this.abaAtiva = this.lerAbaValida(params.get('aba'));
+      this.busca = params.get('search') ?? '';
 
       if (this.abaAtiva === 'historia') {
         this.carregarHistoria();
@@ -177,6 +184,7 @@ export class Sobre implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalvas
 
   ngOnDestroy(): void {
     this.routeSub?.unsubscribe();
+    this.listaSub?.unsubscribe();
   }
 
   private lerAbaValida(valor: string | null): AbaSobre {
@@ -188,7 +196,12 @@ export class Sobre implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalvas
       return;
     }
 
-    this.navegar({ aba, page: 0, sort: null });
+    this.navegar({ aba, page: 0, sort: null, search: null });
+  }
+
+  /** Atualiza a URL (?search=termo); o queryParamMap.subscribe refaz o GET sem recarregar a página. */
+  buscar(termo: string): void {
+    this.navegar({ page: 0, search: termo || null });
   }
 
   private navegar(queryParams: Record<string, any>): void {
@@ -471,16 +484,20 @@ export class Sobre implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalvas
   // ---------------------------------------------------------------
 
   get mensagemVaziaHistoria(): string {
-    return 'Nenhum marco histórico cadastrado.';
+    return this.busca
+      ? `Nenhum marco histórico encontrado para "${this.busca}".`
+      : 'Nenhum marco histórico cadastrado.';
   }
 
   carregarHistoria(): void {
+    // Uma nova busca cancela a requisição anterior em andamento: vale sempre a mais recente.
+    this.listaSub?.unsubscribe();
     this.carregandoLista = true;
     this.erroLista = false;
 
     // tipo HISTORIA faz o back recortar a consulta nos blocos de ano antes de
     // paginar, então content, totalElements e totalPages já vêm só desta aba.
-    this.sobreService.listarSecoesAdmin(this.pagina, this.tamanho, this.sort, GRUPO_HISTORIA).subscribe({
+    this.listaSub = this.sobreService.listarSecoesAdmin(this.pagina, this.tamanho, this.sort, GRUPO_HISTORIA, this.busca || undefined).subscribe({
       next: (resposta) => {
         this.ngZone.run(() => {
           this.blocosHistoria = resposta.content;

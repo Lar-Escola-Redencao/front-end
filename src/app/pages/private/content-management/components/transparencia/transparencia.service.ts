@@ -33,13 +33,13 @@ export class TransparenciaService {
   }
 
   /** Rota autenticada e paginada, usada pela tabela de seções da tela admin. */
-  listarSecoesAdmin(pagina: number, tamanho: number, sort?: string): Observable<PaginaResposta<Secao>> {
-    return this.paginaCmsService.listarSecoesAdmin(ID_PAGINA_TRANSPARENCIA, pagina, tamanho, sort, 'nenhum');
+  listarSecoesAdmin(pagina: number, tamanho: number, sort?: string, search?: string): Observable<PaginaResposta<Secao>> {
+    return this.paginaCmsService.listarSecoesAdmin(ID_PAGINA_TRANSPARENCIA, pagina, tamanho, sort, 'nenhum', search);
   }
 
   /** Rota autenticada e paginada, usada pela tabela de documentos da tela admin. */
-  listarDocumentosAdmin(pagina: number, tamanho: number, sort?: string): Observable<PaginaResposta<DocumentoAdmin>> {
-    return this.paginaCmsService.listarDocumentosAdmin(ID_PAGINA_TRANSPARENCIA, pagina, tamanho, sort);
+  listarDocumentosAdmin(pagina: number, tamanho: number, sort?: string, search?: string): Observable<PaginaResposta<DocumentoAdmin>> {
+    return this.paginaCmsService.listarDocumentosAdmin(ID_PAGINA_TRANSPARENCIA, pagina, tamanho, sort, search);
   }
 
   buscarSecao(id: number): Observable<Secao> {

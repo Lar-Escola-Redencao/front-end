@@ -9,6 +9,7 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { ToastrService } from 'ngx-toastr';
 import { ModalLayout } from '../../../../../components/modal-layout/modal-layout';
 import { Paginacao } from '../../../../../components/paginacao/paginacao';
+import { BarraBusca } from '../../../../../components/barra-busca/barra-busca';
 import { TabelaAcao, TabelaColuna, TabelaLayout } from '../../../../../components/tabela-layout/tabela-layout';
 import { ComponentComAlteracoesNaoSalvas } from '../../../../../shared/guards/can-deactivate.guard';
 import { AtualizarDiretoriaDTO, CriarDiretoriaDTO, Diretoria } from '../../../../../shared/models/diretoria.model';
@@ -31,6 +32,7 @@ import {
     ModalLayout,
     TabelaLayout,
     Paginacao,
+    BarraBusca,
     MatFormFieldModule,
     MatInputModule,
     MatSlideToggleModule
@@ -52,6 +54,10 @@ export class DiretoriaComponent implements OnInit, OnDestroy, ComponentComAltera
   erroLista = false;
 
   private routeSub?: Subscription;
+  private listaSub?: Subscription;
+
+  /** Termo da barra de busca, espelhado em ?search= na URL. */
+  busca = '';
 
   colunas: TabelaColuna<Diretoria>[] = [
     { chave: 'foto', titulo: 'Foto', tipo: 'imagem' },
@@ -102,6 +108,7 @@ export class DiretoriaComponent implements OnInit, OnDestroy, ComponentComAltera
       this.tamanho = tamanho;
       this.sort = sort;
       this.ordenacao = analisarOrdenacao(sort);
+      this.busca = params.get('search') ?? '';
       this.carregarDiretores();
     });
   }
@@ -109,17 +116,17 @@ export class DiretoriaComponent implements OnInit, OnDestroy, ComponentComAltera
   ngOnDestroy(): void {
     this.revogarPreviewSeNecessario();
     this.routeSub?.unsubscribe();
+    this.listaSub?.unsubscribe();
   }
 
   carregarDiretores(): void {
-    if (this.carregandoLista) {
-      return;
-    }
+    // Uma nova busca cancela a requisição anterior em andamento: vale sempre a mais recente.
+    this.listaSub?.unsubscribe();
 
     this.carregandoLista = true;
     this.erroLista = false;
 
-    this.diretoriaService.listarTodos(this.pagina, this.tamanho, this.sort).subscribe({
+    this.listaSub = this.diretoriaService.listarTodos(this.pagina, this.tamanho, this.sort, this.busca || undefined).subscribe({
       next: (resposta) => {
         this.diretores = resposta.content;
         this.totalElementos = resposta.page.totalElements;
@@ -140,6 +147,17 @@ export class DiretoriaComponent implements OnInit, OnDestroy, ComponentComAltera
         this.cdr.detectChanges();
       }
     });
+  }
+
+  get mensagemVazia(): string {
+    return this.busca
+      ? `Nenhum membro da diretoria encontrado para "${this.busca}".`
+      : 'Nenhum membro da diretoria cadastrado.';
+  }
+
+  /** Atualiza a URL (?search=termo); o queryParamMap.subscribe refaz o GET sem recarregar a página. */
+  buscar(termo: string): void {
+    this.navegar({ page: 0, search: termo || null });
   }
 
   irParaPagina(pagina: number): void {

@@ -38,8 +38,9 @@ export class SecoesGrupoService {
    * A rota devolve todas as seções da página (já ordenadas por grupo e ordem);
    * o filtro pelo grupo da aba é feito aqui.
    */
-  listarPorGrupo(idPagina: number, grupo: GrupoSecao): Observable<SecaoGrupo[]> {
-    return this.http.get<Record<string, any>[]>(rotas.listar(idPagina)).pipe(
+  listarPorGrupo(idPagina: number, grupo: GrupoSecao, search?: string): Observable<SecaoGrupo[]> {
+    const params = search ? { search } : undefined;
+    return this.http.get<Record<string, any>[]>(rotas.listar(idPagina), { params }).pipe(
       map((resposta) => resposta.map((item) => this.mapearSecao(item))),
       map((secoes) => secoes.filter((secao) => secao.grupo === grupo)),
     );

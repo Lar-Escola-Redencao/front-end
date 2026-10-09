@@ -8,6 +8,7 @@ import { ToastrService } from 'ngx-toastr';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 
+import { BarraBusca } from '@components/barra-busca/barra-busca';
 import { ModalLayout } from '@components/modal-layout/modal-layout';
 import { TabelaAcao, TabelaColuna, TabelaLayout } from '@components/tabela-layout/tabela-layout';
 
@@ -46,6 +47,7 @@ import {
     ReactiveFormsModule,
     ModalLayout,
     TabelaLayout,
+    BarraBusca,
     MatFormFieldModule,
     MatInputModule,
   ],
@@ -81,6 +83,10 @@ export class CaptacaoRecursos implements OnInit, OnDestroy, ComponentComAlteraco
   previewNovaImagem: string | null = null;
   private valoresOriginais = '';
   private routeSub?: Subscription;
+  private listaSub?: Subscription;
+
+  /** Termo da barra de busca (só em abas de tabela com vários itens), espelhado em ?search= na URL. */
+  busca = '';
 
   constructor(
     private fb: FormBuilder,
@@ -98,13 +104,47 @@ export class CaptacaoRecursos implements OnInit, OnDestroy, ComponentComAlteraco
       const aba = params.get('aba');
       const destino =
         this.config.grupos.find((grupo) => grupo.grupo === aba) ?? this.config.grupos[0];
+
+      const novaBusca = params.get('search') ?? '';
+      const buscaMudou = novaBusca !== this.busca;
+      this.busca = novaBusca;
+
+      if (destino === this.grupoAtivo) {
+        // Mesma aba: só a busca mudou — refaz o GET da tabela sem recarregar a página.
+        if (buscaMudou && this.ehTabela) {
+          this.carregarTabela();
+        }
+        return;
+      }
+
       this.trocarParaGrupo(destino);
     });
   }
 
   ngOnDestroy(): void {
     this.routeSub?.unsubscribe();
+    this.listaSub?.unsubscribe();
     this.liberarPreviewNovaImagem();
+  }
+
+  /** A busca só faz sentido em listas: não aparece no formulário de contato nem no registro único (Pix). */
+  get exibeBusca(): boolean {
+    return this.ehTabela && !this.grupoAtivo.registroUnico;
+  }
+
+  /** Atualiza a URL (?search=termo); o queryParamMap.subscribe refaz o GET sem recarregar a página. */
+  buscar(termo: string): void {
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { search: termo || null },
+      queryParamsHandling: 'merge',
+    });
+  }
+
+  get mensagemVazia(): string {
+    return this.busca
+      ? `Nenhum ${this.grupoAtivo.nomeItem} encontrado para "${this.busca}".`
+      : `Nenhum ${this.grupoAtivo.nomeItem} cadastrado.`;
   }
 
   /** Clique na aba: confirma antes de navegar, então cancelar nem altera a URL. */
@@ -115,6 +155,8 @@ export class CaptacaoRecursos implements OnInit, OnDestroy, ComponentComAlteraco
 
     this.confirmarDescarteSeNecessario((confirmado) => {
       if (confirmado) {
+        // A busca é por aba: zera antes de ativar, para a nova aba já carregar sem filtro.
+        this.busca = '';
         // Ativa antes de navegar: a emissão do query param cai no `destino === grupoAtivo`.
         this.ativarGrupo(grupo);
         this.navegarParaAba(grupo);
@@ -125,7 +167,7 @@ export class CaptacaoRecursos implements OnInit, OnDestroy, ComponentComAlteraco
   private navegarParaAba(grupo: GrupoSecaoConfig, substituirHistorico = false): void {
     this.router.navigate([], {
       relativeTo: this.route,
-      queryParams: { aba: grupo.grupo },
+      queryParams: { aba: grupo.grupo, search: this.busca || null },
       queryParamsHandling: 'merge',
       replaceUrl: substituirHistorico,
     });
@@ -281,10 +323,13 @@ export class CaptacaoRecursos implements OnInit, OnDestroy, ComponentComAlteraco
   }
 
   carregarTabela(): void {
+    // Uma nova busca cancela a requisição anterior em andamento: vale sempre a mais recente.
+    this.listaSub?.unsubscribe();
     this.carregando = true;
     this.erroCarregamento = false;
 
-    this.secoesGrupoService.listarPorGrupo(this.config.idPagina, this.grupoAtivo.grupo).subscribe({
+    const busca = this.exibeBusca ? this.busca || undefined : undefined;
+    this.listaSub = this.secoesGrupoService.listarPorGrupo(this.config.idPagina, this.grupoAtivo.grupo, busca).subscribe({
       next: (itens) => {
         this.itens = itens;
         this.carregando = false;
