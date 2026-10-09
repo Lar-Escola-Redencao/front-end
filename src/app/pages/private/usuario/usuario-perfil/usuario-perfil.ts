@@ -83,12 +83,14 @@ export class UsuarioPerfil implements OnInit, OnDestroy {
   private returnUrl: string | null = null;
 
   readonly formDesligamento = this.fb.group({
+    dataDesligamento: ['', Validators.required],
     justificativa: ['', Validators.required]
   });
 
   readonly formTransferencia = this.fb.group({
     idUnidade: this.fb.control<number | null>(null, Validators.required),
-    idTurmaNova: this.fb.control<number | null>({ value: null, disabled: true }, Validators.required)
+    idTurmaNova: this.fb.control<number | null>({ value: null, disabled: true }, Validators.required),
+    dataTransferencia: ['', Validators.required]
   });
 
   readonly abas: { id: AbaPerfil; label: string }[] = [
@@ -241,7 +243,7 @@ export class UsuarioPerfil implements OnInit, OnDestroy {
 
   abrirModalDesligamento(): void {
     if (!this.usuario?.id || this.desligado || this.monitor) return;
-    this.formDesligamento.reset({ justificativa: '' });
+    this.formDesligamento.reset({ dataDesligamento: this.dataHoje(), justificativa: '' });
     this.modalDesligamentoAberto = true;
   }
 
@@ -254,8 +256,10 @@ export class UsuarioPerfil implements OnInit, OnDestroy {
     if (!this.usuario?.id || this.desligado || this.monitor) return;
 
     this.formDesligamento.markAllAsTouched();
+    const dataDesligamento = this.formDesligamento.value.dataDesligamento || '';
     const justificativa = this.formDesligamento.value.justificativa?.trim() || '';
-    if (this.formDesligamento.invalid || !justificativa) return;
+    if (this.formDesligamento.invalid || !dataDesligamento || !justificativa) return;
+    if (!this.validarDataMinima(this.formDesligamento.get('dataDesligamento'), dataDesligamento)) return;
 
     const confirmou = await this.confirmarAcaoCritica(
       'Confirmar desligamento?',
@@ -266,7 +270,6 @@ export class UsuarioPerfil implements OnInit, OnDestroy {
     if (!confirmou) return;
 
     const usuarioAtual = this.usuario;
-    const dataDesligamento = new Date().toISOString().slice(0, 10);
     this.salvandoDesligamento = true;
     this.usuarioService.inativar(usuarioAtual.id, { dataDesligamento, justificativa }).subscribe({
       next: () => this.ngZone.run(() => {
@@ -300,7 +303,8 @@ export class UsuarioPerfil implements OnInit, OnDestroy {
     this.modoSelecaoTurma = 'transferencia';
     this.formTransferencia.reset({
       idUnidade: this.usuario.idUnidade || null,
-      idTurmaNova: null
+      idTurmaNova: null,
+      dataTransferencia: this.dataHoje()
     });
     this.formTransferencia.get('idTurmaNova')?.disable();
     this.turmasTransferencia = [];
@@ -315,7 +319,7 @@ export class UsuarioPerfil implements OnInit, OnDestroy {
   abrirModalRematricula(): void {
     if (!this.usuario?.id || !this.desligado || this.monitor) return;
     this.modoSelecaoTurma = 'rematricula';
-    this.formTransferencia.reset({ idUnidade: null, idTurmaNova: null });
+    this.formTransferencia.reset({ idUnidade: null, idTurmaNova: null, dataTransferencia: this.dataHoje() });
     this.formTransferencia.get('idTurmaNova')?.disable();
     this.turmasTransferencia = [];
     this.modalTransferenciaAberto = true;
@@ -375,6 +379,9 @@ export class UsuarioPerfil implements OnInit, OnDestroy {
 
     const turma = this.turmaTransferenciaSelecionada;
     if (!turma) return;
+    const dataTransferencia = this.formTransferencia.value.dataTransferencia || '';
+    if (!dataTransferencia) return;
+    if (!this.validarDataMinima(this.formTransferencia.get('dataTransferencia'), dataTransferencia)) return;
 
     const mesmaUnidade = turma.unidade.id === this.usuario.idUnidade;
     const periodo = this.formatarPeriodoTurma(turma.periodo).toLowerCase();
@@ -392,7 +399,7 @@ export class UsuarioPerfil implements OnInit, OnDestroy {
     if (!confirmou) return;
 
     this.salvandoTransferencia = true;
-    this.usuarioService.transferirTurma(this.usuario.id, turma.id).subscribe({
+    this.usuarioService.transferirTurma(this.usuario.id, turma.id, dataTransferencia).subscribe({
       next: usuario => this.ngZone.run(() => {
         this.usuario = usuario;
         this.salvandoTransferencia = false;
@@ -415,6 +422,36 @@ export class UsuarioPerfil implements OnInit, OnDestroy {
         this.atualizarTela();
       })
     });
+  }
+
+  get dataMinimaTransferencia(): string | null {
+    return this.usuario?.dataIngresso ? this.normalizarDataInput(this.usuario.dataIngresso) : null;
+  }
+
+  private dataHoje(): string {
+    const hoje = new Date();
+    const ano = hoje.getFullYear();
+    const mes = String(hoje.getMonth() + 1).padStart(2, '0');
+    const dia = String(hoje.getDate()).padStart(2, '0');
+    return `${ano}-${mes}-${dia}`;
+  }
+
+  private normalizarDataInput(valor?: string | null): string {
+    return valor ? valor.split('T')[0] : '';
+  }
+
+  private validarDataMinima(controle: ReturnType<typeof this.formTransferencia.get>, data: string): boolean {
+    const dataMinima = this.dataMinimaTransferencia;
+    if (dataMinima && data < dataMinima) {
+      controle?.setErrors({ ...(controle.errors || {}), dataAnteriorIngresso: true });
+      controle?.markAsTouched();
+      return false;
+    }
+    if (controle?.errors?.['dataAnteriorIngresso']) {
+      const { dataAnteriorIngresso, ...demaisErros } = controle.errors;
+      controle.setErrors(Object.keys(demaisErros).length ? demaisErros : null);
+    }
+    return true;
   }
 
   confirmarSelecaoTurma(): void {

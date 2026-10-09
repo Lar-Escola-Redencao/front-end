@@ -52,8 +52,8 @@ export class UsuarioService {
     return this.http.post<void>(`${this.apiUrl}/${id}/foto`, formData);
   }
 
-  transferirTurma(id: number, idTurmaNova: number): Observable<UsuarioResponseDTO> {
-    return this.http.put<UsuarioResponseDTO>(`${this.apiUrl}/${id}/turma`, { idTurmaNova });
+  transferirTurma(id: number, idTurmaNova: number, dataTransferencia: string): Observable<UsuarioResponseDTO> {
+    return this.http.put<UsuarioResponseDTO>(`${this.apiUrl}/${id}/turma`, { idTurmaNova, dataTransferencia });
   }
 
   rematricular(id: number, idTurmaNova: number): Observable<UsuarioResponseDTO> {

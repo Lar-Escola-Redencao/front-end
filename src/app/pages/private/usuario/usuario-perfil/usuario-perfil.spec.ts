@@ -144,7 +144,7 @@ describe('UsuarioPerfil', () => {
 
   it('exibe toast de sucesso ao desligar usuario', async () => {
     component.abrirModalDesligamento();
-    component.formDesligamento.setValue({ justificativa: 'Mudanca de cidade' });
+    component.formDesligamento.setValue({ dataDesligamento: '2026-10-09', justificativa: 'Mudanca de cidade' });
 
     await component.confirmarDesligamento();
 
@@ -155,18 +155,18 @@ describe('UsuarioPerfil', () => {
   it('exibe toast de sucesso ao transferir usuario', async () => {
     component.turmasTransferencia = [{ id: 20, periodo: 'TARDE', horaInicio: '13:00', horaFim: '17:00', unidade: { id: 2, nome: 'Unidade B' } }];
     component.formTransferencia.get('idTurmaNova')?.enable();
-    component.formTransferencia.setValue({ idUnidade: 2, idTurmaNova: 20 });
+    component.formTransferencia.setValue({ idUnidade: 2, idTurmaNova: 20, dataTransferencia: '2026-10-09' });
 
     await component.confirmarTransferencia();
 
-    expect(usuarioService.transferirTurma).toHaveBeenCalledWith(7, 20);
+    expect(usuarioService.transferirTurma).toHaveBeenCalledWith(7, 20, '2026-10-09');
     expect(toastr.success).toHaveBeenCalledWith('Usuário transferido com sucesso.', 'Sucesso');
   });
 
   it('usa usuário no texto de confirmação de transferência para outra unidade', async () => {
     component.turmasTransferencia = [{ id: 20, periodo: 'TARDE', horaInicio: '13:00', horaFim: '17:00', unidade: { id: 2, nome: 'Unidade B' } }];
     component.formTransferencia.get('idTurmaNova')?.enable();
-    component.formTransferencia.setValue({ idUnidade: 2, idTurmaNova: 20 });
+    component.formTransferencia.setValue({ idUnidade: 2, idTurmaNova: 20, dataTransferencia: '2026-10-09' });
 
     await component.confirmarTransferencia();
 
@@ -181,7 +181,7 @@ describe('UsuarioPerfil', () => {
     component.modoSelecaoTurma = 'rematricula';
     component.turmasTransferencia = [{ id: 20, periodo: 'TARDE', horaInicio: '13:00', horaFim: '17:00', unidade: { id: 2, nome: 'Unidade B' } }];
     component.formTransferencia.get('idTurmaNova')?.enable();
-    component.formTransferencia.setValue({ idUnidade: 2, idTurmaNova: 20 });
+    component.formTransferencia.setValue({ idUnidade: 2, idTurmaNova: 20, dataTransferencia: '2026-10-09' });
 
     await component.confirmarRematricula();
 

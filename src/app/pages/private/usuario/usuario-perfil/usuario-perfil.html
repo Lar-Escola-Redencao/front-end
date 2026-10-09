@@ -125,6 +125,16 @@
       <app-modal-layout class="perfil-modal" titulo="Desligamento" (closed)="fecharModalDesligamento()">
         <form class="perfil-modal-form" [formGroup]="formDesligamento" (ngSubmit)="confirmarDesligamento()">
           <mat-form-field appearance="outline" class="campo-cheio">
+            <mat-label>Data desligamento*</mat-label>
+            <input matInput type="date" formControlName="dataDesligamento" [attr.min]="dataMinimaTransferencia">
+          </mat-form-field>
+          @if (formDesligamento.get('dataDesligamento')?.invalid && formDesligamento.get('dataDesligamento')?.touched) {
+            <span class="error-text">
+              {{ formDesligamento.get('dataDesligamento')?.hasError('dataAnteriorIngresso') ? 'A data de desligamento não pode ser anterior ao ingresso.' : 'A data de desligamento é obrigatória.' }}
+            </span>
+          }
+
+          <mat-form-field appearance="outline" class="campo-cheio">
             <mat-label>Justificativa*</mat-label>
             <textarea matInput formControlName="justificativa" rows="4"></textarea>
           </mat-form-field>
@@ -171,6 +181,19 @@
 
           @if (!formTransferencia.get('idTurmaNova')?.value && formTransferencia.get('idTurmaNova')?.touched) {
             <span class="error-text">A turma é obrigatória.</span>
+          }
+
+          @if (modoSelecaoTurma === 'transferencia') {
+            <mat-form-field appearance="outline" class="campo-cheio">
+              <mat-label>Data transferência*</mat-label>
+              <input matInput type="date" formControlName="dataTransferencia" [attr.min]="dataMinimaTransferencia">
+            </mat-form-field>
+
+            @if (formTransferencia.get('dataTransferencia')?.invalid && formTransferencia.get('dataTransferencia')?.touched) {
+              <span class="error-text">
+                {{ formTransferencia.get('dataTransferencia')?.hasError('dataAnteriorIngresso') ? 'A data de transferência não pode ser anterior ao ingresso.' : 'A data de transferência é obrigatória.' }}
+              </span>
+            }
           }
 
           @if (carregandoUnidadesTransferencia || carregandoTurmasTransferencia) {
