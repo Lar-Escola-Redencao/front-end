@@ -292,6 +292,11 @@
   text-decoration: underline;
 }
 
+.tabela-documento-indisponivel {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 .tabela-documento-vazio {
   color: #999;
 }

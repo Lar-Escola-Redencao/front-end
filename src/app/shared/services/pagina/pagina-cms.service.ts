@@ -207,6 +207,10 @@ export class PaginaCmsService {
     });
   }
 
+  carregarArquivo(url: string): Observable<Blob> {
+    return this.http.get(url, { responseType: 'blob' });
+  }
+
   deletarDocumento(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/documentos/${id}`);
   }

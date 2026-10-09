@@ -455,6 +455,11 @@ input[type='radio'] {
   border: 1px solid var(--primary-color);
 }
 
+.btn-acao-indisponivel {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 .texto-vazio {
   margin: 8px 0 0;
   color: #777;

@@ -79,6 +79,10 @@ export class UsuarioService {
     return this.http.delete<void>(`${this.apiUrl}/arquivos-saude/${id}`);
   }
 
+  carregarArquivo(url: string): Observable<Blob> {
+    return this.http.get(url, { responseType: 'blob' });
+  }
+
   deletar(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }

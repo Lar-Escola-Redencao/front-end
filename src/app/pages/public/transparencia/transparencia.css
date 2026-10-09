@@ -216,6 +216,11 @@
   background-color: rgba(54, 130, 220, 0.08);
 }
 
+.btn-acao-indisponivel {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 @media (max-width: 600px) {
   .container {
     padding: 96px 16px 48px;

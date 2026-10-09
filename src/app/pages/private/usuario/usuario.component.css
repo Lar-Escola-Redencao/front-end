@@ -1522,6 +1522,11 @@ h1 {
   color: var(--primary-color);
 }
 
+.arquivo-acoes a.arquivo-indisponivel {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 .arquivo-acoes mat-icon {
   width: 19px;
   height: 19px;

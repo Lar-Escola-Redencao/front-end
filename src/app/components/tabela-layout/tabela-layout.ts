@@ -26,6 +26,10 @@ export interface TabelaColuna<T = any> {
   campoOrdenacao?: string;
   /** Texto de uma tag exibida ao lado do valor (ex.: "Encerrado"); null/'' não exibe. */
   etiqueta?: (linha: T) => string | null;
+  documentoLabel?: string;
+  documentoTitle?: string;
+  documentoIndisponivel?: (linha: T) => boolean;
+  aoClicarDocumento?: (linha: T, url: string, event: Event) => void;
 }
 
 export interface TabelaAcao<T = any> {
@@ -175,6 +179,22 @@ export class TabelaLayout<T = any> {
     }
 
     return `${this.apiUrl}${valorString}`;
+  }
+
+  documentoLabel(coluna: TabelaColuna<T>): string {
+    return coluna.documentoLabel || 'Baixar';
+  }
+
+  documentoTitle(coluna: TabelaColuna<T>): string {
+    return coluna.documentoTitle || 'Baixar documento';
+  }
+
+  documentoIndisponivel(linha: T, coluna: TabelaColuna<T>): boolean {
+    return coluna.documentoIndisponivel?.(linha) || false;
+  }
+
+  clicarDocumento(linha: T, coluna: TabelaColuna<T>, url: string, event: Event): void {
+    coluna.aoClicarDocumento?.(linha, url, event);
   }
 
   obterHrefTelefone(valor: any): string | null {

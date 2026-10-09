@@ -85,10 +85,14 @@
             <mat-icon class="arquivo-tipo-icone">{{ iconeArquivo(arquivo.titulo) }}</mat-icon>
             <span>{{ arquivo.titulo }}</span>
             <div class="documento-acoes">
-              <a [href]="urlArquivo(arquivo)" target="_blank" rel="noopener noreferrer" class="btn-acao" title="Visualizar">
+              <a [href]="urlArquivo(arquivo)" target="_blank" rel="noopener noreferrer" class="btn-acao"
+                [class.btn-acao-indisponivel]="arquivoIndisponivel(arquivo)" title="Visualizar"
+                aria-label="Visualizar anexo" (click)="visualizarArquivo($event, arquivo)">
                 <mat-icon>visibility</mat-icon>
               </a>
-              <a [href]="urlArquivo(arquivo)" download class="btn-acao btn-acao-secundario" title="Baixar">
+              <a [href]="urlArquivo(arquivo)" download class="btn-acao btn-acao-secundario"
+                [class.btn-acao-indisponivel]="arquivoIndisponivel(arquivo)" title="Baixar"
+                aria-label="Baixar anexo" (click)="baixarArquivo($event, arquivo)">
                 <mat-icon>download</mat-icon>
               </a>
             </div>

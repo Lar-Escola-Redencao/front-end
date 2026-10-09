@@ -54,10 +54,14 @@
                       target="_blank"
                       rel="noopener noreferrer"
                       class="btn-acao"
+                      [class.btn-acao-indisponivel]="arquivoIndisponivel(urlVisualizar(documento))"
+                      (click)="visualizarDocumento($event, documento)"
                     >
                       Visualizar
                     </a>
-                    <a [href]="urlBaixar(documento)" class="btn-acao btn-acao-secundario">
+                    <a [href]="urlBaixar(documento)" class="btn-acao btn-acao-secundario"
+                      [class.btn-acao-indisponivel]="arquivoIndisponivel(urlBaixar(documento))"
+                      (click)="baixarDocumento($event, documento)">
                       Baixar
                     </a>
                   </div>

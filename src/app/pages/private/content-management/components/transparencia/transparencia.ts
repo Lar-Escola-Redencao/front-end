@@ -9,6 +9,7 @@ import {
   validarDocumento
 } from 'src/app/shared/utils/form-validations';
 import { Alertas } from 'src/app/shared/utils/alerts';
+import { visualizarArquivoComVerificacao } from 'src/app/shared/utils/arquivo-acesso';
 
 import { ComponentComAlteracoesNaoSalvas } from 'src/app/shared/guards/can-deactivate.guard';
 import { ModalLayout } from '@components/modal-layout/modal-layout';
@@ -79,6 +80,8 @@ export class Transparencia implements OnInit, OnDestroy, ComponentComAlteracoesN
 
   // --- TABELAS ---
   documentos: DocumentoExibicao[] = [];
+  documentosIndisponiveis = new Set<string>();
+  private timeoutsDocumentosIndisponiveis = new Map<string, ReturnType<typeof setTimeout>>();
 
   /** Lista completa de seções (não paginada), usada só pelo <select> do modal de documento. */
   secoesParaSelecao: Secao[] = [];
@@ -86,7 +89,15 @@ export class Transparencia implements OnInit, OnDestroy, ComponentComAlteracoesN
   colunasDocumentos: TabelaColuna<DocumentoExibicao>[] = [
     { chave: 'titulo', titulo: 'Documento', principalMobile: true, ordenavel: true },
     { chave: 'secaoTitulo', titulo: 'Seção', ordenavel: true, campoOrdenacao: 'secao.titulo' },
-    { chave: 'arquivo', titulo: 'Documento', tipo: 'documento' },
+    {
+      chave: 'arquivo',
+      titulo: 'Documento',
+      tipo: 'documento',
+      documentoLabel: 'Visualizar',
+      documentoTitle: 'Visualizar documento',
+      documentoIndisponivel: linha => this.documentoIndisponivel(linha),
+      aoClicarDocumento: (linha, url, event) => this.visualizarDocumento(event, linha, url)
+    },
     { chave: 'tipo', titulo: 'Tipo' }
   ];
 
@@ -283,6 +294,38 @@ export class Transparencia implements OnInit, OnDestroy, ComponentComAlteracoesN
         ? doc.arquivo.split('.').pop()?.toUpperCase() ?? 'N/A'
         : 'N/A'
     };
+  }
+
+  visualizarDocumento(event: Event, documento: DocumentoExibicao, url: string): void {
+    event.preventDefault();
+    if (this.documentoIndisponivel(documento)) {
+      this.toastr.warning('Arquivo não encontrado ou indisponível.', 'Arquivo indisponível');
+      return;
+    }
+
+    visualizarArquivoComVerificacao(url, arquivoUrl => this.transparenciaService.carregarArquivo(arquivoUrl), this.toastr, () => {
+      this.bloquearDocumentoTemporariamente(documento);
+    });
+  }
+
+  documentoIndisponivel(documento: DocumentoExibicao): boolean {
+    return this.documentosIndisponiveis.has(this.chaveDocumento(documento));
+  }
+
+  private bloquearDocumentoTemporariamente(documento: DocumentoExibicao): void {
+    const chave = this.chaveDocumento(documento);
+    this.documentosIndisponiveis.add(chave);
+    clearTimeout(this.timeoutsDocumentosIndisponiveis.get(chave));
+    this.timeoutsDocumentosIndisponiveis.set(chave, setTimeout(() => {
+      this.documentosIndisponiveis.delete(chave);
+      this.timeoutsDocumentosIndisponiveis.delete(chave);
+      this.cdr.detectChanges();
+    }, 2000));
+    this.cdr.detectChanges();
+  }
+
+  private chaveDocumento(documento: DocumentoExibicao): string {
+    return documento.arquivo || String(documento.id);
   }
 
   irParaPagina(pagina: number): void {

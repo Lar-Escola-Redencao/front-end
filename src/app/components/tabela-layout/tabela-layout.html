@@ -131,13 +131,14 @@
 
           <a
             class="tabela-documento"
+            [class.tabela-documento-indisponivel]="documentoIndisponivel(linha, coluna)"
             [href]="obterUrlDocumento(linha[coluna.chave])"
             target="_blank"
             rel="noopener noreferrer"
-            download
-            title="Baixar documento"
+            [title]="documentoTitle(coluna)"
+            (click)="clicarDocumento(linha, coluna, obterUrlDocumento(linha[coluna.chave])!, $event)"
           >
-            <span>Baixar</span>
+            <span>{{ documentoLabel(coluna) }}</span>
           </a>
 
         } @else {

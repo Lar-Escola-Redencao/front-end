@@ -348,9 +348,11 @@
             aria-label="Excluir anexo salvo"><mat-icon>delete</mat-icon></button>
           <div class="arquivo-acoes">
             <a [href]="urlArquivoSaude(arquivo)" target="_blank" rel="noopener noreferrer" title="Visualizar"
-              aria-label="Visualizar anexo"><mat-icon>visibility</mat-icon></a>
+              [class.arquivo-indisponivel]="arquivoSaudeIndisponivel(arquivo)"
+              aria-label="Visualizar anexo" (click)="visualizarArquivoSaude($event, arquivo)"><mat-icon>visibility</mat-icon></a>
             <a [href]="urlArquivoSaude(arquivo)" download title="Baixar"
-              aria-label="Baixar anexo"><mat-icon>download</mat-icon></a>
+              [class.arquivo-indisponivel]="arquivoSaudeIndisponivel(arquivo)"
+              aria-label="Baixar anexo" (click)="baixarArquivoSaude($event, arquivo)"><mat-icon>download</mat-icon></a>
           </div>
           <mat-icon class="arquivo-tipo-icone">{{ (arquivo.titulo || '').toLowerCase().endsWith('.pdf') ? 'description' : 'image' }}</mat-icon>
           <span>{{ arquivo.titulo }}</span>

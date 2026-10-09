@@ -9,6 +9,7 @@ import { forkJoin, of } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { ArquivoSaudeDTO, CadastroUsuarioCompletoDTO, UsuarioResponseDTO } from 'src/app/shared/models/usuario.model';
 import { UsuarioService } from 'src/app/shared/services/usuario/usuario.service';
+import { baixarArquivoComVerificacao, visualizarArquivoComVerificacao } from 'src/app/shared/utils/arquivo-acesso';
 import { montarBaseAtualizacaoUsuario, montarFichaSocioeconomicaBase } from '../../utils/usuario-atualizacao-dto';
 import {
   TAMANHO_MAXIMO_ARQUIVO_BYTES,
@@ -48,6 +49,8 @@ export class UsuarioPerfilSaude implements OnChanges {
   erroArquivos = '';
   arquivosSaude: File[] = [];
   arquivosSaudeSalvos: ArquivoSaudeDTO[] = [];
+  arquivosIndisponiveis = new Set<string>();
+  private timeoutsArquivosIndisponiveis = new Map<string, ReturnType<typeof setTimeout>>();
   private descricaoValueChangesRegistrados = false;
   private valoresOriginais: unknown = null;
   readonly limiteArquivo = TAMANHO_MAXIMO_ARQUIVO_BYTES;
@@ -176,6 +179,45 @@ export class UsuarioPerfilSaude implements OnChanges {
     const caminho = arquivo.caminhoArquivo || '';
     if (caminho.startsWith('http://') || caminho.startsWith('https://')) return caminho;
     return `${environment.apiUrl}${caminho.startsWith('/') ? '' : '/'}${caminho}`;
+  }
+
+  visualizarArquivo(event: Event, arquivo: ArquivoSaudeDTO): void {
+    event.preventDefault();
+    const url = this.urlArquivo(arquivo);
+    if (this.arquivoIndisponivel(arquivo)) {
+      this.toastr.warning('Arquivo não encontrado ou indisponível.', 'Arquivo indisponível');
+      return;
+    }
+    visualizarArquivoComVerificacao(url, arquivoUrl => this.usuarioService.carregarArquivo(arquivoUrl), this.toastr, () => {
+      this.bloquearArquivoTemporariamente(url);
+    });
+  }
+
+  baixarArquivo(event: Event, arquivo: ArquivoSaudeDTO): void {
+    event.preventDefault();
+    const url = this.urlArquivo(arquivo);
+    if (this.arquivoIndisponivel(arquivo)) {
+      this.toastr.warning('Arquivo não encontrado ou indisponível.', 'Arquivo indisponível');
+      return;
+    }
+    baixarArquivoComVerificacao(url, arquivo.titulo || '', arquivoUrl => this.usuarioService.carregarArquivo(arquivoUrl), this.toastr, () => {
+      this.bloquearArquivoTemporariamente(url);
+    });
+  }
+
+  arquivoIndisponivel(arquivo: ArquivoSaudeDTO): boolean {
+    return this.arquivosIndisponiveis.has(this.urlArquivo(arquivo));
+  }
+
+  private bloquearArquivoTemporariamente(url: string): void {
+    this.arquivosIndisponiveis.add(url);
+    clearTimeout(this.timeoutsArquivosIndisponiveis.get(url));
+    this.timeoutsArquivosIndisponiveis.set(url, setTimeout(() => {
+      this.arquivosIndisponiveis.delete(url);
+      this.timeoutsArquivosIndisponiveis.delete(url);
+      this.atualizarTela();
+    }, 2000));
+    this.atualizarTela();
   }
 
   iconeArquivo(nome: string): string {
