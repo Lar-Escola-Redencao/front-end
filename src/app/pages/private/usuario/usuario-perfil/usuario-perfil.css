@@ -8,21 +8,31 @@
 .voltar {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   justify-self: start;
   width: auto;
+  margin-bottom: 24px;
+  padding: 0;
   border: 0;
   background: transparent;
-  color: #222;
+  color: var(--input-color);
   cursor: pointer;
   font-family: var(--fonte-texto);
   font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.voltar:hover,
+.voltar:focus-visible {
+  color: var(--primary-color);
 }
 
 .voltar mat-icon {
-  width: 20px;
-  height: 20px;
-  font-size: 20px;
+  width: 18px;
+  height: 18px;
+  font-size: 18px;
 }
 
 .perfil-layout {

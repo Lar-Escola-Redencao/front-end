@@ -117,7 +117,11 @@
                       [attr.aria-label]="'Ocorrências de ' + usuario.nomeUsuario"
                       [class.vazio]="usuario.ocorrencias.length === 0"
                       (click)="abrirGerenciadorOcorrencias(usuario)">
-                      {{ usuario.ocorrencias.length > 0 ? usuario.ocorrencias.length : '+' }}
+                      @if (usuario.ocorrencias.length > 0) {
+                        {{ usuario.ocorrencias.length }}
+                      } @else {
+                        <mat-icon>add</mat-icon>
+                      }
                     </button>
                   }
                 </td>
@@ -181,54 +185,112 @@
 @if (modalOcorrenciaAberto && usuarioSelecionado) {
   <app-modal-layout 
     [class.tremer]="modalTremendo"
-    [titulo]="modoOcorrencia === 'LISTA' ? 'Ocorrências' : (modoOcorrencia === 'NOVO' ? 'Nova ocorrência' : (modoOcorrencia === 'VER' ? 'Detalhes da ocorrência' : 'Editar ocorrência'))" 
+    titulo="Ocorrências"
     (closed)="fecharModalOcorrencia()">
     
-    <p class="modal-subtitulo">Usuário: {{ usuarioSelecionado.nomeUsuario }} <span *ngIf="modoOcorrencia !== 'LISTA'">- Data: {{ formatarData(filtroForm.get('data')?.value) }}</span></p>
+    <p class="modal-subtitulo">{{ subtituloOcorrencia }}</p>
 
-    @if (modoOcorrencia === 'LISTA') {
       <div class="modal-lista">
         @if (podeAdicionarOcorrencia) {
-          <button type="button" class="btn-primary btn-nova-oc" (click)="abrirFormOcorrencia(null, 'NOVO')">Nova ocorrência</button>
+          <div class="modal-lista-acoes">
+            <button type="button" class="btn-primary btn-nova-oc" (click)="abrirFormOcorrencia(null, 'NOVO')">Nova ocorrência</button>
+          </div>
         }
         
-        <div class="lista-ocorrencias">
-          <div class="lista-header">
-            <span>Data de registro</span>
-            <span>Tipo</span>
-            <span>Descrição</span>
-            <span class="col-acoes">Ações</span>
-          </div>
-          @for (oc of usuarioSelecionado.ocorrencias; track oc.id) {
-            <div class="card-ocorrencia-item">
-              <span class="data">{{ formatarDataHora(oc.dataCriacao) }}</span>
-              <span class="tipo">{{ obterLabelOcorrencia(oc.tipoOcorrencia) }}</span>
-              <!-- EXIBE A DESCRIÇÃO REAL DA OCORRÊNCIA -->
-              <span class="desc-resumo">{{ oc.descricao }}</span>
-              
-              <div class="acoes-oc">
-                <button type="button" class="btn-icon icon-view" (click)="abrirFormOcorrencia(oc, 'VER')"><mat-icon>visibility</mat-icon></button>
-                @if (podeEditarExcluirOcorrencia(oc)) {
-                  <button type="button" class="btn-icon icon-edit" (click)="abrirFormOcorrencia(oc, 'EDITAR')"><mat-icon>edit</mat-icon></button>
-                  <button type="button" class="btn-icon icon-delete" (click)="excluirOcorrencia(oc)"><mat-icon>delete</mat-icon></button>
-                }
-              </div>
+        @if (usuarioSelecionado.ocorrencias.length) {
+          <div class="lista-ocorrencias">
+            <div class="lista-header">
+              <span>Hora de registro</span>
+              <span>Tipo</span>
+              <span>Descrição</span>
+              <span class="col-acoes">Ações</span>
             </div>
-          }
+            @for (oc of usuarioSelecionado.ocorrencias; track oc.id) {
+              <div
+                class="card-ocorrencia-item"
+                role="button"
+                tabindex="0"
+                (click)="abrirFormOcorrencia(oc, 'VER')"
+                (keydown.enter)="abrirFormOcorrencia(oc, 'VER')"
+                (keydown.space)="abrirFormOcorrencia(oc, 'VER')"
+              >
+                <span class="data">{{ formatarHoraRegistro(oc.dataCriacao) }}</span>
+                <span class="tipo">{{ obterLabelOcorrencia(oc.tipoOcorrencia) }}</span>
+                <!-- EXIBE A DESCRIÇÃO REAL DA OCORRÊNCIA -->
+                <span class="desc-resumo">{{ oc.descricao }}</span>
+                
+                <div class="acoes-oc">
+                  <button type="button" class="btn-icon icon-view" (click)="abrirFormOcorrencia(oc, 'VER'); $event.stopPropagation()"><mat-icon>visibility</mat-icon></button>
+                  @if (podeEditarExcluirOcorrencia(oc)) {
+                    <button type="button" class="btn-icon icon-edit" (click)="abrirFormOcorrencia(oc, 'EDITAR'); $event.stopPropagation()"><mat-icon>edit</mat-icon></button>
+                    <button type="button" class="btn-icon icon-delete" (click)="excluirOcorrencia(oc); $event.stopPropagation()"><mat-icon>delete</mat-icon></button>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        } @else {
+          <p class="texto-vazio ocorrencias-vazio">Não há ocorrências para este usuário neste dia.</p>
+        }
+      </div>
+  </app-modal-layout>
+}
+
+@if (modalOcorrenciaDetalheAberto && usuarioSelecionado) {
+  <app-modal-layout
+    class="modal-sobreposto"
+    [class.tremer]="modalTremendo"
+    [titulo]="modoOcorrencia === 'NOVO' ? 'Nova ocorrência' : (modoOcorrencia === 'VER' ? 'Detalhes da ocorrência' : 'Editar ocorrência')"
+    (closed)="fecharModalOcorrenciaDetalhe()">
+
+    <p class="modal-subtitulo">{{ subtituloOcorrencia }}</p>
+
+    @if (modoOcorrencia === 'VER' && ocorrenciaSelecionada) {
+      <div class="ocorrencia-preview">
+        <div class="ocorrencia-preview-dados">
+          <div>
+            <mat-icon class="material-symbols-outlined ocorrencia-preview-icone">schedule</mat-icon>
+            <span>{{ formatarDataHora(ocorrenciaSelecionada.dataCriacao) }}</span>
+          </div>
+          <div>
+            <mat-icon class="material-symbols-outlined ocorrencia-preview-icone">category</mat-icon>
+            <span>{{ obterLabelOcorrencia(ocorrenciaSelecionada.tipoOcorrencia) }}</span>
+          </div>
+          <div>
+            <mat-icon class="material-symbols-outlined ocorrencia-preview-icone">notes</mat-icon>
+            <span>{{ ocorrenciaSelecionada.descricao }}</span>
+          </div>
+        </div>
+
+        <div class="acoes-modal">
+          <button type="button" class="btn-cancelar" (click)="fecharModalOcorrenciaDetalhe()">Voltar</button>
         </div>
       </div>
-    }
-
-    @if (modoOcorrencia === 'NOVO' || modoOcorrencia === 'EDITAR' || modoOcorrencia === 'VER') {
-      <form class="form-modal form-ocorrencia" [class.somente-visualizacao]="modoOcorrencia === 'VER'" [formGroup]="formOcorrencia" (ngSubmit)="salvarOcorrencia()">
+    } @else {
+      <form class="form-modal form-ocorrencia" [formGroup]="formOcorrencia" (ngSubmit)="salvarOcorrencia()">
         
         <div class="form-row-2">
-          <mat-form-field appearance="outline" class="campo-hora" [hideRequiredMarker]="modoOcorrencia === 'VER'">
-            <mat-label>Hora de registro</mat-label>
-            <input matInput type="time" formControlName="horaStr" readonly>
-            <mat-icon matSuffix class="icone-relogio">schedule</mat-icon>
-          </mat-form-field>
+          <div class="campo-com-erro">
+            <mat-form-field appearance="outline" class="campo-hora" [hideRequiredMarker]="modoOcorrencia === 'VER'">
+              <mat-label>Hora de registro</mat-label>
+              <input #inputHora matInput type="time" formControlName="horaStr">
+              <button
+                matSuffix
+                type="button"
+                class="botao-seletor-hora"
+                [disabled]="modoOcorrencia === 'VER'"
+                (click)="abrirSeletorHora(inputHora)"
+                aria-label="Selecionar hora"
+              >
+                <mat-icon class="icone-relogio">schedule</mat-icon>
+              </button>
+            </mat-form-field>
+            @if (errosOcorrencia['horaStr']) {
+              <span class="error-text">{{ errosOcorrencia['horaStr'] }}</span>
+            }
+          </div>
           
+          <div class="campo-com-erro">
           <mat-form-field appearance="outline" [hideRequiredMarker]="modoOcorrencia === 'VER'">
             <mat-label>Tipo de ocorrência</mat-label>
             <mat-select formControlName="tipoOcorrencia">
@@ -237,22 +299,31 @@
               }
             </mat-select>
           </mat-form-field>
+          @if (errosOcorrencia['tipoOcorrencia']) {
+            <span class="error-text">{{ errosOcorrencia['tipoOcorrencia'] }}</span>
+          }
+          </div>
         </div>
 
+        <div class="campo-com-erro">
         <mat-form-field appearance="outline" class="campo-textarea" [hideRequiredMarker]="modoOcorrencia === 'VER'">
           <mat-label>Descrição</mat-label>
           <textarea matInput rows="4" formControlName="descricao"></textarea>
         </mat-form-field>
+        @if (errosOcorrencia['descricao']) {
+          <span class="error-text">{{ errosOcorrencia['descricao'] }}</span>
+        }
+        </div>
 
         @if (modoOcorrencia === 'VER') {
           <p class="aviso-visualizacao">Esta ocorrência está em modo de visualização. Os dados não podem ser alterados aqui.</p>
         }
 
         <div class="acoes-modal">
-          <button type="button" class="btn-cancelar" [disabled]="salvando" (click)="voltarParaLista()">{{ modoOcorrencia === 'VER' ? 'Voltar' : 'Cancelar' }}</button>
+          <button type="button" class="btn-cancelar" [disabled]="salvando" (click)="fecharModalOcorrenciaDetalhe()">Cancelar</button>
           
           @if (modoOcorrencia !== 'VER') {
-            <button type="submit" class="btn-primary" [disabled]="!podeSalvarOcorrencia || formOcorrencia.invalid">
+            <button type="submit" class="btn-primary" [disabled]="!podeSalvarOcorrencia">
               <span *ngIf="salvando" class="spinner"></span> {{ modoOcorrencia === 'NOVO' ? 'Salvar' : 'Salvar alterações' }}
             </button>
           }

@@ -324,6 +324,9 @@
 }
 
 .btn-badge-ocorrencia {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   width: 32px;
   height: 32px;
   border-radius: 50%;
@@ -332,6 +335,18 @@
   color: var(--branco);
   font-weight: 700;
   cursor: pointer;
+}
+
+.btn-badge-ocorrencia mat-icon {
+  width: 18px;
+  height: 18px;
+  font-size: 18px;
+  line-height: 18px;
+}
+
+.btn-badge-ocorrencia.vazio {
+  background: #e5e7eb;
+  color: #4b5563;
 }
 
 .rodape-diario {
@@ -400,9 +415,9 @@
 }
 
 .modal-subtitulo {
-  color: var(--input-color);
   font-family: var(--fonte-texto);
-  font-size: 0.9rem;
+  font-size: 14px;
+  color: #555;
   margin: -10px 0 20px 0;
 }
 
@@ -465,9 +480,30 @@
 
 .form-row-2 {
   display: grid;
-  grid-template-columns: 1fr 2fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
   align-items: start;
+}
+
+.campo-com-erro {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+:host ::ng-deep .form-ocorrencia .mat-mdc-form-field-subscript-wrapper {
+  display: none;
+}
+
+:host ::ng-deep .form-row-2 .mat-mdc-text-field-wrapper {
+  height: 62px;
+  align-items: center;
+}
+
+:host ::ng-deep .form-row-2 .mat-mdc-form-field-flex,
+:host ::ng-deep .form-row-2 .mat-mdc-form-field-infix {
+  min-height: 62px;
+  align-items: center;
 }
 
 :host ::ng-deep .form-ocorrencia .mat-mdc-form-field.mat-form-field-disabled .mdc-notched-outline__leading,
@@ -503,9 +539,14 @@
   flex-direction: column;
 }
 
-.btn-nova-oc {
-  align-self: flex-start;
+.modal-lista-acoes {
+  display: flex;
+  justify-content: flex-end;
   margin-bottom: 24px;
+}
+
+.btn-nova-oc {
+  align-self: flex-end;
 }
 
 .lista-ocorrencias {
@@ -515,6 +556,11 @@
   border-radius: 8px;
   background: var(--branco);
   overflow-x: auto;
+}
+
+.ocorrencias-vazio {
+  margin: 0;
+  font-family: var(--fonte-texto);
 }
 
 .lista-header,
@@ -544,6 +590,14 @@
   border-bottom: 1px solid #eee;
   font-size: 0.9rem;
   color: var(--preto);
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.card-ocorrencia-item:hover,
+.card-ocorrencia-item:focus-visible {
+  background-color: #f8fafc;
+  outline: none;
 }
 
 .campo-hora {
@@ -555,13 +609,30 @@
   align-items: center;
 }
 
+.botao-seletor-hora {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  margin-right: -4px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--input-color);
+  cursor: pointer;
+}
+
+.botao-seletor-hora:disabled {
+  cursor: default;
+}
+
 .campo-hora ::ng-deep .icone-relogio {
   color: var(--input-color);
   font-size: 22px;
   width: 22px;
   height: 22px;
-  margin-top: 8px;
-  pointer-events: none;
+  margin: 0;
 }
 
 .campo-hora input[type="time"]::-webkit-calendar-picker-indicator {
@@ -578,7 +649,6 @@
 
 .icone-relogio {
   color: var(--input-color);
-  pointer-events: none;
   z-index: 1;
 }
 
@@ -630,9 +700,77 @@
   color: #dc2626;
 }
 
+:host ::ng-deep app-modal-layout.modal-sobreposto .modal-backdrop {
+  z-index: 2100;
+}
+
+.ocorrencia-preview {
+  padding: 0 0 10px;
+  font-family: var(--fonte-texto);
+}
+
+.ocorrencia-preview-dados {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.ocorrencia-preview-dados div {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+  color: var(--preto);
+  font-family: var(--fonte-texto);
+  font-size: 16px;
+  line-height: 1.45;
+}
+
+.ocorrencia-preview-dados span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  white-space: normal;
+}
+
+.ocorrencia-preview-icone {
+  color: var(--primary-color);
+  font-size: 22px;
+  width: 24px;
+  height: 24px;
+  margin-top: 1px;
+}
+
 @media (max-width: 768px) {
+  .diario-page {
+    padding-inline: 22px;
+  }
+
+  .titulo-linha {
+    justify-content: center;
+    text-align: center;
+    gap: 14px;
+  }
+
+  .titulo-linha h1 {
+    width: 100%;
+  }
+
+  .data-nav {
+    justify-content: center;
+    width: 100%;
+  }
+
   .filtros-turma {
     grid-template-columns: 1fr;
+  }
+
+  .usuario-info {
+    gap: 0;
+  }
+
+  .usuario-info .avatar {
+    display: none;
   }
 
   .rodape-diario {

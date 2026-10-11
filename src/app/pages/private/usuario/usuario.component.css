@@ -1834,13 +1834,13 @@ h1 {
 }
 
 .contato-preview-dados {
-  display: flex;
+  display: flex !important;
   flex-direction: column;
   gap: 16px;
 }
 
 .contato-preview-dados div {
-  display: grid;
+  display: grid !important;
   grid-template-columns: 28px minmax(0, 1fr);
   gap: 12px;
   align-items: center;

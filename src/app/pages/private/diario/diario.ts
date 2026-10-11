@@ -69,13 +69,14 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
 
   modalOcorrenciaAberto = false;
   modoOcorrencia: 'LISTA' | 'NOVO' | 'EDITAR' | 'VER' = 'LISTA';
+  modalOcorrenciaDetalheAberto = false;
   modalTremendo = false;
   usuarioSelecionado: FrequenciaUsuarioResponseDTO | null = null;
   ocorrenciaSelecionada: OcorrenciaResponseDTO | null = null;
   
   formOcorrencia: FormGroup = this.fb.group({
     horaStr: ['', Validators.required],
-    tipoOcorrencia: ['COMPORTAMENTO', Validators.required],
+    tipoOcorrencia: [null, Validators.required],
     descricao: ['', [Validators.required, Validators.pattern(/\S/)]]
   });
   errosOcorrencia: { [key: string]: string } = {};
@@ -103,6 +104,10 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
 
   ngOnInit(): void {
     this.subs.add(interval(1000).subscribe(() => this.cdr.markForCheck()));
+
+    this.subs.add(this.formOcorrencia.valueChanges.subscribe(() => {
+      this.errosOcorrencia = {};
+    }));
 
     this.subs.add(
       this.unidadeAlterada.pipe(
@@ -358,6 +363,11 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
     );
   }
 
+  get subtituloOcorrencia(): string {
+    const nome = this.usuarioSelecionado?.nomeUsuario ?? '';
+    return `Usuário: ${nome} em ${this.formatarData(this.filtroForm.get('data')?.value)}`;
+  }
+
   alterarData(dias: number) {
     const dataAtual = new Date((this.filtroForm.get('data')?.value || this.hojeFormatada()) + 'T12:00:00');
     dataAtual.setDate(dataAtual.getDate() + dias);
@@ -429,7 +439,7 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
   }
 
   get temAlteracoesNoModalOcorrencia(): boolean {
-    if (this.modalOcorrenciaAberto && (this.modoOcorrencia === 'NOVO' || this.modoOcorrencia === 'EDITAR')) {
+    if (this.modalOcorrenciaDetalheAberto && (this.modoOcorrencia === 'NOVO' || this.modoOcorrencia === 'EDITAR')) {
       return this.formOcorrencia.dirty;
     }
     return false;
@@ -450,12 +460,11 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
   abrirGerenciadorOcorrencias(usuario: FrequenciaUsuarioResponseDTO) {
     if (this.salvando || (!usuario.ocorrencias.length && !this.podeAdicionarOcorrencia)) return;
     this.usuarioSelecionado = usuario;
-    if (usuario.ocorrencias && usuario.ocorrencias.length > 0) {
-      this.modoOcorrencia = 'LISTA';
-    } else {
+    this.modoOcorrencia = 'LISTA';
+    this.modalOcorrenciaAberto = true;
+    if (!usuario.ocorrencias?.length) {
       this.abrirFormOcorrencia(null, 'NOVO');
     }
-    this.modalOcorrenciaAberto = true;
   }
 
   fecharModalOcorrencia() {
@@ -475,33 +484,35 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
 
   private executarFechamentoModal() {
     this.modalOcorrenciaAberto = false;
+    this.modalOcorrenciaDetalheAberto = false;
     this.usuarioSelecionado = null;
+    this.ocorrenciaSelecionada = null;
     this.formOcorrencia.enable();
     this.formOcorrencia.markAsPristine();
   }
 
-  voltarParaLista() {
+  fecharModalOcorrenciaDetalhe() {
     if (this.salvando) return;
     if (!this.temAlteracoesNoModalOcorrencia) {
-      this.executarVoltarParaLista();
+      this.executarFechamentoDetalheOcorrencia();
       return;
     }
     Alertas.confirmarDescarte().then(confirmado => {
       this.ngZone.run(() => {
-        if (confirmado) this.executarVoltarParaLista();
+        if (confirmado) this.executarFechamentoDetalheOcorrencia();
         else this.dispararTremorModal();
         this.cdr.markForCheck();
       });
     });
   }
 
-  private executarVoltarParaLista() {
-    if (this.usuarioSelecionado?.ocorrencias.length) {
-      this.modoOcorrencia = 'LISTA';
-      this.formOcorrencia.markAsPristine();
-    } else {
-      this.executarFechamentoModal();
-    }
+  private executarFechamentoDetalheOcorrencia() {
+    this.modalOcorrenciaDetalheAberto = false;
+    this.modoOcorrencia = 'LISTA';
+    this.ocorrenciaSelecionada = null;
+    this.formOcorrencia.enable();
+    this.formOcorrencia.markAsPristine();
+    this.errosOcorrencia = {};
   }
 
   private dispararTremorModal() {
@@ -516,6 +527,7 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
     if (this.salvando || (modo === 'NOVO' && !this.podeAdicionarOcorrencia)
       || (modo === 'EDITAR' && (!oc || !this.podeEditarExcluirOcorrencia(oc)))) return;
     this.modoOcorrencia = modo;
+    this.modalOcorrenciaDetalheAberto = true;
     this.ocorrenciaSelecionada = oc;
     this.errosOcorrencia = {};
     
@@ -523,7 +535,7 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
       this.formOcorrencia.enable();
       this.formOcorrencia.reset({
         horaStr: this.agoraFormatada(),
-        tipoOcorrencia: 'COMPORTAMENTO',
+        tipoOcorrencia: null,
         descricao: ''
       });
     } else if (oc) {
@@ -545,20 +557,28 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
 
   salvarOcorrencia() {
     if (!this.podeSalvarOcorrencia) return;
+    this.formOcorrencia.markAllAsTouched();
+    this.validarHoraOcorrencia();
     if (this.formOcorrencia.invalid) {
-      this.errosOcorrencia = mapearErrosFormulario(this.formOcorrencia);
+      this.errosOcorrencia = mapearErrosFormulario(this.formOcorrencia, {
+        horaStr: {
+          horarioForaDaTurma: this.mensagemHorarioForaDaTurma()
+        }
+      });
       return;
     }
 
     this.salvando = true;
     this.cdr.markForCheck();
-    const { tipoOcorrencia, descricao } = this.formOcorrencia.getRawValue();
+    const { horaStr, tipoOcorrencia, descricao } = this.formOcorrencia.getRawValue();
     const dataSelecionada = this.filtroForm.get('data')?.value;
+    const dataCriacao = `${dataSelecionada}T${horaStr}:00`;
     
     if (this.modoOcorrencia === 'NOVO') {
       const dto = {
         idMatricula: this.usuarioSelecionado!.idMatricula,
         dataOcorrencia: dataSelecionada,
+        dataCriacao,
         tipoOcorrencia,
         descricao
       };
@@ -570,7 +590,7 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
             this.formOcorrencia.markAsPristine();
             this.toastr.success('Ocorrência registrada com sucesso.', 'Sucesso');
             this.salvando = false;
-            this.executarVoltarParaLista();
+            this.executarFechamentoDetalheOcorrencia();
             this.cdr.markForCheck();
           });
         },
@@ -583,7 +603,7 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
         }
       });
     } else {
-      const dto = { tipoOcorrencia, descricao };
+      const dto = { dataCriacao, tipoOcorrencia, descricao };
       this.diarioService.atualizarOcorrencia(this.ocorrenciaSelecionada!.id, dto).subscribe({
         next: (ocAtualizada) => {
           this.ngZone.run(() => {
@@ -592,7 +612,7 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
             this.formOcorrencia.markAsPristine();
             this.toastr.success('Ocorrência atualizada com sucesso.', 'Sucesso');
             this.salvando = false;
-            this.executarVoltarParaLista();
+            this.executarFechamentoDetalheOcorrencia();
             this.cdr.markForCheck();
           });
         },
@@ -605,6 +625,20 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
         }
       });
     }
+  }
+
+  abrirSeletorHora(input: HTMLInputElement): void {
+    if (this.modoOcorrencia === 'VER') return;
+    if (typeof input.showPicker === 'function') {
+      try {
+        input.showPicker();
+        return;
+      } catch {
+        // Alguns navegadores só permitem abrir o seletor em interações diretas.
+      }
+    }
+    input.focus();
+    input.click();
   }
 
   excluirOcorrencia(oc: OcorrenciaResponseDTO) {
@@ -620,9 +654,6 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
             this.salvando = false;
             this.usuarioSelecionado!.ocorrencias = this.usuarioSelecionado!.ocorrencias.filter(o => o.id !== oc.id);
             this.toastr.success('Ocorrência excluída com sucesso.', 'Sucesso');
-            if (this.usuarioSelecionado!.ocorrencias.length === 0) {
-              this.executarFechamentoModal();
-            }
             this.cdr.markForCheck();
           });
         },
@@ -645,6 +676,43 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
     return new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit' }).format(new Date());
   }
 
+  private validarHoraOcorrencia(): void {
+    const controle = this.formOcorrencia.get('horaStr');
+    const turma = this.turmaSelecionada;
+    const hora = controle?.value;
+    if (!controle || !hora || !turma?.horaInicio || !turma?.horaFim) return;
+
+    const inicio = this.normalizarHoraMinuto(turma.horaInicio);
+    const fim = this.normalizarHoraMinuto(turma.horaFim);
+    const selecionada = this.normalizarHoraMinuto(hora);
+    const errosAtuais = { ...(controle.errors ?? {}) };
+    delete errosAtuais['horarioForaDaTurma'];
+
+    if (selecionada < inicio || selecionada > fim) {
+      controle.setErrors({ ...errosAtuais, horarioForaDaTurma: true });
+      return;
+    }
+
+    controle.setErrors(Object.keys(errosAtuais).length ? errosAtuais : null);
+  }
+
+  private mensagemHorarioForaDaTurma(): string {
+    const turma = this.turmaSelecionada;
+    if (!turma?.horaInicio || !turma?.horaFim) {
+      return 'O horário deve estar dentro do horário da turma.';
+    }
+    return `O horário deve estar entre ${this.normalizarHoraMinuto(turma.horaInicio)} e ${this.normalizarHoraMinuto(turma.horaFim)}.`;
+  }
+
+  private get turmaSelecionada(): any | null {
+    const idTurma = this.filtroForm.get('idTurma')?.value;
+    return this.turmas.find(t => t.id === idTurma) ?? null;
+  }
+
+  private normalizarHoraMinuto(valor: string): string {
+    return String(valor).slice(0, 5);
+  }
+
   private instanteBrasilia(iso: string): number {
     return Date.parse(/(Z|[+-]\d{2}:\d{2})$/.test(iso) ? iso : `${iso}-03:00`);
   }
@@ -657,6 +725,10 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
 
   formatarDataHora(isoStr: string): string {
     return new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(this.instanteBrasilia(isoStr)).replace(':', 'h');
+  }
+
+  formatarHoraRegistro(isoStr: string): string {
+    return new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit' }).format(this.instanteBrasilia(isoStr)).replace(':', 'h');
   }
 
   obterLabelOcorrencia(tipo: string): string {

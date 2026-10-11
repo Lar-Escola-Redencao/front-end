@@ -49,6 +49,17 @@
   display: block;
 }
 
+.card-imagem-fallback {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #e6e6e6;
+  color: #9a9a9a;
+  font-size: 3rem;
+}
+
 .card-evento:hover,
 .card-evento:focus-visible {
   transform: translateY(-2px);
@@ -163,7 +174,7 @@
   font-family: var(--fonte-texto);
   font-size: 15px;
   font-weight: 600;
-  color: var(--preto);
+  color: var(--input-color);
   text-decoration: none;
   transition: color 0.2s ease;
 }

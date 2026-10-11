@@ -33,6 +33,7 @@ describe('Diário de turma', () => {
     vi.setSystemTime(new Date('2026-10-06T12:00:00-03:00'));
     papel = 'MONITOR';
     vi.spyOn(Alertas, 'confirmarDescarte').mockResolvedValue(false);
+    vi.spyOn(Alertas, 'confirmarExclusao').mockResolvedValue(false);
     api = {
       listarFrequencia: vi.fn(() => of([aluno()])), salvarEmLote: vi.fn(() => of(undefined)),
       criarOcorrencia: vi.fn(() => of(ocorrencia('2026-10-06T12:00:00'))),
@@ -183,6 +184,48 @@ describe('Diário de turma', () => {
     component.filtroForm.get('data')!.setValue('2026-10-07'); expect(component.podeAdicionarOcorrencia).toBe(false);
   });
 
+  it('abre nova ocorrência com tipo vazio e permite editar a hora dentro do horário da turma', () => {
+    component.abrirGerenciadorOcorrencias(component.usuarios[0]);
+
+    expect(component.formOcorrencia.get('tipoOcorrencia')!.value).toBeNull();
+    component.formOcorrencia.setValue({ horaStr: '09:30', descricao: 'Descrição', tipoOcorrencia: 'SAUDE' });
+
+    component.salvarOcorrencia();
+
+    expect(api.criarOcorrencia).toHaveBeenCalledWith({
+      idMatricula: 1,
+      dataOcorrencia: '2026-10-06',
+      dataCriacao: '2026-10-06T09:30:00',
+      tipoOcorrencia: 'SAUDE',
+      descricao: 'Descrição'
+    });
+  });
+
+  it('bloqueia ocorrência fora do horário da turma da matrícula', () => {
+    component.abrirGerenciadorOcorrencias(component.usuarios[0]);
+    component.formOcorrencia.setValue({ horaStr: '12:01', descricao: 'Descrição', tipoOcorrencia: 'SAUDE' });
+
+    component.salvarOcorrencia();
+
+    expect(api.criarOcorrencia).not.toHaveBeenCalled();
+    expect(component.errosOcorrencia['horaStr']).toContain('08:00');
+    expect(component.errosOcorrencia['horaStr']).toContain('12:00');
+  });
+
+  it('mantém salvar habilitado para exibir erros dos campos obrigatórios', () => {
+    component.abrirGerenciadorOcorrencias(component.usuarios[0]);
+    fixture.detectChanges();
+
+    const salvar = Array.from(fixture.nativeElement.querySelectorAll('button'))
+      .find((b: any) => b.textContent.trim() === 'Salvar') as HTMLButtonElement;
+    salvar.click();
+    fixture.detectChanges();
+
+    expect(salvar.disabled).toBe(false);
+    expect(component.errosOcorrencia['tipoOcorrencia']).toBe('Este campo é obrigatório.');
+    expect(component.errosOcorrencia['descricao']).toBe('Este campo é obrigatório.');
+  });
+
   it('abre formulário ou lista e remove editar/excluir após 24h da criação', () => {
     component.abrirGerenciadorOcorrencias(component.usuarios[0]); expect(component.modoOcorrencia).toBe('NOVO');
     component.usuarioSelecionado!.ocorrencias = [ocorrencia('2026-10-05T11:59:59')];
@@ -193,6 +236,54 @@ describe('Diário de turma', () => {
     expect(fixture.nativeElement.querySelector('.icon-edit')).toBeNull();
     expect(fixture.nativeElement.querySelector('.icon-delete')).toBeNull();
     expect(fixture.nativeElement.querySelector('.icon-view')).not.toBeNull();
+  });
+
+  it('mantém a lista aberta e abre detalhes em um modal sobreposto', () => {
+    const usuario = { ...aluno(), ocorrencias: [ocorrencia('2026-10-06T09:15:00')] };
+    component.abrirGerenciadorOcorrencias(usuario);
+
+    component.abrirFormOcorrencia(usuario.ocorrencias[0], 'VER');
+
+    expect(component.modalOcorrenciaAberto).toBe(true);
+    expect(component.modalOcorrenciaDetalheAberto).toBe(true);
+    expect(component.modoOcorrencia).toBe('VER');
+
+    component.fecharModalOcorrenciaDetalhe();
+
+    expect(component.modalOcorrenciaAberto).toBe(true);
+    expect(component.modalOcorrenciaDetalheAberto).toBe(false);
+    expect(component.usuarioSelecionado).toBe(usuario);
+  });
+
+  it('exibe apenas a hora de registro na lista e mensagem quando não há ocorrências', () => {
+    const usuario = { ...aluno(), ocorrencias: [ocorrencia('2026-10-06T09:15:00')] };
+    component.abrirGerenciadorOcorrencias(usuario);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain('Hora de registro');
+    expect(fixture.nativeElement.textContent).toContain('09h15');
+    expect(fixture.nativeElement.textContent).not.toContain('06/10/2026 09h15');
+
+    component.usuarioSelecionado!.ocorrencias = [];
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain('Não há ocorrências para este usuário neste dia.');
+    expect(fixture.nativeElement.querySelector('.lista-ocorrencias')).toBeNull();
+  });
+
+  it('mantém o modal aberto ao excluir a última ocorrência', async () => {
+    vi.mocked(Alertas.confirmarExclusao).mockResolvedValue(true);
+    api.deletarOcorrencia.mockReturnValue(of(undefined));
+    const usuario = { ...aluno(), ocorrencias: [ocorrencia('2026-10-06T09:15:00')] };
+    component.abrirGerenciadorOcorrencias(usuario);
+
+    component.excluirOcorrencia(usuario.ocorrencias[0]);
+    await Promise.resolve();
+
+    expect(api.deletarOcorrencia).toHaveBeenCalledWith(1);
+    expect(component.modalOcorrenciaAberto).toBe(true);
+    expect(component.usuarioSelecionado).toBe(usuario);
+    expect(component.usuarioSelecionado!.ocorrencias).toEqual([]);
   });
 
   it.each(['COORDENADOR', 'ADMINISTRADOR'])('%s permite edição de um mês atrás', perfil => {
