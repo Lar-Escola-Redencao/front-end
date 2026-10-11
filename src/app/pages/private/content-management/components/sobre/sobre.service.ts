@@ -34,8 +34,9 @@ export class SobreService {
     tamanho: number,
     sort?: string,
     grupo?: GrupoSecao,
+    search?: string,
   ): Observable<PaginaResposta<Secao>> {
-    return this.paginaCmsService.listarSecoesAdmin(ID_PAGINA_SOBRE, pagina, tamanho, sort, grupo);
+    return this.paginaCmsService.listarSecoesAdmin(ID_PAGINA_SOBRE, pagina, tamanho, sort, grupo, search);
   }
 
   buscarSecao(id: number): Observable<Secao> {

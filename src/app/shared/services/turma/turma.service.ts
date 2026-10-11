@@ -45,8 +45,9 @@ export class TurmaService {
     pagina: number,
     tamanho: number,
     unidadeId?: number | null,
+    search?: string,
   ): Observable<PaginaResposta<Turma>> {
-    let params = construirHttpParams({ pagina, tamanho });
+    let params = construirHttpParams({ pagina, tamanho, extras: { search } });
 
     if (unidadeId !== undefined && unidadeId !== null) {
       params = params.set('unidadeId', unidadeId);

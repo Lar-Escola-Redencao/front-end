@@ -19,6 +19,7 @@ import {
   TabelaAcao
 } from '@components/tabela-layout/tabela-layout';
 import { Paginacao } from '@components/paginacao/paginacao';
+import { BarraBusca } from '@components/barra-busca/barra-busca';
 
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -46,6 +47,7 @@ interface DocumentoExibicao extends DocumentoAdmin {
     ModalLayout,
     TabelaLayout,
     Paginacao,
+    BarraBusca,
     MatFormFieldModule,
     MatInputModule,
     MatSelect,
@@ -77,6 +79,10 @@ export class Transparencia implements OnInit, OnDestroy, ComponentComAlteracoesN
   erroLista = false;
 
   private routeSub?: Subscription;
+  private listaSub?: Subscription;
+
+  /** Termo da barra de busca, espelhado em ?search= na URL. */
+  busca = '';
 
   // --- TABELAS ---
   documentos: DocumentoExibicao[] = [];
@@ -176,6 +182,7 @@ export class Transparencia implements OnInit, OnDestroy, ComponentComAlteracoesN
       this.sort = sort;
       this.ordenacao = analisarOrdenacao(sort);
       this.abaAtiva = params.get('aba') === 'secoes' ? 'secoes' : 'documentos';
+      this.busca = params.get('search') ?? '';
 
       this.carregarListaAtiva();
     });
@@ -183,6 +190,7 @@ export class Transparencia implements OnInit, OnDestroy, ComponentComAlteracoesN
 
   ngOnDestroy(): void {
     this.routeSub?.unsubscribe();
+    this.listaSub?.unsubscribe();
   }
 
   mudarAba(aba: 'documentos' | 'secoes'): void {
@@ -190,10 +198,20 @@ export class Transparencia implements OnInit, OnDestroy, ComponentComAlteracoesN
       return;
     }
 
-    this.navegar({ aba, page: 0, sort: null });
+    this.navegar({ aba, page: 0, sort: null, search: null });
+  }
+
+  /** Atualiza a URL (?search=termo); o queryParamMap.subscribe refaz o GET sem recarregar a página. */
+  buscar(termo: string): void {
+    this.navegar({ page: 0, search: termo || null });
   }
 
   get mensagemVazia(): string {
+    if (this.busca) {
+      return this.abaAtiva === 'documentos'
+        ? `Nenhum documento encontrado para "${this.busca}".`
+        : `Nenhuma seção encontrada para "${this.busca}".`;
+    }
     return this.abaAtiva === 'documentos'
       ? 'Nenhum documento cadastrado.'
       : 'Nenhuma seção cadastrada.';
@@ -213,14 +231,13 @@ export class Transparencia implements OnInit, OnDestroy, ComponentComAlteracoesN
   }
 
   carregarDocumentos(): void {
-    if (this.carregandoLista) {
-      return;
-    }
+    // Uma nova busca cancela a requisição anterior em andamento: vale sempre a mais recente.
+    this.listaSub?.unsubscribe();
 
     this.carregandoLista = true;
     this.erroLista = false;
 
-    this.transparenciaService.listarDocumentosAdmin(this.pagina, this.tamanho, this.sort).subscribe({
+    this.listaSub = this.transparenciaService.listarDocumentosAdmin(this.pagina, this.tamanho, this.sort, this.busca || undefined).subscribe({
       next: (resposta) => {
         this.documentos = resposta.content.map(doc => this.mapearDocumento(doc));
         this.totalElementos = resposta.page.totalElements;
@@ -244,14 +261,12 @@ export class Transparencia implements OnInit, OnDestroy, ComponentComAlteracoesN
   }
 
   carregarSecoes(): void {
-    if (this.carregandoLista) {
-      return;
-    }
+    this.listaSub?.unsubscribe();
 
     this.carregandoLista = true;
     this.erroLista = false;
 
-    this.transparenciaService.listarSecoesAdmin(this.pagina, this.tamanho, this.sort).subscribe({
+    this.listaSub = this.transparenciaService.listarSecoesAdmin(this.pagina, this.tamanho, this.sort, this.busca || undefined).subscribe({
       next: (resposta) => {
         this.secoes = resposta.content;
         this.totalElementos = resposta.page.totalElements;

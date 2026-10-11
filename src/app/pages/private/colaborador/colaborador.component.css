@@ -155,11 +155,11 @@ h1{
   gap: 20px;
   flex-wrap: wrap;
   margin-bottom: 24px;
-  justify-content: space-between;
+  align-items: center;
 }
 
 .acoes-colaboradores .filtro-papel{
-  width: 60%;
+  flex: 0 1 260px;
 }
 
 .colaboradores-card {
@@ -335,7 +335,7 @@ h1{
 @media (max-width: 600px) {
 
   .acoes-colaboradores .filtro-papel {
-    width: 100%;
+    flex-basis: 100%;
   }
 
   .acoes-colaboradores,

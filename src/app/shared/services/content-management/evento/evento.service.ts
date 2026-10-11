@@ -21,8 +21,8 @@ export class EventoService {
 
   constructor(private http: HttpClient) { }
 
-  listarTodos(pagina: number, tamanho: number, sort?: string, tipo?: TipoEvento | ''): Observable<PaginaResposta<Evento>> {
-    const params = construirHttpParams({ pagina, tamanho, sort, extras: { tipo: tipo || undefined } });
+  listarTodos(pagina: number, tamanho: number, sort?: string, tipo?: TipoEvento | '', search?: string): Observable<PaginaResposta<Evento>> {
+    const params = construirHttpParams({ pagina, tamanho, sort, extras: { tipo: tipo || undefined, search } });
     return this.http.get<PaginaResposta<Evento>>(`${this.apiUrl}/todos`, { params });
   }
 

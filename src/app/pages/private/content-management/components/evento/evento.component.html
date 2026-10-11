@@ -1,8 +1,9 @@
 <section class="eventos-admin">
   <div class="acoes-eventos">
-    <button type="button" class="btn-primary btn-primary-thick" (click)="abrirCadastro()">
-      Novo evento
-    </button>
+    <app-barra-busca
+      placeholder="Buscar por título, descrição, data, endereço..."
+      [valor]="busca"
+      (buscar)="buscar($event)" />
 
     <mat-form-field appearance="outline" class="filtro-tipo">
       <mat-label>Categoria</mat-label>
@@ -16,6 +17,10 @@
         </mat-option>
       </mat-select>
     </mat-form-field>
+
+    <button type="button" class="btn-primary btn-primary-thick" (click)="abrirCadastro()">
+      Novo evento
+    </button>
   </div>
 
   <app-tabela-layout

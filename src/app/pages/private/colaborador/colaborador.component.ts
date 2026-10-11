@@ -34,6 +34,7 @@ import {
 } from '@components/tabela-layout/tabela-layout';
 
 import { Paginacao } from '@components/paginacao/paginacao';
+import { BarraBusca } from '@components/barra-busca/barra-busca';
 
 import { ComponentComAlteracoesNaoSalvas } from 'src/app/shared/guards/can-deactivate.guard';
 import { AtualizarColaboradorDTO, Colaborador, CriarColaboradorDTO } from 'src/app/shared/models/colaborador.model';
@@ -75,6 +76,7 @@ type Unidade = {
     ModalLayout,
     TabelaLayout,
     Paginacao,
+    BarraBusca,
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
@@ -94,6 +96,9 @@ export class ColaboradorComponent
   // Filtro por papel agora é feito no back-end (idPapel), não em memória.
   filtroPapel: number | null = null;
 
+  /** Termo da barra de busca, espelhado em ?search= na URL. */
+  busca = '';
+
   unidadesDisponiveis: Unidade[] = [];
 
   pagina = 0;
@@ -107,6 +112,7 @@ export class ColaboradorComponent
 
   private routeSub?: Subscription;
   private papelSub?: Subscription;
+  private listaSub?: Subscription;
 
   modalAberto = false;
   modoEdicao = false;
@@ -273,6 +279,8 @@ export class ColaboradorComponent
         ? papelBruto
         : null;
 
+      this.busca = params.get('search') ?? '';
+
       this.carregarColaboradores();
     });
 
@@ -290,9 +298,13 @@ export class ColaboradorComponent
   ngOnDestroy(): void {
     this.routeSub?.unsubscribe();
     this.papelSub?.unsubscribe();
+    this.listaSub?.unsubscribe();
   }
 
   get mensagemVazia(): string {
+    if (this.busca) {
+      return `Nenhum colaborador encontrado para "${this.busca}"`;
+    }
     const papelSelecionado = this.papeis.find(p => p.id === this.filtroPapel);
     return papelSelecionado
       ? `Nenhum colaborador com o papel ${this.obterNomePapel(papelSelecionado)} cadastrado ainda`
@@ -369,9 +381,8 @@ export class ColaboradorComponent
   }
 
   carregarColaboradores(): void {
-    if (this.carregandoLista) {
-      return;
-    }
+    // Uma nova busca/filtro cancela a requisição anterior em andamento: vale sempre a mais recente.
+    this.listaSub?.unsubscribe();
 
     // Para o coordenador a lista é sempre restrita a monitores; aguarda os papéis
     // carregarem para saber o id do papel MONITOR (carregarPapeis recarrega a lista).
@@ -386,8 +397,8 @@ export class ColaboradorComponent
       ? this.idPapelMonitor!
       : this.filtroPapel ?? undefined;
 
-    this.colaboradorService
-      .listarTodos(this.pagina, this.tamanho, this.sort, idPapel)
+    this.listaSub = this.colaboradorService
+      .listarTodos(this.pagina, this.tamanho, this.sort, idPapel, this.busca || undefined)
       .subscribe({
         next: (resposta) => {
           this.ngZone.run(() => {
@@ -430,6 +441,15 @@ export class ColaboradorComponent
 
   removerFiltroPapel(): void {
     this.filtrarPorPapel(null);
+  }
+
+  /** Atualiza a URL (?search=termo); o queryParamMap.subscribe refaz o GET sem recarregar a página. */
+  buscar(termo: string): void {
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { search: termo || null, page: 0 },
+      queryParamsHandling: 'merge'
+    });
   }
 
   ordenarPor(campo: string): void {
