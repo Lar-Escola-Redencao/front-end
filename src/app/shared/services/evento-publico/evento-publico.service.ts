@@ -3,23 +3,15 @@ import {
   HttpClient,
   HttpParams
 } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { Observable, forkJoin, of } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
-import {
-  Evento,
-  MidiaEventoDTO,
-  TipoEvento
-} from 'src/app/shared/models/evento.model';
+import { Evento, EventoRedeSocial, TipoEvento } from 'src/app/shared/models/evento.model';
 
 interface EventoPagedResponse {
   content?: Evento[];
   _embedded?: Record<string, Evento[]>;
 }
-
-// O GET /evento/{id} retorna midiaEvento como uma lista de objetos
-// { id, tipoMidia, urlMidia }, não como uma lista de strings.
-type EventoDetalheResponse = Omit<Evento, 'midiaEvento'> & { midiaEvento?: MidiaEventoDTO[] };
 
 @Injectable({
   providedIn: 'root'
@@ -64,21 +56,45 @@ export class EventoPublicoService {
     );
   }
 
+  // As redes sociais vêm de um endpoint próprio; se ele falhar o detalhe do evento
+  // continua abrindo, apenas sem o overlay de redes sociais.
   buscarPorId(id: number): Observable<Evento> {
-    return this.http.get<EventoDetalheResponse>(`${this.apiUrl}/${id}`).pipe(
-      map(evento => ({
+    return forkJoin({
+      evento: this.http.get<Evento>(`${this.apiUrl}/${id}`),
+      redesSociais: this.listarRedesSociais(id)
+    }).pipe(
+      map(({ evento, redesSociais }) => ({
         ...evento,
         imagem: this.tratarImagem(evento.imagem),
-        midiaEvento: (evento.midiaEvento ?? []).map(midia => ({
-          url: this.tratarImagem(midia.urlMidia ?? midia.url_midia),
-          tipo: midia.tipoMidia ?? midia.tipo_midia ?? 'IMAGEM'
-        })),
+        redesSociais,
         parceiros: (evento.parceiros ?? []).map(parceiro => ({
           ...parceiro,
           logo: this.tratarImagem(parceiro.logo)
         }))
       }))
     );
+  }
+
+  // Só exibimos a rede social quando há um ícone pra ela: sem ícone, não tem
+  // como mostrar de qual rede se trata, então o item fica de fora do overlay.
+  listarRedesSociais(id: number): Observable<EventoRedeSocial[]> {
+    return this.http.get<EventoRedeSocial[]>(`${this.apiUrl}/${id}/redes-sociais`).pipe(
+      map(redes =>
+        (redes ?? [])
+          .map(rede => ({ ...rede, icone: this.tratarIconeRedeSocial(rede.icone) }))
+          .filter(rede => rede.urlLink?.trim() && rede.icone)
+      ),
+      catchError(() => of([]))
+    );
+  }
+
+  private tratarIconeRedeSocial(caminho: string | null | undefined): string {
+    if (!caminho) return '';
+    if (caminho.startsWith('/images/')) {
+      return caminho;
+    }
+
+    return this.tratarImagem(caminho);
   }
 
   private extrairEventos(resposta: Evento[] | EventoPagedResponse): Evento[] {
