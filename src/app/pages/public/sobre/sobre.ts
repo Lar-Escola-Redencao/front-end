@@ -46,7 +46,7 @@ export class Sobre {
   protected readonly indicadores = signal<IndicadoresSobre | null>(null);
   protected readonly meninosAtendidos = computed(() => {
     const total = this.indicadores()?.totalMeninos;
-    return total == null ? '—' : `${total}`;
+    return total == null ? '—' : `+${total}`;
   });
   protected readonly anosOsc = computed(() => {
     const fundacao = this.indicadores()?.dataFundacao;
