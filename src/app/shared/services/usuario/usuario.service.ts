@@ -15,8 +15,20 @@ export class UsuarioService {
   private readonly http = inject(HttpClient);
   private readonly apiUrl = `${environment.apiUrl}/usuarios`;
 
-  listarUsuarios(search?: string): Observable<UsuarioResponseDTO[]> {
-    const params = search ? { search } : undefined;
+  listarUsuarios(filtros?: string | {
+    search?: string;
+    idUnidade?: number | null;
+    idTurma?: number | null;
+    statusMatricula?: string | null;
+  }): Observable<UsuarioResponseDTO[]> {
+    if (typeof filtros === 'string') {
+      filtros = { search: filtros };
+    }
+    const params: Record<string, string> = {};
+    if (filtros?.search) params['search'] = filtros.search;
+    if (filtros?.idUnidade) params['idUnidade'] = String(filtros.idUnidade);
+    if (filtros?.idTurma) params['idTurma'] = String(filtros.idTurma);
+    if (filtros?.statusMatricula) params['statusMatricula'] = filtros.statusMatricula;
     return this.http.get<UsuarioResponseDTO[]>(this.apiUrl, { params });
   }
 

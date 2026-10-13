@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectorRef, Component, NgZone, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, HostListener, NgZone, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -25,6 +25,7 @@ import { UsuarioPerfilDadosSocioeconomicos } from './components/dados-socioecono
 import { UsuarioPerfilSaude } from './components/saude/saude';
 import { UsuarioPerfilMatriculas } from './components/matriculas/matriculas';
 import { Alertas } from 'src/app/shared/utils/alerts';
+import { ComponentComAlteracoesNaoSalvas } from 'src/app/shared/guards/can-deactivate.guard';
 
 type AbaPerfil = 'acompanhamento' | 'contatos' | 'saude' | 'dados-pessoais' | 'dados-socioeconomicos' | 'matricula';
 
@@ -49,7 +50,7 @@ type AbaPerfil = 'acompanhamento' | 'contatos' | 'saude' | 'dados-pessoais' | 'd
   templateUrl: './usuario-perfil.html',
   styleUrl: './usuario-perfil.css',
 })
-export class UsuarioPerfil implements OnInit, OnDestroy {
+export class UsuarioPerfil implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalvas {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
@@ -65,6 +66,7 @@ export class UsuarioPerfil implements OnInit, OnDestroy {
   @ViewChild(UsuarioPerfilDadosPessoais) private dadosPessoais?: UsuarioPerfilDadosPessoais;
   @ViewChild(UsuarioPerfilDadosSocioeconomicos) private dadosSocioeconomicos?: UsuarioPerfilDadosSocioeconomicos;
   @ViewChild(UsuarioPerfilSaude) private saude?: UsuarioPerfilSaude;
+  @ViewChild(UsuarioPerfilContatos) private contatos?: UsuarioPerfilContatos;
 
   usuario: UsuarioResponseDTO | null = null;
   carregando = true;
@@ -109,6 +111,18 @@ export class UsuarioPerfil implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.sub?.unsubscribe();
+  }
+
+  formularioTemAlteracoesNaoSalvas(): boolean {
+    return !!this.contatos?.formularioTemAlteracoesNaoSalvas();
+  }
+
+  @HostListener('window:beforeunload', ['$event'])
+  avisarAntesDeFechar(event: BeforeUnloadEvent): void {
+    if (this.formularioTemAlteracoesNaoSalvas()) {
+      event.preventDefault();
+      event.returnValue = '';
+    }
   }
 
   carregarPerfil(): void {
@@ -548,7 +562,7 @@ export class UsuarioPerfil implements OnInit, OnDestroy {
       confirmButtonColor,
       cancelButtonColor: '#757575',
       reverseButtons: true,
-      inputValidator: valor => valor?.trim() === textoConfirmacao
+      inputValidator: valor => valor?.trim().toLowerCase() === textoConfirmacao.toLowerCase()
         ? undefined
         : `Digite exatamente: ${textoConfirmacao}`
     });

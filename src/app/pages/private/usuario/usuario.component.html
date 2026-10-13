@@ -13,9 +13,63 @@
       <app-barra-busca
         [placeholder]="abaAtiva === 'usuarios' ? 'Buscar por nome, CPF, documento, escola...' : 'Buscar por nome, telefone, e-mail, CPF...'"
         [valor]="busca" (buscar)="buscar($event)" />
+
+      <button *ngIf="abaAtiva === 'usuarios'" type="button" class="btn-filtros-mobile" (click)="abrirFiltrosMobile()">
+        Filtros
+        @if (quantidadeFiltrosUsuariosAplicados > 0) {
+          <span class="filtros-contador">{{ quantidadeFiltrosUsuariosAplicados }}</span>
+        }
+        <mat-icon>filter_list</mat-icon>
+      </button>
       <button *ngIf="abaAtiva === 'usuarios' && podeCadastrarUsuario" type="button"
         class="btn-primary btn-primary-thick" (click)="abrirCadastro()">Novo usuário</button>
     </div>
+
+    <ng-template #filtrosUsuarios>
+      <div class="filtros-usuarios">
+        <mat-form-field appearance="outline">
+          <mat-label>Unidade</mat-label>
+          <mat-select [ngModel]="filtroModalUnidadeId ?? 'todas'" [ngModelOptions]="{ standalone: true }" (ngModelChange)="onFiltroModalUnidadeChange($event === 'todas' ? null : $event)">
+            <mat-option value="todas">Todas as unidades</mat-option>
+            @for (unidade of unidadesDisponiveis; track unidade.id) {
+              <mat-option [value]="unidade.id">{{ unidade.nome }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Turma</mat-label>
+          <mat-select [ngModel]="filtroModalTurmaId ?? 'todas'" [ngModelOptions]="{ standalone: true }" (ngModelChange)="filtroModalTurmaId = $event === 'todas' ? null : $event" [disabled]="!filtroModalUnidadeId">
+            <mat-option value="todas">Todas as turmas</mat-option>
+            @for (turma of turmasDaUnidadeFiltro(filtroModalUnidadeId!); track turma.id) {
+              <mat-option [value]="turma.id">{{ formatarPeriodoTabela(turma.periodo) }} ({{ turma.horaInicio }} - {{ turma.horaFim }})</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Status</mat-label>
+          <mat-select [ngModel]="filtroModalStatusMatricula ?? 'todos'" [ngModelOptions]="{ standalone: true }" (ngModelChange)="filtroModalStatusMatricula = $event === 'todos' ? null : $event">
+            @for (status of statusMatriculaOpcoes; track status.label) {
+              <mat-option [value]="status.value ?? 'todos'">{{ status.label }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <div class="acoes-filtros-usuarios">
+          <button type="button" class="btn-filtro-secundario" (click)="limparFiltrosUsuarios()">Limpar filtros</button>
+          <button type="button" class="btn-primary" (click)="aplicarFiltrosModal()">Aplicar filtros</button>
+        </div>
+      </div>
+    </ng-template>
+
+    @if (filtrosMobileAberto) {
+      <app-modal-layout titulo="Filtrar usuários" (closed)="fecharFiltrosMobile()">
+        <div class="filtros-usuarios-mobile">
+          <ng-container *ngTemplateOutlet="filtrosUsuarios"></ng-container>
+        </div>
+      </app-modal-layout>
+    }
 
     <app-tabela-layout [colunas]="$any(abaAtiva === 'usuarios' ? colunas : colunasContatos)"
       [dados]="$any(abaAtiva === 'usuarios' ? usuarios : contatos)"

@@ -25,9 +25,24 @@
   white-space: nowrap;
 }
 .status-matricula--ativo { color: #139445; background: #dcfce7; }
-.status-matricula--inativo,
 .status-matricula--egresso,
-.status-matricula--excluido { color: #555; background: #e8e8e8; }
+.status-matricula--excluido { color: #fff; background: #8c8c8c; }
+.status-matricula--inativo {
+  color: #1661bd;
+  background: rgba(54, 130, 220, 0.12);
+}
+
+:host ::ng-deep app-tabela-layout .badge-status.status-matricula-egresso,
+:host ::ng-deep app-tabela-layout .badge-status.status-matricula-excluido {
+  background-color: #8c8c8c;
+  color: #fff;
+}
+
+:host ::ng-deep app-tabela-layout .badge-status.status-matricula-inativo {
+  background-color: rgba(54, 130, 220, 0.12);
+  color: #1661bd;
+}
+
 .justificativa-matricula {
   display: flex;
   flex-direction: column;

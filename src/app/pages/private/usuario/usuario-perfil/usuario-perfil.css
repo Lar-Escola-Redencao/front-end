@@ -110,8 +110,8 @@
   margin: -4px 0 14px;
   padding: 0 20px;
   border-radius: 999px;
-  background: rgba(0, 0, 0, 0.08);
-  color: rgba(0, 0, 0, 0.6);
+  background: #8c8c8c;
+  color: #fff;
   font-family: var(--fonte-texto);
   font-size: 13px;
   font-weight: 600;

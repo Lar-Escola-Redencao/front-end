@@ -273,8 +273,8 @@
 }
 
 .badge-excluido {
-  background-color: #8c8c8c;
-  color: white;
+  background-color: #e8e8e8;
+  color: #555;
   font-size: 11px;
   padding: 2px 8px;
   border-radius: 12px;

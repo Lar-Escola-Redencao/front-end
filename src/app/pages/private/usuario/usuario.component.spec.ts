@@ -29,7 +29,8 @@ describe('Contrato de edição de usuários', () => {
     vi.spyOn(Alertas, 'confirmarDescarte').mockResolvedValue(false);
     service = {
       buscarPorId: vi.fn(() => of(usuario)), listarArquivosSaude: vi.fn(() => of([])),
-      atualizar: vi.fn(() => of(usuario)), criar: vi.fn(() => of(usuario))
+      atualizar: vi.fn(() => of(usuario)), criar: vi.fn(() => of(usuario)),
+      listarUsuarios: vi.fn(() => of([usuario]))
     };
     TestBed.configureTestingModule({ providers: [
       provideHttpClient(), provideRouter([]),
@@ -290,6 +291,22 @@ describe('Contrato de edição de usuários', () => {
     component.ordenacao = { campo: 'nomeTurma', direcao: 'desc' };
     component.aplicarPaginacao();
     expect(component.usuarios.map(u => u.id)).toEqual([1, 2]);
+  });
+
+  it('envia filtros de unidade, turma e status na listagem de usuários', () => {
+    component.filtroUnidadeId = 1;
+    component.filtroTurmaId = 2;
+    component.filtroStatusMatricula = 'EGRESSO';
+    component.busca = 'maria';
+
+    component.carregarUsuarios();
+
+    expect(service.listarUsuarios).toHaveBeenCalledWith({
+      search: 'maria',
+      idUnidade: 1,
+      idTurma: 2,
+      statusMatricula: 'EGRESSO'
+    });
   });
 
   it('exibe erro de telefone retornado pela API e permite corrigir o campo', () => {

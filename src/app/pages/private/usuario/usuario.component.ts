@@ -113,6 +113,15 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
 
   /** Termo da barra de busca, espelhado em ?search= na URL. */
   busca = '';
+  filtroUnidadeId: number | null = null;
+  filtroTurmaId: number | null = null;
+  filtroStatusMatricula: 'ATIVO' | 'EGRESSO' | null = null;
+  filtroModalUnidadeId: number | null = null;
+  filtroModalTurmaId: number | null = null;
+  filtroModalStatusMatricula: 'ATIVO' | 'EGRESSO' | null = null;
+  filtrosMobileAberto = false;
+  turmasFiltro: any[] = [];
+  todasTurmasFiltro: any[] = [];
   private listaSub?: Subscription;
 
   pagina = 0;
@@ -290,6 +299,12 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
     { label: 'Outro', value: 'OUTRO' }
   ];
 
+  readonly statusMatriculaOpcoes = [
+    { label: 'Todos os status', value: null },
+    { label: 'Ativo', value: 'ATIVO' },
+    { label: 'Desligado', value: 'EGRESSO' }
+  ];
+
   // Ações da tabela
   colunas: TabelaColuna<UsuarioResponseDTO>[] = [
     {
@@ -398,8 +413,18 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
       const buscaMudou = novaBusca !== this.busca;
       this.busca = novaBusca;
 
+      const novoFiltroUnidade = this.paramNumero(params.get('idUnidade'));
+      const novoFiltroTurma = this.paramNumero(params.get('idTurma'));
+      const novoFiltroStatus = this.paramStatusMatricula(params.get('statusMatricula'));
+      const filtrosMudaram = novoFiltroUnidade !== this.filtroUnidadeId
+        || novoFiltroTurma !== this.filtroTurmaId
+        || novoFiltroStatus !== this.filtroStatusMatricula;
+      this.filtroUnidadeId = novoFiltroUnidade;
+      this.filtroTurmaId = novoFiltroTurma;
+      this.filtroStatusMatricula = novoFiltroStatus;
+
       if (this.abaAtiva === 'usuarios') {
-        if (buscaMudou || (this.usuariosListagem.length === 0 && !this.carregandoLista)) {
+        if (buscaMudou || filtrosMudaram || (this.usuariosListagem.length === 0 && !this.carregandoLista)) {
            this.carregarUsuarios();
         } else {
            this.aplicarPaginacao();
@@ -408,6 +433,15 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
         this.carregarContatos();
       }
     });
+  }
+
+  private paramNumero(valor: string | null): number | null {
+    const numero = Number(valor);
+    return Number.isFinite(numero) && numero > 0 ? numero : null;
+  }
+
+  private paramStatusMatricula(valor: string | null): 'ATIVO' | 'EGRESSO' | null {
+    return valor === 'ATIVO' || valor === 'EGRESSO' ? valor : null;
   }
 
   private atualizarTela(): void {
@@ -442,6 +476,129 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
     });
   }
 
+  aplicarFiltrosUsuarios(): void {
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: {
+        idUnidade: this.filtroUnidadeId || null,
+        idTurma: this.filtroTurmaId || null,
+        statusMatricula: this.filtroStatusMatricula || null,
+        page: 0
+      },
+      queryParamsHandling: 'merge'
+    });
+  }
+
+  onFiltroUnidadeChange(idUnidade: number | null): void {
+    this.filtroUnidadeId = idUnidade;
+    this.filtroTurmaId = null;
+    this.aplicarFiltrosUsuarios();
+  }
+
+  onFiltroTurmaChange(idTurma: number | null): void {
+    this.filtroTurmaId = idTurma;
+    this.aplicarFiltrosUsuarios();
+  }
+
+  onFiltroStatusChange(status: 'ATIVO' | 'EGRESSO' | null): void {
+    this.filtroStatusMatricula = status;
+    this.aplicarFiltrosUsuarios();
+  }
+
+  get filtroUnidadeTurmaValor(): string | null {
+    if (this.filtroTurmaId) return `turma:${this.filtroTurmaId}`;
+    if (this.filtroUnidadeId) return `unidade:${this.filtroUnidadeId}`;
+    return null;
+  }
+
+  onFiltroUnidadeTurmaChange(valor: string | null): void {
+    if (!valor) {
+      this.filtroUnidadeId = null;
+      this.filtroTurmaId = null;
+    } else if (valor.startsWith('unidade:')) {
+      this.filtroUnidadeId = Number(valor.replace('unidade:', '')) || null;
+      this.filtroTurmaId = null;
+    } else if (valor.startsWith('turma:')) {
+      const idTurma = Number(valor.replace('turma:', '')) || null;
+      const turma = this.todasTurmasFiltro.find(item => item.id === idTurma);
+      this.filtroTurmaId = idTurma;
+      this.filtroUnidadeId = turma?.unidade?.id ?? turma?.unidadeId ?? null;
+    }
+    this.aplicarFiltrosUsuarios();
+  }
+
+  turmasDaUnidadeFiltro(idUnidade: number): any[] {
+    return this.todasTurmasFiltro.filter(turma => turma.unidade?.id === idUnidade || turma.unidadeId === idUnidade);
+  }
+
+  limparFiltrosUsuarios(): void {
+    this.filtroModalUnidadeId = null;
+    this.filtroModalTurmaId = null;
+    this.filtroModalStatusMatricula = null;
+    this.turmasFiltro = [];
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { idUnidade: null, idTurma: null, statusMatricula: null, page: 0 },
+      queryParamsHandling: 'merge'
+    });
+  }
+
+  abrirFiltrosMobile(): void {
+    this.filtroModalUnidadeId = this.filtroUnidadeId;
+    this.filtroModalTurmaId = this.filtroTurmaId;
+    this.filtroModalStatusMatricula = this.filtroStatusMatricula;
+    this.filtrosMobileAberto = true;
+  }
+
+  async fecharFiltrosMobile(confirmarDescarte = true): Promise<void> {
+    if (confirmarDescarte && this.filtrosUsuariosModalAlterados()) {
+      const acao = await Alertas.confirmarSaidaFiltros();
+
+      if (acao === 'voltar') {
+        return;
+      }
+    }
+
+    this.filtrosMobileAberto = false;
+  }
+
+  onFiltroModalUnidadeChange(idUnidade: number | null): void {
+    this.filtroModalUnidadeId = idUnidade;
+    this.filtroModalTurmaId = null;
+  }
+
+  aplicarFiltrosModal(): void {
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: {
+        idUnidade: this.filtroModalUnidadeId || null,
+        idTurma: this.filtroModalTurmaId || null,
+        statusMatricula: this.filtroModalStatusMatricula || null,
+        page: 0
+      },
+      queryParamsHandling: 'merge'
+    });
+    this.fecharFiltrosMobile(false);
+  }
+
+  private filtrosUsuariosModalAlterados(): boolean {
+    return this.filtroModalUnidadeId !== this.filtroUnidadeId ||
+      this.filtroModalTurmaId !== this.filtroTurmaId ||
+      this.filtroModalStatusMatricula !== this.filtroStatusMatricula;
+  }
+
+  get possuiFiltrosUsuariosAplicados(): boolean {
+    return !!this.filtroUnidadeId || !!this.filtroTurmaId || !!this.filtroStatusMatricula;
+  }
+
+  get quantidadeFiltrosUsuariosAplicados(): number {
+    let total = 0;
+    if (this.filtroUnidadeId) total++;
+    if (this.filtroTurmaId) total++;
+    if (this.filtroStatusMatricula) total++;
+    return total;
+  }
+
   get mensagemVaziaLista(): string {
     if (this.busca) {
       return this.abaAtiva === 'usuarios'
@@ -459,13 +616,18 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
     this.atualizarTela();
 
     const busca = this.busca;
-    this.listaSub = this.usuarioService.listarUsuarios(busca || undefined).subscribe({
+    this.listaSub = this.usuarioService.listarUsuarios({
+      search: busca || undefined,
+      idUnidade: this.filtroUnidadeId,
+      idTurma: this.filtroTurmaId,
+      statusMatricula: this.filtroStatusMatricula
+    }).subscribe({
       next: (resposta) => {
         this.ngZone.run(() => {
           const ativos = resposta.filter(u => u.status !== 'EXCLUIDO');
           this.usuariosListagem = ativos;
           // Sem busca, a resposta é a lista completa — reaproveitada na checagem de CPF e nos vínculos.
-          if (!busca) this.todosUsuarios = ativos;
+          if (!busca && !this.filtroUnidadeId && !this.filtroTurmaId && !this.filtroStatusMatricula) this.todosUsuarios = ativos;
           this.aplicarPaginacao();
           this.carregandoLista = false;
           this.cdr.markForCheck();
@@ -552,6 +714,32 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
         ? dados
         : dados.filter((u: any) => permitidas.includes(u.id));
       this.atualizarTela();
+    });
+
+    this.turmaService.listar().subscribe(turmas => {
+      this.ngZone.run(() => {
+        const permitidas = this.sessao.unidadesPermitidasIds();
+        this.todasTurmasFiltro = permitidas === null
+          ? turmas
+          : turmas.filter((t: any) => permitidas.includes(t.unidade?.id ?? t.unidadeId));
+        this.atualizarTela();
+      });
+    });
+  }
+
+  private carregarTurmasFiltro(idUnidade: number | null): void {
+    if (!idUnidade) {
+      this.turmasFiltro = [];
+      return;
+    }
+    this.turmaService.listar(idUnidade).subscribe(turmas => {
+      this.ngZone.run(() => {
+        this.turmasFiltro = turmas.filter((t: any) => t.unidade?.id === idUnidade || t.unidadeId === idUnidade);
+        if (this.filtroTurmaId && !this.turmasFiltro.some(t => t.id === this.filtroTurmaId)) {
+          this.filtroTurmaId = null;
+        }
+        this.atualizarTela();
+      });
     });
   }
 
@@ -1435,7 +1623,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
     return '-';
   }
 
-  private formatarPeriodoTabela(valor?: string | null): string {
+  formatarPeriodoTabela(valor?: string | null): string {
     if (!valor) return '';
 
     const texto = valor.toString().replace(/\(.*?\)/g, '').trim();

@@ -158,8 +158,87 @@ h1{
   align-items: center;
 }
 
-.acoes-colaboradores .filtro-papel{
-  flex: 0 1 260px;
+.btn-filtros {
+  min-width: 190px;
+  min-height: 58px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 16px;
+  border: 1px solid var(--input-border);
+  border-radius: var(--input-radius);
+  background: var(--branco);
+  color: var(--input-color);
+  cursor: pointer;
+  font-family: var(--fonte-texto);
+  font-size: 1rem;
+  font-weight: 700;
+  transition: border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.btn-filtros:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+  box-shadow: 0 2px 8px rgba(54, 130, 220, 0.12);
+}
+
+.btn-filtros mat-icon {
+  font-size: 22px;
+  width: 22px;
+  height: 22px;
+}
+
+.filtros-contador {
+  min-width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: var(--primary-color);
+  color: var(--branco);
+  font-size: 0.78rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.filtros-colaboradores {
+  display: grid;
+  gap: 12px;
+  text-align: left;
+}
+
+.filtros-colaboradores .mat-mdc-form-field {
+  width: 100%;
+}
+
+.filtros-colaboradores ::ng-deep .mat-mdc-select {
+  margin-top: 10px;
+}
+
+.acoes-filtros-colaboradores {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.btn-filtro-secundario {
+  border: 0;
+  background: transparent;
+  color: var(--input-color);
+  cursor: pointer;
+  font-family: var(--fonte-texto);
+  font-size: 1rem;
+  font-weight: 700;
+  padding: 10px 12px;
+}
+
+.btn-filtro-secundario:hover {
+  color: var(--primary-color);
 }
 
 .colaboradores-card {
@@ -334,17 +413,24 @@ h1{
 
 @media (max-width: 600px) {
 
-  .acoes-colaboradores .filtro-papel {
-    flex-basis: 100%;
-  }
-
   .acoes-colaboradores,
   .acoes-modal,
   .acoes-modal .btn-primary {
     width: 100%;
   }
 
-  .acoes-colaboradores .btn-primary {
+  .acoes-colaboradores .btn-primary,
+  .acoes-colaboradores .btn-filtros {
+    width: 100%;
+  }
+
+  .acoes-filtros-colaboradores {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .acoes-filtros-colaboradores .btn-primary,
+  .acoes-filtros-colaboradores .btn-filtro-secundario {
     width: 100%;
   }
 
