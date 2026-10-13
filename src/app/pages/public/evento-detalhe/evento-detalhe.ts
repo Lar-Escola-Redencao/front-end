@@ -1,11 +1,10 @@
-import { ChangeDetectorRef, Component, ElementRef, HostListener, OnDestroy, OnInit, QueryList, ViewChild, ViewChildren, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, HostListener, OnDestroy, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { PublicNavbar } from '@components/public-navbar/public-navbar';
 import { PublicFooter } from '@components/public-footer/public-footer';
-import { Evento, MidiaEvento, Parceiro, TipoEvento } from 'src/app/shared/models/evento.model';
+import { Evento, EventoRedeSocial, Parceiro, TipoEvento } from 'src/app/shared/models/evento.model';
 import { EventoPublicoService } from 'src/app/shared/services/evento-publico/evento-publico.service';
-import { PublicContentService } from 'src/app/shared/services/public-content/public-content.service';
 
 @Component({
   selector: 'app-evento-detalhe',
@@ -17,7 +16,6 @@ import { PublicContentService } from 'src/app/shared/services/public-content/pub
 export class EventoDetalhe implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly eventoPublicoService = inject(EventoPublicoService);
-  private readonly publicContentService = inject(PublicContentService);
   private readonly cdr = inject(ChangeDetectorRef);
 
   private readonly nomesTipoEvento: Record<TipoEvento, string> = {
@@ -30,16 +28,12 @@ export class EventoDetalhe implements OnInit, OnDestroy {
   carregando = true;
   naoEncontrado = false;
 
-  indiceMidiaAtual = 0;
-  midiaPrincipalIndisponivel = false;
+  imagemPrincipalIndisponivel = false;
   lightboxAberto = false;
   indiceParceiroAtual = 0;
   parceirosEmTransicao = true;
   parceirosAnimando = false;
   private parceirosAutoPlayInterval: number | null = null;
-
-  @ViewChildren('miniaturaPreview') miniaturasPreview!: QueryList<ElementRef<HTMLButtonElement>>;
-  @ViewChild('lightboxVideo') lightboxVideo?: ElementRef<HTMLVideoElement>;
 
   ngOnInit(): void {
     const id = Number(this.route.snapshot.paramMap.get('id'));
@@ -70,32 +64,22 @@ export class EventoDetalhe implements OnInit, OnDestroy {
     document.body.style.overflow = '';
   }
 
-  // Imagem principal do evento seguida das mídias extras (`midiaEvento`).
-  // TODO: `midiaEvento` ainda não existe no back-end (ver evento.model.ts) — hoje
-  // este array sempre terá no máximo 1 item, então o carrossel fica desabilitado
-  // e é exibida apenas a imagem estática, como pedido.
-  get midias(): MidiaEvento[] {
-    if (!this.evento?.imagem) return [];
-    return [
-      { url: this.evento.imagem, tipo: 'IMAGEM' },
-      ...(this.evento.midiaEvento ?? [])
-    ];
+  get imagemPrincipal(): string {
+    return this.evento?.imagem ?? '';
   }
 
-  get possuiCarrossel(): boolean {
-    return this.midias.length > 1;
+  get redesSociais(): EventoRedeSocial[] {
+    return this.evento?.redesSociais ?? [];
   }
 
-  get midiaAtual(): string {
-    return this.midiaAtualItem?.url ?? '';
+  // O overlay "acompanhe pelas redes" só faz sentido depois que o evento
+  // encerrou e existe ao menos uma rede social (com ícone) cadastrada para divulgar.
+  get exibirOverlayRedesSociais(): boolean {
+    return this.eventoEncerrado() && this.redesSociais.length > 0;
   }
 
-  get midiaAtualItem(): MidiaEvento | null {
-    return this.midias[this.indiceMidiaAtual] ?? null;
-  }
-
-  get midiaAtualEhVideo(): boolean {
-    return this.ehVideo(this.midiaAtualItem);
+  get exibirOverlayEventoEncerrado(): boolean {
+    return this.eventoEncerrado() && this.redesSociais.length === 0;
   }
 
   get parceiros(): Parceiro[] {
@@ -124,43 +108,6 @@ export class EventoDetalhe implements OnInit, OnDestroy {
   @HostListener('window:resize')
   onResize(): void {
     this.cdr.detectChanges();
-  }
-
-  selecionarMidia(indice: number): void {
-    this.pausarVideoLightbox();
-    this.indiceMidiaAtual = indice;
-    this.midiaPrincipalIndisponivel = false;
-    this.centralizarMiniaturaAtual();
-  }
-
-  proximaMidia(): void {
-    const total = this.midias.length;
-    if (total <= 1) return;
-    this.pausarVideoLightbox();
-    this.indiceMidiaAtual = (this.indiceMidiaAtual + 1) % total;
-    this.midiaPrincipalIndisponivel = false;
-    this.centralizarMiniaturaAtual();
-  }
-
-  midiaAnterior(): void {
-    const total = this.midias.length;
-    if (total <= 1) return;
-    this.pausarVideoLightbox();
-    this.indiceMidiaAtual = (this.indiceMidiaAtual - 1 + total) % total;
-    this.midiaPrincipalIndisponivel = false;
-    this.centralizarMiniaturaAtual();
-  }
-
-  abrirLightbox(): void {
-    if (!this.midiaAtual) return;
-    this.lightboxAberto = true;
-    document.body.style.overflow = 'hidden';
-  }
-
-  fecharLightbox(): void {
-    this.pausarVideoLightbox();
-    this.lightboxAberto = false;
-    document.body.style.overflow = '';
   }
 
   proximoParceiro(): void {
@@ -237,7 +184,7 @@ export class EventoDetalhe implements OnInit, OnDestroy {
   }
 
   obterUrlImagem(caminho: string | null | undefined): string {
-    return this.publicContentService.tratarUrlImagem(caminho);
+    return this.eventoPublicoService.tratarImagem(caminho);
   }
 
   onParceiroImageError(event: Event): void {
@@ -246,41 +193,25 @@ export class EventoDetalhe implements OnInit, OnDestroy {
     img.nextElementSibling?.classList.remove('imagem-fallback-hidden');
   }
 
-  onMiniaturaImageError(event: Event): void {
+  onImagemPrincipalError(): void {
+    this.imagemPrincipalIndisponivel = true;
+  }
+
+  abrirLightbox(): void {
+    if (!this.imagemPrincipal || this.imagemPrincipalIndisponivel) return;
+    this.lightboxAberto = true;
+    document.body.style.overflow = 'hidden';
+  }
+
+  fecharLightbox(): void {
+    this.lightboxAberto = false;
+    document.body.style.overflow = '';
+  }
+
+  onIconeRedeError(event: Event): void {
     const img = event.target as HTMLImageElement;
     img.style.display = 'none';
-    img.nextElementSibling?.classList.remove('miniatura-fallback-hidden');
-  }
-
-  onMidiaPrincipalError(): void {
-    this.midiaPrincipalIndisponivel = true;
-  }
-
-  ehVideo(midia: MidiaEvento | null | undefined): boolean {
-    return midia?.tipo === 'VIDEO';
-  }
-
-  tipoVideo(url: string): string {
-    const extensao = url.split('?')[0].split('.').pop()?.toLowerCase();
-    if (extensao === 'webm') return 'video/webm';
-    if (extensao === 'ogg' || extensao === 'ogv') return 'video/ogg';
-    return 'video/mp4';
-  }
-
-  private pausarVideoLightbox(): void {
-    if (!this.lightboxAberto) return;
-    this.lightboxVideo?.nativeElement.pause();
-  }
-
-  private centralizarMiniaturaAtual(): void {
-    setTimeout(() => {
-      const miniatura = this.miniaturasPreview?.get(this.indiceMidiaAtual);
-      miniatura?.nativeElement.scrollIntoView({
-        behavior: 'smooth',
-        block: 'nearest',
-        inline: 'center'
-      });
-    });
+    img.nextElementSibling?.classList.remove('rede-social-fallback-hidden');
   }
 
   eventoEncerrado(): boolean {
