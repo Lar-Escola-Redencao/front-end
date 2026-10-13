@@ -1,0 +1,103 @@
+<app-modal-layout
+  [class.tremer]="modalTremendo"
+  titulo="Publicações vinculadas"
+  (closed)="fechar()">
+
+  <div class="vinculo-redes">
+    <div class="vinculo-cabecalho">
+      <p class="vinculo-resumo">Informe os links onde o evento <strong>{{ evento.titulo }}</strong> foi publicado</p>
+      <p class="vinculo-resumo">{{ totalVinculadas }} de {{ linhas.length }} publicações vinculadas</p>
+    </div>
+
+    @if (carregando) {
+    <div class="vinculo-estado">
+      <span class="spinner spinner-escuro" aria-hidden="true"></span>
+      <p>Carregando redes sociais...</p>
+    </div>
+    } @else if (erroCarregamento) {
+    <div class="vinculo-estado vinculo-estado-erro">
+      <p>Não foi possível carregar as redes sociais.</p>
+      <button type="button" class="botao-tentar-novamente" (click)="carregar()">Tentar novamente</button>
+    </div>
+    } @else if (linhas.length === 0) {
+    <div class="vinculo-estado">
+      <p>Nenhuma rede social cadastrada.</p>
+    </div>
+    } @else {
+    <table class="vinculo-tabela">
+      <thead>
+        <tr>
+          <th class="coluna-icone">Ícone</th>
+          <th class="coluna-rede">Rede social</th>
+          <th class="coluna-status">Status</th>
+          <th>Link da publicação</th>
+          <th class="coluna-acoes"></th>
+        </tr>
+      </thead>
+
+      <tbody>
+        @for (linha of linhas; track linha.idRedeSocial) {
+        <tr [class.vinculada]="linha.vinculada">
+          <td class="celula-icone">
+            @if (linha.icone) {
+            <img class="rede-icone" [src]="tratarImagem(linha.icone)" alt="" (error)="esconderIcone($event)" />
+            }
+          </td>
+
+          <td class="celula-rede">
+            <span class="rede-nome">{{ linha.nome }}</span>
+          </td>
+
+          <td class="coluna-status">
+            <span class="badge-vinculo" [class.ativo]="linha.vinculada">
+              {{ linha.vinculada ? 'Vinculada' : 'Não vinculada' }}
+            </span>
+          </td>
+
+          <td class="celula-link">
+            <mat-form-field appearance="outline" class="campo-link" [class.campo-link-erro]="linha.erro">
+              <mat-label>Link da publicação</mat-label>
+              <input
+                matInput
+                type="url"
+                class="input-link"
+                [(ngModel)]="linha.urlLink"
+                [disabled]="linha.salvando"
+                maxlength="255"
+                (keydown.enter)="salvar(linha)" />
+            </mat-form-field>
+            @if (linha.erro) {
+            <span class="error-text">{{ linha.erro }}</span>
+            }
+          </td>
+
+          <td class="coluna-acoes">
+            <div class="acoes">
+              @if (linha.salvando) {
+              <span class="spinner spinner-escuro" aria-hidden="true"></span>
+              } @else if (!linha.vinculada) {
+              <button type="button" class="botao-acao" title="Vincular ao evento" (click)="salvar(linha)">
+                <mat-icon>add_link</mat-icon>
+              </button>
+              } @else {
+              @if (foiAlterada(linha)) {
+              <button type="button" class="botao-acao" title="Salvar link" (click)="salvar(linha)">
+                <mat-icon>check</mat-icon>
+              </button>
+              <button type="button" class="botao-acao" title="Descartar alteração" (click)="descartarAlteracao(linha)">
+                <mat-icon>undo</mat-icon>
+              </button>
+              }
+              <button type="button" class="botao-acao botao-excluir" title="Desvincular" (click)="desvincular(linha)">
+                <mat-icon>link_off</mat-icon>
+              </button>
+              }
+            </div>
+          </td>
+        </tr>
+        }
+      </tbody>
+    </table>
+    }
+  </div>
+</app-modal-layout>

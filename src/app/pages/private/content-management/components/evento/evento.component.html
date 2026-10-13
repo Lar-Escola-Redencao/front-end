@@ -1,8 +1,9 @@
 <section class="eventos-admin">
   <div class="acoes-eventos">
-    <button type="button" class="btn-primary btn-primary-thick" (click)="abrirCadastro()">
-      Novo evento
-    </button>
+    <app-barra-busca
+      placeholder="Buscar por título, descrição, data, endereço..."
+      [valor]="busca"
+      (buscar)="buscar($event)" />
 
     <mat-form-field appearance="outline" class="filtro-tipo">
       <mat-label>Categoria</mat-label>
@@ -16,6 +17,10 @@
         </mat-option>
       </mat-select>
     </mat-form-field>
+
+    <button type="button" class="btn-primary btn-primary-thick" (click)="abrirCadastro()">
+      Novo evento
+    </button>
   </div>
 
   <app-tabela-layout
@@ -188,7 +193,12 @@
     </div>
 
     <div class="preview-info">
-      <div class="tag-tipo">{{ formatarTextoExibicao(eventoVisualizacao.tipoEvento) }}</div>
+      <div class="preview-tags">
+        <div class="tag-tipo">{{ formatarTextoExibicao(eventoVisualizacao.tipoEvento) }}</div>
+        @if (eventoVisualizacao.encerrado) {
+        <div class="tag-encerrado">Encerrado</div>
+        }
+      </div>
       <h2>{{ eventoVisualizacao.titulo }}</h2>
 
       <p class="preview-data-local">
@@ -221,4 +231,8 @@
     </div>
   </div>
 </app-modal-layout>
+}
+
+@if (eventoVinculoRedes) {
+<app-evento-redes-sociais [evento]="eventoVinculoRedes" (fechado)="fecharVinculoRedes()" />
 }

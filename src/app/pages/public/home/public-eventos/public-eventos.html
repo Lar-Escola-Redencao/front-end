@@ -9,9 +9,21 @@
         class="card-evento"
         *ngFor="let evento of eventosDestaque"
         [routerLink]="['/eventos', evento.id]"
+        [queryParams]="{ returnUrl: '/#eventos' }"
         [attr.aria-label]="'Ver detalhes do evento ' + evento.titulo"
       >
-        <img class="card-imagem" [src]="obterUrlImagem(evento.imagem)" [alt]="evento.titulo" loading="lazy" />
+        <ng-container *ngIf="obterUrlImagem(evento.imagem) && !eventoImagemIndisponivel(evento.id); else imagemIndisponivel">
+          <img
+            class="card-imagem"
+            [src]="obterUrlImagem(evento.imagem)"
+            [alt]="evento.titulo"
+            loading="lazy"
+            (error)="onEventoImageError(evento.id)"
+          />
+        </ng-container>
+        <ng-template #imagemIndisponivel>
+          <span class="card-imagem-fallback material-symbols-outlined" aria-hidden="true">image</span>
+        </ng-template>
         <div class="card-overlay">
           <div class="card-topo">
             <div class="card-data">

@@ -150,14 +150,14 @@ describe('UnidadesTurmas', () => {
   });
 
   it('carrega a lista de turmas ao iniciar (aba padrão)', () => {
-    expect(turmaService.listarPaginado).toHaveBeenCalledWith(0, 10, null);
+    expect(turmaService.listarPaginado).toHaveBeenCalledWith(0, 10, null, undefined);
     expect(component.turmas).toEqual([turma]);
   });
 
   it('carrega a tabela de unidades ao trocar para a aba unidades', () => {
     component.mudarAba('unidades');
 
-    expect(unidadeService.listarPaginado).toHaveBeenCalledWith(0, 10);
+    expect(unidadeService.listarPaginado).toHaveBeenCalledWith(0, 10, undefined, undefined);
     expect(component.unidadesTabela).toEqual(unidades);
   });
 
@@ -166,7 +166,29 @@ describe('UnidadesTurmas', () => {
     component.onFiltroUnidadeChange();
 
     expect(component.unidadeFiltroId).toBe(1);
-    expect(turmaService.listarPaginado).toHaveBeenLastCalledWith(0, 10, 1);
+    expect(turmaService.listarPaginado).toHaveBeenLastCalledWith(0, 10, 1, undefined);
+  });
+
+  it('envia o termo da barra de busca como search e volta para a primeira página', () => {
+    component.irParaPagina(2);
+    component.buscar('manha');
+
+    expect(currentParams['search']).toBe('manha');
+    expect(currentParams['page']).toBe('0');
+    expect(turmaService.listarPaginado).toHaveBeenLastCalledWith(0, 10, null, 'manha');
+
+    component.buscar('');
+
+    expect(currentParams['search']).toBeUndefined();
+    expect(turmaService.listarPaginado).toHaveBeenLastCalledWith(0, 10, null, undefined);
+  });
+
+  it('limpa a busca ao trocar de aba', () => {
+    component.buscar('centro');
+    component.mudarAba('unidades');
+
+    expect(component.busca).toBe('');
+    expect(unidadeService.listarPaginado).toHaveBeenLastCalledWith(0, 10, undefined, undefined);
   });
 
   it('volta a listar sem unidadeId ao selecionar "Todas as unidades"', () => {
@@ -176,7 +198,7 @@ describe('UnidadesTurmas', () => {
     component.onFiltroUnidadeChange();
 
     expect(component.unidadeFiltroId).toBeNull();
-    expect(turmaService.listarPaginado).toHaveBeenLastCalledWith(0, 10, null);
+    expect(turmaService.listarPaginado).toHaveBeenLastCalledWith(0, 10, null, undefined);
   });
 
   it('carrega as unidades e desmarca o estado de carregamento', () => {

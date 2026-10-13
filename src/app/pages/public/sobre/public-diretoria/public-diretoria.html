@@ -7,9 +7,7 @@
 
     <div
       class="carousel-container"
-      *ngIf="diretoresOriginal.length > 0; else semDiretoria"
-      (mouseenter)="stopAutoPlay()"
-      (mouseleave)="startAutoPlay()">
+      *ngIf="diretoresOriginal.length > 0; else semDiretoria">
       <button
         class="nav-btn prev-btn"
         (click)="prev()"

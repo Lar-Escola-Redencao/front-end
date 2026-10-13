@@ -4,6 +4,8 @@ export interface ContatoDTO {
   telefone: string;
   email?: string;
   endereco?: string;
+  cpf?: string;
+  localTrabalho?: string;
   parentesco: string;
   principal: boolean;
 }
@@ -14,6 +16,8 @@ export interface ContatoResponseDTO {
   telefone: string;
   email?: string;
   endereco?: string;
+  cpf?: string;
+  localTrabalho?: string;
   parentesco?: string;
   principal?: boolean;
 }
@@ -24,20 +28,22 @@ export interface ContatoListagemDTO {
   telefone: string;
   email?: string;
   endereco?: string;
+  cpf?: string;
+  localTrabalho?: string;
   quantidadeVinculos: number;
 }
 
 /** Um dos usuários vinculados a um contato (modal "Usuários vinculados"). */
 export interface UsuarioVinculadoDTO {
   idUsuario?: number;
-  idAssistido?: number;
-  nomeCompleto?: string;
-  nomeAssistido?: string;
+  nomeUsuario?: string;
   parentesco: string;
   principal: boolean;
   idUnidade?: number;
   nomeUnidade?: string;
   imagemPerfil?: string;
+  statusMatricula?: string;
+  dataDesligamento?: string;
 }
 
 /** Detalhe completo de um contato, incluindo todos os usuários vinculados a ele. */
@@ -50,6 +56,8 @@ export interface AtualizarContatoDTO {
   telefone: string;
   email?: string;
   endereco?: string;
+  cpf?: string;
+  localTrabalho?: string;
 }
 
 export interface VincularContatoExistenteDTO {

@@ -19,6 +19,7 @@ export class PublicEventosComponent implements OnInit {
   carregando = true;
 
   private readonly quantidadeDestaque = 4;
+  private readonly imagensIndisponiveis = new Set<number>();
 
   ngOnInit(): void {
     this.eventoPublicoService.listarPublicos().subscribe({
@@ -61,6 +62,14 @@ export class PublicEventosComponent implements OnInit {
   }
 
   obterUrlImagem(caminho: string | null | undefined): string {
-    return this.eventoPublicoService.tratarImagem(caminho);
+    return caminho ?? '';
+  }
+
+  onEventoImageError(eventoId: number): void {
+    this.imagensIndisponiveis.add(eventoId);
+  }
+
+  eventoImagemIndisponivel(eventoId: number): boolean {
+    return this.imagensIndisponiveis.has(eventoId);
   }
 }

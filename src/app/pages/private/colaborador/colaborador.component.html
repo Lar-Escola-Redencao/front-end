@@ -2,26 +2,25 @@
   <h1>Colaboradores</h1>
   <div class="conteudo">
     <div class="acoes-colaboradores">
+      <app-barra-busca
+        placeholder="Buscar por nome, e-mail, CPF, telefone..."
+        [valor]="busca"
+        (buscar)="buscar($event)" />
+
+      <button
+        type="button"
+        class="btn-filtros"
+        (click)="abrirFiltros()">
+        <span>Filtros</span>
+        @if (quantidadeFiltrosAplicados > 0) {
+          <span class="filtros-contador">{{ quantidadeFiltrosAplicados }}</span>
+        }
+        <mat-icon>filter_list</mat-icon>
+      </button>
+
       <button type="button" class="btn-primary btn-primary-thick" (click)="abrirCadastro()">
         Novo colaborador
       </button>
-
-      @if (!somenteMonitores) {
-        <mat-form-field appearance="outline" class="filtro-papel">
-          <mat-label>Papel de acesso</mat-label>
-          <mat-select
-            [value]="filtroPapel"
-            [canSelectNullableOptions]="true"
-            (selectionChange)="filtrarPorPapel($event.value)">
-            <mat-option [value]="null">Todos os papéis</mat-option>
-            <mat-option
-              *ngFor="let papel of papeis"
-              [value]="papel.id">
-              {{ obterNomePapel(papel) }}
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
-      }
     </div>
 
     <app-tabela-layout
@@ -46,6 +45,66 @@
       (tamanhoChange)="mudarTamanhoPagina($event)" />
   </div>
 </section>
+
+<ng-template #filtrosColaboradores>
+  <div class="filtros-colaboradores">
+    <mat-form-field appearance="outline">
+      <mat-label>Unidade</mat-label>
+      <mat-select
+        [ngModel]="filtroModalUnidade ?? 'todas'"
+        [ngModelOptions]="{ standalone: true }"
+        (ngModelChange)="selecionarUnidadeFiltro($event)">
+        <mat-option value="todas">Todas as unidades</mat-option>
+        <mat-option
+          *ngFor="let unidade of unidadesDisponiveis"
+          [value]="unidade.id">
+          {{ unidade.nome }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    @if (!somenteMonitores) {
+      <mat-form-field appearance="outline">
+        <mat-label>Papel de acesso</mat-label>
+        <mat-select
+          [ngModel]="filtroModalPapel ?? 'todos'"
+          [ngModelOptions]="{ standalone: true }"
+          (ngModelChange)="selecionarPapelFiltro($event)">
+          <mat-option value="todos">Todos os papéis</mat-option>
+          <mat-option
+            *ngFor="let papel of papeis"
+            [value]="papel.id">
+            {{ obterNomePapel(papel) }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    }
+
+    <div class="acoes-filtros-colaboradores">
+      <button
+        type="button"
+        class="btn-filtro-secundario"
+        (click)="limparFiltros()">
+        Limpar filtros
+      </button>
+
+      <button
+        type="button"
+        class="btn-primary"
+        (click)="aplicarFiltrosModal()">
+        Aplicar filtros
+      </button>
+    </div>
+  </div>
+</ng-template>
+
+@if (filtrosAberto) {
+  <app-modal-layout
+    titulo="Filtrar colaboradores"
+    (closed)="fecharFiltros()">
+    <ng-container *ngTemplateOutlet="filtrosColaboradores"></ng-container>
+  </app-modal-layout>
+}
 
 @if (modalAberto) {
 <app-modal-layout
@@ -161,7 +220,7 @@
       {{ erros['idPapel'] }}
     </span>
 
-    <div class="form-group">
+    <div class="form-group" *ngIf="!papelSelecionadoAdministrador">
       <label class="unidades-label">Unidades vinculadas</label>
       <div class="unidades-box">
         <div *ngIf="unidadesDisponiveis.length === 0" class="sem-unidades">

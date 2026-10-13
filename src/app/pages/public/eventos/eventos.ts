@@ -49,6 +49,7 @@ export class Eventos implements OnInit {
   readonly tamanhosPagina = [6];
   readonly tamanhoMinimoTitulo = 3;
   filtrosMobileAberto = false;
+  private readonly imagensIndisponiveis = new Set<number>();
 
   constructor(
     private eventoPublicoService: EventoPublicoService,
@@ -248,7 +249,15 @@ export class Eventos implements OnInit {
   }
 
   obterUrlImagem(caminho: string | null | undefined): string {
-    return this.eventoPublicoService.tratarImagem(caminho);
+    return caminho ?? '';
+  }
+
+  onEventoImageError(eventoId: number): void {
+    this.imagensIndisponiveis.add(eventoId);
+  }
+
+  eventoImagemIndisponivel(eventoId: number): boolean {
+    return this.imagensIndisponiveis.has(eventoId);
   }
 
   private atualizarPagina(): void {

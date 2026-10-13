@@ -66,6 +66,11 @@ body {
   font-family: var(--fonte-texto);
 }
 
+.swal2-popup {
+  --swal2-confirm-button-background-color: var(--primary-color);
+  --swal2-confirm-button-hover-background-color: var(--primary-hover-color);
+}
+
 /* =========================
    ANGULAR MATERIAL
    ========================= */

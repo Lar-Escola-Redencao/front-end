@@ -9,6 +9,7 @@ import { MatOption, MatSelect } from '@angular/material/select';
 import { ToastrService } from 'ngx-toastr';
 import { ModalLayout } from '@components/modal-layout/modal-layout';
 import { Paginacao } from '@components/paginacao/paginacao';
+import { BarraBusca } from '@components/barra-busca/barra-busca';
 import { TabelaAcao, TabelaColuna, TabelaLayout } from '@components/tabela-layout/tabela-layout';
 import { ComponentComAlteracoesNaoSalvas } from 'src/app/shared/guards/can-deactivate.guard';
 import { AtualizarEventoDTO, CriarEventoDTO, Evento, TipoEvento } from 'src/app/shared/models/evento.model';
@@ -23,6 +24,7 @@ import {
 import { EventoService } from 'src/app/shared/services/content-management/evento/evento.service';
 import { ParceiroService } from 'src/app/shared/services/content-management/evento/parceiro.service';
 import { environment } from 'src/environments/environment';
+import { EventoRedesSociaisComponent } from './evento-redes-sociais/evento-redes-sociais.component';
 
 @Component({
   selector: 'app-evento',
@@ -34,10 +36,12 @@ import { environment } from 'src/environments/environment';
     ModalLayout,
     TabelaLayout,
     Paginacao,
+    BarraBusca,
     MatFormFieldModule,
     MatInputModule,
     MatSelect,
-    MatOption
+    MatOption,
+    EventoRedesSociaisComponent
   ],
   templateUrl: './evento.component.html',
   styleUrls: ['./evento.component.css']
@@ -65,6 +69,10 @@ export class EventoComponent implements OnInit, OnDestroy, ComponentComAlteracoe
   erroLista = false;
 
   private routeSub?: Subscription;
+  private listaSub?: Subscription;
+
+  /** Termo da barra de busca, espelhado em ?search= na URL. */
+  busca = '';
 
   modalAberto = false;
   modoEdicao = false;
@@ -82,8 +90,16 @@ export class EventoComponent implements OnInit, OnDestroy, ComponentComAlteracoe
   modalVisualizacaoAberto = false;
   eventoVisualizacao: Evento | null = null;
 
+  eventoVinculoRedes: Evento | null = null;
+
   colunas: TabelaColuna<Evento>[] = [
-    { chave: 'titulo', titulo: 'Titulo', principalMobile: true, ordenavel: true },
+    {
+      chave: 'titulo',
+      titulo: 'Titulo',
+      principalMobile: true,
+      ordenavel: true,
+      etiqueta: (evento) => evento.encerrado ? 'Encerrado' : null
+    },
     {
       chave: 'dataEvento',
       titulo: 'Data',
@@ -106,7 +122,9 @@ export class EventoComponent implements OnInit, OnDestroy, ComponentComAlteracoe
 
   acoesTabela: TabelaAcao<Evento>[] = [
     { icone: 'visibility', tooltip: 'Visualizar', acao: 'visualizar' },
-    { icone: 'edit', tooltip: 'Editar', acao: 'editar' },
+    // Evento encerrado não é mais editado: no lugar, gerencia os links do pós-evento.
+    { icone: 'edit', tooltip: 'Editar', acao: 'editar', visivel: (evento) => !evento.encerrado },
+    { icone: 'link', tooltip: 'Vincular redes sociais', acao: 'vincular', visivel: (evento) => !!evento.encerrado },
     { icone: 'delete', tooltip: 'Excluir', acao: 'excluir' }
   ];
 
@@ -142,15 +160,20 @@ export class EventoComponent implements OnInit, OnDestroy, ComponentComAlteracoe
       this.sort = sort;
       this.ordenacao = analisarOrdenacao(sort);
       this.filtroTipo = (params.get('tipo') as TipoEvento | null) ?? null;
+      this.busca = params.get('search') ?? '';
       this.carregarEventos();
     });
   }
 
   ngOnDestroy(): void {
     this.routeSub?.unsubscribe();
+    this.listaSub?.unsubscribe();
   }
 
   get mensagemVazia(): string {
+    if (this.busca) {
+      return `Nenhum evento encontrado para "${this.busca}"`;
+    }
     return this.filtroTipo
       ? `Nenhum evento do tipo ${this.formatarTextoExibicao(this.filtroTipo)} cadastrado ainda`
       : 'Nenhum evento cadastrado ainda';
@@ -186,16 +209,15 @@ export class EventoComponent implements OnInit, OnDestroy, ComponentComAlteracoe
   }
 
   carregarEventos(): void {
-    if (this.carregandoLista) {
-      return;
-    }
+    // Uma nova busca cancela a requisição anterior em andamento: vale sempre a mais recente.
+    this.listaSub?.unsubscribe();
 
     this.carregandoLista = true;
     this.erroLista = false;
 
     const tipo = this.filtroTipo ? (this.filtroTipo as TipoEvento) : undefined;
 
-    this.eventoService.listarTodos(this.pagina, this.tamanho, this.sort, tipo).subscribe({
+    this.listaSub = this.eventoService.listarTodos(this.pagina, this.tamanho, this.sort, tipo, this.busca || undefined).subscribe({
       next: (resposta) => {
         this.ngZone.run(() => {
           this.eventos = [...resposta.content];
@@ -230,6 +252,11 @@ export class EventoComponent implements OnInit, OnDestroy, ComponentComAlteracoe
 
   aplicarFiltro(): void {
     this.navegar({ page: 0, tipo: this.filtroTipo || null });
+  }
+
+  /** Atualiza a URL (?search=termo); o queryParamMap.subscribe refaz o GET sem recarregar a página. */
+  buscar(termo: string): void {
+    this.navegar({ page: 0, search: termo || null });
   }
 
   irParaPagina(pagina: number): void {
@@ -312,6 +339,14 @@ export class EventoComponent implements OnInit, OnDestroy, ComponentComAlteracoe
   fecharVisualizacao(): void {
     this.modalVisualizacaoAberto = false;
     this.eventoVisualizacao = null;
+  }
+
+  abrirVinculoRedes(evento: Evento): void {
+    this.eventoVinculoRedes = evento;
+  }
+
+  fecharVinculoRedes(): void {
+    this.eventoVinculoRedes = null;
   }
 
   get temAlteracoes(): boolean {
@@ -557,6 +592,11 @@ export class EventoComponent implements OnInit, OnDestroy, ComponentComAlteracoe
 
     if (evento.tipo === 'editar') {
       this.abrirEdicao(evento.linha);
+      return;
+    }
+
+    if (evento.tipo === 'vincular') {
+      this.abrirVinculoRedes(evento.linha);
       return;
     }
 

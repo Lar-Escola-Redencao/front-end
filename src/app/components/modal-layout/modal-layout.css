@@ -12,7 +12,9 @@
 .modal-card {
   width: min(100%, 560px);
   max-height: calc(100vh - 48px);
-  overflow: auto;
+  box-sizing: border-box;
+  overflow-x: hidden;
+  overflow-y: auto;
   padding: 28px;
   border-radius: 12px;
   background: var(--branco);
@@ -21,9 +23,18 @@
 
 .modal-header {
   display: flex;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
   margin-bottom: 24px;
+}
+
+.modal-title-area {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  min-width: 0;
 }
 
 .modal-header h2 {

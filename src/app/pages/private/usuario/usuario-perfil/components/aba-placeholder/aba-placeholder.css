@@ -1,0 +1,23 @@
+.aba-conteudo {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+span,
+p {
+  color: #777;
+  font-family: var(--fonte-texto);
+}
+
+h2 {
+  margin: 0;
+  color: #222;
+  font-family: var(--fonte-texto);
+  font-size: 1.25rem;
+}
+
+p {
+  margin: 12px 0 0;
+  line-height: 1.5;
+}

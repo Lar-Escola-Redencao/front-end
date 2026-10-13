@@ -1,7 +1,10 @@
 <div class="modal-backdrop" (click)="closed.emit()">
   <section class="modal-card" (click)="$event.stopPropagation()">
     <header class="modal-header">
-      <h2>{{ titulo }}</h2>
+      <div class="modal-title-area">
+        <h2>{{ titulo }}</h2>
+        <ng-content select="[modal-title-extra]"></ng-content>
+      </div>
       <button type="button" class="modal-close" aria-label="Fechar modal" (click)="closed.emit()">×</button>
     </header>
 

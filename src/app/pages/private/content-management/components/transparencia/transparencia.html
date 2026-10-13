@@ -11,6 +11,10 @@
 
   @if (abaAtiva === 'documentos') {
     <div class="acoes-transparencia">
+      <app-barra-busca
+        placeholder="Buscar por título, arquivo ou seção..."
+        [valor]="busca"
+        (buscar)="buscar($event)" />
       <button type="button" class="btn-primary btn-primary-thick" (click)="abrirModal('documento')">
         Novo documento
       </button>
@@ -22,7 +26,11 @@
       (ordenar)="ordenarPor($event)"
       (tentarNovamente)="tentarNovamente()" />
   } @else {
-    <div class="acoes-transparencia"> 
+    <div class="acoes-transparencia">
+      <app-barra-busca
+        placeholder="Buscar por título ou conteúdo..."
+        [valor]="busca"
+        (buscar)="buscar($event)" />
       <button type="button" class="btn-primary btn-primary-thick" (click)="abrirModal('secao')">
         Nova seção
       </button>

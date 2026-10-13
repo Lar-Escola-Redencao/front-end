@@ -95,8 +95,19 @@
           class="card-evento"
           [class.encerrado]="eventoEncerrado(evento)"
           [routerLink]="['/eventos', evento.id]"
+          [queryParams]="{ returnUrl: '/eventos' }"
         >
-          <img class="card-imagem" [src]="obterUrlImagem(evento.imagem)" [alt]="evento.titulo" loading="lazy" />
+          @if (obterUrlImagem(evento.imagem) && !eventoImagemIndisponivel(evento.id)) {
+            <img
+              class="card-imagem"
+              [src]="obterUrlImagem(evento.imagem)"
+              [alt]="evento.titulo"
+              loading="lazy"
+              (error)="onEventoImageError(evento.id)"
+            />
+          } @else {
+            <span class="card-imagem-fallback material-symbols-outlined" aria-hidden="true">image</span>
+          }
           <div class="card-overlay">
             <div class="card-topo">
               <div class="card-data">
