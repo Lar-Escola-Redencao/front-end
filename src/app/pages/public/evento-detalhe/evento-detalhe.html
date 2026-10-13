@@ -2,10 +2,10 @@
 
 <main class="evento-detalhe-page">
   @if (!carregando) {
-  <a class="link-voltar" routerLink="/eventos">
+  <button type="button" class="link-voltar" (click)="voltar()">
     <span class="material-symbols-outlined">arrow_back</span>
-    Voltar para "Eventos"
-  </a>
+    Voltar
+  </button>
   }
 
   @if (carregando) {

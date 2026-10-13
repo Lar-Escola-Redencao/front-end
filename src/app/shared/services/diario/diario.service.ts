@@ -21,6 +21,8 @@ export interface FrequenciaUsuarioResponseDTO {
   idFrequencia: number | null;
   presente: boolean | null;
   statusMatricula?: string; /* Adicionado para capturar o EXCLUIDO */
+  permiteAcessoPerfil?: boolean;
+  isUsuarioExcluido?: boolean;
   ocorrencias: OcorrenciaResponseDTO[];
 }
 

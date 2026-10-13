@@ -82,12 +82,32 @@ export interface UsuarioResponseDTO {
   idUnidade?: number;
   nomeTurma?: string;
   nomeUnidade?: string;
+  dataIngresso?: string;
+  dataPrimeiraMatricula?: string;
+  dataDesligamento?: string;
+  justificativaEgresso?: string;
   periodo?: string;
   status?: string;
+  statusMatricula?: string;
+  matriculaCorrigida?: boolean;
 }
 
 export interface ArquivoSaudeDTO {
   id: number;
   titulo: string;
   caminhoArquivo?: string;
+}
+
+export interface MatriculaHistoricoDTO {
+  id: number;
+  idUnidade: number;
+  nomeUnidade: string;
+  idTurma: number;
+  periodoTurma: 'MANHA' | 'TARDE';
+  horaInicio: string;
+  horaFim: string;
+  status: 'ATIVO' | 'INATIVO' | 'EGRESSO' | 'EXCLUIDO';
+  dataIngresso: string;
+  dataDesligamento?: string | null;
+  justificativaEgresso?: string | null;
 }

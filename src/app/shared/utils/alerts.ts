@@ -29,6 +29,28 @@ export const Alertas = {
     }).then((resultado) => resultado.isConfirmed);
   },
 
+  confirmarSaidaFiltros: (): Promise<'descartar' | 'voltar'> => {
+    return Swal.fire({
+      title: 'Deseja descartar as alterações?',
+      text: 'Existem filtros selecionados que ainda não foram aplicados.',
+      icon: 'warning',
+      showDenyButton: true,
+      confirmButtonText: 'Voltar aos filtros',
+      denyButtonText: 'Descartar alterações',
+      confirmButtonColor: '#3682dc',
+      denyButtonColor: '#757575',
+      reverseButtons: true,
+      allowOutsideClick: false,
+      allowEscapeKey: false
+    }).then((resultado) => {
+      if (resultado.isConfirmed) {
+        return 'voltar';
+      }
+
+      return 'descartar';
+    });
+  },
+
   confirmarSubstituirContatoPrincipal: (): Promise<boolean> => {
     return Swal.fire({
       title: 'Substituir contato principal?',

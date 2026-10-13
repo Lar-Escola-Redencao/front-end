@@ -26,4 +26,8 @@ export class TransparenciaPublicaService {
   urlBaixar(documento: Documento): string {
     return `${this.apiUrl}/documentos/${documento.id}/download`;
   }
+
+  carregarArquivo(url: string): Observable<Blob> {
+    return this.http.get(url, { responseType: 'blob' });
+  }
 }

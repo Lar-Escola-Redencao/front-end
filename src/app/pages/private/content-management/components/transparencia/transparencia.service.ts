@@ -74,6 +74,10 @@ export class TransparenciaService {
     return this.paginaCmsService.baixarDocumento(id);
   }
 
+  carregarArquivo(url: string): Observable<Blob> {
+    return this.paginaCmsService.carregarArquivo(url);
+  }
+
   deletarDocumento(id: number): Observable<void> {
     return this.paginaCmsService.deletarDocumento(id);
   }

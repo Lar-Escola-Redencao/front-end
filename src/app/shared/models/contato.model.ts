@@ -42,6 +42,8 @@ export interface UsuarioVinculadoDTO {
   idUnidade?: number;
   nomeUnidade?: string;
   imagemPerfil?: string;
+  statusMatricula?: string;
+  dataDesligamento?: string;
 }
 
 /** Detalhe completo de um contato, incluindo todos os usuários vinculados a ele. */

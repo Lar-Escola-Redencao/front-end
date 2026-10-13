@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of, Subject, throwError } from 'rxjs';
 import { vi } from 'vitest';
 import { ToastrService } from 'ngx-toastr';
+import { provideRouter } from '@angular/router';
 import { Diario } from './diario';
 import { DiarioService } from 'src/app/shared/services/diario/diario.service';
 import { TurmaService } from 'src/app/shared/services/turma/turma.service';
@@ -15,9 +16,12 @@ describe('Diário de turma', () => {
   let papel: string;
   let api: any;
   let turmas: any;
+  let toastr: any;
   const aluno = (statusMatricula = 'ATIVO', idMatricula = 1) => ({
     idMatricula, idUsuario: idMatricula, nomeUsuario: 'Aluno ' + idMatricula,
-    imagemPerfil: '', statusMatricula, idFrequencia: null, presente: null, ocorrencias: []
+    imagemPerfil: '', statusMatricula, permiteAcessoPerfil: true,
+    isUsuarioExcluido: statusMatricula === 'EXCLUIDO',
+    idFrequencia: null, presente: null, ocorrencias: []
   });
   const ocorrencia = (dataCriacao: string) => ({
     id: 1, idMatricula: 1, dataCriacao, dataOcorrencia: '2026-10-06',
@@ -29,13 +33,16 @@ describe('Diário de turma', () => {
     vi.setSystemTime(new Date('2026-10-06T12:00:00-03:00'));
     papel = 'MONITOR';
     vi.spyOn(Alertas, 'confirmarDescarte').mockResolvedValue(false);
+    vi.spyOn(Alertas, 'confirmarExclusao').mockResolvedValue(false);
     api = {
       listarFrequencia: vi.fn(() => of([aluno()])), salvarEmLote: vi.fn(() => of(undefined)),
       criarOcorrencia: vi.fn(() => of(ocorrencia('2026-10-06T12:00:00'))),
       atualizarOcorrencia: vi.fn(), deletarOcorrencia: vi.fn()
     };
     turmas = { listar: vi.fn(() => of([{ id: 2, unidade: { id: 1 }, horaInicio: '08:00', horaFim: '12:00', periodo: 'MANHA' }])) };
+    toastr = { success: vi.fn(), error: vi.fn(), warning: vi.fn() };
     TestBed.configureTestingModule({ imports: [Diario], providers: [
+      provideRouter([]),
       { provide: DiarioService, useValue: api }, { provide: TurmaService, useValue: turmas },
       { provide: UnidadeService, useValue: { listarTodas: () => of([{ id: 1, nome: 'Unidade' }]) } },
       { provide: SessaoService, useValue: {
@@ -43,7 +50,7 @@ describe('Diário de turma', () => {
         isMonitor: () => papel === 'MONITOR', isCoordenador: () => papel === 'COORDENADOR',
         isAdministrador: () => papel === 'ADMINISTRADOR'
       } },
-      { provide: ToastrService, useValue: { success: vi.fn(), error: vi.fn() } }
+      { provide: ToastrService, useValue: toastr }
     ] });
     fixture = TestBed.createComponent(Diario);
     component = fixture.componentInstance;
@@ -177,6 +184,48 @@ describe('Diário de turma', () => {
     component.filtroForm.get('data')!.setValue('2026-10-07'); expect(component.podeAdicionarOcorrencia).toBe(false);
   });
 
+  it('abre nova ocorrência com tipo vazio e permite editar a hora dentro do horário da turma', () => {
+    component.abrirGerenciadorOcorrencias(component.usuarios[0]);
+
+    expect(component.formOcorrencia.get('tipoOcorrencia')!.value).toBeNull();
+    component.formOcorrencia.setValue({ horaStr: '09:30', descricao: 'Descrição', tipoOcorrencia: 'SAUDE' });
+
+    component.salvarOcorrencia();
+
+    expect(api.criarOcorrencia).toHaveBeenCalledWith({
+      idMatricula: 1,
+      dataOcorrencia: '2026-10-06',
+      dataCriacao: '2026-10-06T09:30:00',
+      tipoOcorrencia: 'SAUDE',
+      descricao: 'Descrição'
+    });
+  });
+
+  it('bloqueia ocorrência fora do horário da turma da matrícula', () => {
+    component.abrirGerenciadorOcorrencias(component.usuarios[0]);
+    component.formOcorrencia.setValue({ horaStr: '12:01', descricao: 'Descrição', tipoOcorrencia: 'SAUDE' });
+
+    component.salvarOcorrencia();
+
+    expect(api.criarOcorrencia).not.toHaveBeenCalled();
+    expect(component.errosOcorrencia['horaStr']).toContain('08:00');
+    expect(component.errosOcorrencia['horaStr']).toContain('12:00');
+  });
+
+  it('mantém salvar habilitado para exibir erros dos campos obrigatórios', () => {
+    component.abrirGerenciadorOcorrencias(component.usuarios[0]);
+    fixture.detectChanges();
+
+    const salvar = Array.from(fixture.nativeElement.querySelectorAll('button'))
+      .find((b: any) => b.textContent.trim() === 'Salvar') as HTMLButtonElement;
+    salvar.click();
+    fixture.detectChanges();
+
+    expect(salvar.disabled).toBe(false);
+    expect(component.errosOcorrencia['tipoOcorrencia']).toBe('Este campo é obrigatório.');
+    expect(component.errosOcorrencia['descricao']).toBe('Este campo é obrigatório.');
+  });
+
   it('abre formulário ou lista e remove editar/excluir após 24h da criação', () => {
     component.abrirGerenciadorOcorrencias(component.usuarios[0]); expect(component.modoOcorrencia).toBe('NOVO');
     component.usuarioSelecionado!.ocorrencias = [ocorrencia('2026-10-05T11:59:59')];
@@ -187,6 +236,54 @@ describe('Diário de turma', () => {
     expect(fixture.nativeElement.querySelector('.icon-edit')).toBeNull();
     expect(fixture.nativeElement.querySelector('.icon-delete')).toBeNull();
     expect(fixture.nativeElement.querySelector('.icon-view')).not.toBeNull();
+  });
+
+  it('mantém a lista aberta e abre detalhes em um modal sobreposto', () => {
+    const usuario = { ...aluno(), ocorrencias: [ocorrencia('2026-10-06T09:15:00')] };
+    component.abrirGerenciadorOcorrencias(usuario);
+
+    component.abrirFormOcorrencia(usuario.ocorrencias[0], 'VER');
+
+    expect(component.modalOcorrenciaAberto).toBe(true);
+    expect(component.modalOcorrenciaDetalheAberto).toBe(true);
+    expect(component.modoOcorrencia).toBe('VER');
+
+    component.fecharModalOcorrenciaDetalhe();
+
+    expect(component.modalOcorrenciaAberto).toBe(true);
+    expect(component.modalOcorrenciaDetalheAberto).toBe(false);
+    expect(component.usuarioSelecionado).toBe(usuario);
+  });
+
+  it('exibe apenas a hora de registro na lista e mensagem quando não há ocorrências', () => {
+    const usuario = { ...aluno(), ocorrencias: [ocorrencia('2026-10-06T09:15:00')] };
+    component.abrirGerenciadorOcorrencias(usuario);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain('Hora de registro');
+    expect(fixture.nativeElement.textContent).toContain('09h15');
+    expect(fixture.nativeElement.textContent).not.toContain('06/10/2026 09h15');
+
+    component.usuarioSelecionado!.ocorrencias = [];
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain('Não há ocorrências para este usuário neste dia.');
+    expect(fixture.nativeElement.querySelector('.lista-ocorrencias')).toBeNull();
+  });
+
+  it('mantém o modal aberto ao excluir a última ocorrência', async () => {
+    vi.mocked(Alertas.confirmarExclusao).mockResolvedValue(true);
+    api.deletarOcorrencia.mockReturnValue(of(undefined));
+    const usuario = { ...aluno(), ocorrencias: [ocorrencia('2026-10-06T09:15:00')] };
+    component.abrirGerenciadorOcorrencias(usuario);
+
+    component.excluirOcorrencia(usuario.ocorrencias[0]);
+    await Promise.resolve();
+
+    expect(api.deletarOcorrencia).toHaveBeenCalledWith(1);
+    expect(component.modalOcorrenciaAberto).toBe(true);
+    expect(component.usuarioSelecionado).toBe(usuario);
+    expect(component.usuarioSelecionado!.ocorrencias).toEqual([]);
   });
 
   it.each(['COORDENADOR', 'ADMINISTRADOR'])('%s permite edição de um mês atrás', perfil => {
@@ -268,6 +365,41 @@ describe('Diário de turma', () => {
     component.alterarData(-1);
     expect(Alertas.confirmarDescarte).not.toHaveBeenCalled();
     expect(api.listarFrequencia).toHaveBeenLastCalledWith(2, '2026-10-05');
+  });
+
+  it('exibe o nome do aluno como link discreto para o perfil', () => {
+    fixture.detectChanges();
+    const link = fixture.nativeElement.querySelector('.usuario-perfil-link') as HTMLAnchorElement;
+    expect(link).toBeTruthy();
+    expect(link.textContent?.trim()).toBe('Aluno 1');
+    expect(link.getAttribute('href')).toBe('/dashboard/usuarios/1?returnUrl=%2Fdashboard%2Fdiario%3FidUnidade%3D1%26idTurma%3D2%26data%3D2026-10-06');
+  });
+
+  it('seleciona unidade única e turma dentro do horário ao abrir o diário', () => {
+    expect(component.filtroForm.get('idUnidade')!.value).toBe(1);
+    expect(component.filtroForm.get('idTurma')!.value).toBe(2);
+    expect(api.listarFrequencia).toHaveBeenCalledWith(2, '2026-10-06');
+  });
+
+  it('bloqueia o perfil quando a API nega acesso e mostra aviso', () => {
+    component.usuarios = [{ ...aluno('ATIVO', 1), permiteAcessoPerfil: false }];
+    component.estadoTela = 'INICIAL';
+    fixture.detectChanges();
+    const link = fixture.nativeElement.querySelector('a.usuario-perfil-link');
+    const botao = fixture.nativeElement.querySelector('button.usuario-perfil-link--disabled') as HTMLButtonElement;
+    expect(link).toBeNull();
+    expect(botao.textContent?.trim()).toBe('Aluno 1');
+    botao.click();
+    expect(toastr.warning).toHaveBeenCalledWith(
+      'O perfil deste usuário foi excluído do sistema.'
+    );
+  });
+
+  it('exibe tag de excluído pela flag retroativa, não pelo status histórico', () => {
+    component.usuarios = [{ ...aluno('ATIVO', 1), isUsuarioExcluido: true }];
+    component.estadoTela = 'INICIAL';
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.badge-excluido')?.textContent.trim()).toBe('Excluído');
   });
 
 });

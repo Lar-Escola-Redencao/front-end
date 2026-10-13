@@ -1,6 +1,6 @@
 import { ChangeDetectorRef, Component, HostListener, OnDestroy, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { PublicNavbar } from '@components/public-navbar/public-navbar';
 import { PublicFooter } from '@components/public-footer/public-footer';
 import { Evento, EventoRedeSocial, Parceiro, TipoEvento } from 'src/app/shared/models/evento.model';
@@ -9,12 +9,13 @@ import { EventoPublicoService } from 'src/app/shared/services/evento-publico/eve
 @Component({
   selector: 'app-evento-detalhe',
   standalone: true,
-  imports: [CommonModule, RouterLink, PublicNavbar, PublicFooter],
+  imports: [CommonModule, PublicNavbar, PublicFooter],
   templateUrl: './evento-detalhe.html',
   styleUrl: './evento-detalhe.css'
 })
 export class EventoDetalhe implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly eventoPublicoService = inject(EventoPublicoService);
   private readonly cdr = inject(ChangeDetectorRef);
 
@@ -34,8 +35,10 @@ export class EventoDetalhe implements OnInit, OnDestroy {
   parceirosEmTransicao = true;
   parceirosAnimando = false;
   private parceirosAutoPlayInterval: number | null = null;
+  private returnUrl: string | null = null;
 
   ngOnInit(): void {
+    this.returnUrl = this.obterReturnUrl();
     const id = Number(this.route.snapshot.paramMap.get('id'));
 
     if (!id) {
@@ -183,6 +186,10 @@ export class EventoDetalhe implements OnInit, OnDestroy {
     }
   }
 
+  voltar(): void {
+    this.router.navigateByUrl(this.returnUrl ?? '/eventos');
+  }
+
   obterUrlImagem(caminho: string | null | undefined): string {
     return this.eventoPublicoService.tratarImagem(caminho);
   }
@@ -212,6 +219,11 @@ export class EventoDetalhe implements OnInit, OnDestroy {
     const img = event.target as HTMLImageElement;
     img.style.display = 'none';
     img.nextElementSibling?.classList.remove('rede-social-fallback-hidden');
+  }
+
+  private obterReturnUrl(): string | null {
+    const valor = this.route.snapshot.queryParamMap?.get('returnUrl');
+    return valor?.startsWith('/') ? valor : null;
   }
 
   eventoEncerrado(): boolean {

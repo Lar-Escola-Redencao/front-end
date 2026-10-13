@@ -26,7 +26,9 @@ export class EventoPublicoService {
     if (
       caminho.startsWith('http://') ||
       caminho.startsWith('https://') ||
-      caminho.startsWith('data:')
+      caminho.startsWith('data:') ||
+      caminho.startsWith('/api/') ||
+      caminho.startsWith('/images/')
     ) {
       return caminho;
     }

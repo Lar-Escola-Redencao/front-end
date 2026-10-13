@@ -95,6 +95,10 @@ export class ColaboradorComponent
 
   // Filtro por papel agora é feito no back-end (idPapel), não em memória.
   filtroPapel: number | null = null;
+  filtroUnidade: number | null = null;
+  filtroModalPapel: number | null = null;
+  filtroModalUnidade: number | null = null;
+  filtrosAberto = false;
 
   /** Termo da barra de busca, espelhado em ?search= na URL. */
   busca = '';
@@ -279,6 +283,11 @@ export class ColaboradorComponent
         ? papelBruto
         : null;
 
+      const unidadeBruta = Number(params.get('unidade') ?? params.get('idUnidade'));
+      this.filtroUnidade = Number.isFinite(unidadeBruta) && unidadeBruta > 0
+        ? unidadeBruta
+        : null;
+
       this.busca = params.get('search') ?? '';
 
       this.carregarColaboradores();
@@ -306,9 +315,13 @@ export class ColaboradorComponent
       return `Nenhum colaborador encontrado para "${this.busca}"`;
     }
     const papelSelecionado = this.papeis.find(p => p.id === this.filtroPapel);
-    return papelSelecionado
-      ? `Nenhum colaborador com o papel ${this.obterNomePapel(papelSelecionado)} cadastrado ainda`
-      : 'Nenhum colaborador cadastrado ainda';
+    const unidadeSelecionada = this.unidadesDisponiveis.find(u => u.id === this.filtroUnidade);
+
+    if (papelSelecionado || unidadeSelecionada) {
+      return 'Nenhum colaborador encontrado com os filtros selecionados';
+    }
+
+    return 'Nenhum colaborador cadastrado ainda';
   }
 
   get temAlteracoes(): boolean {
@@ -325,6 +338,11 @@ export class ColaboradorComponent
   /** Coordenador só faz a gestão de monitores; administrador vê e gerencia todos os papéis. */
   get somenteMonitores(): boolean {
     return this.auth.hasRole('COORDENADOR');
+  }
+
+  get quantidadeFiltrosAplicados(): number {
+    return Number(Boolean(this.filtroUnidade)) +
+      Number(Boolean(!this.somenteMonitores && this.filtroPapel));
   }
 
   private get idPapelMonitor(): number | null {
@@ -398,7 +416,14 @@ export class ColaboradorComponent
       : this.filtroPapel ?? undefined;
 
     this.listaSub = this.colaboradorService
-      .listarTodos(this.pagina, this.tamanho, this.sort, idPapel, this.busca || undefined)
+      .listarTodos(
+        this.pagina,
+        this.tamanho,
+        this.sort,
+        idPapel,
+        this.filtroUnidade,
+        this.busca || undefined
+      )
       .subscribe({
         next: (resposta) => {
           this.ngZone.run(() => {
@@ -430,17 +455,62 @@ export class ColaboradorComponent
       });
   }
 
-  /** Atualiza a URL (?papel=id); o próprio queryParamMap.subscribe recarrega a lista. */
-  filtrarPorPapel(idPapel: number | null): void {
+  abrirFiltros(): void {
+    this.filtroModalUnidade = this.filtroUnidade;
+    this.filtroModalPapel = this.filtroPapel;
+    this.filtrosAberto = true;
+  }
+
+  async fecharFiltros(confirmarDescarte = true): Promise<void> {
+    if (confirmarDescarte && this.filtrosModalAlterados()) {
+      const acao = await Alertas.confirmarSaidaFiltros();
+
+      if (acao === 'voltar') {
+        return;
+      }
+    }
+
+    this.filtrosAberto = false;
+  }
+
+  aplicarFiltrosModal(): void {
     this.router.navigate([], {
       relativeTo: this.route,
-      queryParams: { papel: idPapel || null, page: 0 },
+      queryParams: {
+        unidade: this.filtroModalUnidade || null,
+        papel: this.somenteMonitores ? null : this.filtroModalPapel || null,
+        page: 0
+      },
+      queryParamsHandling: 'merge'
+    });
+    this.fecharFiltros(false);
+  }
+
+  limparFiltros(): void {
+    this.filtroModalUnidade = null;
+    this.filtroModalPapel = null;
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { unidade: null, papel: null, page: 0 },
       queryParamsHandling: 'merge'
     });
   }
 
-  removerFiltroPapel(): void {
-    this.filtrarPorPapel(null);
+  selecionarUnidadeFiltro(valor: number | string | null): void {
+    this.filtroModalUnidade = valor === 'todas' || valor === null
+      ? null
+      : Number(valor);
+  }
+
+  selecionarPapelFiltro(valor: number | string | null): void {
+    this.filtroModalPapel = valor === 'todos' || valor === null
+      ? null
+      : Number(valor);
+  }
+
+  private filtrosModalAlterados(): boolean {
+    return this.filtroModalUnidade !== this.filtroUnidade ||
+      this.filtroModalPapel !== this.filtroPapel;
   }
 
   /** Atualiza a URL (?search=termo); o queryParamMap.subscribe refaz o GET sem recarregar a página. */

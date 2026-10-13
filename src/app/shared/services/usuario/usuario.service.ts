@@ -1,21 +1,34 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpContext } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
-import { ArquivoSaudeDTO, CadastroUsuarioCompletoDTO, UsuarioResponseDTO } from '../../models/usuario.model';
+import { ArquivoSaudeDTO, CadastroUsuarioCompletoDTO, MatriculaHistoricoDTO, UsuarioResponseDTO } from '../../models/usuario.model';
 import {
   AtualizarVinculoDTO,
   ContatoDTO,
   VincularContatoExistenteDTO
 } from '../../models/contato.model';
+import { SILENCIAR_TOAST_ACESSO } from '../../interceptors/acesso-toast.context';
 
 @Injectable({ providedIn: 'root' })
 export class UsuarioService {
   private readonly http = inject(HttpClient);
   private readonly apiUrl = `${environment.apiUrl}/usuarios`;
 
-  listarUsuarios(search?: string): Observable<UsuarioResponseDTO[]> {
-    const params = search ? { search } : undefined;
+  listarUsuarios(filtros?: string | {
+    search?: string;
+    idUnidade?: number | null;
+    idTurma?: number | null;
+    statusMatricula?: string | null;
+  }): Observable<UsuarioResponseDTO[]> {
+    if (typeof filtros === 'string') {
+      filtros = { search: filtros };
+    }
+    const params: Record<string, string> = {};
+    if (filtros?.search) params['search'] = filtros.search;
+    if (filtros?.idUnidade) params['idUnidade'] = String(filtros.idUnidade);
+    if (filtros?.idTurma) params['idTurma'] = String(filtros.idTurma);
+    if (filtros?.statusMatricula) params['statusMatricula'] = filtros.statusMatricula;
     return this.http.get<UsuarioResponseDTO[]>(this.apiUrl, { params });
   }
 
@@ -23,8 +36,15 @@ export class UsuarioService {
     return this.http.get<UsuarioResponseDTO[]>(`${this.apiUrl}/buscar`, { params: { termo, unidadeId } });
   }
 
-  buscarPorId(id: number): Observable<UsuarioResponseDTO> {
-    return this.http.get<UsuarioResponseDTO>(`${this.apiUrl}/${id}`);
+  buscarPorId(id: number, silenciarToastAcesso = false): Observable<UsuarioResponseDTO> {
+    const options = silenciarToastAcesso
+      ? { context: new HttpContext().set(SILENCIAR_TOAST_ACESSO, true) }
+      : {};
+    return this.http.get<UsuarioResponseDTO>(`${this.apiUrl}/${id}`, options);
+  }
+
+  listarMatriculas(id: number): Observable<MatriculaHistoricoDTO[]> {
+    return this.http.get<MatriculaHistoricoDTO[]>(`${this.apiUrl}/${id}/matriculas`);
   }
 
   criar(dto: CadastroUsuarioCompletoDTO, arquivosSaude: File[] = []): Observable<UsuarioResponseDTO> {
@@ -45,6 +65,18 @@ export class UsuarioService {
     return this.http.post<void>(`${this.apiUrl}/${id}/foto`, formData);
   }
 
+  transferirTurma(id: number, idTurmaNova: number, dataTransferencia: string): Observable<UsuarioResponseDTO> {
+    return this.http.put<UsuarioResponseDTO>(`${this.apiUrl}/${id}/turma`, { idTurmaNova, dataTransferencia });
+  }
+
+  rematricular(id: number, idTurmaNova: number): Observable<UsuarioResponseDTO> {
+    return this.http.put<UsuarioResponseDTO>(`${this.apiUrl}/${id}/rematricular`, { idTurmaNova });
+  }
+
+  inativar(id: number, dto: { dataDesligamento: string; justificativa: string }): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/${id}/inativar`, dto);
+  }
+
   uploadArquivoSaude(id: number, arquivo: File): Observable<unknown> {
     const formData = new FormData();
     formData.append('titulo', arquivo.name);
@@ -58,6 +90,10 @@ export class UsuarioService {
 
   deletarArquivoSaude(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/arquivos-saude/${id}`);
+  }
+
+  carregarArquivo(url: string): Observable<Blob> {
+    return this.http.get(url, { responseType: 'blob' });
   }
 
   deletar(id: number): Observable<void> {

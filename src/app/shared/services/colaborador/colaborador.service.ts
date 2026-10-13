@@ -14,8 +14,24 @@ export class ColaboradorService {
 
   constructor(private http: HttpClient) {}
 
-  listarTodos(pagina: number, tamanho: number, sort?: string, idPapel?: number | null, search?: string): Observable<PaginaResposta<Colaborador>> {
-    const params = construirHttpParams({ pagina, tamanho, sort, extras: { idPapel: idPapel ?? undefined, search } });
+  listarTodos(
+    pagina: number,
+    tamanho: number,
+    sort?: string,
+    idPapel?: number | null,
+    idUnidade?: number | null,
+    search?: string
+  ): Observable<PaginaResposta<Colaborador>> {
+    const params = construirHttpParams({
+      pagina,
+      tamanho,
+      sort,
+      extras: {
+        idPapel: idPapel ?? undefined,
+        idUnidade: idUnidade ?? undefined,
+        search
+      }
+    });
     return this.http.get<PaginaResposta<Colaborador>>(`${this.apiUrl}/todos`, { params });
   }
 

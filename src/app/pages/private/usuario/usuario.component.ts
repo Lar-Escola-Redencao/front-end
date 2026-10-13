@@ -17,7 +17,7 @@ import {
   ReactiveFormsModule,
   Validators
 } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Subscription, of, forkJoin } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap, catchError, map, tap } from 'rxjs/operators';
 
@@ -56,6 +56,7 @@ import {
   validarArquivo,
   validarExtensaoArquivo
 } from 'src/app/shared/utils/form-validations';
+import { baixarArquivoComVerificacao, visualizarArquivoComVerificacao } from 'src/app/shared/utils/arquivo-acesso';
 import { formatarCep, formatarCpf, formatarTelefone } from 'src/app/shared/utils/masks';
 
 import {
@@ -66,12 +67,14 @@ import {
 } from 'src/app/shared/utils/paginacao-url';
 import { UnidadeService } from 'src/app/shared/services/unidade/unidade.service';
 import { TurmaService } from 'src/app/shared/services/turma/turma.service';
+import { environment } from 'src/environments/environment';
 
 @Component({
   selector: 'app-usuario',
   standalone: true,
   imports: [
     CommonModule,
+    RouterLink,
     FormsModule,
     ReactiveFormsModule,
     ModalLayout,
@@ -110,6 +113,15 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
 
   /** Termo da barra de busca, espelhado em ?search= na URL. */
   busca = '';
+  filtroUnidadeId: number | null = null;
+  filtroTurmaId: number | null = null;
+  filtroStatusMatricula: 'ATIVO' | 'EGRESSO' | null = null;
+  filtroModalUnidadeId: number | null = null;
+  filtroModalTurmaId: number | null = null;
+  filtroModalStatusMatricula: 'ATIVO' | 'EGRESSO' | null = null;
+  filtrosMobileAberto = false;
+  turmasFiltro: any[] = [];
+  todasTurmasFiltro: any[] = [];
   private listaSub?: Subscription;
 
   pagina = 0;
@@ -166,13 +178,15 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
   // Modal Rápido de Contato
   modalContatoAberto = false;
   contatoEmEdicaoId: number | null = null;
-  private valoresOriginaisContato: unknown = null;
+  private valoresOriginaisContato: string | null = null;
   private valoresOriginaisVinculo: unknown = null;
   formEdicaoContato = this.fb.group({
     nomeCompleto: ['', [Validators.required, Validators.minLength(3)]],
     telefone: ['', [Validators.required, Validators.minLength(14)]],
     email: ['', Validators.email],
-    endereco: ['']
+    endereco: [''],
+    cpf: ['', Validators.minLength(14)],
+    localTrabalho: ['']
   });
 
   // Modal de Preview do Usuário
@@ -220,6 +234,8 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
   arquivosSaude: File[] = [];
   arquivosSaudeSalvos: ArquivoSaudeDTO[] = [];
   arquivosSaudeCarregados = false;
+  arquivosSaudeIndisponiveis = new Set<string>();
+  private timeoutsArquivosSaudeIndisponiveis = new Map<string, ReturnType<typeof setTimeout>>();
   erroArquivos = '';
   readonly limiteArquivo = TAMANHO_MAXIMO_ARQUIVO_BYTES;
   readonly etapas = ['Dados pessoais', 'Contatos', 'Dados socioeconômicos', 'Dados complementares', 'Matrícula'];
@@ -283,10 +299,21 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
     { label: 'Outro', value: 'OUTRO' }
   ];
 
+  readonly statusMatriculaOpcoes = [
+    { label: 'Todos os status', value: null },
+    { label: 'Ativo', value: 'ATIVO' },
+    { label: 'Desligado', value: 'EGRESSO' }
+  ];
+
   // Ações da tabela
   colunas: TabelaColuna<UsuarioResponseDTO>[] = [
-    { chave: 'nomeCompleto', titulo: 'Nome do Usuário', principalMobile: true, ordenavel: true },
-    { chave: 'cpf', titulo: 'CPF/Documento', ordenavel: true, formatar: (v, linha) => v || linha.documentoAuxiliar || '-' },
+    {
+      chave: 'nomeCompleto',
+      titulo: 'Usuário',
+      principalMobile: true,
+      ordenavel: true,
+      etiqueta: usuario => (usuario.statusMatricula || '').toUpperCase() === 'EGRESSO' ? 'Desligado' : null
+    },
     {
       chave: 'dataNascimento',
       ordenavel: true,
@@ -302,19 +329,17 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
   ];
 
   private readonly acoesTabelaUsuarios: TabelaAcao<UsuarioResponseDTO>[] = [
-    { icone: 'visibility', tooltip: 'Visualizar detalhes', acao: 'ver' },
-    { icone: 'edit', tooltip: 'Editar', acao: 'editar' },
-    { icone: 'delete', tooltip: 'Excluir', acao: 'excluir' }
+    { icone: 'badge', tooltip: 'Acessar perfil', acao: 'ver' }
   ];
 
   private readonly acoesTabelaUsuariosSomenteView: TabelaAcao<UsuarioResponseDTO>[] = [
-    { icone: 'visibility', tooltip: 'Visualizar detalhes', acao: 'ver' }
+    { icone: 'badge', tooltip: 'Acessar perfil', acao: 'ver' }
   ];
 
   // Colunas da tabela de Contatos: Nome, Telefone, E-mail, Vínculos
   colunasContatos: TabelaColuna<ContatoListagemDTO>[] = [
-    { chave: 'nomeCompleto', titulo: 'Nome do Responsável', principalMobile: true, ordenavel: true },
-    { chave: 'telefone', titulo: 'Telefone', ordenavel: true, formatar: (v) => formatarTelefone(v) },
+    { chave: 'nomeCompleto', titulo: 'Responsável', principalMobile: true, ordenavel: true },
+    { chave: 'telefone', titulo: 'Telefone', ordenavel: true, tipo: 'telefone', formatar: (v) => formatarTelefone(v) },
     { chave: 'email', titulo: 'E-mail', ordenavel: true, formatar: (v) => v || '-' },
     { chave: 'quantidadeVinculos', titulo: 'Vínculos', ordenavel: true }
   ];
@@ -324,7 +349,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
     { icone: 'visibility', tooltip: 'Visualizar detalhes', acao: 'ver_contato' },
     { icone: 'account_child_invert', tooltip: 'Usuários vinculados', acao: 'ver_vinculos' },
     { icone: 'edit', tooltip: 'Editar contato', acao: 'editar_contato' },
-    { icone: 'delete', tooltip: 'Excluir', acao: 'excluir_contato' }
+    { icone: 'delete', tooltip: 'Excluir', acao: 'excluir_contato', visivel: contato => contato.quantidadeVinculos === 0 }
   ];
 
   private readonly acoesTabelaContatosSomenteView: TabelaAcao<ContatoListagemDTO>[] = [
@@ -332,6 +357,10 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
     { icone: 'account_child_invert', tooltip: 'Usuários vinculados', acao: 'ver_vinculos' }
   ];
 
+
+  get perfilQueryParams(): { returnUrl: string } {
+    return { returnUrl: this.router.url };
+  }
 
   onFotoSelecionada(event: any) {
     const file = event.target.files[0];
@@ -384,8 +413,18 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
       const buscaMudou = novaBusca !== this.busca;
       this.busca = novaBusca;
 
+      const novoFiltroUnidade = this.paramNumero(params.get('idUnidade'));
+      const novoFiltroTurma = this.paramNumero(params.get('idTurma'));
+      const novoFiltroStatus = this.paramStatusMatricula(params.get('statusMatricula'));
+      const filtrosMudaram = novoFiltroUnidade !== this.filtroUnidadeId
+        || novoFiltroTurma !== this.filtroTurmaId
+        || novoFiltroStatus !== this.filtroStatusMatricula;
+      this.filtroUnidadeId = novoFiltroUnidade;
+      this.filtroTurmaId = novoFiltroTurma;
+      this.filtroStatusMatricula = novoFiltroStatus;
+
       if (this.abaAtiva === 'usuarios') {
-        if (buscaMudou || (this.usuariosListagem.length === 0 && !this.carregandoLista)) {
+        if (buscaMudou || filtrosMudaram || (this.usuariosListagem.length === 0 && !this.carregandoLista)) {
            this.carregarUsuarios();
         } else {
            this.aplicarPaginacao();
@@ -394,6 +433,15 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
         this.carregarContatos();
       }
     });
+  }
+
+  private paramNumero(valor: string | null): number | null {
+    const numero = Number(valor);
+    return Number.isFinite(numero) && numero > 0 ? numero : null;
+  }
+
+  private paramStatusMatricula(valor: string | null): 'ATIVO' | 'EGRESSO' | null {
+    return valor === 'ATIVO' || valor === 'EGRESSO' ? valor : null;
   }
 
   private atualizarTela(): void {
@@ -428,6 +476,129 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
     });
   }
 
+  aplicarFiltrosUsuarios(): void {
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: {
+        idUnidade: this.filtroUnidadeId || null,
+        idTurma: this.filtroTurmaId || null,
+        statusMatricula: this.filtroStatusMatricula || null,
+        page: 0
+      },
+      queryParamsHandling: 'merge'
+    });
+  }
+
+  onFiltroUnidadeChange(idUnidade: number | null): void {
+    this.filtroUnidadeId = idUnidade;
+    this.filtroTurmaId = null;
+    this.aplicarFiltrosUsuarios();
+  }
+
+  onFiltroTurmaChange(idTurma: number | null): void {
+    this.filtroTurmaId = idTurma;
+    this.aplicarFiltrosUsuarios();
+  }
+
+  onFiltroStatusChange(status: 'ATIVO' | 'EGRESSO' | null): void {
+    this.filtroStatusMatricula = status;
+    this.aplicarFiltrosUsuarios();
+  }
+
+  get filtroUnidadeTurmaValor(): string | null {
+    if (this.filtroTurmaId) return `turma:${this.filtroTurmaId}`;
+    if (this.filtroUnidadeId) return `unidade:${this.filtroUnidadeId}`;
+    return null;
+  }
+
+  onFiltroUnidadeTurmaChange(valor: string | null): void {
+    if (!valor) {
+      this.filtroUnidadeId = null;
+      this.filtroTurmaId = null;
+    } else if (valor.startsWith('unidade:')) {
+      this.filtroUnidadeId = Number(valor.replace('unidade:', '')) || null;
+      this.filtroTurmaId = null;
+    } else if (valor.startsWith('turma:')) {
+      const idTurma = Number(valor.replace('turma:', '')) || null;
+      const turma = this.todasTurmasFiltro.find(item => item.id === idTurma);
+      this.filtroTurmaId = idTurma;
+      this.filtroUnidadeId = turma?.unidade?.id ?? turma?.unidadeId ?? null;
+    }
+    this.aplicarFiltrosUsuarios();
+  }
+
+  turmasDaUnidadeFiltro(idUnidade: number): any[] {
+    return this.todasTurmasFiltro.filter(turma => turma.unidade?.id === idUnidade || turma.unidadeId === idUnidade);
+  }
+
+  limparFiltrosUsuarios(): void {
+    this.filtroModalUnidadeId = null;
+    this.filtroModalTurmaId = null;
+    this.filtroModalStatusMatricula = null;
+    this.turmasFiltro = [];
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { idUnidade: null, idTurma: null, statusMatricula: null, page: 0 },
+      queryParamsHandling: 'merge'
+    });
+  }
+
+  abrirFiltrosMobile(): void {
+    this.filtroModalUnidadeId = this.filtroUnidadeId;
+    this.filtroModalTurmaId = this.filtroTurmaId;
+    this.filtroModalStatusMatricula = this.filtroStatusMatricula;
+    this.filtrosMobileAberto = true;
+  }
+
+  async fecharFiltrosMobile(confirmarDescarte = true): Promise<void> {
+    if (confirmarDescarte && this.filtrosUsuariosModalAlterados()) {
+      const acao = await Alertas.confirmarSaidaFiltros();
+
+      if (acao === 'voltar') {
+        return;
+      }
+    }
+
+    this.filtrosMobileAberto = false;
+  }
+
+  onFiltroModalUnidadeChange(idUnidade: number | null): void {
+    this.filtroModalUnidadeId = idUnidade;
+    this.filtroModalTurmaId = null;
+  }
+
+  aplicarFiltrosModal(): void {
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: {
+        idUnidade: this.filtroModalUnidadeId || null,
+        idTurma: this.filtroModalTurmaId || null,
+        statusMatricula: this.filtroModalStatusMatricula || null,
+        page: 0
+      },
+      queryParamsHandling: 'merge'
+    });
+    this.fecharFiltrosMobile(false);
+  }
+
+  private filtrosUsuariosModalAlterados(): boolean {
+    return this.filtroModalUnidadeId !== this.filtroUnidadeId ||
+      this.filtroModalTurmaId !== this.filtroTurmaId ||
+      this.filtroModalStatusMatricula !== this.filtroStatusMatricula;
+  }
+
+  get possuiFiltrosUsuariosAplicados(): boolean {
+    return !!this.filtroUnidadeId || !!this.filtroTurmaId || !!this.filtroStatusMatricula;
+  }
+
+  get quantidadeFiltrosUsuariosAplicados(): number {
+    let total = 0;
+    if (this.filtroUnidadeId) total++;
+    if (this.filtroTurmaId) total++;
+    if (this.filtroStatusMatricula) total++;
+    return total;
+  }
+
   get mensagemVaziaLista(): string {
     if (this.busca) {
       return this.abaAtiva === 'usuarios'
@@ -442,16 +613,21 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
     this.listaSub?.unsubscribe();
     this.carregandoLista = true;
     this.erroLista = false;
-    this.cdr.markForCheck();
+    this.atualizarTela();
 
     const busca = this.busca;
-    this.listaSub = this.usuarioService.listarUsuarios(busca || undefined).subscribe({
+    this.listaSub = this.usuarioService.listarUsuarios({
+      search: busca || undefined,
+      idUnidade: this.filtroUnidadeId,
+      idTurma: this.filtroTurmaId,
+      statusMatricula: this.filtroStatusMatricula
+    }).subscribe({
       next: (resposta) => {
         this.ngZone.run(() => {
           const ativos = resposta.filter(u => u.status !== 'EXCLUIDO');
           this.usuariosListagem = ativos;
           // Sem busca, a resposta é a lista completa — reaproveitada na checagem de CPF e nos vínculos.
-          if (!busca) this.todosUsuarios = ativos;
+          if (!busca && !this.filtroUnidadeId && !this.filtroTurmaId && !this.filtroStatusMatricula) this.todosUsuarios = ativos;
           this.aplicarPaginacao();
           this.carregandoLista = false;
           this.cdr.markForCheck();
@@ -474,6 +650,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
     this.listaSub?.unsubscribe();
     this.carregandoLista = true;
     this.erroLista = false;
+    this.atualizarTela();
 
     const busca = this.busca || undefined;
     const consulta = this.ordenacao?.campo === 'quantidadeVinculos'
@@ -537,6 +714,32 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
         ? dados
         : dados.filter((u: any) => permitidas.includes(u.id));
       this.atualizarTela();
+    });
+
+    this.turmaService.listar().subscribe(turmas => {
+      this.ngZone.run(() => {
+        const permitidas = this.sessao.unidadesPermitidasIds();
+        this.todasTurmasFiltro = permitidas === null
+          ? turmas
+          : turmas.filter((t: any) => permitidas.includes(t.unidade?.id ?? t.unidadeId));
+        this.atualizarTela();
+      });
+    });
+  }
+
+  private carregarTurmasFiltro(idUnidade: number | null): void {
+    if (!idUnidade) {
+      this.turmasFiltro = [];
+      return;
+    }
+    this.turmaService.listar(idUnidade).subscribe(turmas => {
+      this.ngZone.run(() => {
+        this.turmasFiltro = turmas.filter((t: any) => t.unidade?.id === idUnidade || t.unidadeId === idUnidade);
+        if (this.filtroTurmaId && !this.turmasFiltro.some(t => t.id === this.filtroTurmaId)) {
+          this.filtroTurmaId = null;
+        }
+        this.atualizarTela();
+      });
     });
   }
 
@@ -618,7 +821,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
     for (const transporte of this.transportes.filter(item => item.valor)) {
       this.formSubs.push(this.formUsuario.get(`complementares.${transporte.campo}`)!.valueChanges.subscribe(ativo => {
         const controle = this.formUsuario.get(`complementares.${transporte.valor}`)!;
-        controle.setValidators(ativo ? [Validators.min(0)] : []);
+        controle.setValidators(ativo ? [Validators.required, Validators.min(0)] : []);
         if (!ativo) controle.setValue(null, { emitEvent: false });
         controle.updateValueAndValidity();
       }));
@@ -683,6 +886,16 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
     else if (this.familiarExpandidoIndex > index) this.familiarExpandidoIndex--;
   }
 
+  tituloFamiliar(index: number): string {
+    const nome = this.familiaresArray.at(index)?.get('nomeCompleto')?.value;
+    return nome ? String(nome) : `Membro ${index + 1}`;
+  }
+
+  vinculoFamiliar(index: number): string {
+    const valor = this.familiaresArray.at(index)?.get('parentescoVinculo')?.value;
+    return valor ? this.opcoesParentesco.find(item => item.value === valor)?.label ?? String(valor) : '';
+  }
+
   get totalDespesasMensais(): number {
     return this.despesas.reduce((total, despesa) => total + (Number(this.formUsuario.get('socioeconomico.' + despesa.campo)?.value) || 0), 0);
   }
@@ -704,7 +917,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
   get avisoConflitoPeriodoMatricula(): string {
     const periodo = this.formUsuario.get('periodoEscolar')?.value;
     const label = this.periodosEscolares.find(item => item.value === periodo)?.label?.toLowerCase() || 'mesmo periodo';
-    return `Conflito de horário identificado. O estudante declarou que estuda de ${label}, e a turma selecionada também e nesse período.`;
+    return `Conflito de horário identificado. O estudante declarou que estuda de ${label}, e a turma selecionada também é nesse período.`;
   }
 
   selecionarArquivosSaude(event: Event): void {
@@ -744,6 +957,51 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
 
   removerArquivoSaude(index: number): void {
     this.arquivosSaude.splice(index, 1);
+  }
+
+  urlArquivoSaude(arquivo: ArquivoSaudeDTO): string {
+    const caminho = arquivo.caminhoArquivo || '';
+    if (caminho.startsWith('http://') || caminho.startsWith('https://')) return caminho;
+    return `${environment.apiUrl}${caminho.startsWith('/') ? '' : '/'}${caminho}`;
+  }
+
+  visualizarArquivoSaude(event: Event, arquivo: ArquivoSaudeDTO): void {
+    event.preventDefault();
+    const url = this.urlArquivoSaude(arquivo);
+    if (this.arquivoSaudeIndisponivel(arquivo)) {
+      this.toastr.warning('Arquivo não encontrado ou indisponível.', 'Arquivo indisponível');
+      return;
+    }
+    visualizarArquivoComVerificacao(url, arquivoUrl => this.usuarioService.carregarArquivo(arquivoUrl), this.toastr, () => {
+      this.bloquearArquivoSaudeTemporariamente(url);
+    });
+  }
+
+  baixarArquivoSaude(event: Event, arquivo: ArquivoSaudeDTO): void {
+    event.preventDefault();
+    const url = this.urlArquivoSaude(arquivo);
+    if (this.arquivoSaudeIndisponivel(arquivo)) {
+      this.toastr.warning('Arquivo não encontrado ou indisponível.', 'Arquivo indisponível');
+      return;
+    }
+    baixarArquivoComVerificacao(url, arquivo.titulo || '', arquivoUrl => this.usuarioService.carregarArquivo(arquivoUrl), this.toastr, () => {
+      this.bloquearArquivoSaudeTemporariamente(url);
+    });
+  }
+
+  arquivoSaudeIndisponivel(arquivo: ArquivoSaudeDTO): boolean {
+    return this.arquivosSaudeIndisponiveis.has(this.urlArquivoSaude(arquivo));
+  }
+
+  private bloquearArquivoSaudeTemporariamente(url: string): void {
+    this.arquivosSaudeIndisponiveis.add(url);
+    clearTimeout(this.timeoutsArquivosSaudeIndisponiveis.get(url));
+    this.timeoutsArquivosSaudeIndisponiveis.set(url, setTimeout(() => {
+      this.arquivosSaudeIndisponiveis.delete(url);
+      this.timeoutsArquivosSaudeIndisponiveis.delete(url);
+      this.atualizarTela();
+    }, 2000));
+    this.atualizarTela();
   }
 
   abrirCadastro() {
@@ -841,7 +1099,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
               telefone: [formatarTelefone(c.telefone), [Validators.required, Validators.minLength(14)]],
               email: [c.email, Validators.email],
               endereco: [c.endereco], cpf: [formatarCpf(c.cpf), Validators.minLength(14)], localTrabalho: [c.localTrabalho || ''],
-              busca: [''], tipoBusca: ['CPF'], buscarExistente: [false], principal: [c.principal]
+              busca: [''], tipoBusca: ['Nome'], buscarExistente: [false], principal: [c.principal]
             });
 
             this.contatosArray.push(contatoForm);
@@ -1053,7 +1311,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
       telefone: ['', [Validators.required, Validators.minLength(14)]],
       email: ['', Validators.email],
       endereco: [''], cpf: ['', Validators.minLength(14)], localTrabalho: [''],
-      busca: [''], tipoBusca: ['CPF'], buscarExistente: [false], principal: [isPrincipal]
+      busca: [''], tipoBusca: ['Nome'], buscarExistente: [false], principal: [isPrincipal]
     });
 
     this.contatosArray.push(contatoForm);
@@ -1087,13 +1345,40 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
     ).subscribe(({ termo, resultados }) => {
       const indiceAtual = this.contatosArray.controls.indexOf(contatoForm);
       if (indiceAtual >= 0 && contatoForm.get('buscarExistente')?.value && !contatoForm.get('id')?.value && contatoForm.get('busca')?.value === termo) {
-        this.opcoesAutocomplete[indiceAtual] = resultados;
+        const idsJaAdicionados = new Set(
+          this.contatosArray.controls
+            .filter((_, i) => i !== indiceAtual)
+            .map(contato => contato.get('id')?.value)
+            .filter((id): id is number => typeof id === 'number')
+        );
+        this.opcoesAutocomplete[indiceAtual] = resultados
+          .filter(contato => !idsJaAdicionados.has(contato.id))
+          .filter(contato => this.contatoCorrespondeTipoBusca(contato, contatoForm.get('tipoBusca')?.value, termo));
       }
       this.atualizarTela();
     });
+    const tipoBuscaSub = contatoForm.get('tipoBusca')!.valueChanges.subscribe(() => {
+      contatoForm.patchValue({
+        id: null,
+        busca: '',
+        nomeCompleto: '',
+        telefone: '',
+        email: '',
+        endereco: '',
+        cpf: '',
+        localTrabalho: ''
+      }, { emitEvent: false });
+      const indiceAtual = this.contatosArray.controls.indexOf(contatoForm);
+      if (indiceAtual >= 0) this.opcoesAutocomplete[indiceAtual] = [];
+      if (contatoForm.get('buscarExistente')?.value) {
+        for (const campo of this.camposCompartilhadosContato) {
+          contatoForm.get(campo)?.disable({ emitEvent: false });
+        }
+      }
+    });
     const cpfSub = contatoForm.get('cpf')!.valueChanges.subscribe(() => this.validarCpfsContatos());
-    this.subsPorContato.set(contatoForm, [sub, cpfSub]);
-    this.formSubs.push(sub, cpfSub);
+    this.subsPorContato.set(contatoForm, [sub, tipoBuscaSub, cpfSub]);
+    this.formSubs.push(sub, tipoBuscaSub, cpfSub);
   }
 
   alternarBuscaContato(index: number, buscar: boolean, preservarSelecionado = false): void {
@@ -1112,7 +1397,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
       }
     }
     if (buscar && !preservarSelecionado && !temSelecionado) {
-      grupo.get('busca')?.setValue('', { emitEvent: false });
+      grupo.patchValue({ busca: '', tipoBusca: 'Nome' }, { emitEvent: false });
     }
     this.opcoesAutocomplete[index] = [];
     for (const campo of ['nomeCompleto', 'telefone', 'email', 'endereco', 'cpf', 'localTrabalho']) {
@@ -1227,6 +1512,31 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
     return typeof contato === 'string' ? contato : contato?.nomeCompleto || '';
   }
 
+  formatarTelefoneContato(valor?: string | null): string {
+    return valor ? formatarTelefone(valor) : '-';
+  }
+
+  hrefTelefoneContato(valor?: string | null): string | null {
+    const telefone = String(valor ?? '').replace(/\D/g, '');
+    return telefone ? `tel:${telefone}` : null;
+  }
+
+  private contatoCorrespondeTipoBusca(contato: ContatoListagemDTO, tipoBusca: unknown, termo: string): boolean {
+    const texto = termo.trim().toLowerCase();
+    const numeros = termo.replace(/\D/g, '');
+    switch (tipoBusca) {
+      case 'CPF':
+        return !!numeros && (contato.cpf || '').replace(/\D/g, '').includes(numeros);
+      case 'Telefone':
+        return !!numeros && (contato.telefone || '').replace(/\D/g, '').includes(numeros);
+      case 'E-mail':
+        return (contato.email || '').toLowerCase().includes(texto);
+      case 'Nome':
+      default:
+        return contato.nomeCompleto.toLowerCase().includes(texto);
+    }
+  }
+
   // Validações e Máscaras
   verificarErros() {
     const errosServidor = Object.fromEntries(
@@ -1269,6 +1579,11 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
     this.formEdicaoContato.get('telefone')?.setValue(formatarTelefone(input.value));
   }
 
+  aplicarMascaraCpfEdicao(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.formEdicaoContato.get('cpf')?.setValue(formatarCpf(input.value));
+  }
+
   aplicarMascaraTelefoneContato(index: number, event: Event) {
     const input = event.target as HTMLInputElement;
     this.contatosArray.at(index).get('telefone')?.setValue(formatarTelefone(input.value), { emitEvent: false });
@@ -1308,7 +1623,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
     return '-';
   }
 
-  private formatarPeriodoTabela(valor?: string | null): string {
+  formatarPeriodoTabela(valor?: string | null): string {
     if (!valor) return '';
 
     const texto = valor.toString().replace(/\(.*?\)/g, '').trim();
@@ -1408,6 +1723,10 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
 
   idUsuarioVinculo(vinculo: UsuarioVinculadoDTO): number | null {
     return vinculo.idUsuario ?? null;
+  }
+
+  vinculoDesligado(vinculo: UsuarioVinculadoDTO): boolean {
+    return (vinculo.statusMatricula || '').toUpperCase() === 'EGRESSO';
   }
 
   private tratarErroSalvarUsuario(err: any, mensagemPadrao: string): void {
@@ -1610,8 +1929,9 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
   // ações da tabela
   executarAcao(evento: { tipo: string; linha: any }) {
     if (this.abaAtiva === 'usuarios') {
-      if (evento.tipo === 'ver' || evento.tipo === 'visualizar') this.abrirPreviewUsuario(evento.linha);
-      if (evento.tipo === 'editar') this.abrirEdicao(evento.linha);
+      if (evento.tipo === 'ver' || evento.tipo === 'visualizar') {
+        this.router.navigate(['/dashboard/usuarios', evento.linha.id], { queryParams: this.perfilQueryParams });
+      }
       if (evento.tipo === 'excluir') this.excluirUsuario(evento.linha);
       return;
     }
@@ -1631,21 +1951,33 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
       nomeCompleto: contato.nomeCompleto,
       telefone: formatarTelefone(contato.telefone),
       email: contato.email || '',
-      endereco: (contato as any).endereco || ''
+      endereco: contato.endereco || '',
+      cpf: contato.cpf ? formatarCpf(contato.cpf) : '',
+      localTrabalho: contato.localTrabalho || ''
     });
     this.formEdicaoContato.markAsPristine();
     this.formEdicaoContato.markAsUntouched();
-    this.valoresOriginaisContato = this.formEdicaoContato.getRawValue();
+    this.valoresOriginaisContato = this.snapshotContatoEdicao();
     this.modalContatoAberto = true;
   }
 
   private contatoTemAlteracoes(): boolean {
-    return JSON.stringify(this.formEdicaoContato.getRawValue()) !== JSON.stringify(this.valoresOriginaisContato);
+    return this.snapshotContatoEdicao() !== this.valoresOriginaisContato;
+  }
+
+  private snapshotContatoEdicao(): string {
+    return JSON.stringify(this.formEdicaoContato.getRawValue());
   }
 
   async fecharModalContato() {
     if (this.isLoading) return;
-    if (this.contatoTemAlteracoes() && !await Alertas.confirmarDescarte()) return;
+    if (this.contatoTemAlteracoes()) {
+      const confirmado = await Alertas.confirmarDescarte();
+      if (!confirmado) {
+        this.atualizarTela();
+        return;
+      }
+    }
     this.fecharModalContatoSemConfirmacao();
     this.atualizarTela();
   }
@@ -1653,6 +1985,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
   private fecharModalContatoSemConfirmacao() {
     this.modalContatoAberto = false;
     this.contatoEmEdicaoId = null;
+    this.valoresOriginaisContato = null;
     this.formEdicaoContato.reset();
   }
 
@@ -1667,10 +2000,13 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
       nomeCompleto: dados.nomeCompleto!,
       telefone: dados.telefone?.replace(/\D/g, '') || '',
       email: dados.email || undefined,
-      endereco: dados.endereco || undefined
+      endereco: dados.endereco || undefined,
+      cpf: dados.cpf?.replace(/\D/g, '') || undefined,
+      localTrabalho: dados.localTrabalho || undefined
     };
 
     this.isLoading = true;
+    this.atualizarTela();
     this.contatoService.atualizarContato(this.contatoEmEdicaoId, dto).subscribe({
       next: () => {
         this.ngZone.run(() => {
@@ -1772,7 +2108,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
     this.contatoService.buscarDetalhe(contato.id).subscribe({
       next: (detalhe) => {
         this.ngZone.run(() => {
-          this.vinculosDoContato = (detalhe.vinculos || []).filter(v => v.idUnidade != null);
+          this.vinculosDoContato = detalhe.vinculos || [];
           this.carregandoVinculos = false;
           this.atualizarTela();
         });
@@ -1843,7 +2179,6 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
     if (!this.podeGerenciarContatos || !contato) return;
 
     this.contatoSelecionado = contato;
-    this.modalVinculosAberto = false;
     this.turmasDoVinculo = [];
     this.usuariosParaVinculo = [];
     this.usuarioSelecionadoParaVinculo = null;
@@ -1964,8 +2299,26 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
   private fecharNovoVinculoSemConfirmacao() {
     this.buscaVinculoSub?.unsubscribe();
     this.modalNovoVinculoAberto = false;
-    this.contatoSelecionado = null;
     this.usuarioSelecionadoParaVinculo = null;
+  }
+
+  private recarregarVinculosDoContatoAtual(): void {
+    if (!this.contatoSelecionado) return;
+
+    const contatoAtual = this.contatoSelecionado;
+    this.carregandoVinculos = true;
+    this.contatoService.buscarDetalhe(contatoAtual.id).subscribe({
+      next: detalhe => this.ngZone.run(() => {
+        this.vinculosDoContato = detalhe.vinculos || [];
+        this.carregandoVinculos = false;
+        this.atualizarTela();
+      }),
+      error: () => this.ngZone.run(() => {
+        this.carregandoVinculos = false;
+        this.toastr.error('Erro ao carregar os usuários vinculados a este contato.', 'Erro');
+        this.atualizarTela();
+      })
+    });
   }
 
   /** Carrega a lista de usuários (uma vez) para alimentar o passo "Usuário" do vínculo. */
@@ -2046,6 +2399,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
           this.toastr.success('Vínculo criado com sucesso!', 'Sucesso');
           this.fecharNovoVinculoSemConfirmacao();
           this.carregarContatos();
+          this.recarregarVinculosDoContatoAtual();
           this.atualizarTela();
         });
       },

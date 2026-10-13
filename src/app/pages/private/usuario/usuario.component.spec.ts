@@ -1,6 +1,6 @@
 import { ComponentFixture, ComponentFixtureAutoDetect, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
-import { provideRouter, ActivatedRoute } from '@angular/router';
+import { provideRouter, ActivatedRoute, Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { of, throwError, Subject } from 'rxjs';
 import { vi } from 'vitest';
@@ -29,7 +29,8 @@ describe('Contrato de edição de usuários', () => {
     vi.spyOn(Alertas, 'confirmarDescarte').mockResolvedValue(false);
     service = {
       buscarPorId: vi.fn(() => of(usuario)), listarArquivosSaude: vi.fn(() => of([])),
-      atualizar: vi.fn(() => of(usuario)), criar: vi.fn(() => of(usuario))
+      atualizar: vi.fn(() => of(usuario)), criar: vi.fn(() => of(usuario)),
+      listarUsuarios: vi.fn(() => of([usuario]))
     };
     TestBed.configureTestingModule({ providers: [
       provideHttpClient(), provideRouter([]),
@@ -269,6 +270,16 @@ describe('Contrato de edição de usuários', () => {
     expect(component.colunasContatos.every(coluna => coluna.ordenavel)).toBe(true);
   });
 
+  it('abre o perfil do usuário pela ação de visualização da tabela', () => {
+    const router = TestBed.inject(Router);
+    const navigate = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+    service.buscarPorId.mockClear();
+    component.abaAtiva = 'usuarios';
+    component.executarAcao({ tipo: 'ver', linha: usuario });
+    expect(navigate).toHaveBeenCalledWith(['/dashboard/usuarios', usuario.id], { queryParams: { returnUrl: '/' } });
+    expect(service.buscarPorId).not.toHaveBeenCalled();
+  });
+
   it('ordena pelo documento alternativo e pela unidade exibida antes de paginar', () => {
     component.usuariosListagem = [
       { ...usuario, id: 1, cpf: '', documentoAuxiliar: 'DOC-20', nomeUnidade: 'Zulu', nomeTurma: 'MANHA' },
@@ -280,6 +291,22 @@ describe('Contrato de edição de usuários', () => {
     component.ordenacao = { campo: 'nomeTurma', direcao: 'desc' };
     component.aplicarPaginacao();
     expect(component.usuarios.map(u => u.id)).toEqual([1, 2]);
+  });
+
+  it('envia filtros de unidade, turma e status na listagem de usuários', () => {
+    component.filtroUnidadeId = 1;
+    component.filtroTurmaId = 2;
+    component.filtroStatusMatricula = 'EGRESSO';
+    component.busca = 'maria';
+
+    component.carregarUsuarios();
+
+    expect(service.listarUsuarios).toHaveBeenCalledWith({
+      search: 'maria',
+      idUnidade: 1,
+      idTurma: 2,
+      statusMatricula: 'EGRESSO'
+    });
   });
 
   it('exibe erro de telefone retornado pela API e permite corrigir o campo', () => {
@@ -299,7 +326,34 @@ describe('Contrato de edição de usuários', () => {
     (TestBed.inject(ContatoService) as any).atualizarContato = vi.fn(() => throwError(() => ({ error: { message: mensagem } })));
     component.salvarEdicaoContato();
     expect(component.mensagemErro(component.formEdicaoContato.get('telefone'))).toBe(mensagem);
+    expect(component.isLoading).toBe(false);
     expect(component.modalContatoAberto).toBe(true);
+  });
+
+  it('confirma descarte antes de fechar edição de contato alterada', async () => {
+    component.abrirEdicaoContato({ id: 8, nomeCompleto: 'Ana', telefone: '11999999999', quantidadeVinculos: 0 });
+    component.formEdicaoContato.get('nomeCompleto')?.setValue('Ana Alterada');
+
+    await component.fecharModalContato();
+
+    expect(Alertas.confirmarDescarte).toHaveBeenCalledTimes(1);
+    expect(component.modalContatoAberto).toBe(true);
+
+    vi.mocked(Alertas.confirmarDescarte).mockResolvedValue(true);
+    await component.fecharModalContato();
+
+    expect(component.modalContatoAberto).toBe(false);
+  });
+
+  it('avisa no reload quando edição de contato tem alterações', () => {
+    component.abrirEdicaoContato({ id: 8, nomeCompleto: 'Ana', telefone: '11999999999', quantidadeVinculos: 0 });
+    component.formEdicaoContato.get('telefone')?.setValue('(11) 98888-8888');
+    const event = { preventDefault: vi.fn(), returnValue: undefined as string | undefined } as unknown as BeforeUnloadEvent;
+
+    component.avisarAntesDeFechar(event);
+
+    expect(event.preventDefault).toHaveBeenCalled();
+    expect(event.returnValue).toBe('');
   });
 
   it('exibe a data de nascimento sem deslocamento de fuso horário', () => {
