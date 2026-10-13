@@ -57,6 +57,18 @@ describe('EventoPublicoService.buscarPorId', () => {
     ]);
   });
 
+  it('mantem caminho de logo que ja veio prefixado com /api', () => {
+    const { resultado } = buscar();
+
+    httpMock.expectOne(`${api}/7`).flush({
+      ...eventoApi,
+      parceiros: [{ id: 1, nome: 'Nigro', logo: '/api/uploads/parceiros/nigro.png' }]
+    });
+    httpMock.expectOne(`${api}/7/redes-sociais`).flush([]);
+
+    expect(resultado()?.parceiros[0].logo).toBe('/api/uploads/parceiros/nigro.png');
+  });
+
   it('ignora vinculos sem link', () => {
     const { resultado } = buscar();
 
