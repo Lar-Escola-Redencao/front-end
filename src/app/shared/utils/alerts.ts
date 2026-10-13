@@ -1,10 +1,10 @@
 import Swal from 'sweetalert2';
 
 export const Alertas = {
-  confirmarDescarte: (): Promise<boolean> => {
+  confirmarDescarte: (mensagem = 'Existem dados preenchidos que ainda não foram salvos. Deseja realmente sair?'): Promise<boolean> => {
     return Swal.fire({
       title: 'Descartar alterações?',
-      text: 'Existem dados preenchidos que ainda não foram salvos. Deseja realmente sair?',
+      text: mensagem,
       icon: 'warning',
       showCancelButton: true,
       confirmButtonText: 'Sim, descartar',

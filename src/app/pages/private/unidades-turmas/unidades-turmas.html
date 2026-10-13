@@ -22,6 +22,10 @@
 
     @if (abaAtiva === 'unidades') {
       <div class="acoes-unidades">
+        <app-barra-busca
+          placeholder="Buscar por nome, endereço, telefone, e-mail..."
+          [valor]="busca"
+          (buscar)="buscar($event)" />
         <button type="button" class="btn-primary btn-primary-thick" (click)="abrirCadastro()">Nova unidade</button>
       </div>
 
@@ -39,7 +43,10 @@
 
     @if (abaAtiva === 'turmas') {
       <div class="acoes-unidades acoes-turmas">
-        <button type="button" class="btn-primary btn-primary-thick" (click)="abrirCadastroTurma()">Nova turma</button>
+        <app-barra-busca
+          placeholder="Buscar por período, horário, unidade..."
+          [valor]="busca"
+          (buscar)="buscar($event)" />
 
         <mat-form-field appearance="outline" class="filtro-unidade">
           <mat-label>Turmas da unidade</mat-label>
@@ -56,6 +63,8 @@
             }
           </mat-select>
         </mat-form-field>
+
+        <button type="button" class="btn-primary btn-primary-thick" (click)="abrirCadastroTurma()">Nova turma</button>
       </div>
 
       <app-tabela-layout

@@ -39,6 +39,7 @@ import {
 } from '@components/tabela-layout/tabela-layout';
 
 import { Paginacao } from '@components/paginacao/paginacao';
+import { BarraBusca } from '@components/barra-busca/barra-busca';
 
 import { ModalLayout } from '@components/modal-layout/modal-layout';
 
@@ -73,6 +74,7 @@ import { environment } from '../../../../../../environments/environment';
     ModalLayout,
     TabelaLayout,
     Paginacao,
+    BarraBusca,
     MatFormFieldModule,
     MatInputModule,
     MatSlideToggleModule
@@ -143,6 +145,12 @@ export class PartnersManager
   totalPaginas = 0;
 
   private routeSub?: Subscription;
+
+  /** Termo da barra de busca, espelhado em ?search= na URL. */
+  busca = '';
+
+  /** Identifica a requisição mais recente: respostas de buscas anteriores são descartadas. */
+  private requisicaoLista = 0;
 
 
   // =========================================================
@@ -216,6 +224,7 @@ export class PartnersManager
       this.tamanho = tamanho;
       this.sort = sort;
       this.ordenacao = analisarOrdenacao(sort);
+      this.busca = params.get('search') ?? '';
       this.carregarPartners();
     });
   }
@@ -229,15 +238,17 @@ export class PartnersManager
   // =========================================================
 
   carregarPartners(): void {
-    if (this.isLoading) {
-      return;
-    }
+    const requisicao = ++this.requisicaoLista;
 
     this.isLoading = true;
     this.loadError = false;
     this.partnersService
-      .listarTodos(this.pagina, this.tamanho, this.sort)
+      .listarTodos(this.pagina, this.tamanho, this.sort, this.busca || undefined)
       .then((resposta) => {
+        if (requisicao !== this.requisicaoLista) {
+          return;
+        }
+
         this.partners = resposta.content;
         this.totalElementos = resposta.page.totalElements;
         this.totalPaginas = resposta.page.totalPages;
@@ -252,6 +263,10 @@ export class PartnersManager
       })
 
       .catch(() => {
+        if (requisicao !== this.requisicaoLista) {
+          return;
+        }
+
         this.isLoading = false;
         this.loadError = true;
         this.toastr.error(
@@ -260,6 +275,17 @@ export class PartnersManager
         );
         this.cdr.detectChanges();
       });
+  }
+
+  get mensagemVazia(): string {
+    return this.busca
+      ? `Nenhum parceiro encontrado para "${this.busca}".`
+      : 'Nenhum parceiro cadastrado.';
+  }
+
+  /** Atualiza a URL (?search=termo); o queryParamMap.subscribe refaz o GET sem recarregar a página. */
+  buscar(termo: string): void {
+    this.navegar({ page: 0, search: termo || null });
   }
 
   irParaPagina(pagina: number): void {

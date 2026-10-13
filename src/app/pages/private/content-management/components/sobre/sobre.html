@@ -70,7 +70,7 @@
   }
 
   <!-- ============================================================= -->
-  <!-- ABA 2 — IMAGENS CARROSSEL (10 slots fixos, só substituição) -->
+  <!-- ABA 2 — IMAGENS CARROSSEL (8 slots fixos, só substituição) -->
   <!-- ============================================================= -->
 
   @if (abaAtiva === 'carrossel') {
@@ -136,6 +136,10 @@
 
   @if (abaAtiva === 'historia') {
     <div class="acoes-historia">
+      <app-barra-busca
+        placeholder="Buscar por ano, título ou conteúdo..."
+        [valor]="busca"
+        (buscar)="buscar($event)" />
       <button type="button" class="btn-primary btn-primary-thick" (click)="abrirModalHistoria()">
         Novo marco histórico
       </button>

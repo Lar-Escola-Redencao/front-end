@@ -10,6 +10,9 @@
     </div>
 
     <div class="acoes-usuarios">
+      <app-barra-busca
+        [placeholder]="abaAtiva === 'usuarios' ? 'Buscar por nome, CPF, documento, escola...' : 'Buscar por nome, telefone, e-mail, CPF...'"
+        [valor]="busca" (buscar)="buscar($event)" />
       <button *ngIf="abaAtiva === 'usuarios' && podeCadastrarUsuario" type="button"
         class="btn-primary btn-primary-thick" (click)="abrirCadastro()">Novo usuário</button>
     </div>
@@ -18,7 +21,7 @@
       [dados]="$any(abaAtiva === 'usuarios' ? usuarios : contatos)"
       [acoes]="$any(abaAtiva === 'usuarios' ? acoesTabelaUsuariosAtual : acoesTabelaContatosAtual)"
       [carregando]="carregandoLista" [erro]="erroLista" [ordenacao]="ordenacao"
-      [mensagemVazia]="abaAtiva === 'usuarios' ? 'Nenhum usuário cadastrado ainda.' : 'Nenhum contato cadastrado ainda.'"
+      [mensagemVazia]="mensagemVaziaLista"
       (acao)="executarAcao($event)" (ordenar)="ordenarPor($event)"
       (tentarNovamente)="abaAtiva === 'usuarios' ? carregarUsuarios() : carregarContatos()">
     </app-tabela-layout>
