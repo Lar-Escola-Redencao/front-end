@@ -6,6 +6,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
 import { ModalLayout } from '../../../components/modal-layout/modal-layout';
 import { PerfilService } from '../../../shared/services/colaborador/perfil.service';
+import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-alterar-senha',
@@ -31,6 +32,8 @@ export class AlterarSenha {
   mostrarAtual = signal(false);
   mostrarNova = signal(false);
   mostrarConfirmacao = signal(false);
+  confirmandoDesistencia = signal(false);
+  private confirmacaoDesistencia?: Promise<boolean>;
 
   formAtual = new FormGroup({
     senhaAtual: new FormControl('', { nonNullable: true, validators: [Validators.required] })
@@ -56,13 +59,51 @@ export class AlterarSenha {
   );
 
   @HostListener('document:keydown.escape')
-  fechar(): void {
-    if (this.carregando()) {
+  async fechar(): Promise<void> {
+    if (this.carregando() || this.confirmandoDesistencia()) {
+      return;
+    }
+    if (!await this.confirmarDesistencia()) {
       return;
     }
     this.formAtual.reset();
     this.formSenha.reset();
     this.closed.emit();
+  }
+
+  formularioTemAlteracoesNaoSalvas(): boolean {
+    return this.etapa() !== 3 && (this.etapa() === 2 || this.carregando()
+      || !!this.formAtual.getRawValue().senhaAtual
+      || !!this.formSenha.getRawValue().novaSenha
+      || !!this.formSenha.getRawValue().confirmacaoSenha);
+  }
+
+  confirmarDesistencia(mensagem = 'Deseja realmente desistir de alterar sua senha? Os dados preenchidos serão descartados.'): Promise<boolean> {
+    if (!this.formularioTemAlteracoesNaoSalvas()) {
+      return Promise.resolve(true);
+    }
+    if (this.carregando()) {
+      return Promise.resolve(false);
+    }
+    if (this.confirmacaoDesistencia) {
+      return this.confirmacaoDesistencia;
+    }
+    this.confirmandoDesistencia.set(true);
+    this.confirmacaoDesistencia = Swal.fire({
+      title: 'Desistir de alterar a senha?',
+      text: mensagem,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sim, desistir',
+      cancelButtonText: 'Continuar alterando',
+      confirmButtonColor: '#e04b3a',
+      cancelButtonColor: '#757575',
+      reverseButtons: true
+    }).then(resultado => resultado.isConfirmed).finally(() => {
+      this.confirmandoDesistencia.set(false);
+      this.confirmacaoDesistencia = undefined;
+    });
+    return this.confirmacaoDesistencia;
   }
 
   confirmarSenhaAtual(): void {
@@ -92,10 +133,17 @@ export class AlterarSenha {
     });
   }
 
-  voltarParaConfirmacao(): void {
-    if (this.carregando()) {
+  async voltarParaConfirmacao(): Promise<void> {
+    if (this.carregando() || this.confirmandoDesistencia()) {
       return;
     }
+    if (!await this.confirmarDesistencia()) {
+      return;
+    }
+    this.reiniciarConfirmacao();
+  }
+
+  private reiniciarConfirmacao(): void {
     this.formAtual.enable();
     this.formAtual.reset();
     this.formSenha.reset();
@@ -127,7 +175,7 @@ export class AlterarSenha {
       error: (erro) => {
         this.carregando.set(false);
         this.formSenha.enable();
-        this.voltarParaConfirmacao();
+        this.reiniciarConfirmacao();
         this.erro.set(erro?.error?.message || 'Não foi possível alterar sua senha.');
       }
     });

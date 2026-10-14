@@ -4,7 +4,7 @@
   role="dialog"
   aria-modal="true"
   aria-label="Alterar senha"
-  cdkTrapFocus
+  [cdkTrapFocus]="!confirmandoDesistencia()"
   [cdkTrapFocusAutoCapture]="true"
 >
   @if (etapa() === 1) {

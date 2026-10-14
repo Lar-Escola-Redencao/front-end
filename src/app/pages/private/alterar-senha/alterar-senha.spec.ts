@@ -3,6 +3,7 @@ import { of, Subject, throwError } from 'rxjs';
 import { vi } from 'vitest';
 import { AlterarSenha } from './alterar-senha';
 import { PerfilService } from 'src/app/shared/services/colaborador/perfil.service';
+import Swal from 'sweetalert2';
 
 describe('Alteração de senha em duas etapas', () => {
   let component: AlterarSenha;
@@ -25,6 +26,68 @@ describe('Alteração de senha em duas etapas', () => {
     component.formAtual.setValue({ senhaAtual: 'admin123' });
     component.confirmarSenhaAtual();
   }
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('preserva a senha e o modal ao desistir do fechamento', async () => {
+    component.formAtual.controls.senhaAtual.setValue('admin123');
+    vi.spyOn(Swal, 'fire').mockResolvedValue({ isConfirmed: false } as any);
+    const fechar = vi.spyOn(component.closed, 'emit');
+    await component.fechar();
+    expect(fechar).not.toHaveBeenCalled();
+    expect(component.formAtual.getRawValue().senhaAtual).toBe('admin123');
+    expect(component.confirmandoDesistencia()).toBe(false);
+  });
+
+  it('descarta as senhas e fecha somente após confirmar', async () => {
+    confirmarAtual();
+    component.formSenha.controls.novaSenha.setValue('Nova123');
+    vi.spyOn(Swal, 'fire').mockResolvedValue({ isConfirmed: true } as any);
+    const fechar = vi.spyOn(component.closed, 'emit');
+    await component.fechar();
+    expect(fechar).toHaveBeenCalledOnce();
+    expect(component.formAtual.getRawValue().senhaAtual).toBe('');
+    expect(component.formSenha.getRawValue().novaSenha).toBe('');
+  });
+
+  it('protege a volta para a primeira etapa e mantém os dados ao cancelar', async () => {
+    confirmarAtual();
+    component.formSenha.controls.novaSenha.setValue('Nova123');
+    const alerta = vi.spyOn(Swal, 'fire').mockResolvedValue({ isConfirmed: false } as any);
+    await component.voltarParaConfirmacao();
+    expect(component.etapa()).toBe(2);
+    expect(component.formSenha.getRawValue().novaSenha).toBe('Nova123');
+    alerta.mockResolvedValue({ isConfirmed: true } as any);
+    await component.voltarParaConfirmacao();
+    expect(component.etapa()).toBe(1);
+    expect(component.formSenha.getRawValue().novaSenha).toBe('');
+  });
+
+  it('não pede confirmação sem preenchimento ou após sucesso', async () => {
+    const alerta = vi.spyOn(Swal, 'fire');
+    await component.fechar();
+    expect(alerta).not.toHaveBeenCalled();
+    component.etapa.set(3);
+    expect(component.formularioTemAlteracoesNaoSalvas()).toBe(false);
+    await component.fechar();
+    expect(alerta).not.toHaveBeenCalled();
+  });
+
+  it('reutiliza a confirmação pendente e impede fechamento durante requisição', async () => {
+    component.formAtual.controls.senhaAtual.setValue('admin123');
+    let responder!: (resultado: any) => void;
+    const alerta = vi.spyOn(Swal, 'fire').mockReturnValue(new Promise(resolve => responder = resolve));
+    const primeira = component.confirmarDesistencia();
+    expect(component.confirmarDesistencia()).toBe(primeira);
+    expect(alerta).toHaveBeenCalledOnce();
+    responder({ isConfirmed: false });
+    await primeira;
+    component.carregando.set(true);
+    expect(await component.confirmarDesistencia()).toBe(false);
+    expect(alerta).toHaveBeenCalledOnce();
+  });
 
   it('só libera a nova senha após confirmação do servidor', () => {
     const resposta = new Subject<void>();

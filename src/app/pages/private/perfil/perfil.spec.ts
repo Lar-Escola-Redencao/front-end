@@ -6,9 +6,12 @@ import { Perfil } from './perfil';
 import { PerfilService } from 'src/app/shared/services/colaborador/perfil.service';
 import { canDeactivateGuard } from 'src/app/shared/guards/can-deactivate.guard';
 import { Alertas } from 'src/app/shared/utils/alerts';
+import { AlterarSenha } from '../alterar-senha/alterar-senha';
+import { By } from '@angular/platform-browser';
 
 describe('Proteção de alterações não salvas em Meu perfil', () => {
   let component: Perfil;
+  let alterarSenha: AlterarSenha;
   let service: { buscarMeuPerfil: ReturnType<typeof vi.fn>; atualizar: ReturnType<typeof vi.fn> };
   const perfil = {
     id: 1,
@@ -31,10 +34,12 @@ describe('Proteção de alterações não salvas em Meu perfil', () => {
       { provide: PerfilService, useValue: service },
       { provide: ToastrService, useValue: { success: vi.fn(), error: vi.fn() } }
     ] });
-    TestBed.overrideComponent(Perfil, { set: { template: '' } });
+    TestBed.overrideComponent(Perfil, { set: { template: '<app-alterar-senha></app-alterar-senha>' } });
+    TestBed.overrideComponent(AlterarSenha, { set: { template: '' } });
     const fixture = TestBed.createComponent(Perfil);
     component = fixture.componentInstance;
     fixture.detectChanges();
+    alterarSenha = fixture.debugElement.query(By.directive(AlterarSenha)).componentInstance;
   });
 
   afterEach(() => {
@@ -45,6 +50,18 @@ describe('Proteção de alterações não salvas em Meu perfil', () => {
     component.habilitarEdicao();
     component.formDados.get('nomeCompleto')!.setValue('Nome alterado');
   }
+
+  it('protege navegação e recarregamento quando somente o modal de senha tem dados', async () => {
+    alterarSenha.formAtual.controls.senhaAtual.setValue('admin123');
+    expect(component.formularioTemAlteracoesNaoSalvas()).toBe(true);
+    const confirmar = vi.spyOn(alterarSenha, 'confirmarDesistencia').mockResolvedValue(false);
+    expect(await canDeactivateGuard(component, null!, null!, null!)).toBe(false);
+    expect(confirmar).toHaveBeenCalledOnce();
+    const evento = { preventDefault: vi.fn(), returnValue: undefined };
+    component.avisarAntesDeFechar(evento as unknown as BeforeUnloadEvent);
+    expect(evento.preventDefault).toHaveBeenCalledOnce();
+    expect(evento.returnValue).toBe('');
+  });
 
   it('não avisa só por abrir a edição nem após restaurar o valor original', () => {
     component.habilitarEdicao();
