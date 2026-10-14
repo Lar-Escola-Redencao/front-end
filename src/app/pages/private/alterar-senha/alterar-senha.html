@@ -1,0 +1,118 @@
+<app-modal-layout
+  [titulo]="etapa() === 1 ? 'Confirmar senha atual' : 'Alterar senha'"
+  (closed)="fechar()"
+  role="dialog"
+  aria-modal="true"
+  aria-label="Alterar senha"
+  cdkTrapFocus
+  [cdkTrapFocusAutoCapture]="true"
+>
+  @if (etapa() === 1) {
+    <p class="descricao">Confirme sua senha atual para continuar.</p>
+    <form class="senha-form" [formGroup]="formAtual" (ngSubmit)="confirmarSenhaAtual()">
+      <mat-form-field appearance="outline">
+        <mat-label>Senha atual</mat-label>
+        <input
+          matInput
+          [type]="mostrarAtual() ? 'text' : 'password'"
+          formControlName="senhaAtual"
+          autocomplete="current-password"
+          (input)="erro.set('')"
+        />
+        <button
+          matSuffix
+          type="button"
+          class="senha-toggle"
+          [attr.aria-label]="mostrarAtual() ? 'Ocultar senha atual' : 'Mostrar senha atual'"
+          (click)="mostrarAtual.set(!mostrarAtual())"
+        >
+          <mat-icon>{{ mostrarAtual() ? 'visibility_off' : 'visibility' }}</mat-icon>
+        </button>
+        <mat-error>{{
+          formAtual.controls.senhaAtual.hasError('senhaIncorreta')
+            ? 'A senha atual está incorreta.'
+            : 'Informe sua senha atual.'
+        }}</mat-error>
+      </mat-form-field>
+      @if (erro()) {
+        <p class="error-text" role="alert">{{ erro() }}</p>
+      }
+      <div class="acoes">
+        <button type="button" class="btn-cancelar" [disabled]="carregando()" (click)="fechar()">
+          Cancelar
+        </button>
+        <button type="submit" class="btn-primary" [disabled]="carregando() || formAtual.invalid">
+          {{ carregando() ? 'Confirmando...' : 'Continuar' }}
+        </button>
+      </div>
+    </form>
+  }
+
+  @if (etapa() === 2) {
+    <p class="descricao">Informe sua nova senha de acesso.</p>
+    <form class="senha-form" [formGroup]="formSenha" (ngSubmit)="salvarSenha()">
+      <mat-form-field appearance="outline">
+        <mat-label>Nova senha</mat-label>
+        <input
+          matInput
+          [type]="mostrarNova() ? 'text' : 'password'"
+          formControlName="novaSenha"
+          autocomplete="new-password"
+        />
+        <button
+          matSuffix
+          type="button"
+          class="senha-toggle"
+          [attr.aria-label]="mostrarNova() ? 'Ocultar nova senha' : 'Mostrar nova senha'"
+          (click)="mostrarNova.set(!mostrarNova())"
+        >
+          <mat-icon>{{ mostrarNova() ? 'visibility_off' : 'visibility' }}</mat-icon>
+        </button>
+        <mat-hint>Mínimo 6 caracteres, 1 letra maiúscula e 1 número.</mat-hint>
+        <mat-error>A senha não atende aos requisitos de segurança.</mat-error>
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Confirmar nova senha</mat-label>
+        <input
+          matInput
+          [type]="mostrarConfirmacao() ? 'text' : 'password'"
+          formControlName="confirmacaoSenha"
+          autocomplete="new-password"
+        />
+        <button
+          matSuffix
+          type="button"
+          class="senha-toggle"
+          [attr.aria-label]="mostrarConfirmacao() ? 'Ocultar confirmação' : 'Mostrar confirmação'"
+          (click)="mostrarConfirmacao.set(!mostrarConfirmacao())"
+        >
+          <mat-icon>{{ mostrarConfirmacao() ? 'visibility_off' : 'visibility' }}</mat-icon>
+        </button>
+        <mat-error>Confirme sua nova senha.</mat-error>
+      </mat-form-field>
+      @if (formSenha.hasError('senhasDiferentes') && formSenha.controls.confirmacaoSenha.touched) {
+        <p class="error-text" role="alert">As senhas não coincidem.</p>
+      }
+      <div class="acoes">
+        <button
+          type="button"
+          class="btn-cancelar"
+          [disabled]="carregando()"
+          (click)="voltarParaConfirmacao()"
+        >
+          Voltar
+        </button>
+        <button type="submit" class="btn-primary" [disabled]="carregando() || formSenha.invalid">
+          {{ carregando() ? 'Salvando...' : 'Salvar senha' }}
+        </button>
+      </div>
+    </form>
+  }
+
+  @if (etapa() === 3) {
+    <p class="sucesso" role="status">Sua senha foi alterada com sucesso.</p>
+    <div class="acoes">
+      <button type="button" class="btn-primary" (click)="fechar()">Concluir</button>
+    </div>
+  }
+</app-modal-layout>

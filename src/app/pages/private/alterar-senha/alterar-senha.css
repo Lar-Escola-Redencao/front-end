@@ -1,0 +1,76 @@
+.descricao,
+.sucesso {
+  margin: 0 0 24px;
+  color: var(--input-color);
+  font-family: var(--fonte-texto);
+  line-height: 1.5;
+}
+
+.senha-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.senha-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+  border: 0;
+  background: transparent;
+  color: var(--input-color);
+  cursor: pointer;
+}
+
+.acoes {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 24px;
+  margin-top: 8px;
+}
+
+.btn-cancelar {
+  border: 0;
+  background: transparent;
+  color: var(--input-color);
+  cursor: pointer;
+  font-family: var(--fonte-texto);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.btn-cancelar:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+:host ::ng-deep .senha-form .mat-mdc-form-field-subscript-wrapper {
+  display: block !important;
+}
+
+:host ::ng-deep .senha-form .mat-mdc-form-field-subscript-wrapper::before {
+  display: none;
+}
+
+:host ::ng-deep .senha-form .mat-mdc-form-field-error-wrapper,
+:host ::ng-deep .senha-form .mat-mdc-form-field-hint-wrapper {
+  position: static;
+  padding: 0 2px;
+}
+
+:host ::ng-deep .senha-form .mat-mdc-form-field-error,
+:host ::ng-deep .senha-form .mat-mdc-form-field-hint {
+  display: block;
+  padding-top: 6px;
+  font-family: var(--fonte-texto);
+  font-size: 0.85rem;
+  line-height: 1.4;
+  white-space: normal;
+}
+
+:host ::ng-deep .senha-form .mat-mdc-form-field-error {
+  color: var(--error-color);
+}

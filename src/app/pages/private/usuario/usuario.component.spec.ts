@@ -10,10 +10,11 @@ import { UsuarioService } from 'src/app/shared/services/usuario/usuario.service'
 import { SessaoService } from 'src/app/shared/services/auth/sessao.service';
 import { ContatoService } from 'src/app/shared/services/usuario/contato.service';
 import { TurmaService } from 'src/app/shared/services/turma/turma.service';
+import { CepService } from 'src/app/shared/services/usuario/cep.service';
 
 const usuario = {
   id: 1, nomeCompleto: 'Maria Silva', dataNascimento: '2015-01-01',
-  cpf: '12345678901', endereco: 'Rua A', bairro: 'Centro', escola: 'Escola',
+  cpf: '12345678901', endereco: 'Rua A', bairro: 'Centro', cep: '14801000', escola: 'Escola',
   periodoEscolar: 'MANHA', serieEscolar: 'PRIMEIRO_ANO', idUnidade: 1, idTurma: 2,
   contatos: [{ id: 8, nomeCompleto: 'Ana Silva', telefone: '11999999999', cpf: '', parentesco: 'MAE', principal: true }],
   composicaoFamiliar: [{ nomeCompleto: 'Ana Silva', parentescoVinculo: 'MAE', idade: 0, escolaridade: 'MEDIO_COMPLETO', renda: 0, beneficios: 0 }],
@@ -24,6 +25,7 @@ describe('Contrato de edição de usuários', () => {
   let component: UsuarioComponent;
   let fixture: ComponentFixture<UsuarioComponent>;
   let service: any;
+  let cep: { consultar: ReturnType<typeof vi.fn> };
   beforeEach(() => {
     vi.restoreAllMocks();
     vi.spyOn(Alertas, 'confirmarDescarte').mockResolvedValue(false);
@@ -32,11 +34,13 @@ describe('Contrato de edição de usuários', () => {
       atualizar: vi.fn(() => of(usuario)), criar: vi.fn(() => of(usuario)),
       listarUsuarios: vi.fn(() => of([usuario]))
     };
+    cep = { consultar: vi.fn(() => of({ logradouro: 'Praça da Sé', bairro: 'Sé' })) };
     TestBed.configureTestingModule({ providers: [
       provideHttpClient(), provideRouter([]),
       { provide: ComponentFixtureAutoDetect, useValue: false },
       { provide: ActivatedRoute, useValue: {} },
       { provide: UsuarioService, useValue: service },
+      { provide: CepService, useValue: cep },
       { provide: SessaoService, useValue: { podeEditarUsuario: () => true, podeGerenciarContatos: () => true } },
       { provide: ContatoService, useValue: { buscarDetalhe: vi.fn() } },
       { provide: TurmaService, useValue: { listar: () => of([]) } },
@@ -66,6 +70,104 @@ describe('Contrato de edição de usuários', () => {
     expect(dto.fichaSocioeconomica).toMatchObject({ despesaAgua: 0, utilizaCarro: false, gastoCarro: 0, religiao: 'Budista' });
     component.contatosArray.at(0).get('telefone')?.setValue('(11) 99999-9999');
     expect(component.contatoExistenteAlterado(0)).toBe(false);
+  });
+
+  it('bloqueia os campos de endereço enquanto consulta e os libera ao terminar', async () => {
+    vi.useFakeTimers();
+    try {
+      const resposta = new Subject<any>();
+      cep.consultar.mockReturnValue(resposta);
+      const controle = component.formUsuario.get('cep')!;
+      controle.markAsDirty();
+      controle.setValue('01001000');
+      await vi.advanceTimersByTimeAsync(401);
+      for (const campo of ['cep', 'endereco', 'bairro', 'numeroEndereco', 'complementoEndereco']) {
+        expect(component.formUsuario.get(campo)!.disabled).toBe(true);
+      }
+      resposta.next({ logradouro: 'Praça da Sé', bairro: 'Sé' });
+      expect(component.consultandoCep).toBe(false);
+      expect(component.formUsuario.get('numeroEndereco')!.enabled).toBe(true);
+      expect(component.erroCep).toBe('');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('junta endereço, número e complemento no contrato existente', () => {
+    component.formUsuario.patchValue({ endereco: 'Rua A', numeroEndereco: '123', complementoEndereco: 'Casa dos fundos' });
+    component.salvar();
+    expect(service.atualizar.mock.calls[0][1].endereco).toBe('Rua A, 123, Casa dos fundos');
+    expect(service.atualizar.mock.calls[0][1].numeroEndereco).toBeUndefined();
+  });
+
+  it('consulta CEP sem máscara e preenche os campos editáveis', async () => {
+    vi.useFakeTimers();
+    try {
+      const controle = component.formUsuario.get('cep')!;
+      controle.markAsDirty();
+      controle.setValue('01001-000');
+      await vi.advanceTimersByTimeAsync(401);
+      expect(cep.consultar).toHaveBeenCalledWith('01001000');
+      expect(component.formUsuario.get('endereco')!.value).toBe('Praça da Sé');
+      expect(component.formUsuario.get('bairro')!.value).toBe('Sé');
+      expect(component.formUsuario.get('endereco')!.enabled).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('mostra a obrigatoriedade do CEP vazio após sair do campo', () => {
+    const controle = component.formUsuario.get('cep')!;
+    controle.setValue('');
+    controle.markAsUntouched();
+    expect(component.estadoErroCep.isErrorState(controle as any, null)).toBe(false);
+    controle.markAsTouched();
+    expect(controle.hasError('required')).toBe(true);
+    expect(component.estadoErroCep.isErrorState(controle as any, null)).toBe(true);
+  });
+
+  it('ignora a consulta anterior ao trocar o CEP e preserva edição durante a consulta', async () => {
+    vi.useFakeTimers();
+    try {
+      const anterior = new Subject<any>();
+      const atual = new Subject<any>();
+      cep.consultar.mockReturnValueOnce(anterior).mockReturnValueOnce(atual);
+      const controle = component.formUsuario.get('cep')!;
+      controle.markAsDirty();
+      controle.setValue('01001000');
+      await vi.advanceTimersByTimeAsync(401);
+      controle.setValue('14801000');
+      anterior.next({ logradouro: 'Endereço antigo', bairro: 'Antigo' });
+      await vi.advanceTimersByTimeAsync(401);
+      component.formUsuario.get('endereco')!.setValue('Endereço manual, 123');
+      atual.next({ logradouro: 'Novo endereço', bairro: 'Novo bairro' });
+      expect(component.formUsuario.get('endereco')!.value).toBe('Endereço manual, 123');
+      expect(component.formUsuario.get('bairro')!.value).toBe('Novo bairro');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('trata CEP incompleto, inexistente e serviço indisponível sem bloquear preenchimento manual', async () => {
+    vi.useFakeTimers();
+    try {
+      const controle = component.formUsuario.get('cep')!;
+      controle.markAsDirty();
+      controle.setValue('123');
+      expect(cep.consultar).not.toHaveBeenCalled();
+      expect(component.erroCep).toContain('8 dígitos');
+      cep.consultar.mockReturnValueOnce(of({ erro: true }));
+      controle.setValue('99999999');
+      await vi.advanceTimersByTimeAsync(401);
+      expect(component.erroCep).toContain('não encontrado');
+      cep.consultar.mockReturnValueOnce(throwError(() => new Error('Indisponível')));
+      controle.setValue('01001000');
+      await vi.advanceTimersByTimeAsync(401);
+      expect(component.erroCep).toContain('manualmente');
+      expect(component.formUsuario.get('endereco')!.enabled).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('não permite salvar quando a consulta falha', () => {

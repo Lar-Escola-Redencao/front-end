@@ -24,7 +24,7 @@ describe('Diário de turma', () => {
     idFrequencia: null, presente: null, ocorrencias: []
   });
   const ocorrencia = (dataCriacao: string) => ({
-    id: 1, idMatricula: 1, dataCriacao, dataOcorrencia: '2026-10-06',
+    id: 1, idMatricula: 1, dataCriacao, dataRegistro: dataCriacao, dataOcorrencia: '2026-10-06',
     descricao: 'Registro', tipoOcorrencia: 'SAUDE' as const, nomeMembro: 'Monitor'
   });
 
@@ -265,6 +265,7 @@ describe('Diário de turma', () => {
     expect(fixture.nativeElement.textContent).not.toContain('06/10/2026 09h15');
 
     component.usuarioSelecionado!.ocorrencias = [];
+    fixture.changeDetectorRef.markForCheck();
     fixture.detectChanges();
 
     expect(fixture.nativeElement.textContent).toContain('Não há ocorrências para este usuário neste dia.');

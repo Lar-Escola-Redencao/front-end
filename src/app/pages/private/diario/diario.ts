@@ -353,7 +353,7 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
   }
 
   podeEditarExcluirOcorrencia(oc: OcorrenciaResponseDTO): boolean {
-    return this.perfilEstrategico || (this.isMonitor && Date.now() - this.instanteBrasilia(oc.dataCriacao) <= 24 * 60 * 60 * 1000);
+    return this.perfilEstrategico || (this.isMonitor && !!oc.dataRegistro && Date.now() - this.instanteBrasilia(oc.dataRegistro) <= 24 * 60 * 60 * 1000);
   }
 
   get podeSalvarOcorrencia(): boolean {
