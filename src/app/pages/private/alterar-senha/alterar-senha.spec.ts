@@ -3,6 +3,8 @@ import { of, Subject, throwError } from 'rxjs';
 import { vi } from 'vitest';
 import { AlterarSenha } from './alterar-senha';
 import { PerfilService } from 'src/app/shared/services/colaborador/perfil.service';
+import { Auth } from 'src/app/shared/services/auth/auth';
+import { Router } from '@angular/router';
 import Swal from 'sweetalert2';
 
 describe('Alteração de senha em duas etapas', () => {
@@ -11,13 +13,21 @@ describe('Alteração de senha em duas etapas', () => {
     validarSenhaAtual: ReturnType<typeof vi.fn>;
     alterarSenha: ReturnType<typeof vi.fn>;
   };
+  let auth: { logout: ReturnType<typeof vi.fn> };
+  let router: { navigate: ReturnType<typeof vi.fn> };
 
   beforeEach(() => {
     service = {
       validarSenhaAtual: vi.fn(() => of(undefined)),
       alterarSenha: vi.fn(() => of(undefined))
     };
-    TestBed.configureTestingModule({ providers: [{ provide: PerfilService, useValue: service }] });
+    auth = { logout: vi.fn() };
+    router = { navigate: vi.fn(() => Promise.resolve(true)) };
+    TestBed.configureTestingModule({ providers: [
+      { provide: PerfilService, useValue: service },
+      { provide: Auth, useValue: auth },
+      { provide: Router, useValue: router }
+    ] });
     TestBed.overrideComponent(AlterarSenha, { set: { template: '' } });
     component = TestBed.createComponent(AlterarSenha).componentInstance;
   });
@@ -33,7 +43,7 @@ describe('Alteração de senha em duas etapas', () => {
 
   it('preserva a senha e o modal ao desistir do fechamento', async () => {
     component.formAtual.controls.senhaAtual.setValue('admin123');
-    vi.spyOn(Swal, 'fire').mockResolvedValue({ isConfirmed: false } as any);
+    const alerta = vi.spyOn(Swal, 'fire').mockResolvedValue({ isConfirmed: false } as any);
     const fechar = vi.spyOn(component.closed, 'emit');
     await component.fechar();
     expect(fechar).not.toHaveBeenCalled();
@@ -44,7 +54,7 @@ describe('Alteração de senha em duas etapas', () => {
   it('descarta as senhas e fecha somente após confirmar', async () => {
     confirmarAtual();
     component.formSenha.controls.novaSenha.setValue('Nova123');
-    vi.spyOn(Swal, 'fire').mockResolvedValue({ isConfirmed: true } as any);
+    alerta.mockResolvedValue({ isConfirmed: true } as any);
     const fechar = vi.spyOn(component.closed, 'emit');
     await component.fechar();
     expect(fechar).toHaveBeenCalledOnce();
@@ -109,6 +119,31 @@ describe('Alteração de senha em duas etapas', () => {
     expect(component.formAtual.enabled).toBe(true);
   });
 
+  it('mostra a opção de recuperação quando a senha atual está incorreta', () => {
+    service.validarSenhaAtual.mockReturnValue(
+      throwError(() => ({ error: { message: 'A senha atual está incorreta.' } }))
+    );
+
+    confirmarAtual();
+
+    expect(component.mostrarRecuperacaoSenha()).toBe(true);
+  });
+
+  it('desloga e navega para a recuperação de senha somente após confirmar o descarte', async () => {
+    component.formAtual.controls.senhaAtual.setValue('senha-incorreta');
+    vi.spyOn(Swal, 'fire').mockResolvedValue({ isConfirmed: false } as any);
+    await component.irParaRecuperacaoSenha();
+
+    expect(auth.logout).not.toHaveBeenCalled();
+    expect(router.navigate).not.toHaveBeenCalled();
+
+    vi.spyOn(Swal, 'fire').mockResolvedValue({ isConfirmed: true } as any);
+    await component.irParaRecuperacaoSenha();
+
+    expect(auth.logout).toHaveBeenCalledOnce();
+    expect(router.navigate).toHaveBeenCalledWith(['/recuperar-senha']);
+  });
+
   it('bloqueia troca antes da confirmação, senhas diferentes e senha fora da política', () => {
     component.formSenha.setValue({ novaSenha: 'Nova123', confirmacaoSenha: 'Nova123' });
     component.salvarSenha();
@@ -118,6 +153,15 @@ describe('Alteração de senha em duas etapas', () => {
     component.formSenha.setValue({ novaSenha: 'abc', confirmacaoSenha: 'abc' });
     component.salvarSenha();
     expect(service.alterarSenha).not.toHaveBeenCalled();
+  });
+
+  it('coloca a divergência no campo de confirmação somente quando ele tem valor', () => {
+    component.formSenha.controls.novaSenha.setValue('Nova123');
+    expect(component.formSenha.controls.confirmacaoSenha.hasError('senhasDiferentes')).toBe(false);
+
+    component.formSenha.controls.confirmacaoSenha.setValue('Outra123');
+    expect(component.formSenha.controls.confirmacaoSenha.hasError('senhasDiferentes')).toBe(true);
+    expect(component.formSenha.hasError('senhasDiferentes')).toBe(true);
   });
 
   it('reenvia a senha atual validada e limpa todas as senhas no sucesso', () => {

@@ -1,4 +1,5 @@
 import { Component, EventEmitter, HostListener, Output, inject, signal } from '@angular/core';
+import { Router } from '@angular/router';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { A11yModule } from '@angular/cdk/a11y';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -6,6 +7,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
 import { ModalLayout } from '../../../components/modal-layout/modal-layout';
 import { PerfilService } from '../../../shared/services/colaborador/perfil.service';
+import { Auth } from '../../../shared/services/auth/auth';
 import Swal from 'sweetalert2';
 
 @Component({
@@ -25,10 +27,13 @@ import Swal from 'sweetalert2';
 export class AlterarSenha {
   @Output() closed = new EventEmitter<void>();
   private readonly perfilService = inject(PerfilService);
+  private readonly auth = inject(Auth);
+  private readonly router = inject(Router);
 
   etapa = signal<1 | 2 | 3>(1);
   carregando = signal(false);
   erro = signal('');
+  mostrarRecuperacaoSenha = signal(false);
   mostrarAtual = signal(false);
   mostrarNova = signal(false);
   mostrarConfirmacao = signal(false);
@@ -52,11 +57,18 @@ export class AlterarSenha {
     },
     {
       validators: (grupo) =>
-        grupo.get('novaSenha')?.value === grupo.get('confirmacaoSenha')?.value
+        !grupo.get('novaSenha')?.value || !grupo.get('confirmacaoSenha')?.value
           ? null
-          : { senhasDiferentes: true }
+          : grupo.get('novaSenha')?.value === grupo.get('confirmacaoSenha')?.value
+            ? null
+            : { senhasDiferentes: true }
     }
   );
+
+  constructor() {
+    this.formSenha.controls.novaSenha.valueChanges.subscribe(() => this.validarSenhasIguais());
+    this.formSenha.controls.confirmacaoSenha.valueChanges.subscribe(() => this.validarSenhasIguais());
+  }
 
   @HostListener('document:keydown.escape')
   async fechar(): Promise<void> {
@@ -112,6 +124,7 @@ export class AlterarSenha {
       return;
     }
     this.erro.set('');
+    this.mostrarRecuperacaoSenha.set(false);
     this.carregando.set(true);
     this.formAtual.disable();
     this.perfilService.validarSenhaAtual(this.formAtual.getRawValue().senhaAtual).subscribe({
@@ -125,12 +138,21 @@ export class AlterarSenha {
         this.formAtual.enable();
         if (erro?.error?.message === 'A senha atual está incorreta.') {
           this.formAtual.controls.senhaAtual.setErrors({ senhaIncorreta: true });
+          this.mostrarRecuperacaoSenha.set(true);
           this.erro.set('');
         } else {
           this.erro.set(erro?.error?.message || 'Não foi possível confirmar sua senha atual.');
         }
       }
     });
+  }
+
+  async irParaRecuperacaoSenha(): Promise<void> {
+    if (!await this.confirmarDesistencia('Os dados preenchidos serão descartados para recuperar sua senha.')) {
+      return;
+    }
+    this.auth.logout();
+    void this.router.navigate(['/recuperar-senha']);
   }
 
   async voltarParaConfirmacao(): Promise<void> {
@@ -153,6 +175,7 @@ export class AlterarSenha {
 
   salvarSenha(): void {
     this.formSenha.markAllAsTouched();
+    this.validarSenhasIguais();
     if (this.etapa() !== 2 || this.formSenha.invalid || this.carregando()) {
       return;
     }
@@ -179,5 +202,18 @@ export class AlterarSenha {
         this.erro.set(erro?.error?.message || 'Não foi possível alterar sua senha.');
       }
     });
+  }
+
+  private validarSenhasIguais(): void {
+    const novaSenha = this.formSenha.controls.novaSenha;
+    const confirmacaoSenha = this.formSenha.controls.confirmacaoSenha;
+    const erros = { ...(confirmacaoSenha.errors || {}) };
+
+    delete erros['senhasDiferentes'];
+    if (novaSenha.value && confirmacaoSenha.value && novaSenha.value !== confirmacaoSenha.value) {
+      erros['senhasDiferentes'] = true;
+    }
+
+    confirmacaoSenha.setErrors(Object.keys(erros).length ? erros : null);
   }
 }

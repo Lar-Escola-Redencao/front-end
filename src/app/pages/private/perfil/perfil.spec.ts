@@ -8,6 +8,8 @@ import { canDeactivateGuard } from 'src/app/shared/guards/can-deactivate.guard';
 import { Alertas } from 'src/app/shared/utils/alerts';
 import { AlterarSenha } from '../alterar-senha/alterar-senha';
 import { By } from '@angular/platform-browser';
+import { Auth } from 'src/app/shared/services/auth/auth';
+import { Router } from '@angular/router';
 
 describe('Proteção de alterações não salvas em Meu perfil', () => {
   let component: Perfil;
@@ -30,9 +32,13 @@ describe('Proteção de alterações não salvas em Meu perfil', () => {
       buscarMeuPerfil: vi.fn(() => of(perfil)),
       atualizar: vi.fn(() => of(perfil))
     };
+    const auth = { logout: vi.fn() };
+    const router = { navigate: vi.fn(() => Promise.resolve(true)) };
     TestBed.configureTestingModule({ providers: [
       { provide: PerfilService, useValue: service },
-      { provide: ToastrService, useValue: { success: vi.fn(), error: vi.fn() } }
+      { provide: ToastrService, useValue: { success: vi.fn(), error: vi.fn() } },
+      { provide: Auth, useValue: auth },
+      { provide: Router, useValue: router }
     ] });
     TestBed.overrideComponent(Perfil, { set: { template: '<app-alterar-senha></app-alterar-senha>' } });
     TestBed.overrideComponent(AlterarSenha, { set: { template: '' } });

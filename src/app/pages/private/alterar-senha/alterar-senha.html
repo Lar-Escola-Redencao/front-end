@@ -9,6 +9,12 @@
 >
   @if (etapa() === 1) {
     <p class="descricao">Confirme sua senha atual para continuar.</p>
+    @if (mostrarRecuperacaoSenha()) {
+      <p class="recuperacao-senha">
+        Esqueceu sua senha? Acesse “Esqueci a senha” na tela de login ou clique
+        <button type="button" class="link-recuperacao" (click)="irParaRecuperacaoSenha()">aqui</button>.
+      </p>
+    }
     <form class="senha-form" [formGroup]="formAtual" (ngSubmit)="confirmarSenhaAtual()">
       <mat-form-field appearance="outline">
         <mat-label>Senha atual</mat-label>
@@ -68,9 +74,11 @@
         >
           <mat-icon>{{ mostrarNova() ? 'visibility_off' : 'visibility' }}</mat-icon>
         </button>
-        <mat-hint>Mínimo 6 caracteres, 1 letra maiúscula e 1 número.</mat-hint>
         <mat-error>A senha não atende aos requisitos de segurança.</mat-error>
       </mat-form-field>
+      <span class="hint-text">
+        Mínimo 6 caracteres, 1 letra maiúscula e 1 número.
+      </span>
       <mat-form-field appearance="outline">
         <mat-label>Confirmar nova senha</mat-label>
         <input
@@ -88,11 +96,12 @@
         >
           <mat-icon>{{ mostrarConfirmacao() ? 'visibility_off' : 'visibility' }}</mat-icon>
         </button>
-        <mat-error>Confirme sua nova senha.</mat-error>
+        <mat-error>
+          {{ formSenha.controls.confirmacaoSenha.hasError('senhasDiferentes')
+            ? 'As senhas não coincidem.'
+            : 'Confirme sua nova senha.' }}
+        </mat-error>
       </mat-form-field>
-      @if (formSenha.hasError('senhasDiferentes') && formSenha.controls.confirmacaoSenha.touched) {
-        <p class="error-text" role="alert">As senhas não coincidem.</p>
-      }
       <div class="acoes">
         <button
           type="button"
@@ -110,7 +119,12 @@
   }
 
   @if (etapa() === 3) {
-    <p class="sucesso" role="status">Sua senha foi alterada com sucesso.</p>
+    <div class="success-state" role="status">
+      <div class="icon-circle">
+        <span class="material-symbols-outlined">check_circle</span>
+      </div>
+      <p class="sucesso">Sua senha foi alterada com sucesso.</p>
+    </div>
     <div class="acoes">
       <button type="button" class="btn-primary" (click)="fechar()">Concluir</button>
     </div>

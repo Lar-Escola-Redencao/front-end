@@ -3,7 +3,7 @@
 .cep-consulta {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 8px;
 }
 
 .cep-consulta mat-form-field {
