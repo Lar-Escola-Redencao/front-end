@@ -8,7 +8,6 @@ export interface OcorrenciaResponseDTO {
   idMatricula: number;
   dataOcorrencia: string;
   dataCriacao: string;
-  dataRegistro: string;
   descricao: string;
   tipoOcorrencia: 'COMPORTAMENTO' | 'SAUDE' | 'ASSISTENCIA' | 'OUTRO';
   nomeMembro: string;

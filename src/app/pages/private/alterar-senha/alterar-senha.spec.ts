@@ -54,7 +54,7 @@ describe('Alteração de senha em duas etapas', () => {
   it('descarta as senhas e fecha somente após confirmar', async () => {
     confirmarAtual();
     component.formSenha.controls.novaSenha.setValue('Nova123');
-    alerta.mockResolvedValue({ isConfirmed: true } as any);
+    vi.spyOn(Swal, 'fire').mockResolvedValue({ isConfirmed: true } as any);
     const fechar = vi.spyOn(component.closed, 'emit');
     await component.fechar();
     expect(fechar).toHaveBeenCalledOnce();

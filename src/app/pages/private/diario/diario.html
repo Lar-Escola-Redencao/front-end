@@ -200,7 +200,7 @@
         @if (usuarioSelecionado.ocorrencias.length) {
           <div class="lista-ocorrencias">
             <div class="lista-header">
-              <span>Hora de registro</span>
+              <span>Hora da ocorrência</span>
               <span>Tipo</span>
               <span>Descrição</span>
               <span class="col-acoes">Ações</span>
@@ -214,7 +214,7 @@
                 (keydown.enter)="abrirFormOcorrencia(oc, 'VER')"
                 (keydown.space)="abrirFormOcorrencia(oc, 'VER')"
               >
-                <span class="data">{{ formatarHoraRegistro(oc.dataCriacao) }}</span>
+                <span class="data">{{ formatarHoraRegistro(oc.dataOcorrencia) }}</span>
                 <span class="tipo">{{ obterLabelOcorrencia(oc.tipoOcorrencia) }}</span>
                 <!-- EXIBE A DESCRIÇÃO REAL DA OCORRÊNCIA -->
                 <span class="desc-resumo">{{ oc.descricao }}</span>
@@ -250,7 +250,7 @@
         <div class="ocorrencia-preview-dados">
           <div>
             <mat-icon class="material-symbols-outlined ocorrencia-preview-icone">schedule</mat-icon>
-            <span>{{ formatarDataHora(ocorrenciaSelecionada.dataCriacao) }}</span>
+            <span>{{ formatarDataHora(ocorrenciaSelecionada.dataOcorrencia) }}</span>
           </div>
           <div>
             <mat-icon class="material-symbols-outlined ocorrencia-preview-icone">category</mat-icon>
@@ -272,7 +272,7 @@
         <div class="form-row-2">
           <div class="campo-com-erro">
             <mat-form-field appearance="outline" class="campo-hora" [hideRequiredMarker]="modoOcorrencia === 'VER'">
-              <mat-label>Hora de registro</mat-label>
+              <mat-label>Hora da ocorrência</mat-label>
               <input #inputHora matInput type="time" formControlName="horaStr">
               <button
                 matSuffix
