@@ -92,10 +92,24 @@
 
 .acoes-form {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: flex-end;
   gap: 28px;
   margin-top: 4px;
+}
+
+.link-alterar-senha {
+  margin-right: auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--primary-color);
+  cursor: pointer;
+  font-family: var(--fonte-texto);
+  font-size: 0.9rem;
+  font-weight: 400;
+  text-align: left;
 }
 
 .btn-cancelar {

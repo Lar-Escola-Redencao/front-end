@@ -18,10 +18,11 @@ import {
   Validators
 } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { Subscription, of, forkJoin } from 'rxjs';
+import { Subscription, of, forkJoin, timer } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap, catchError, map, tap } from 'rxjs/operators';
 
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { ErrorStateMatcher } from '@angular/material/core';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatIconModule } from '@angular/material/icon';
@@ -40,6 +41,8 @@ import { BarraBusca } from '@components/barra-busca/barra-busca';
 
 import { ComponentComAlteracoesNaoSalvas } from 'src/app/shared/guards/can-deactivate.guard';
 import { UsuarioService } from 'src/app/shared/services/usuario/usuario.service';
+import { CepService } from 'src/app/shared/services/usuario/cep.service';
+import { montarEndereco, separarEndereco } from 'src/app/shared/utils/endereco';
 import { ContatoService } from 'src/app/shared/services/usuario/contato.service';
 import { SessaoService } from 'src/app/shared/services/auth/sessao.service';
 import { ArquivoSaudeDTO, UsuarioResponseDTO, CadastroUsuarioCompletoDTO } from 'src/app/shared/models/usuario.model';
@@ -94,6 +97,14 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
 
   private readonly fb = inject(FormBuilder);
   private readonly usuarioService = inject(UsuarioService);
+  private readonly cepService = inject(CepService);
+  consultandoCep = false;
+  erroCep = '';
+  readonly estadoErroCep: ErrorStateMatcher = {
+    isErrorState: (controle, formulario) => !!(
+      controle && (controle.invalid || this.erroCep) && (controle.touched || formulario?.submitted)
+    )
+  };
   private readonly contatoService = inject(ContatoService);
   private readonly unidadeService = inject(UnidadeService);
   private readonly turmaService = inject(TurmaService);
@@ -759,6 +770,8 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
   }
 
   iniciarFormulario() {
+    this.consultandoCep = false;
+    this.erroCep = '';
     this.formSubs.forEach(sub => sub.unsubscribe());
     this.formSubs = [];
     this.subsPorContato.clear();
@@ -770,7 +783,10 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
       usarOutroDocumento: [false],
       cpf: ['', [Validators.required, Validators.minLength(14)]],
       tipoDocumento: [''], documentoAuxiliar: [''], cadUnico: [''],
-      endereco: ['', Validators.required], bairro: ['', Validators.required], cep: [''],
+      endereco: ['', Validators.required], bairro: ['', Validators.required],
+      cep: ['', [Validators.required, Validators.pattern(/^\d{5}-?\d{3}$/)]],
+      numeroEndereco: ['', this.modoEdicao ? [Validators.pattern(/\S/)] : [Validators.required, Validators.pattern(/\S/)]],
+      complementoEndereco: [''],
       escola: ['', Validators.required], periodoEscolar: ['', Validators.required],
       serieEscolar: ['', Validators.required], raEscolar: [''],
       contatos: this.fb.array([]),
@@ -792,6 +808,50 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
       idUnidade: [null, Validators.required],
       idTurma: this.fb.control<number | null>({ value: null, disabled: true }, Validators.required)
     });
+    this.formSubs.push(this.formUsuario.get('cep')!.valueChanges.pipe(
+      map(valor => String(valor || '').replace(/\D/g, '')),
+      distinctUntilChanged(),
+      switchMap(cep => {
+        this.definirConsultaCep(false);
+        this.erroCep = '';
+        if (!cep || !this.formUsuario.get('cep')!.dirty) {
+          return of(null);
+        }
+        if (cep.length !== 8) {
+          this.erroCep = 'Informe um CEP com 8 dígitos.';
+          return of(null);
+        }
+        const endereco = this.formUsuario.get('endereco')!.value;
+        const bairro = this.formUsuario.get('bairro')!.value;
+        this.definirConsultaCep(true);
+        this.atualizarTela();
+        return timer(400).pipe(
+          switchMap(() => this.cepService.consultar(cep)),
+          map(dados => ({ dados, endereco, bairro })),
+          catchError(() => {
+            this.erroCep = 'Não foi possível consultar o CEP. Preencha o endereço manualmente.';
+            return of(null);
+          })
+        );
+      })
+    ).subscribe(resultado => {
+      this.definirConsultaCep(false);
+      if (resultado?.dados.erro) {
+        this.erroCep = 'CEP não encontrado. Confira o CEP ou preencha o endereço manualmente.';
+      } else if (resultado) {
+        const { dados, endereco, bairro } = resultado;
+        if (dados.logradouro && this.formUsuario.get('endereco')!.value === endereco) {
+          this.formUsuario.get('endereco')!.setValue(dados.logradouro);
+        }
+        if (dados.bairro && this.formUsuario.get('bairro')!.value === bairro) {
+          this.formUsuario.get('bairro')!.setValue(dados.bairro);
+        }
+        const numero = this.formUsuario.get('numeroEndereco')!;
+        numero.setValidators([Validators.required, Validators.pattern(/\S/)]);
+        numero.updateValueAndValidity({ emitEvent: false });
+      }
+      this.atualizarTela();
+    }));
     this.formSubs.push(this.formUsuario.get('socioeconomico.tipoMoradia')!.valueChanges.subscribe(tipo => {
       const aluguel = this.formUsuario.get('socioeconomico.valorAluguel')!;
       aluguel.setValidators(tipo === 'ALUGADA' || tipo === 'APARTAMENTO_ALUGADO' ? [Validators.required, Validators.min(0)] : []);
@@ -1066,7 +1126,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
         this.formUsuario.patchValue({
           nomeCompleto: dadosCompletos.nomeCompleto,
           dataNascimento: dadosCompletos.dataNascimento ? dadosCompletos.dataNascimento.split('T')[0] : '',
-          endereco: dadosCompletos.endereco,
+          ...separarEndereco(dadosCompletos.endereco),
           bairro: dadosCompletos.bairro || '', cep: formatarCep(dadosCompletos.cep),
           escola: dadosCompletos.escola || '', periodoEscolar: dadosCompletos.periodoEscolar || '',
           serieEscolar: dadosCompletos.serieEscolar || '', raEscolar: dadosCompletos.raEscolar || '',
@@ -1260,11 +1320,14 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
   }
 
   proximaEtapa(): void {
+    if (this.consultandoCep) {
+      return;
+    }
     if (this.etapaModal === 1) {
-      for (const campo of ['nomeCompleto', 'dataNascimento', 'cpf', 'tipoDocumento', 'documentoAuxiliar', 'endereco', 'bairro', 'escola', 'periodoEscolar', 'serieEscolar']) {
+      for (const campo of ['nomeCompleto', 'dataNascimento', 'cpf', 'tipoDocumento', 'documentoAuxiliar', 'endereco', 'numeroEndereco', 'cep', 'bairro', 'escola', 'periodoEscolar', 'serieEscolar']) {
         this.formUsuario.get(campo)?.markAsTouched();
       }
-      if (['nomeCompleto', 'dataNascimento', 'cpf', 'tipoDocumento', 'documentoAuxiliar', 'endereco', 'bairro', 'escola', 'periodoEscolar', 'serieEscolar'].some(c => this.formUsuario.get(c)?.invalid)) {
+      if (['nomeCompleto', 'dataNascimento', 'cpf', 'tipoDocumento', 'documentoAuxiliar', 'endereco', 'numeroEndereco', 'cep', 'bairro', 'escola', 'periodoEscolar', 'serieEscolar'].some(c => this.formUsuario.get(c)?.invalid)) {
         this.verificarErros();
         return;
       }
@@ -1563,9 +1626,25 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
     return obterMensagemErro(e);
   }
 
+  get numeroEnderecoObrigatorio(): boolean {
+    return this.formUsuario.get('numeroEndereco')?.hasValidator(Validators.required) || false;
+  }
+
+  private definirConsultaCep(carregando: boolean): void {
+    this.consultandoCep = carregando;
+    for (const campo of ['cep', 'endereco', 'bairro', 'numeroEndereco', 'complementoEndereco']) {
+      const controle = this.formUsuario.get(campo)!;
+      if (carregando) {
+        controle.disable({ emitEvent: false });
+      } else {
+        controle.enable({ emitEvent: false });
+      }
+    }
+  }
+
   aplicarMascaraCep(event: Event): void {
     const input = event.target as HTMLInputElement;
-    this.formUsuario.get('cep')?.setValue(formatarCep(input.value), { emitEvent: false });
+    this.formUsuario.get('cep')?.setValue(formatarCep(input.value));
   }
 
   aplicarMascaraCpf(event: Event) {
@@ -1794,7 +1873,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
   }
 
   salvar() {
-    if (this.isLoading || this.isCarregandoEdicao || !this.modalAberto) return;
+    if (this.isLoading || this.isCarregandoEdicao || this.consultandoCep || !this.modalAberto) return;
     this.formUsuario.markAllAsTouched();
     this.validarCpfsContatos();
     this.verificarErros();
@@ -1804,7 +1883,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
     }
 
     if (this.formUsuario.invalid || !this.formUsuario.get('idTurma')?.value || this.contatosArray.controls.some(c => c.get('buscarExistente')?.value && !c.get('id')?.value)) {
-      const dadosPessoais = ['nomeCompleto', 'dataNascimento', 'cpf', 'tipoDocumento', 'documentoAuxiliar', 'endereco', 'bairro', 'escola', 'periodoEscolar', 'serieEscolar'];
+      const dadosPessoais = ['nomeCompleto', 'dataNascimento', 'cpf', 'tipoDocumento', 'documentoAuxiliar', 'endereco', 'numeroEndereco', 'cep', 'bairro', 'escola', 'periodoEscolar', 'serieEscolar'];
       if (dadosPessoais.some(campo => this.formUsuario.get(campo)?.invalid)) {
         this.etapaModal = 1;
       } else if (!this.contatosArray.length || this.contatosArray.invalid || this.contatosArray.controls.some(c => c.get('buscarExistente')?.value && !c.get('id')?.value)) {
@@ -1859,7 +1938,9 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
       cpf: dados.usarOutroDocumento ? null : dados.cpf?.replace(/\D/g, ''),
       documentoAuxiliar: dados.usarOutroDocumento ? dados.documentoAuxiliar : null,
       tipoDocumento: dados.usarOutroDocumento ? dados.tipoDocumento : null,
-      cadUnico: dados.cadUnico, endereco: dados.endereco, bairro: dados.bairro,
+      cadUnico: dados.cadUnico,
+      endereco: montarEndereco(dados.endereco, dados.numeroEndereco, dados.complementoEndereco),
+      bairro: dados.bairro,
       cep: dados.cep, escola: dados.escola, periodoEscolar: dados.periodoEscolar,
       serieEscolar: dados.serieEscolar, raEscolar: dados.raEscolar,
       idTurma: dados.idTurma, composicaoFamiliar: socio.composicaoFamiliar,

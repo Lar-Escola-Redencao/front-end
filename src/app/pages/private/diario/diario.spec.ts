@@ -24,7 +24,7 @@ describe('Diário de turma', () => {
     idFrequencia: null, presente: null, ocorrencias: []
   });
   const ocorrencia = (dataCriacao: string) => ({
-    id: 1, idMatricula: 1, dataCriacao, dataOcorrencia: '2026-10-06',
+    id: 1, idMatricula: 1, dataCriacao, dataOcorrencia: dataCriacao,
     descricao: 'Registro', tipoOcorrencia: 'SAUDE' as const, nomeMembro: 'Monitor'
   });
 
@@ -57,6 +57,19 @@ describe('Diário de turma', () => {
     fixture.detectChanges();
     component.filtroForm.get('idUnidade')!.setValue(1);
     component.filtroForm.get('idTurma')!.setValue(2);
+  });
+
+  it('usa a criação do servidor para a janela e a hora do fato para editar', () => {
+    const registro = {
+      ...ocorrencia('2026-10-06T11:00:00'),
+      dataOcorrencia: '2026-10-04T09:15:00'
+    };
+    expect(component.podeEditarExcluirOcorrencia(registro)).toBe(true);
+    component.abrirFormOcorrencia(registro, 'EDITAR');
+    expect(component.formOcorrencia.get('horaStr')!.value).toBe('09:15');
+    expect(component.podeEditarExcluirOcorrencia({
+      ...registro, dataCriacao: '2026-10-05T11:59:59'
+    })).toBe(false);
   });
 
   afterEach(() => { fixture.destroy(); vi.useRealTimers(); vi.restoreAllMocks(); });
@@ -194,8 +207,7 @@ describe('Diário de turma', () => {
 
     expect(api.criarOcorrencia).toHaveBeenCalledWith({
       idMatricula: 1,
-      dataOcorrencia: '2026-10-06',
-      dataCriacao: '2026-10-06T09:30:00',
+      dataOcorrencia: '2026-10-06T09:30:00',
       tipoOcorrencia: 'SAUDE',
       descricao: 'Descrição'
     });
@@ -255,16 +267,17 @@ describe('Diário de turma', () => {
     expect(component.usuarioSelecionado).toBe(usuario);
   });
 
-  it('exibe apenas a hora de registro na lista e mensagem quando não há ocorrências', () => {
+  it('exibe apenas a hora do fato na lista e mensagem quando não há ocorrências', () => {
     const usuario = { ...aluno(), ocorrencias: [ocorrencia('2026-10-06T09:15:00')] };
     component.abrirGerenciadorOcorrencias(usuario);
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.textContent).toContain('Hora de registro');
+    expect(fixture.nativeElement.textContent).toContain('Hora da ocorrência');
     expect(fixture.nativeElement.textContent).toContain('09h15');
     expect(fixture.nativeElement.textContent).not.toContain('06/10/2026 09h15');
 
     component.usuarioSelecionado!.ocorrencias = [];
+    fixture.changeDetectorRef.markForCheck();
     fixture.detectChanges();
 
     expect(fixture.nativeElement.textContent).toContain('Não há ocorrências para este usuário neste dia.');

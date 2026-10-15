@@ -150,15 +150,33 @@
 
       <h3>Endereço</h3>
       <div class="step-grid">
-        <mat-form-field appearance="outline"><mat-label>CEP</mat-label><input matInput
-            formControlName="cep" inputmode="numeric" maxlength="9"
-            (input)="aplicarMascaraCep($event)"></mat-form-field>
+        <div class="cep-consulta">
+          <mat-form-field appearance="outline">
+            <mat-label>CEP*</mat-label>
+            <input matInput formControlName="cep" inputmode="numeric" maxlength="9"
+              [errorStateMatcher]="estadoErroCep" (input)="aplicarMascaraCep($event)">
+            <mat-error>{{ formUsuario.get('cep')?.hasError('required') ? mensagemErro(formUsuario.get('cep')) : erroCep || 'Informe um CEP com 8 dígitos.' }}</mat-error>
+          </mat-form-field>
+          <a class="cep-ajuda" href="https://buscacepinter.correios.com.br/app/endereco/index.php"
+            target="_blank" rel="noopener noreferrer" title="Consultar o CEP nos Correios em uma nova aba">
+            Consultar CEP nos Correios
+          </a>
+        </div>
         <mat-form-field appearance="outline"><mat-label>Bairro*</mat-label><input matInput
             formControlName="bairro"><mat-error>{{ mensagemErro(formUsuario.get('bairro'))
             }}</mat-error></mat-form-field>
         <mat-form-field class="wide" appearance="outline"><mat-label>Endereço*</mat-label><input matInput
             formControlName="endereco"><mat-error>{{ mensagemErro(formUsuario.get('endereco'))
             }}</mat-error></mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>{{ !modoEdicao || numeroEnderecoObrigatorio ? 'Número*' : 'Número' }}</mat-label>
+          <input matInput formControlName="numeroEndereco">
+          <mat-error>{{ mensagemErro(formUsuario.get('numeroEndereco')) }}</mat-error>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Complemento</mat-label>
+          <input matInput formControlName="complementoEndereco">
+        </mat-form-field>
       </div>
 
       <h3>Dados escolares</h3>
@@ -440,8 +458,8 @@
     <div class="acoes-modal cadastro-acoes">
       <span class="acoes-espaco"></span>
       <button type="button" class="btn-cancelar" (click)="fecharModal()" [disabled]="isLoading">Cancelar</button>
-      <button *ngIf="etapaModal < 5" type="button" class="btn-primary" (click)="proximaEtapa()">Próximo</button>
-      <button *ngIf="etapaModal === 5" type="submit" class="btn-primary" [disabled]="isLoading">{{ isLoading ?
+      <button *ngIf="etapaModal < 5" type="button" class="btn-primary" (click)="proximaEtapa()" [disabled]="consultandoCep">Próximo</button>
+      <button *ngIf="etapaModal === 5" type="submit" class="btn-primary" [disabled]="isLoading || consultandoCep">{{ isLoading ?
         'Finalizando...' : 'Finalizar' }}</button>
     </div>
     }
