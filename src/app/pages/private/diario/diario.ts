@@ -353,7 +353,7 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
   }
 
   podeEditarExcluirOcorrencia(oc: OcorrenciaResponseDTO): boolean {
-    return this.perfilEstrategico || (this.isMonitor && Date.now() - this.instanteBrasilia(oc.dataCriacao) <= 24 * 60 * 60 * 1000);
+    return this.perfilEstrategico || (this.isMonitor && !!oc.dataCriacao && Date.now() - this.instanteBrasilia(oc.dataCriacao) <= 24 * 60 * 60 * 1000);
   }
 
   get podeSalvarOcorrencia(): boolean {
@@ -539,7 +539,7 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
         descricao: ''
       });
     } else if (oc) {
-      const hora = new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit' }).format(this.instanteBrasilia(oc.dataCriacao));
+      const hora = new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit' }).format(this.instanteBrasilia(oc.dataOcorrencia));
       this.formOcorrencia.patchValue({
         horaStr: hora,
         tipoOcorrencia: oc.tipoOcorrencia,
@@ -572,13 +572,12 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
     this.cdr.markForCheck();
     const { horaStr, tipoOcorrencia, descricao } = this.formOcorrencia.getRawValue();
     const dataSelecionada = this.filtroForm.get('data')?.value;
-    const dataCriacao = `${dataSelecionada}T${horaStr}:00`;
+    const dataOcorrencia = `${dataSelecionada}T${horaStr}:00`;
     
     if (this.modoOcorrencia === 'NOVO') {
       const dto = {
         idMatricula: this.usuarioSelecionado!.idMatricula,
-        dataOcorrencia: dataSelecionada,
-        dataCriacao,
+        dataOcorrencia,
         tipoOcorrencia,
         descricao
       };
@@ -603,7 +602,7 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
         }
       });
     } else {
-      const dto = { dataCriacao, tipoOcorrencia, descricao };
+      const dto = { dataOcorrencia, tipoOcorrencia, descricao };
       this.diarioService.atualizarOcorrencia(this.ocorrenciaSelecionada!.id, dto).subscribe({
         next: (ocAtualizada) => {
           this.ngZone.run(() => {

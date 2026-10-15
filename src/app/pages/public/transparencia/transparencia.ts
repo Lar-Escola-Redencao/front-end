@@ -75,7 +75,7 @@ export class Transparencia {
       this.toastr.warning('Arquivo não encontrado ou indisponível.', 'Arquivo indisponível');
       return;
     }
-    baixarArquivoComVerificacao(url, documento.titulo || '', arquivoUrl => this.transparenciaService.carregarArquivo(arquivoUrl), this.toastr, () => this.marcarArquivoIndisponivel(url));
+    baixarArquivoComVerificacao(url, documento.titulo || '', arquivoUrl => this.transparenciaService.carregarDownload(arquivoUrl), this.toastr, () => this.marcarArquivoIndisponivel(url), documento.arquivo);
   }
 
   protected arquivoIndisponivel(url: string): boolean {
