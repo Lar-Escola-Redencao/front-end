@@ -128,9 +128,10 @@
 .cadastro-form .aviso-conflito-matricula {
   display: block;
   margin: 2px 0 0 2px;
-  color: var(--mat-form-field-error-text-color, #d32f2f);
+  color: #d98200;
   font-family: var(--fonte-texto);
-  font-size: 0.78rem;
+  font-size: 13px;
+  font-weight: 700;
   line-height: 1.35;
   text-align: left;
 }

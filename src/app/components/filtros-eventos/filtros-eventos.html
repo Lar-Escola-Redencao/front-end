@@ -1,0 +1,50 @@
+<button type="button" class="btn-filtros" (click)="abrir()">
+  Filtros
+  @if (quantidade > 0) { <span class="filtros-contador">{{ quantidade }}</span> }
+  <mat-icon>filter_list</mat-icon>
+</button>
+
+@if (aberto) {
+  <app-modal-layout titulo="Filtrar eventos" (closed)="fechar()">
+    <form class="filtros-eventos" (ngSubmit)="confirmar()">
+      <mat-form-field appearance="outline">
+        <mat-label>Data de início</mat-label>
+        <input #dataInicial matInput type="date" name="dataInicial" [(ngModel)]="rascunho.dataInicial" />
+        <button mat-icon-button matSuffix type="button" aria-label="Abrir calendário da data de início" (click)="abrirCalendario(dataInicial)">
+          <mat-icon>calendar_month</mat-icon>
+        </button>
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Data de fim</mat-label>
+        <input #dataFinal matInput type="date" name="dataFinal" [(ngModel)]="rascunho.dataFinal" />
+        <button mat-icon-button matSuffix type="button" aria-label="Abrir calendário da data de fim" (click)="abrirCalendario(dataFinal)">
+          <mat-icon>calendar_month</mat-icon>
+        </button>
+      </mat-form-field>
+      @if (intervaloInvalido) {
+        <p class="erro-filtro" role="alert">A data de fim deve ser igual ou posterior à data de início.</p>
+      }
+      <mat-form-field appearance="outline">
+        <mat-label>Valor</mat-label>
+        <mat-select name="valor" [(ngModel)]="rascunho.valor">
+          <mat-option value="todos">Gratuito ou pago</mat-option>
+          <mat-option value="gratuito">Gratuito</mat-option>
+          <mat-option value="pago">Pago</mat-option>
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Categoria</mat-label>
+        <mat-select name="tipo" [(ngModel)]="rascunho.tipo" [canSelectNullableOptions]="true">
+          <mat-option [value]="null">Todas as categorias</mat-option>
+          @for (categoria of categorias; track categoria.valor) {
+            <mat-option [value]="categoria.valor">{{ categoria.nome }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      <div class="acoes-filtros">
+        <button type="button" class="btn-filtro-secundario" (click)="limpar()">Limpar filtros</button>
+        <button type="submit" class="btn-primary" [disabled]="intervaloInvalido">Aplicar filtros</button>
+      </div>
+    </form>
+  </app-modal-layout>
+}

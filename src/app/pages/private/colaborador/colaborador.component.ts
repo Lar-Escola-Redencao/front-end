@@ -1,6 +1,7 @@
 import {
   ChangeDetectorRef,
   Component,
+  inject,
   HostListener,
   NgZone,
   OnDestroy,
@@ -16,7 +17,7 @@ import {
 } from '@angular/forms';
 
 import { ActivatedRoute, Router } from '@angular/router';
-import { Subscription } from 'rxjs';
+import { Subscription, forkJoin, of } from 'rxjs';
 
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -39,6 +40,7 @@ import { BarraBusca } from '@components/barra-busca/barra-busca';
 import { ComponentComAlteracoesNaoSalvas } from 'src/app/shared/guards/can-deactivate.guard';
 import { AtualizarColaboradorDTO, Colaborador, CriarColaboradorDTO } from 'src/app/shared/models/colaborador.model';
 import { Auth } from 'src/app/shared/services/auth/auth';
+import { SessaoService } from 'src/app/shared/services/auth/sessao.service';
 import { ColaboradorService } from 'src/app/shared/services/colaborador/colaborador.service';
 import { PapelService } from 'src/app/shared/services/colaborador/papel.service';
 import { UnidadeService } from 'src/app/shared/services/colaborador/unidade.service';
@@ -88,6 +90,8 @@ type Unidade = {
 })
 export class ColaboradorComponent
   implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalvas {
+
+  private readonly sessao = inject(SessaoService);
 
   colaboradores: Colaborador[] = [];
   papeisDisponiveis: string[] = [];
@@ -382,11 +386,16 @@ export class ColaboradorComponent
   }
 
   carregarUnidades(): void {
-    this.unidadeService
-      .listarTodos()
+    forkJoin({
+      unidades: this.unidadeService.listarTodos(),
+      membro: this.somenteMonitores ? this.sessao.carregar() : of(null)
+    })
       .subscribe({
-        next: (dados: Unidade[]) => {
-          this.unidadesDisponiveis = dados;
+        next: ({ unidades, membro }) => {
+          const permitidas = new Set((membro?.unidades ?? []).map(unidade => unidade.id));
+          this.unidadesDisponiveis = this.somenteMonitores
+            ? unidades.filter(unidade => permitidas.has(unidade.id))
+            : unidades;
           this.cdr.detectChanges();
         },
         error: (err: any) => {

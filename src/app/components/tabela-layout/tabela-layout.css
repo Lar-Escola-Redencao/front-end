@@ -219,7 +219,6 @@
 .etiqueta-celula {
   display: inline-flex;
   align-items: center;
-  margin-left: 8px;
   padding: 3px 8px;
   border-radius: 999px;
   font-size: 11px;

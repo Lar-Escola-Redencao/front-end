@@ -2,6 +2,12 @@
   width: 100%;
 }
 
+.acoes-eventos app-barra-busca { flex: 1; min-width: 220px; }
+@media (max-width: 640px) {
+  .acoes-eventos app-barra-busca,
+  .acoes-eventos app-filtros-eventos { width: 100%; }
+}
+
 .acoes-eventos {
   display: flex;
   align-items: center;

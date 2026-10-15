@@ -5,18 +5,7 @@
       [valor]="busca"
       (buscar)="buscar($event)" />
 
-    <mat-form-field appearance="outline" class="filtro-tipo">
-      <mat-label>Categoria</mat-label>
-      <mat-select
-        [(ngModel)]="filtroTipo"
-        [canSelectNullableOptions]="true"
-        (selectionChange)="aplicarFiltro()">
-        <mat-option [value]="null">Todos os eventos</mat-option>
-        <mat-option *ngFor="let tipo of tiposDisponiveis" [value]="tipo">
-          {{ formatarTextoExibicao(tipo) }}
-        </mat-option>
-      </mat-select>
-    </mat-form-field>
+    <app-filtros-eventos [filtros]="filtrosAplicados" (aplicar)="filtrar($event)" />
 
     <button type="button" class="btn-primary btn-primary-thick" (click)="abrirCadastro()">
       Novo evento

@@ -54,6 +54,17 @@
   padding: 20px 24px;
 }
 
+.hint-text .link-colaboradores {
+  color: inherit;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.hint-text .link-colaboradores:hover,
+.hint-text .link-colaboradores:focus-visible {
+  color: var(--primary-color);
+}
+
 .somente-leitura {
   display: flex;
   flex-direction: column;
