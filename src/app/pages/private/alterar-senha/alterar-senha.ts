@@ -108,7 +108,6 @@ export class AlterarSenha {
       confirmButtonText: 'Sim, desistir',
       cancelButtonText: 'Continuar alterando',
       confirmButtonColor: '#e04b3a',
-      cancelButtonColor: '#757575',
       reverseButtons: true
     }).then(resultado => resultado.isConfirmed).finally(() => {
       this.confirmandoDesistencia.set(false);

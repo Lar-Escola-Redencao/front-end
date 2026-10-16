@@ -475,7 +475,7 @@ export class Transparencia implements OnInit, OnDestroy, ComponentComAlteracoesN
     if (!this.modoEdicao) return this.formDocumento.dirty;
 
     // Como File object quebra no JSON.stringify, comparamos manualmente no caso de arquivo alterado
-    if (this.formDocumento.get('arquivo')?.dirty) return true;
+    if (this.formDocumento.get('arquivo')?.value) return true;
 
     const valorAtual = { ...this.formDocumento.getRawValue(), arquivo: null };
     const valorOriginal = { ...this.valoresOriginaisDocumento, arquivo: null };

@@ -315,6 +315,63 @@ body {
   min-height: 58px !important;
 }
 
+/* Ações secundárias de formulários, dentro e fora dos modais. */
+.form-acoes,
+.swal2-container .swal2-actions {
+  gap: 8px;
+}
+
+.swal2-container .swal2-actions > button {
+  margin: 0;
+}
+
+.btn-cancelar,
+.btn-cancelar-modal,
+.swal2-container .swal2-actions .swal2-cancel {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 45px;
+  min-width: 45px;
+  padding: 10px 24px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  box-shadow: none;
+  color: var(--input-color);
+  cursor: pointer;
+  font-family: var(--fonte-texto);
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.25;
+  transition: color 0.2s ease;
+}
+
+.btn-cancelar:hover:not(:disabled),
+.btn-cancelar-modal:hover:not(:disabled),
+.swal2-container .swal2-actions .swal2-cancel:hover:not(:disabled) {
+  color: #666;
+}
+
+.swal2-container .swal2-actions .swal2-cancel:hover,
+.swal2-container .swal2-actions .swal2-cancel:active {
+  background-image: none;
+}
+
+.btn-cancelar:focus-visible,
+.btn-cancelar-modal:focus-visible,
+.swal2-container .swal2-actions .swal2-cancel:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 3px;
+}
+
+.btn-cancelar:disabled,
+.btn-cancelar-modal:disabled,
+.swal2-container .swal2-actions .swal2-cancel:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 /* =========================
    SWITCH (ESTILO APPLE)
    ========================= */

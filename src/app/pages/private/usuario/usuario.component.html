@@ -56,7 +56,7 @@
           </mat-select>
         </mat-form-field>
 
-        <div class="acoes-filtros-usuarios">
+        <div class="acoes-filtros-usuarios form-acoes">
           <button type="button" class="btn-filtro-secundario" (click)="limparFiltrosUsuarios()">Limpar filtros</button>
           <button type="button" class="btn-primary" (click)="aplicarFiltrosModal()">Aplicar filtros</button>
         </div>
@@ -458,11 +458,11 @@
       <span class="aviso-conflito-matricula" *ngIf="conflitoPeriodoMatricula">{{ avisoConflitoPeriodoMatricula }}</span>
     </div>
 
-    <div class="acoes-modal cadastro-acoes">
+    <div class="acoes-modal cadastro-acoes form-acoes">
       <span class="acoes-espaco"></span>
       <button type="button" class="btn-cancelar" (click)="fecharModal()" [disabled]="isLoading">Cancelar</button>
       <button *ngIf="etapaModal < 5" type="button" class="btn-primary" (click)="proximaEtapa()" [disabled]="consultandoCep">Próximo</button>
-      <button *ngIf="etapaModal === 5" type="submit" class="btn-primary" [disabled]="isLoading || consultandoCep">{{ isLoading ?
+      <button *ngIf="etapaModal === 5" type="submit" class="btn-primary" [disabled]="isLoading || isCarregandoEdicao || consultandoCep || (modoEdicao && !temAlteracoes)">{{ isLoading ?
         'Finalizando...' : 'Finalizar' }}</button>
     </div>
     }
@@ -514,11 +514,11 @@
       Ao editar estes dados, todos os outros vínculos deste contato também serão alterados.
     </span>
 
-    <div class="acoes-modal">
+    <div class="acoes-modal form-acoes">
       <button type="button" class="btn-cancelar" (click)="fecharModalContato()" [disabled]="isLoading">Cancelar</button>
-      <button type="submit" class="btn-primary" [disabled]="isLoading">
+      <button type="submit" class="btn-primary" [disabled]="isLoading || !contatoTemAlteracoes()">
         <span *ngIf="isLoading" class="spinner" aria-hidden="true"></span>
-        <span>{{ isLoading ? 'Salvando...' : 'Salvar alterações' }}</span>
+        <span>{{ isLoading ? 'Salvando...' : 'Salvar' }}</span>
       </button>
     </div>
 
@@ -745,7 +745,7 @@
       *ngIf="formNovoVinculo.get('idUsuario')?.invalid && formNovoVinculo.get('idUsuario')?.touched">Selecione um
       usuário.</span>
 
-    <div class="acoes-modal">
+    <div class="acoes-modal form-acoes">
       <button type="button" class="btn-cancelar" (click)="fecharNovoVinculo()"
         [disabled]="isSalvandoVinculo">Cancelar</button>
       <button type="submit" class="btn-primary" [disabled]="isSalvandoVinculo">

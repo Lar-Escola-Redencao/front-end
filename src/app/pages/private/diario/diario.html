@@ -139,7 +139,7 @@
             <span>A chamada desta turma ainda não foi iniciada.</span>
           </div>
           
-          <div class="acoes">
+          <div class="acoes form-acoes">
             @if (!podeIniciarChamada) {
               <span class="alerta-tempo-vermelho">O registro ficará disponível<br>após o horário de início da aula.</span>
             }
@@ -157,7 +157,7 @@
             <input type="checkbox" [(ngModel)]="declaracaoAceita">
             <span>Declaro que o diário foi preenchido corretamente</span>
           </label>
-          <div class="acoes">
+          <div class="acoes form-acoes">
             <button type="button" class="btn-cancelar" [disabled]="salvando" (click)="cancelarPreenchimento()">Cancelar</button>
             <button type="button" class="btn-primary" [disabled]="!declaracaoAceita || !podePreencherFrequencia" (click)="salvarDiarioLote()">
                <span *ngIf="salvando" class="spinner"></span> Salvar
@@ -262,7 +262,7 @@
           </div>
         </div>
 
-        <div class="acoes-modal">
+        <div class="acoes-modal form-acoes">
           <button type="button" class="btn-cancelar" (click)="fecharModalOcorrenciaDetalhe()">Voltar</button>
         </div>
       </div>
@@ -319,7 +319,7 @@
           <p class="aviso-visualizacao">Esta ocorrência está em modo de visualização. Os dados não podem ser alterados aqui.</p>
         }
 
-        <div class="acoes-modal">
+        <div class="acoes-modal form-acoes">
           <button type="button" class="btn-cancelar" [disabled]="salvando" (click)="fecharModalOcorrenciaDetalhe()">Cancelar</button>
           
           @if (modoOcorrencia !== 'VER') {

@@ -152,9 +152,9 @@
           <span class="aviso-contato-edicao" role="alert">Ao editar estes dados, todos os outros vínculos deste contato também serão alterados.</span>
         }
 
-        <div class="modal-acoes">
+        <div class="modal-acoes form-acoes">
           <button type="button" class="btn-cancelar" [disabled]="salvando" (click)="fecharModal()">Cancelar</button>
-          <button type="submit" class="btn-primary" [disabled]="salvando">
+          <button type="submit" class="btn-primary" [disabled]="salvando || (modoModal === 'editar' && !temAlteracoes)">
             <span *ngIf="salvando" class="spinner" aria-hidden="true"></span>
             <span>{{ salvando ? 'Salvando...' : 'Salvar' }}</span>
           </button>

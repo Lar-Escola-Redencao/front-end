@@ -10,7 +10,6 @@ export const Alertas = {
       confirmButtonText: 'Sim, descartar',
       cancelButtonText: 'Continuar editando',
       confirmButtonColor: '#e04b3a',
-      cancelButtonColor: '#757575',
       reverseButtons: true
     }).then((resultado) => resultado.isConfirmed);
   },
@@ -24,7 +23,6 @@ export const Alertas = {
       confirmButtonText: 'Sim, excluir',
       cancelButtonText: 'Cancelar',
       confirmButtonColor: '#e04b3a',
-      cancelButtonColor: '#757575',
       reverseButtons: true
     }).then((resultado) => resultado.isConfirmed);
   },
@@ -60,7 +58,6 @@ export const Alertas = {
       confirmButtonText: 'Sim, substituir',
       cancelButtonText: 'Cancelar',
       confirmButtonColor: '#3682dc',
-      cancelButtonColor: '#757575',
       reverseButtons: true
     }).then((resultado) => resultado.isConfirmed);
   }

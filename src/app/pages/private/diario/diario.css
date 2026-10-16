@@ -411,7 +411,6 @@
 .rodape-diario .acoes {
   display: flex;
   align-items: center;
-  gap: 16px;
 }
 
 .modal-subtitulo {
@@ -421,28 +420,10 @@
   margin: -10px 0 20px 0;
 }
 
-.btn-cancelar {
-  background: transparent;
-  border: none;
-  outline: none;
-  color: var(--input-color);
-  font-family: var(--fonte-texto);
-  font-size: 1rem;
-  font-weight: 700;
-  cursor: pointer;
-  padding: 8px 16px;
-  transition: color 0.2s ease;
-}
-
-.btn-cancelar:hover {
-  color: var(--preto);
-}
-
 .acoes-modal {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 16px;
   margin-top: 16px;
 }
 

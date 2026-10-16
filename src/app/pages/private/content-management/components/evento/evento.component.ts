@@ -681,7 +681,7 @@ export class EventoComponent implements OnInit, OnDestroy, ComponentComAlteracoe
       endereco: valor.endereco,
       tipoEvento: valor.tipoEvento,
       valor: this.valorNumerico,
-      parceirosIds: valor.parceirosIds || []
+      parceirosIds: [...(valor.parceirosIds || [])].sort((a, b) => a - b)
     };
   }
 }

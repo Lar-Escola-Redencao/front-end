@@ -80,7 +80,7 @@
     </span>
     }
 
-    <div class="acoes-modal">
+    <div class="acoes-modal form-acoes">
 
       <button
         type="button"
@@ -94,7 +94,7 @@
       <button
         type="submit"
         class="btn-primary"
-        [disabled]="isSalvando"
+        [disabled]="isSalvando || (modoEdicao && !temAlteracoes)"
       >
         <span
           *ngIf="isSalvando"

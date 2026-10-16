@@ -74,6 +74,18 @@ describe('Diário de turma', () => {
 
   afterEach(() => { fixture.destroy(); vi.useRealTimers(); vi.restoreAllMocks(); });
 
+  it('bloqueia salvar ocorrência inalterada e volta a bloquear ao desfazer a edição', () => {
+    component.usuarioSelecionado = aluno();
+    component.abrirFormOcorrencia(ocorrencia('2026-10-06T12:00:00'), 'EDITAR');
+    expect(component.podeSalvarOcorrencia).toBe(false);
+    component.formOcorrencia.get('descricao')!.setValue('Registro alterado');
+    expect(component.podeSalvarOcorrencia).toBe(true);
+    component.formOcorrencia.get('descricao')!.setValue('Registro');
+    component.formOcorrencia.markAsDirty();
+    expect(component.podeSalvarOcorrencia).toBe(false);
+    expect(component.temAlteracoesNoModalOcorrencia).toBe(false);
+  });
+
   it('carrega turma em cascata e consulta novamente ao mudar data', () => {
     expect(turmas.listar).toHaveBeenCalledWith(1);
     component.filtroForm.get('data')!.setValue('2026-10-03');

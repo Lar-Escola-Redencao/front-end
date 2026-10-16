@@ -6,7 +6,7 @@
       @if (!editando) {
         <button type="button" class="btn-primary" (click)="editar()">Editar</button>
       } @else {
-        <div class="acoes-edicao">
+        <div class="acoes-edicao form-acoes">
           <button type="button" class="btn-cancelar" [disabled]="salvando" (click)="cancelar()">Cancelar</button>
           <button type="submit" class="btn-primary" [disabled]="salvando || !temAlteracoes">
             <span *ngIf="salvando" class="spinner" aria-hidden="true"></span>

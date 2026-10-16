@@ -333,10 +333,12 @@ export class ColaboradorComponent
       return this.formColaborador.dirty;
     }
 
-    return (
-      JSON.stringify(this.formColaborador.getRawValue()) !==
-      JSON.stringify(this.valoresOriginaisDoFormulario)
-    );
+    const normalizar = (valores: any) => ({
+      ...valores,
+      idsUnidades: [...(valores?.idsUnidades || [])].sort((a, b) => a - b)
+    });
+    return JSON.stringify(normalizar(this.formColaborador.getRawValue())) !==
+      JSON.stringify(normalizar(this.valoresOriginaisDoFormulario));
   }
 
   /** Coordenador só faz a gestão de monitores; administrador vê e gerencia todos os papéis. */

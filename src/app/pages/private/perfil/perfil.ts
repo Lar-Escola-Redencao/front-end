@@ -93,6 +93,10 @@ export class Perfil implements OnInit, ComponentComAlteracoesNaoSalvas {
     );
   }
 
+  get temAlteracoes(): boolean {
+    return this.dadosTemAlteracoesNaoSalvas();
+  }
+
   @HostListener('window:beforeunload', ['$event'])
   avisarAntesDeFechar(event: BeforeUnloadEvent): void {
     if (this.formularioTemAlteracoesNaoSalvas()) {
@@ -163,6 +167,7 @@ export class Perfil implements OnInit, ComponentComAlteracoesNaoSalvas {
   }
 
   salvar(): void {
+    if (this.salvando || !this.temAlteracoes) return;
     this.formDados.markAllAsTouched();
     this.verificarErros();
 

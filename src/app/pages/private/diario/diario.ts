@@ -359,7 +359,7 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
   get podeSalvarOcorrencia(): boolean {
     return !this.salvando && !!this.usuarioSelecionado && (
       this.modoOcorrencia === 'NOVO' ? this.podeAdicionarOcorrencia
-        : this.modoOcorrencia === 'EDITAR' && !!this.ocorrenciaSelecionada && this.podeEditarExcluirOcorrencia(this.ocorrenciaSelecionada)
+        : this.modoOcorrencia === 'EDITAR' && !!this.ocorrenciaSelecionada && this.podeEditarExcluirOcorrencia(this.ocorrenciaSelecionada) && this.temAlteracoesNoModalOcorrencia
     );
   }
 
@@ -438,9 +438,11 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
     return this.estadoTela === 'PREENCHENDO';
   }
 
+  private valoresOriginaisOcorrencia = '';
+
   get temAlteracoesNoModalOcorrencia(): boolean {
     if (this.modalOcorrenciaDetalheAberto && (this.modoOcorrencia === 'NOVO' || this.modoOcorrencia === 'EDITAR')) {
-      return this.formOcorrencia.dirty;
+      return JSON.stringify(this.formOcorrencia.getRawValue()) !== this.valoresOriginaisOcorrencia;
     }
     return false;
   }
@@ -553,6 +555,7 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
       }
     }
     this.formOcorrencia.markAsPristine();
+    this.valoresOriginaisOcorrencia = JSON.stringify(this.formOcorrencia.getRawValue());
   }
 
   salvarOcorrencia() {

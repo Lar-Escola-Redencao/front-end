@@ -516,7 +516,7 @@ export class CaptacaoRecursos implements OnInit, OnDestroy, ComponentComAlteraco
       return;
     }
 
-    if ((this.modoEdicao || this.editandoContato) && !this.temAlteracoes) {
+    if ((this.modoEdicao || (this.editandoContato && !!this.secaoContato)) && !this.temAlteracoes) {
       this.toastr.info('Nenhum dado foi alterado.', 'Aviso');
       return;
     }

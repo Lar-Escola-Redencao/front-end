@@ -72,6 +72,19 @@ describe('Contrato de edição de usuários', () => {
     expect(component.contatoExistenteAlterado(0)).toBe(false);
   });
 
+  it('preserva alterações digitadas antes de chegar a consulta de turmas da edição', () => {
+    const resposta = new Subject<any[]>();
+    vi.spyOn(TestBed.inject(TurmaService), 'listar').mockReturnValue(resposta);
+    component.abrirEdicao(usuario);
+    expect(component.temAlteracoes).toBe(false);
+    component.formUsuario.get('nomeCompleto')!.setValue('Maria Atualizada');
+    resposta.next([{ id: 2, unidade: { id: 1 } }]);
+    expect(component.temAlteracoes).toBe(true);
+    component.salvar();
+    expect(service.atualizar).toHaveBeenCalledOnce();
+    expect(service.atualizar.mock.calls[0][1].nomeCompleto).toBe('Maria Atualizada');
+  });
+
   it('bloqueia os campos de endereço enquanto consulta e os libera ao terminar', async () => {
     vi.useFakeTimers();
     try {
@@ -414,6 +427,7 @@ describe('Contrato de edição de usuários', () => {
   it('exibe erro de telefone retornado pela API e permite corrigir o campo', () => {
     const mensagem = 'Já existe outro contato cadastrado com este telefone.';
     service.atualizar.mockReturnValue(throwError(() => ({ error: { message: mensagem } })));
+    component.contatosArray.at(0).get('telefone')!.setValue('(11) 97777-7777');
     component.salvar();
     const telefone = component.contatosArray.at(0).get('telefone')!;
     expect(component.etapaModal).toBe(2);
@@ -424,6 +438,7 @@ describe('Contrato de edição de usuários', () => {
 
   it('exibe conflito de telefone na edição centralizada', () => {
     component.abrirEdicaoContato({ id: 8, nomeCompleto: 'Ana', telefone: '11999999999', quantidadeVinculos: 0 });
+    component.formEdicaoContato.get('telefone')!.setValue('(11) 97777-7777');
     const mensagem = 'Já existe outro contato cadastrado com este telefone.';
     (TestBed.inject(ContatoService) as any).atualizarContato = vi.fn(() => throwError(() => ({ error: { message: mensagem } })));
     component.salvarEdicaoContato();

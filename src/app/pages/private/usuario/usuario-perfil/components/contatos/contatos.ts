@@ -230,6 +230,10 @@ export class UsuarioPerfilContatos implements OnDestroy {
       && this.snapshotFormulario() !== this.valoresOriginaisFormulario;
   }
 
+  get temAlteracoes(): boolean {
+    return this.snapshotFormulario() !== this.valoresOriginaisFormulario;
+  }
+
   @HostListener('window:beforeunload', ['$event'])
   avisarAntesDeFechar(event: BeforeUnloadEvent): void {
     if (this.formularioTemAlteracoesNaoSalvas()) {
@@ -354,6 +358,7 @@ export class UsuarioPerfilContatos implements OnDestroy {
 
   async salvar(): Promise<void> {
     if (!this.usuario?.id || this.somenteLeitura || this.salvando || this.modoModal === 'visualizar') return;
+    if (this.modoModal === 'editar' && !this.temAlteracoes) return;
     this.form.markAllAsTouched();
 
     if (this.form.get('buscarExistente')?.value && !this.form.get('id')?.value) {

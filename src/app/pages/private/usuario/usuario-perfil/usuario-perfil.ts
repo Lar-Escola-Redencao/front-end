@@ -560,7 +560,6 @@ export class UsuarioPerfil implements OnInit, OnDestroy, ComponentComAlteracoesN
       confirmButtonText: botaoConfirmar,
       cancelButtonText: 'Cancelar',
       confirmButtonColor,
-      cancelButtonColor: '#757575',
       reverseButtons: true,
       inputValidator: valor => valor?.trim().toLowerCase() === textoConfirmacao.toLowerCase()
         ? undefined

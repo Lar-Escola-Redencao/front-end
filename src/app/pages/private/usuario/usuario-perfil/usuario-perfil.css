@@ -330,17 +330,6 @@
   width: 100%;
 }
 
-.btn-cancelar-modal {
-  border: 0;
-  background: transparent;
-  color: var(--input-color, #777);
-  cursor: pointer;
-  font-family: var(--fonte-texto);
-  font-size: 14px;
-  font-weight: 700;
-}
-
-.btn-cancelar-modal:disabled,
 .perfil-modal-form .btn-primary:disabled {
   cursor: not-allowed;
   opacity: 0.65;
@@ -349,7 +338,6 @@
 .perfil-modal-acoes {
   display: flex;
   justify-content: flex-end;
-  gap: 16px;
   margin-top: 20px;
 }
 

@@ -1135,16 +1135,18 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
           cpf: dadosCompletos.cpf ? formatarCpf(dadosCompletos.cpf) : '',
           tipoDocumento: dadosCompletos.tipoDocumento || '',
           documentoAuxiliar: dadosCompletos.documentoAuxiliar || '',
-          idUnidade: dadosCompletos.idUnidade || null
+          idUnidade: dadosCompletos.idUnidade || null,
+          idTurma: dadosCompletos.idTurma || null
         });
 
         if (dadosCompletos.idUnidade) {
           const turmaCtrl = this.formUsuario.get('idTurma');
           this.turmaService.listar(dadosCompletos.idUnidade).subscribe(turmas => {
+            if (!this.modalAberto || this.usuarioSelecionadoId !== usuarioLista.id
+              || turmaCtrl !== this.formUsuario.get('idTurma')
+              || this.formUsuario.get('idUnidade')?.value !== dadosCompletos.idUnidade) return;
             this.turmasDisponiveis = turmas.filter(t => t.unidade.id === dadosCompletos.idUnidade);
             turmaCtrl?.enable();
-            turmaCtrl?.setValue(dadosCompletos.idTurma || null);
-            this.valoresOriginaisDoFormulario = this.formUsuario.getRawValue();
             this.atualizarTela();
           });
         }
@@ -1881,6 +1883,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
   }
 
   get temAlteracoes(): boolean {
+    if (this.fotoSelecionada || this.arquivosSaude.length > 0) return true;
     if (!this.modoEdicao) return this.formUsuario.dirty;
     return JSON.stringify(this.formUsuario.getRawValue()) !== JSON.stringify(this.valoresOriginaisDoFormulario);
   }
@@ -1901,6 +1904,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
 
   salvar() {
     if (this.isLoading || this.isCarregandoEdicao || this.consultandoCep || !this.modalAberto) return;
+    if (this.modoEdicao && !this.temAlteracoes) return;
     this.formUsuario.markAllAsTouched();
     this.validarCpfsContatos();
     this.verificarErros();
@@ -2069,7 +2073,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
     this.modalContatoAberto = true;
   }
 
-  private contatoTemAlteracoes(): boolean {
+  contatoTemAlteracoes(): boolean {
     return this.snapshotContatoEdicao() !== this.valoresOriginaisContato;
   }
 
@@ -2098,6 +2102,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
   }
 
   salvarEdicaoContato() {
+    if (this.isLoading || !this.contatoTemAlteracoes()) return;
     if (this.formEdicaoContato.invalid || !this.contatoEmEdicaoId) {
       this.formEdicaoContato.markAllAsTouched();
       return;

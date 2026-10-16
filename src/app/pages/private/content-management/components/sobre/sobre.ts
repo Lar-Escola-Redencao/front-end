@@ -316,7 +316,7 @@ export class Sobre implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalvas
       return;
     }
 
-    if (!this.temAlteracoesTexto) {
+    if (this.secaoTexto && !this.temAlteracoesTexto) {
       this.toastr.info('Nenhum dado foi alterado.', 'Aviso');
       return;
     }
@@ -568,7 +568,7 @@ export class Sobre implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalvas
   }
 
   get temAlteracoesHistoria(): boolean {
-    if (this.formHistoria.get('imagem')?.dirty) {
+    if (this.formHistoria.get('imagem')?.value) {
       return true;
     }
 

@@ -106,7 +106,6 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: flex-end;
-  gap: 28px;
   margin-top: 4px;
 }
 
@@ -121,21 +120,6 @@
   font-size: 0.9rem;
   font-weight: 400;
   text-align: left;
-}
-
-.btn-cancelar {
-  border: 0;
-  background: transparent;
-  color: var(--input-color);
-  cursor: pointer;
-  font-family: var(--fonte-texto);
-  font-size: 1rem;
-  font-weight: 700;
-}
-
-.btn-cancelar:disabled {
-  cursor: not-allowed;
-  opacity: 0.6;
 }
 
 .estado-info,

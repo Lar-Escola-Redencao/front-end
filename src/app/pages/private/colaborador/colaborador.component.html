@@ -80,7 +80,7 @@
       </mat-form-field>
     }
 
-    <div class="acoes-filtros-colaboradores">
+    <div class="acoes-filtros-colaboradores form-acoes">
       <button
         type="button"
         class="btn-filtro-secundario"
@@ -295,7 +295,7 @@
     </span>
     }
 
-    <div class="acoes-modal">
+    <div class="acoes-modal form-acoes">
       <button
         type="button"
         class="btn-cancelar"
@@ -307,7 +307,7 @@
       <button
         type="submit"
         class="btn-primary"
-        [disabled]="isLoading || formColaborador.invalid || (modoEdicao && !temAlteracoes)">
+        [disabled]="isLoading || (modoEdicao && !temAlteracoes)">
         <span
           *ngIf="isLoading"
           class="spinner"

@@ -143,7 +143,7 @@
           }
         </form>
 
-        <div class="perfil-modal-acoes">
+        <div class="perfil-modal-acoes form-acoes">
           <button type="button" class="btn-cancelar-modal" (click)="fecharModalDesligamento()" [disabled]="salvandoDesligamento">Cancelar</button>
           <button type="button" class="btn-primary" (click)="confirmarDesligamento()" [disabled]="salvandoDesligamento">
             {{ salvandoDesligamento ? 'Enviando...' : 'Confirmar' }}
@@ -209,7 +209,7 @@
           }
         </form>
 
-        <div class="perfil-modal-acoes">
+        <div class="perfil-modal-acoes form-acoes">
           <button type="button" class="btn-cancelar-modal" (click)="fecharModalTransferencia()" [disabled]="salvandoTransferencia">Cancelar</button>
           <button type="button" class="btn-primary" (click)="confirmarSelecaoTurma()" [disabled]="salvandoTransferencia">
             {{ salvandoTransferencia ? 'Enviando...' : (modoSelecaoTurma === 'rematricula' ? 'Matricular' : 'Confirmar') }}

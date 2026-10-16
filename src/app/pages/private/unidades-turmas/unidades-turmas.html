@@ -282,7 +282,7 @@
         </div>
       }
 
-      <div class="acoes-modal">
+      <div class="acoes-modal form-acoes">
         <button type="button" class="btn-cancelar" [disabled]="isLoading" (click)="fecharModal()">
           Cancelar
         </button>
@@ -397,7 +397,7 @@
         {{ errosTurma['unidadeId'] }}
       </span>
 
-      <div class="acoes-modal">
+      <div class="acoes-modal form-acoes">
         <button
           type="button"
           class="btn-cancelar"
@@ -412,8 +412,6 @@
           class="btn-primary"
           [disabled]="
             isLoadingTurma ||
-            formTurma.invalid ||
-            unidades.length === 0 ||
             (modoEdicaoTurma && !temAlteracoesTurma)
           "
         >

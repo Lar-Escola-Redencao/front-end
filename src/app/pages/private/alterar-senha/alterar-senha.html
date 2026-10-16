@@ -37,11 +37,11 @@
       @if (erro()) {
         <p class="error-text" role="alert">{{ erro() }}</p>
       }
-      <div class="acoes">
+      <div class="acoes form-acoes">
         <button type="button" class="btn-cancelar" [disabled]="carregando()" (click)="fechar()">
           Cancelar
         </button>
-        <button type="submit" class="btn-primary" [disabled]="carregando() || formAtual.invalid">
+        <button type="submit" class="btn-primary" [disabled]="carregando()">
           {{ carregando() ? 'Confirmando...' : 'Continuar' }}
         </button>
       </div>
@@ -96,7 +96,7 @@
             : 'Confirme sua nova senha.' }}
         </mat-error>
       </mat-form-field>
-      <div class="acoes">
+      <div class="acoes form-acoes">
         <button
           type="button"
           class="btn-cancelar"
@@ -105,7 +105,7 @@
         >
           Voltar
         </button>
-        <button type="submit" class="btn-primary" [disabled]="carregando() || formSenha.invalid">
+        <button type="submit" class="btn-primary" [disabled]="carregando()">
           {{ carregando() ? 'Salvando...' : 'Salvar senha' }}
         </button>
       </div>
@@ -119,7 +119,7 @@
       </div>
       <p class="sucesso">Sua senha foi alterada com sucesso.</p>
     </div>
-    <div class="acoes">
+    <div class="acoes form-acoes">
       <button type="button" class="btn-primary" (click)="fechar()">Concluir</button>
     </div>
   }

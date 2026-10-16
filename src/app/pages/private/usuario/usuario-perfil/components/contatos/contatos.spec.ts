@@ -55,6 +55,35 @@ describe('UsuarioPerfilContatos', () => {
     expect(component.contatosOrdenados.map(contato => contato.id)).toEqual([1, 2]);
   });
 
+  it('só habilita salvar edição enquanto os valores diferem do contato original', () => {
+    component.usuario = { id: 1, nomeCompleto: 'Aluno', contatos: [] } as any;
+    component.abrirFormulario('editar', {
+      id: 1, nomeCompleto: 'Contato', telefone: '16999999999', parentesco: 'MAE', principal: true
+    } as any);
+    fixture.detectChanges();
+    const salvar = () => fixture.nativeElement.querySelector('button[type="submit"]') as HTMLButtonElement;
+    expect(salvar().disabled).toBe(true);
+    component.form.get('nomeCompleto')!.setValue('Outro contato');
+    fixture.detectChanges();
+    expect(salvar().disabled).toBe(false);
+    component.form.get('nomeCompleto')!.setValue('Contato');
+    fixture.detectChanges();
+    expect(salvar().disabled).toBe(true);
+  });
+
+  it('permite tentar cadastrar contato vazio e destaca os campos obrigatórios', async () => {
+    component.usuario = { id: 1, nomeCompleto: 'Aluno', contatos: [] } as any;
+    component.abrirFormulario('novo');
+    fixture.detectChanges();
+    const salvar = fixture.nativeElement.querySelector('button[type="submit"]') as HTMLButtonElement;
+    expect(salvar.disabled).toBe(false);
+    await component.salvar();
+    fixture.detectChanges();
+    expect(component.form.get('nomeCompleto')!.touched).toBe(true);
+    expect(fixture.nativeElement.querySelector('.error-text')).toBeTruthy();
+    expect(usuarioService.vincularNovoContato).not.toHaveBeenCalled();
+  });
+
   it('oculta o botão de novo contato quando o usuário já possui quatro contatos', () => {
     component.usuario = {
       id: 1,

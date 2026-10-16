@@ -31,7 +31,6 @@
 .acoes-edicao {
   display: inline-flex;
   align-items: center;
-  gap: 16px;
 }
 
 .aba-cabecalho > .btn-primary,
@@ -39,16 +38,6 @@
   position: absolute;
   top: 0;
   right: 0;
-}
-
-.btn-cancelar {
-  border: 0;
-  background: transparent;
-  color: var(--input-color);
-  cursor: pointer;
-  font-family: var(--fonte-texto);
-  font-size: 14px;
-  font-weight: 700;
 }
 
 .step-grid {

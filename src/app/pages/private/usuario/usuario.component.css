@@ -126,7 +126,6 @@ h1 {
 .acoes-filtros-usuarios {
   display: flex;
   justify-content: flex-end;
-  gap: 12px;
   margin-top: 4px;
 }
 
@@ -460,18 +459,7 @@ h1 {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 28px;
   margin-top: 4px;
-}
-
-.btn-cancelar {
-  border: 0;
-  background: transparent;
-  color: var(--input-color);
-  cursor: pointer;
-  font-family: var(--fonte-texto);
-  font-size: 1rem;
-  font-weight: 700;
 }
 
 /* modal de preview */
@@ -850,7 +838,6 @@ h1 {
 
   .acoes-modal {
     flex-direction: column-reverse;
-    gap: 12px;
     width: 100%;
   }
 
@@ -1675,7 +1662,6 @@ h1 {
 
 .cadastro-acoes {
   display: flex;
-  gap: 18px;
   justify-content: flex-end;
   margin-top: 28px;
 }
@@ -1746,7 +1732,6 @@ h1 {
 
   .cadastro-acoes {
     flex-direction: row;
-    gap: 12px;
   }
 
   .cadastro-acoes button {
