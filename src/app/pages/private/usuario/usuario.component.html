@@ -123,8 +123,9 @@
         <mat-form-field appearance="outline"><mat-label>Nome completo*</mat-label><input matInput
             formControlName="nomeCompleto"><mat-error>{{ mensagemErro(formUsuario.get('nomeCompleto'))
             }}</mat-error></mat-form-field>
-        <mat-form-field appearance="outline"><mat-label>Data nascimento*</mat-label><input matInput type="date"
-            formControlName="dataNascimento"><mat-error>{{ mensagemErro(formUsuario.get('dataNascimento'))
+        <mat-form-field appearance="outline"><mat-label>Data nascimento*</mat-label><input #dataNascimento matInput type="date"
+            formControlName="dataNascimento"><button type="button" matSuffix class="btn-calendario-data"
+            aria-label="Abrir calendário da data de nascimento" (click)="abrirCalendario(dataNascimento)"><mat-icon>calendar_month</mat-icon></button><mat-error>{{ mensagemErro(formUsuario.get('dataNascimento'))
             }}</mat-error></mat-form-field>
         <ng-container *ngIf="!formUsuario.get('usarOutroDocumento')?.value; else outroDocumento">
           <mat-form-field appearance="outline"><mat-label>CPF/CIN*</mat-label><input matInput formControlName="cpf"
@@ -278,8 +279,10 @@
             <mat-form-field appearance="outline"><mat-label>Local de trabalho</mat-label><input matInput
                 formControlName="localTrabalho"></mat-form-field>
           </div>
-          <span class="aviso-contato-edicao" role="alert" *ngIf="contatoExistenteAlterado(i)">Este contato será
-            atualizado para todos os usuários vinculados a ele.</span>
+          <span class="aviso-contato-edicao" role="alert" *ngIf="contatoExistenteAlterado(i)">
+            Este contato será atualizado para todos os usuários vinculados a ele. Para desfazer, clique
+            <button type="button" class="link-desfazer-contato" (click)="descartarAlteracoesContato(i)">aqui</button>.
+          </span>
         </div>
       </div>
       <button type="button" class="btn-add-contato" *ngIf="contatosArray.length < 4"

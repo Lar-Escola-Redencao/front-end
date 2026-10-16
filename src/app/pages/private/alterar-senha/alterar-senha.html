@@ -9,12 +9,6 @@
 >
   @if (etapa() === 1) {
     <p class="descricao">Confirme sua senha atual para continuar.</p>
-    @if (mostrarRecuperacaoSenha()) {
-      <p class="recuperacao-senha">
-        Esqueceu sua senha? Acesse “Esqueci a senha” na tela de login ou clique
-        <button type="button" class="link-recuperacao" (click)="irParaRecuperacaoSenha()">aqui</button>.
-      </p>
-    }
     <form class="senha-form" [formGroup]="formAtual" (ngSubmit)="confirmarSenhaAtual()">
       <mat-form-field appearance="outline">
         <mat-label>Senha atual</mat-label>

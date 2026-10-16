@@ -55,7 +55,7 @@
 }
 
 .hint-text .link-colaboradores {
-  color: inherit;
+  color: var(--primary-color);
   text-decoration: none;
   transition: color 0.2s ease;
 }
@@ -142,6 +142,8 @@
 .estado-erro {
   color: var(--input-color);
   font-family: var(--fonte-texto);
+  display: grid;
+  gap: 16px;
 }
 
 .spinner {

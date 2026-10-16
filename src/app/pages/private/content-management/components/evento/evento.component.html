@@ -77,7 +77,9 @@
       <div>
       <mat-form-field appearance="outline">
         <mat-label>Data e hora</mat-label>
-        <input matInput type="datetime-local" formControlName="dataEvento" (blur)="verificarErros()" />
+        <input #dataEvento matInput type="datetime-local" formControlName="dataEvento" (blur)="verificarErros()" />
+        <button type="button" matSuffix class="btn-calendario-data" aria-label="Abrir seletor de data e hora"
+          (click)="abrirCalendario(dataEvento)"><mat-icon>calendar_month</mat-icon></button>
       </mat-form-field>
       <span class="error-text" *ngIf="erros['dataEvento']">{{ erros['dataEvento'] }}</span>
       </div>

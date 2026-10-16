@@ -1508,6 +1508,28 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
     );
   }
 
+  descartarAlteracoesContato(index: number): void {
+    const grupo = this.contatosArray.at(index) as FormGroup;
+    const original = this.contatosOriginais.get(grupo);
+    if (!original) return;
+
+    grupo.patchValue({
+      nomeCompleto: original['nomeCompleto'],
+      telefone: formatarTelefone(original['telefone']),
+      email: original['email'],
+      endereco: original['endereco'],
+      cpf: formatarCpf(original['cpf']),
+      localTrabalho: original['localTrabalho']
+    }, { emitEvent: false });
+
+    for (const campo of this.camposCompartilhadosContato) {
+      grupo.get(campo)?.markAsPristine();
+      grupo.get(campo)?.markAsUntouched();
+    }
+    this.validarCpfsContatos();
+    this.atualizarTela();
+  }
+
   private validarCpfsContatos(): void {
     const cpfsVistos = new Set<string>();
     for (const grupo of this.contatosArray.controls) {
@@ -1577,6 +1599,11 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
 
   formatarTelefoneContato(valor?: string | null): string {
     return valor ? formatarTelefone(valor) : '-';
+  }
+
+  abrirCalendario(campo: HTMLInputElement): void {
+    campo.focus();
+    if (typeof campo.showPicker === 'function') campo.showPicker();
   }
 
   hrefTelefoneContato(valor?: string | null): string | null {

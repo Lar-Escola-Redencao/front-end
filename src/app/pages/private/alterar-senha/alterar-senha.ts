@@ -33,7 +33,6 @@ export class AlterarSenha {
   etapa = signal<1 | 2 | 3>(1);
   carregando = signal(false);
   erro = signal('');
-  mostrarRecuperacaoSenha = signal(false);
   mostrarAtual = signal(false);
   mostrarNova = signal(false);
   mostrarConfirmacao = signal(false);
@@ -124,7 +123,6 @@ export class AlterarSenha {
       return;
     }
     this.erro.set('');
-    this.mostrarRecuperacaoSenha.set(false);
     this.carregando.set(true);
     this.formAtual.disable();
     this.perfilService.validarSenhaAtual(this.formAtual.getRawValue().senhaAtual).subscribe({
@@ -138,7 +136,6 @@ export class AlterarSenha {
         this.formAtual.enable();
         if (erro?.error?.message === 'A senha atual está incorreta.') {
           this.formAtual.controls.senhaAtual.setErrors({ senhaIncorreta: true });
-          this.mostrarRecuperacaoSenha.set(true);
           this.erro.set('');
         } else {
           this.erro.set(erro?.error?.message || 'Não foi possível confirmar sua senha atual.');

@@ -1,6 +1,6 @@
 .descricao,
 .sucesso {
-  margin: 0 0 24px;
+  margin: 0 0 12px;
   color: var(--input-color);
   font-family: var(--fonte-texto);
   line-height: 1.5;
@@ -43,26 +43,6 @@
   font-family: var(--fonte-texto);
   font-size: 0.8rem;
   font-weight: 600;
-}
-
-.recuperacao-senha {
-  margin: -20px 0 12px;
-  color: var(--input-color);
-  font-family: var(--fonte-texto);
-  font-size: 0.85rem;
-  line-height: 1.4;
-}
-
-.link-recuperacao {
-  align-self: flex-start;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: var(--primary-color);
-  font-family: var(--fonte-texto);
-  font-weight: 400;
-  text-decoration: none;
-  cursor: pointer;
 }
 
 .senha-toggle {

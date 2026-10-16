@@ -5,6 +5,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatIconModule } from '@angular/material/icon';
 import { MatOption, MatSelect } from '@angular/material/select';
 import { ToastrService } from 'ngx-toastr';
 import { ModalLayout } from '@components/modal-layout/modal-layout';
@@ -41,6 +42,7 @@ import { EventoRedesSociaisComponent } from './evento-redes-sociais/evento-redes
     FiltrosEventosComponent,
     MatFormFieldModule,
     MatInputModule,
+    MatIconModule,
     MatSelect,
     MatOption,
     EventoRedesSociaisComponent
@@ -537,6 +539,11 @@ export class EventoComponent implements OnInit, OnDestroy, ComponentComAlteracoe
     const d = new Date(data);
     const pad = (n: number) => n < 10 ? '0' + n : n;
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  }
+
+  abrirCalendario(campo: HTMLInputElement): void {
+    campo.focus();
+    if (typeof campo.showPicker === 'function') campo.showPicker();
   }
 
   salvar(): void {
