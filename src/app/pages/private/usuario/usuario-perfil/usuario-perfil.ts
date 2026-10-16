@@ -560,7 +560,7 @@ export class UsuarioPerfil implements OnInit, OnDestroy, ComponentComAlteracoesN
       confirmButtonText: botaoConfirmar,
       cancelButtonText: 'Cancelar',
       confirmButtonColor,
-      reverseButtons: true,
+      reverseButtons: false,
       inputValidator: valor => valor?.trim().toLowerCase() === textoConfirmacao.toLowerCase()
         ? undefined
         : `Digite exatamente: ${textoConfirmacao}`

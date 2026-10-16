@@ -10,7 +10,7 @@ export const Alertas = {
       confirmButtonText: 'Sim, descartar',
       cancelButtonText: 'Continuar editando',
       confirmButtonColor: '#e04b3a',
-      reverseButtons: true
+      reverseButtons: false
     }).then((resultado) => resultado.isConfirmed);
   },
 
@@ -23,7 +23,7 @@ export const Alertas = {
       confirmButtonText: 'Sim, excluir',
       cancelButtonText: 'Cancelar',
       confirmButtonColor: '#e04b3a',
-      reverseButtons: true
+      reverseButtons: false
     }).then((resultado) => resultado.isConfirmed);
   },
 
@@ -35,8 +35,9 @@ export const Alertas = {
       showDenyButton: true,
       confirmButtonText: 'Voltar aos filtros',
       denyButtonText: 'Descartar alterações',
-      confirmButtonColor: '#3682dc',
+      customClass: { confirmButton: 'swal2-retornar' },
       denyButtonColor: '#757575',
+      // Neste alerta, confirm volta aos filtros e deny efetiva o descarte.
       reverseButtons: true,
       allowOutsideClick: false,
       allowEscapeKey: false
@@ -58,7 +59,7 @@ export const Alertas = {
       confirmButtonText: 'Sim, substituir',
       cancelButtonText: 'Cancelar',
       confirmButtonColor: '#3682dc',
-      reverseButtons: true
+      reverseButtons: false
     }).then((resultado) => resultado.isConfirmed);
   }
 };

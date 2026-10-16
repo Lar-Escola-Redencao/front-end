@@ -348,19 +348,25 @@ body {
 }
 
 .btn-cancelar:hover:not(:disabled),
-.btn-cancelar-modal:hover:not(:disabled),
-.swal2-container .swal2-actions .swal2-cancel:hover:not(:disabled) {
+.btn-cancelar-modal:hover:not(:disabled) {
   color: #666;
 }
 
-.swal2-container .swal2-actions .swal2-cancel:hover,
-.swal2-container .swal2-actions .swal2-cancel:active {
-  background-image: none;
+.swal2-container .swal2-actions :is(.swal2-cancel, .swal2-retornar) {
+  background: var(--input-color);
+  color: var(--branco);
+  font-weight: 400;
+}
+
+.swal2-container .swal2-actions :is(.swal2-cancel, .swal2-retornar):hover:not(:disabled),
+.swal2-container .swal2-actions :is(.swal2-cancel, .swal2-retornar):active:not(:disabled) {
+  background: #666;
+  color: var(--branco);
 }
 
 .btn-cancelar:focus-visible,
 .btn-cancelar-modal:focus-visible,
-.swal2-container .swal2-actions .swal2-cancel:focus-visible {
+.swal2-container .swal2-actions :is(.swal2-cancel, .swal2-retornar):focus-visible {
   outline: 2px solid var(--primary-color);
   outline-offset: 3px;
 }
