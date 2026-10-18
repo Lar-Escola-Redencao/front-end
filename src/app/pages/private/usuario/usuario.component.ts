@@ -104,7 +104,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
   erroCep = '';
   readonly estadoErroCep: ErrorStateMatcher = {
     isErrorState: (controle, formulario) => !!(
-      controle && (controle.invalid || this.erroCep) && (controle.touched || formulario?.submitted)
+      controle && controle.invalid && (controle.touched || formulario?.submitted)
     )
   };
   private readonly contatoService = inject(ContatoService);
@@ -786,7 +786,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
       cpf: ['', [Validators.required, Validators.minLength(14)]],
       tipoDocumento: [''], documentoAuxiliar: [''], cadUnico: [''],
       endereco: ['', Validators.required], bairro: ['', Validators.required],
-      cep: ['', [Validators.required, Validators.pattern(/^\d{5}-?\d{3}$/)]],
+      cep: ['', Validators.pattern(/^\d{5}-?\d{3}$/)],
       numeroEndereco: ['', this.modoEdicao ? [Validators.pattern(/\S/)] : [Validators.required, Validators.pattern(/\S/)]],
       complementoEndereco: [''],
       escola: ['', Validators.required], periodoEscolar: ['', Validators.required],
@@ -839,7 +839,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
     ).subscribe(resultado => {
       this.definirConsultaCep(false);
       if (resultado?.dados.erro) {
-        this.erroCep = 'CEP não encontrado. Confira o CEP ou preencha o endereço manualmente.';
+        this.erroCep = 'Endereço não localizado. Preencha os campos manualmente.';
       } else if (resultado) {
         const { dados, endereco, bairro } = resultado;
         if (dados.logradouro && this.formUsuario.get('endereco')!.value === endereco) {

@@ -10,6 +10,15 @@
   width: 100%;
 }
 
+.aviso-cep {
+  color: #d98200;
+  font-family: var(--fonte-texto);
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.4;
+  text-align: left;
+}
+
 .cep-ajuda {
   align-self: flex-start;
   margin-left: 2px;
@@ -151,7 +160,7 @@
   color: #d98200;
   font-family: var(--fonte-texto);
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 400;
   line-height: 1.35;
   text-align: left;
 }

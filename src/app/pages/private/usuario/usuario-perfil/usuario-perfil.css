@@ -390,7 +390,7 @@
 
 .aviso-conflito-transferencia {
   color: #d98200;
-  font-weight: 700;
+  font-weight: 400;
 }
 
 :host ::ng-deep app-modal-layout.perfil-modal .modal-card {

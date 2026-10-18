@@ -1,3 +1,23 @@
+.cep-consulta {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.aviso-cep,
+.cep-status {
+  color: #d98200;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.4;
+  text-align: left;
+}
+
+.cep-status {
+  color: var(--input-color);
+}
+
 .aba-conteudo,
 .form-dados-pessoais {
   display: flex;

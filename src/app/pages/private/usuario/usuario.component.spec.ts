@@ -129,14 +129,34 @@ describe('Contrato de edição de usuários', () => {
     }
   });
 
-  it('mostra a obrigatoriedade do CEP vazio após sair do campo', () => {
+  it('aceita CEP vazio mesmo após sair do campo e não exibe erro de consulta anterior', () => {
     const controle = component.formUsuario.get('cep')!;
     controle.setValue('');
     controle.markAsUntouched();
     expect(component.estadoErroCep.isErrorState(controle as any, null)).toBe(false);
     controle.markAsTouched();
-    expect(controle.hasError('required')).toBe(true);
-    expect(component.estadoErroCep.isErrorState(controle as any, null)).toBe(true);
+    expect(controle.valid).toBe(true);
+    component.erroCep = 'CEP não encontrado.';
+    expect(component.estadoErroCep.isErrorState(controle as any, null)).toBe(false);
+  });
+
+  it('mantém o CEP válido quando a consulta não encontra o endereço', async () => {
+    vi.useFakeTimers();
+    try {
+      cep.consultar.mockReturnValue(of({ erro: true } as any));
+      const controle = component.formUsuario.get('cep')!;
+      controle.markAsDirty();
+      controle.markAsTouched();
+      controle.setValue('14801-000');
+      await vi.advanceTimersByTimeAsync(450);
+      expect(component.erroCep).toContain('Endereço não localizado');
+      expect(controle.valid).toBe(true);
+      expect(component.estadoErroCep.isErrorState(controle as any, null)).toBe(false);
+      expect(component.consultandoCep).toBe(false);
+      expect(component.formUsuario.get('endereco')!.enabled).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('ignora a consulta anterior ao trocar o CEP e preserva edição durante a consulta', async () => {

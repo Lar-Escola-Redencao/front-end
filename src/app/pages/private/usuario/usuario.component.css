@@ -1163,7 +1163,18 @@ h1 {
 }
 
 :host ::ng-deep app-modal-layout.cadastro-modal .mat-mdc-form-field.mat-form-field-disabled .mdc-text-field {
-  background: #d5d5d5;
+  background-color: #eeeeee !important;
+  opacity: 1;
+}
+
+:host ::ng-deep app-modal-layout.cadastro-modal .mat-mdc-form-field.mat-form-field-disabled .mat-mdc-floating-label {
+  background-color: #eeeeee !important;
+  padding: 0 4px;
+  z-index: 2;
+}
+
+:host ::ng-deep app-modal-layout.cadastro-modal .mat-mdc-form-field.mat-form-field-disabled .mdc-notched-outline__notch {
+  background-color: transparent !important;
 }
 
 .cadastro-form .checkbox-discreto {
@@ -1888,7 +1899,7 @@ h1 {
   color: #d98200;
   font-family: var(--fonte-texto);
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 400;
   line-height: 1.35;
   text-align: left;
 }

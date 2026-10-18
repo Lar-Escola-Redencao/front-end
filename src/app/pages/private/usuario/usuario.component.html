@@ -153,11 +153,14 @@
       <div class="step-grid">
         <div class="cep-consulta">
           <mat-form-field appearance="outline">
-            <mat-label>CEP*</mat-label>
+            <mat-label>CEP</mat-label>
             <input matInput formControlName="cep" inputmode="numeric" maxlength="9"
               [errorStateMatcher]="estadoErroCep" (input)="aplicarMascaraCep($event)">
-            <mat-error>{{ formUsuario.get('cep')?.hasError('required') ? mensagemErro(formUsuario.get('cep')) : erroCep || 'Informe um CEP com 8 dígitos.' }}</mat-error>
+            <mat-error>Informe um CEP com 8 dígitos.</mat-error>
           </mat-form-field>
+          @if (erroCep && formUsuario.get('cep')?.valid && formUsuario.get('cep')?.value) {
+            <span class="aviso-cep" role="status">{{ erroCep }}</span>
+          }
           <a class="cep-ajuda" href="https://buscacepinter.correios.com.br/app/endereco/index.php"
             target="_blank" rel="noopener noreferrer" title="Consultar o CEP nos Correios em uma nova aba">
             Consultar CEP nos Correios

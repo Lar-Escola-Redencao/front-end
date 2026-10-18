@@ -1,5 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Subject, catchError, distinctUntilChanged, map, of, switchMap, takeUntil, timer } from 'rxjs';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
@@ -8,6 +10,8 @@ import { MatSelectModule } from '@angular/material/select';
 import { ToastrService } from 'ngx-toastr';
 import { CadastroUsuarioCompletoDTO, UsuarioResponseDTO } from 'src/app/shared/models/usuario.model';
 import { UsuarioService } from 'src/app/shared/services/usuario/usuario.service';
+import { CepService } from 'src/app/shared/services/usuario/cep.service';
+import { montarEndereco, separarEndereco } from 'src/app/shared/utils/endereco';
 import { obterMensagemErro, validarArquivo, validarExtensaoArquivo } from 'src/app/shared/utils/form-validations';
 import { formatarCep, formatarCpf } from 'src/app/shared/utils/masks';
 import { environment } from 'src/environments/environment';
@@ -30,6 +34,8 @@ import { montarBaseAtualizacaoUsuario } from '../../utils/usuario-atualizacao-dt
 export class UsuarioPerfilDadosPessoais implements OnChanges {
   private readonly fb = inject(FormBuilder);
   private readonly usuarioService = inject(UsuarioService);
+  private readonly cepService = inject(CepService);
+  private readonly cancelarConsultaCep = new Subject<void>();
   private readonly toastr = inject(ToastrService);
   private readonly changeDetectorRef = inject(ChangeDetectorRef);
 
@@ -39,6 +45,8 @@ export class UsuarioPerfilDadosPessoais implements OnChanges {
 
   editando = false;
   salvando = false;
+  consultandoCep = false;
+  avisoCep = '';
   fotoSelecionada: File | null = null;
   fotoPreviewUrl: string | null = null;
   fotoPerfilValidadaUrl: string | null = null;
@@ -72,7 +80,7 @@ export class UsuarioPerfilDadosPessoais implements OnChanges {
     documentoAuxiliar: [''],
     cadUnico: [''],
     usarOutroDocumento: [{ value: false, disabled: true }],
-    cep: [''],
+    cep: ['', Validators.pattern(/^\d{5}-?\d{3}$/)],
     bairro: ['', Validators.required],
     endereco: ['', Validators.required],
     escola: ['', Validators.required],
@@ -80,6 +88,44 @@ export class UsuarioPerfilDadosPessoais implements OnChanges {
     serieEscolar: ['', Validators.required],
     raEscolar: ['']
   });
+
+  constructor() {
+    this.form.controls.cep.valueChanges.pipe(
+      map(valor => String(valor ?? '').replace(/\D/g, '')),
+      distinctUntilChanged(),
+      switchMap(cep => {
+        this.consultandoCep = false;
+        this.avisoCep = '';
+        if (!this.editando || this.somenteLeitura || this.salvando || cep.length !== 8) return of(null);
+        const endereco = this.form.controls.endereco.value ?? '';
+        const bairro = this.form.controls.bairro.value;
+        this.consultandoCep = true;
+        return timer(400).pipe(
+          switchMap(() => this.cepService.consultar(cep)),
+          map(dados => ({ dados, endereco, bairro })),
+          catchError(() => {
+            this.avisoCep = 'Não foi possível consultar o CEP. Preencha o endereço manualmente.';
+            return of(null);
+          }),
+          takeUntil(this.cancelarConsultaCep)
+        );
+      }),
+      takeUntilDestroyed()
+    ).subscribe(resultado => {
+      this.consultandoCep = false;
+      if (resultado?.dados.erro) {
+        this.avisoCep = 'Endereço não localizado. Preencha os campos manualmente.';
+      } else if (resultado && this.editando) {
+        const { dados, endereco, bairro } = resultado;
+        if (dados.logradouro && this.form.controls.endereco.value === endereco) {
+          const partes = separarEndereco(endereco);
+          this.form.controls.endereco.setValue(montarEndereco(dados.logradouro, partes.numeroEndereco, partes.complementoEndereco));
+        }
+        if (dados.bairro && this.form.controls.bairro.value === bairro) this.form.controls.bairro.setValue(dados.bairro);
+      }
+      this.changeDetectorRef.markForCheck();
+    });
+  }
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['usuario']) {
@@ -118,7 +164,7 @@ export class UsuarioPerfilDadosPessoais implements OnChanges {
   }
 
   salvar(): void {
-    if (!this.usuario || this.somenteLeitura) return;
+    if (!this.usuario || this.somenteLeitura || this.salvando || this.consultandoCep) return;
 
     this.form.markAllAsTouched();
     if (this.form.invalid || !this.temAlteracoes) return;
@@ -202,6 +248,10 @@ export class UsuarioPerfilDadosPessoais implements OnChanges {
   }
 
   private preencherFormulario(): void {
+    this.cancelarConsultaCep.next();
+    this.consultandoCep = false;
+    this.avisoCep = '';
+    this.editando = false;
     this.fotoPerfilValidadaUrl = null;
     this.form.reset({
       nomeCompleto: this.usuario?.nomeCompleto ?? '',
