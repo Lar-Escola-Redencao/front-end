@@ -106,10 +106,29 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: flex-end;
+  gap: 12px 24px;
   margin-top: 4px;
 }
 
+.acoes-form .acoes-edicao-perfil {
+  display: flex;
+  flex: 0 1 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  width: auto;
+  max-width: 100%;
+}
+
+.acoes-edicao-perfil > button {
+  flex: 0 0 auto;
+  min-height: 48px;
+  white-space: nowrap;
+}
+
 .link-alterar-senha {
+  flex: 0 0 auto;
+  min-height: 48px;
   margin-right: auto;
   padding: 0;
   border: 0;
@@ -120,6 +139,31 @@
   font-size: 0.9rem;
   font-weight: 400;
   text-align: left;
+}
+
+@media (max-width: 768px) {
+  .acoes-form {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .acoes-form .acoes-edicao-perfil {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+  }
+
+  .acoes-edicao-perfil > button,
+  .link-alterar-senha {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .link-alterar-senha {
+    margin-right: 0;
+    text-align: center;
+  }
 }
 
 .estado-info,

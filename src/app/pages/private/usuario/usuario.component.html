@@ -88,7 +88,7 @@
 
 @if (modalAberto) {
 <app-modal-layout class="cadastro-modal" [class.tremer]="modalTremendo"
-  [titulo]="modoEdicao ? 'Editar usuário' : 'Novo usuário'" (closed)="fecharModal()">
+  [titulo]="modoEdicao ? 'Editar usuário' : 'Cadastrar novo usuário'" (closed)="fecharModal()">
   
   <div class="stepper-indicador" aria-label="Etapas do cadastro">
     <ng-container *ngFor="let etapa of etapas; let i = index">

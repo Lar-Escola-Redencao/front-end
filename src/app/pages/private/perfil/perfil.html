@@ -55,24 +55,26 @@
               {{ erros['endereco'] }}
             </span>
 
-            <div class="acoes-form form-acoes">
+            <div class="acoes-form">
               <button type="button" class="link-alterar-senha" (click)="modalSenhaAberto = true">Alterar senha</button>
-              @if (!modoEdicao) {
-                <button type="button" class="btn-primary" (click)="habilitarEdicao()">
-                  Editar
-                </button>
-              } @else {
-                <button type="button" class="btn-cancelar" [disabled]="salvando" (click)="cancelarEdicao()">
-                  Cancelar
-                </button>
-                <button type="submit" class="btn-primary" [disabled]="salvando || !temAlteracoes">
-                  @if (salvando) {
-                    <span class="spinner"></span> Salvando...
-                  } @else {
-                    Salvar
-                  }
-                </button>
-              }
+              <div class="acoes-edicao-perfil form-acoes">
+                @if (!modoEdicao) {
+                  <button type="button" class="btn-primary" (click)="habilitarEdicao()">
+                    Editar
+                  </button>
+                } @else {
+                  <button type="button" class="btn-cancelar" [disabled]="salvando" (click)="cancelarEdicao()">
+                    Cancelar
+                  </button>
+                  <button type="submit" class="btn-primary" [disabled]="salvando || !temAlteracoes">
+                    @if (salvando) {
+                      <span class="spinner"></span> Salvando...
+                    } @else {
+                      Salvar
+                    }
+                  </button>
+                }
+              </div>
             </div>
           </form>
         </div>

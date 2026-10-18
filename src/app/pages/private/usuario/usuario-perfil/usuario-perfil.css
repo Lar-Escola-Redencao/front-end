@@ -58,11 +58,11 @@
   gap: 16px;
 }
 
-.perfil-card,
 .perfil-area-painel {
   display: contents;
 }
 
+.perfil-card,
 .perfil-dados {
   border: 1px solid #d8d8d8;
   border-radius: 8px;
@@ -248,6 +248,44 @@
 
 .aba-btn.ativa {
   border-bottom-color: var(--primary-color);
+}
+
+/* Quando quebrar, mantém o mesmo visual em larguras intermediárias e no mobile. */
+.abas-container.abas-quebradas {
+  border-bottom: 0;
+}
+
+.abas-container.abas-quebradas > .aba-btn {
+  flex-grow: 1;
+  margin-bottom: 0;
+  border: 0;
+  border-bottom: 1px solid #e0e0e0;
+  border-radius: 0;
+  outline: none;
+  box-shadow: inset -1px 0 0 #e0e0e0;
+}
+
+.abas-container.abas-quebradas > .aba-btn:not(.ativa) {
+  background: #f5f5f5;
+}
+
+.abas-container.abas-quebradas > .aba-btn.ativa {
+  background: var(--branco);
+  border-bottom: 2px solid var(--primary-color);
+  outline: none;
+}
+
+.abas-container.abas-quebradas > .aba-superior-esquerda {
+  border-top-left-radius: 8px;
+}
+
+.abas-container.abas-quebradas > .aba-superior-direita {
+  border-top-right-radius: 8px;
+}
+
+.abas-container.abas-quebradas > .aba-btn:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: -2px;
 }
 
 .aba-painel {

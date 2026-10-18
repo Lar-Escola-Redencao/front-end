@@ -445,6 +445,60 @@ body {
   cursor: not-allowed;
 }
 
+/* Ações com cancelamento: preserva o texto e a área de toque no mobile. */
+@media (max-width: 768px) {
+  body .form-acoes:has(> .btn-cancelar, > .btn-cancelar-modal) {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: stretch;
+    justify-content: flex-end;
+    gap: 8px;
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  body .form-acoes:has(> .btn-cancelar, > .btn-cancelar-modal) > :is(.btn-primary, .btn-cancelar, .btn-cancelar-modal) {
+    /* Mantém a largura do texto sem esticar os botões. */
+    flex: 0 0 max-content;
+    box-sizing: border-box;
+    min-width: max-content;
+    max-width: 100%;
+    min-height: 48px;
+    padding: 10px 16px;
+    white-space: nowrap;
+    overflow-wrap: normal;
+    word-break: normal;
+  }
+
+  .form-acoes > .acoes-espaco {
+    display: none;
+  }
+
+  .swal2-container .swal2-actions > :is(.swal2-confirm, .swal2-cancel, .swal2-deny) {
+    min-width: 48px;
+    min-height: 48px;
+    padding: 10px 16px;
+    white-space: nowrap;
+  }
+
+  /* Edição nas abas do usuário: uma ação por linha, sem atingir os modais. */
+  body .perfil-dados .aba-cabecalho .form-acoes {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  body .perfil-dados .aba-cabecalho > .btn-primary,
+  body .perfil-dados .aba-cabecalho .form-acoes > button {
+    flex: 0 0 auto;
+    width: 100%;
+    min-width: 0;
+    min-height: 48px;
+    box-sizing: border-box;
+  }
+}
+
 /* =========================
    SWITCH (ESTILO APPLE)
    ========================= */

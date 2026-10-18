@@ -11,8 +11,11 @@
 }
 
 .aba-cabecalho {
-  display: block;
-  margin-bottom: 6px;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  min-height: 48px;
+  margin-bottom: 12px;
 }
 
 .aba-cabecalho h2,
@@ -29,15 +32,16 @@
 }
 
 .acoes-edicao {
-  display: inline-flex;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   align-items: center;
 }
 
 .aba-cabecalho > .btn-primary,
-.aba-cabecalho .acoes-edicao {
-  position: absolute;
-  top: 0;
-  right: 0;
+.acoes-edicao > button {
+  min-height: 48px;
+  white-space: nowrap;
 }
 
 .step-grid {
@@ -349,18 +353,6 @@
 @media (max-width: 650px) {
   .step-grid {
     grid-template-columns: 1fr;
-  }
-
-  .aba-cabecalho,
-  .acoes-edicao {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .aba-cabecalho > .btn-primary,
-  .aba-cabecalho .acoes-edicao {
-    position: static;
-    margin-top: 10px;
   }
 
   .documento-duplo {
