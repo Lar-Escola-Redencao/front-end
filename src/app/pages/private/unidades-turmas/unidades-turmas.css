@@ -233,60 +233,11 @@ h1 {
 }
 
 .modal-body-preview {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  text-align: left;
-}
-
-.preview-capa img {
   width: 100%;
-  max-height: 220px;
-  object-fit: cover;
-  border-radius: var(--input-radius);
-}
-
-.preview-info {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.tag-cor {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  align-self: flex-start;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  color: var(--branco);
-}
-
-.tag-cor .material-symbols-outlined {
-  font-size: 20px;
-}
-
-.preview-info h2 {
-  margin: 0;
-  color: var(--preto);
-  font-family: var(--fonte-titulo);
-  font-size: 1.5rem;
-}
-
-.preview-linha {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin: 0;
-  color: var(--input-color);
-  font-family: var(--fonte-texto);
-  line-height: 1.5;
-}
-
-.preview-linha .material-symbols-outlined {
-  color: var(--primary-color);
-  font-size: 1.2rem;
+  max-width: 340px;
+  margin: 0 auto;
+  padding: 38px 16px 8px;
+  box-sizing: border-box;
 }
 
 .image-preview img {

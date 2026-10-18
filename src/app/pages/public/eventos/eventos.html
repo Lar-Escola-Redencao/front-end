@@ -11,7 +11,7 @@
   @if (carregando) {
     <p class="mensagem-estado">Carregando eventos...</p>
   } @else if (eventosFiltrados.length === 0) {
-    <p class="mensagem-estado">Nenhum evento encontrado para os filtros selecionados.</p>
+    <app-estado-vazio icone="event" [mensagem]="mensagemVazia" />
   } @else {
     <div class="grade-eventos">
       @for (evento of eventosPaginados; track evento.id) {

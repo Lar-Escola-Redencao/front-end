@@ -23,6 +23,29 @@ describe('Eventos', () => {
     expect(component.obterUrlImagem('/api/uploads/evento.jpg')).toBe('/api/uploads/evento.jpg');
   });
 
+  it('inicia sem filtros e lista eventos futuros e antigos em ordem decrescente', () => {
+    const dados = [
+      { id: 1, titulo: 'Antigo', dataEvento: '2020-01-01T10:00:00' },
+      { id: 3, titulo: 'Futuro distante', dataEvento: '2030-12-01T10:00:00' },
+      { id: 2, titulo: 'Futuro', dataEvento: '2030-01-01T10:00:00' },
+    ] as unknown as Evento[];
+    const pagina = new Eventos(
+      { listarPublicos: () => of(dados) } as unknown as EventoPublicoService,
+      { detectChanges: () => undefined } as ChangeDetectorRef,
+    );
+    pagina.ngOnInit();
+    expect(pagina.possuiFiltrosAplicados).toBe(false);
+    expect(pagina.eventosPaginados.map(evento => evento.id)).toEqual([3, 2, 1]);
+    expect(dados.map(evento => evento.id)).toEqual([1, 3, 2]);
+  });
+
+  it('distingue cadastro vazio de busca ou filtros sem resultados', () => {
+    component.ngOnInit();
+    expect(component.mensagemVazia).toBe('Nenhum evento disponível no momento.');
+    component.buscar('Bazar');
+    expect(component.mensagemVazia).toBe('Nenhum evento encontrado para a busca ou os filtros selecionados.');
+  });
+
   it('marca apenas o evento informado com imagem indisponivel', () => {
     component.onEventoImageError(10);
 

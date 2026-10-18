@@ -1,3 +1,4 @@
+import { EstadoVazio } from '@components/estado-vazio/estado-vazio';
 import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
@@ -7,7 +8,7 @@ import { EventoPublicoService } from 'src/app/shared/services/evento-publico/eve
 @Component({
   selector: 'app-public-eventos',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [EstadoVazio, CommonModule, RouterLink],
   templateUrl: './public-eventos.html',
   styleUrl: './public-eventos.css'
 })

@@ -158,14 +158,6 @@
   background-color: #2f9e44;
 }
 
-.mensagem-vazia {
-  text-align: center;
-  font-family: var(--fonte-texto);
-  color: var(--input-color);
-  font-size: 1.1rem;
-  margin: 32px 0;
-}
-
 .link-todos-eventos {
   display: flex;
   align-items: center;

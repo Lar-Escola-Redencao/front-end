@@ -20,7 +20,7 @@ const eventoApi = {
   parceiros: [{ id: 1, nome: 'Lupo', logo: '/uploads/parceiros/lupo.png' }]
 };
 
-describe('EventoPublicoService.buscarPorId', () => {
+describe('EventoPublicoService', () => {
   let service: EventoPublicoService;
   let httpMock: HttpTestingController;
 
@@ -33,6 +33,29 @@ describe('EventoPublicoService.buscarPorId', () => {
   });
 
   afterEach(() => httpMock.verify({ ignoreCancelled: true }));
+
+  it('carrega todas as páginas públicas sem aplicar filtros e inclui eventos antigos', () => {
+    let resultado: Evento[] = [];
+    service.listarPublicos().subscribe(eventos => resultado = eventos);
+    const primeira = httpMock.expectOne(req => req.url === `${api}/todos` && req.params.get('page') === '0');
+    expect(primeira.request.params.get('size')).toBe('50');
+    expect(primeira.request.params.getAll('sort')).toEqual(['dataEvento,asc', 'id,asc']);
+    expect(primeira.request.params.has('tipo')).toBe(false);
+    expect(primeira.request.params.has('dataInicial')).toBe(false);
+    expect(primeira.request.params.has('dataFinal')).toBe(false);
+    expect(primeira.request.params.has('valor')).toBe(false);
+    primeira.flush({
+      content: [{ ...eventoApi, id: 1, dataEvento: '2020-01-01T10:00:00' }],
+      page: { number: 0, size: 50, totalElements: 2, totalPages: 2 },
+    });
+    expect(resultado).toEqual([]);
+    const segunda = httpMock.expectOne(req => req.url === `${api}/todos` && req.params.get('page') === '1');
+    segunda.flush({
+      content: [{ ...eventoApi, id: 2, dataEvento: '2030-01-01T10:00:00' }],
+      page: { number: 1, size: 50, totalElements: 2, totalPages: 2 },
+    });
+    expect(resultado.map(evento => evento.id)).toEqual([1, 2]);
+  });
 
   function buscar(): { resultado: () => Evento | undefined } {
     let resultado: Evento | undefined;

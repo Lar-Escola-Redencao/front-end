@@ -1,0 +1,47 @@
+<div class="card-unidade-interno">
+  <div class="card-imagem-wrapper">
+    <span class="badge-numero" [style.background-color]="unidade.corHex">
+      {{ numero }}
+    </span>
+    <img
+      *ngIf="imagemUrl && !imagemIndisponivel"
+      class="card-imagem"
+      [src]="imagemUrl"
+      (error)="imagemIndisponivel = true"
+      [alt]="unidade.nome"
+      loading="lazy"
+    />
+    <div *ngIf="!imagemUrl || imagemIndisponivel" class="card-imagem card-imagem-fallback">
+      <span class="material-symbols-outlined">apartment</span>
+    </div>
+  </div>
+
+  <div class="card-corpo">
+    <h3 class="card-titulo">{{ unidade.nome }}</h3>
+
+    <p class="card-linha">
+      <span class="material-symbols-outlined">location_on</span>
+      {{ unidade.endereco }}
+    </p>
+
+    <p class="card-linha">
+      <span class="material-symbols-outlined">schedule</span>
+      {{ formatarHorario(unidade) }} de {{ unidade.diasFuncionamento | diasFuncionamento }}
+    </p>
+
+    <p class="card-linha">
+      <span class="material-symbols-outlined">school</span>
+      Atendidos - Meninos de {{ unidade.idadeMin }} a {{ unidade.idadeMax }} anos
+    </p>
+
+    <p class="card-linha">
+      <span class="material-symbols-outlined">mail</span>
+      {{ unidade.email }}
+    </p>
+
+    <p class="card-linha">
+      <span class="material-symbols-outlined">call</span>
+      {{ unidade.telefone }}
+    </p>
+  </div>
+</div>

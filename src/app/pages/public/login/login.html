@@ -1,19 +1,5 @@
 <app-public-navbar></app-public-navbar>
 
-@if (showSessionAlertToast()) {
-  <div class="toast toast-warning" role="alert">
-    <span>{{ sessionAlertMessage() }}</span>
-    <button
-      type="button"
-      class="toast-close"
-      (click)="dismissSessionAlertToast()"
-      aria-label="Fechar aviso"
-    >
-      &times;
-    </button>
-  </div>
-}
-
 <div class="layout">
   <div class="illustration" aria-hidden="true"></div>
 

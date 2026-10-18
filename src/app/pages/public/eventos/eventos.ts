@@ -12,6 +12,7 @@ import { PublicNavbar } from '@components/public-navbar/public-navbar';
 import { Evento, TipoEvento } from 'src/app/shared/models/evento.model';
 import { EventoPublicoService } from 'src/app/shared/services/evento-publico/evento-publico.service';
 import { PublicFooter } from '@components/public-footer/public-footer';
+import { EstadoVazio } from '@components/estado-vazio/estado-vazio';
 
 type FiltroValor = 'todos' | 'gratuito' | 'pago';
 
@@ -25,7 +26,8 @@ type FiltroValor = 'todos' | 'gratuito' | 'pago';
     BarraBusca,
     FiltrosEventosComponent,
     PublicNavbar,
-    PublicFooter
+    PublicFooter,
+    EstadoVazio
   ],
   templateUrl: './eventos.html',
   styleUrl: './eventos.css'
@@ -61,7 +63,7 @@ export class Eventos implements OnInit {
     this.carregando = true;
     this.eventoPublicoService.listarPublicos().subscribe({
       next: (dados) => {
-        this.eventos = dados.sort(
+        this.eventos = [...dados].sort(
           (eventoAtual, proximoEvento) =>
             new Date(proximoEvento.dataEvento).getTime() - new Date(eventoAtual.dataEvento).getTime()
         );
@@ -169,6 +171,12 @@ export class Eventos implements OnInit {
       this.filtroDataFinal ||
       this.filtroValor !== 'todos' || this.filtroTipo
     );
+  }
+
+  get mensagemVazia(): string {
+    return this.possuiFiltrosAplicados
+      ? 'Nenhum evento encontrado para a busca ou os filtros selecionados.'
+      : 'Nenhum evento disponível no momento.';
   }
 
   irParaPagina(pagina: number): void {

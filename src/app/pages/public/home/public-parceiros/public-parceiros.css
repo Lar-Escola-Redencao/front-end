@@ -110,14 +110,6 @@
   font-weight: 500;
 }
 
-.mensagem-vazia {
-  text-align: center;
-  font-family: var(--fonte-texto);
-  color: var(--input-color);
-  font-size: 1.1rem;
-  margin-top: 32px;
-}
-
 @media (max-width: 900px) {
   .nav-btn .material-symbols-outlined {
     font-size: 1.8rem;

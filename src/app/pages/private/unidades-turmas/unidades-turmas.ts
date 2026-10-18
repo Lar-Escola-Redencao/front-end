@@ -1,3 +1,4 @@
+import { UnidadeCard } from '@components/unidade-card/unidade-card';
 import { AbasResponsivas } from 'src/app/shared/directives/abas-responsivas';
 import { ChangeDetectorRef, Component, HostListener, NgZone, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -51,6 +52,7 @@ type OpcaoPeriodo = { valor: Periodo; label: string };
     FormsModule,
     ReactiveFormsModule,
     ModalLayout,
+    UnidadeCard,
     TabelaLayout,
     Paginacao,
     BarraBusca,
@@ -890,6 +892,13 @@ export class UnidadesTurmas implements OnInit, OnDestroy, ComponentComAlteracoes
     if (evento.tipo === 'excluir') {
       this.deletarTurma(evento.linha);
     }
+  }
+
+  get numeroUnidadeVisualizacao(): number {
+    const indice = this.unidades.findIndex(unidade => unidade.id === this.unidadeVisualizacao?.id);
+    if (indice >= 0) return indice + 1;
+    const indiceNaPagina = this.unidadesTabela.findIndex(unidade => unidade.id === this.unidadeVisualizacao?.id);
+    return indiceNaPagina >= 0 ? this.pagina * this.tamanho + indiceNaPagina + 1 : 1;
   }
 
   abrirVisualizacao(unidade: Unidade): void {

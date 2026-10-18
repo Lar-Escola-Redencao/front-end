@@ -1,13 +1,14 @@
+import { EstadoVazio } from '@components/estado-vazio/estado-vazio';
 import { ChangeDetectorRef, Component, HostListener, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Unidade } from 'src/app/shared/models/unidade.model';
 import { PublicContentService } from 'src/app/shared/services/public-content/public-content.service';
-import { DiasFuncionamentoPipe } from 'src/app/shared/pipes/dias-funcionamento.pipe';
+import { UnidadeCard } from 'src/app/components/unidade-card/unidade-card';
 
 @Component({
   selector: 'app-public-unidades',
   standalone: true,
-  imports: [CommonModule, DiasFuncionamentoPipe],
+  imports: [EstadoVazio, CommonModule, UnidadeCard],
   templateUrl: './public-unidades.html',
   styleUrl: './public-unidades.css'
 })
@@ -97,20 +98,4 @@ export class PublicUnidadesComponent implements OnInit {
     return this.publicContentService.tratarUrlImagem(caminho);
   }
 
-  onImageError(event: Event): void {
-    const img = event.target as HTMLImageElement;
-    img.style.display = 'none';
-  }
-
-  formatarHorario(unidade: Unidade): string {
-    const abertura = this.formatarHora(unidade.horarioAbertura);
-    const fechamento = this.formatarHora(unidade.horarioFechamento);
-    return `${abertura} às ${fechamento}`;
-  }
-
-  private formatarHora(hora: string): string {
-    const [horas, minutos] = (hora || '').split(':');
-    if (!horas) return hora ?? '';
-    return minutos && minutos !== '00' ? `${horas}h${minutos}` : `${horas}h`;
-  }
 }
