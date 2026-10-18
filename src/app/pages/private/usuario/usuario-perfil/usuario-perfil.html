@@ -67,10 +67,11 @@
           }
         </div>
 
-        <button type="button" class="excluir-usuario" (click)="excluirUsuario()">Excluir usuário</button>
+        <button type="button" class="btn-cancelar excluir-usuario" (click)="excluirUsuario()">Excluir usuário</button>
         }
       </aside>
 
+      <div class="perfil-area-painel">
       <main class="perfil-dados">
         <nav appAbasResponsivas class="abas-container" aria-label="Dados do usuário">
           @for (aba of abasVisiveis; track aba.id) {
@@ -119,6 +120,7 @@
           }
         </div>
       </main>
+      </div>
     </div>
 
     @if (modalDesligamentoAberto) {

@@ -1,8 +1,10 @@
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { of } from 'rxjs';
+import { vi } from 'vitest';
+import Swal from 'sweetalert2';
 
 import { Modulo, Role, roleTemAcesso } from 'src/app/shared/models/permissao.model';
 import { PrivateNavbar } from './private-navbar';
@@ -63,7 +65,50 @@ describe('PrivateNavbar', () => {
     return Array.from(links).map((a) => a.getAttribute('href') ?? '');
   }
 
-  afterEach(() => localStorage.clear());
+  afterEach(() => {
+    localStorage.clear();
+    vi.restoreAllMocks();
+  });
+
+  it('abre o mesmo modal de senha pelo atalho abaixo de Meu perfil', async () => {
+    await criar('ADMINISTRADOR');
+    component.menuUsuarioAberto = true;
+    fixture.detectChanges();
+    const botoes = fixture.nativeElement.querySelectorAll('.menu-usuario-item') as NodeListOf<HTMLButtonElement>;
+    expect(Array.from(botoes).map(botao => botao.textContent?.trim())).toEqual([
+      expect.stringContaining('Meu perfil'),
+      expect.stringContaining('Alterar senha'),
+      expect.stringContaining('Sair')
+    ]);
+    botoes[1].click();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('app-alterar-senha')).toBeTruthy();
+    expect(component.menuUsuarioAberto).toBe(false);
+    expect(component.menuVisivel).toBe(false);
+  });
+
+  it('mantém a sessão quando a saída é cancelada', async () => {
+    await criar('ADMINISTRADOR');
+    const logout = vi.spyOn(TestBed.inject(Auth), 'logout');
+    const navegar = vi.spyOn(TestBed.inject(Router), 'navigateByUrl');
+    vi.spyOn(Swal, 'fire').mockResolvedValue({ isConfirmed: false, isDenied: false, isDismissed: true });
+    await component.sair();
+    expect(logout).not.toHaveBeenCalled();
+    expect(navegar).not.toHaveBeenCalled();
+  });
+
+  it('encerra a sessão somente após confirmar a saída', async () => {
+    await criar('ADMINISTRADOR');
+    const logout = vi.spyOn(TestBed.inject(Auth), 'logout');
+    const navegar = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
+    const alerta = vi.spyOn(Swal, 'fire').mockResolvedValue({ isConfirmed: true, isDenied: false, isDismissed: false });
+    await component.sair();
+    expect(alerta).toHaveBeenCalledWith(expect.objectContaining({
+      confirmButtonText: 'Sim, sair', cancelButtonText: 'Cancelar', reverseButtons: false
+    }));
+    expect(logout).toHaveBeenCalledOnce();
+    expect(navegar).toHaveBeenCalledWith('/');
+  });
 
   it('should create', async () => {
     await criar('ADMINISTRADOR');
