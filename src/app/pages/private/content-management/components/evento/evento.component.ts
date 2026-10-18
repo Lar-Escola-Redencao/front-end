@@ -27,6 +27,7 @@ import { EventoService } from 'src/app/shared/services/content-management/evento
 import { ParceiroService } from 'src/app/shared/services/content-management/evento/parceiro.service';
 import { environment } from 'src/environments/environment';
 import { EventoRedesSociaisComponent } from './evento-redes-sociais/evento-redes-sociais.component';
+import { EventoDetalhe } from 'src/app/pages/public/evento-detalhe/evento-detalhe';
 
 @Component({
   selector: 'app-evento',
@@ -45,7 +46,8 @@ import { EventoRedesSociaisComponent } from './evento-redes-sociais/evento-redes
     MatIconModule,
     MatSelect,
     MatOption,
-    EventoRedesSociaisComponent
+    EventoRedesSociaisComponent,
+    EventoDetalhe
   ],
   templateUrl: './evento.component.html',
   styleUrls: ['./evento.component.css']
