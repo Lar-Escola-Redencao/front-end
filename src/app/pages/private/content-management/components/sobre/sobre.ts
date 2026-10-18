@@ -1,3 +1,4 @@
+import { AbasResponsivas } from 'src/app/shared/directives/abas-responsivas';
 import { Component, OnInit, OnDestroy, ChangeDetectorRef, HostListener, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -53,6 +54,7 @@ interface ClassificacaoSecoes {
   selector: 'app-sobre',
   standalone: true,
   imports: [
+    AbasResponsivas,
     CommonModule,
     ReactiveFormsModule,
     ModalLayout,

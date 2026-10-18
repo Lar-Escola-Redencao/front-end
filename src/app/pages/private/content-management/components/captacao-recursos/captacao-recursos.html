@@ -1,6 +1,6 @@
 <section class="captacao-recursos">
   @if (config.grupos.length > 1) {
-    <div class="abas-container">
+    <div appAbasResponsivas class="abas-container">
       @for (grupo of config.grupos; track grupo.grupo) {
         <button
           type="button"

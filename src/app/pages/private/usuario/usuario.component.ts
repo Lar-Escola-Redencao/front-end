@@ -1,3 +1,4 @@
+import { AbasResponsivas } from 'src/app/shared/directives/abas-responsivas';
 import {
   ChangeDetectorRef,
   Component,
@@ -76,6 +77,7 @@ import { environment } from 'src/environments/environment';
   selector: 'app-usuario',
   standalone: true,
   imports: [
+    AbasResponsivas,
     CommonModule,
     RouterLink,
     FormsModule,

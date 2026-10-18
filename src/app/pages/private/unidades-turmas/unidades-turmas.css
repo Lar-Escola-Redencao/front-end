@@ -21,13 +21,19 @@ h1 {
 }
 
 .abas-container {
+  flex-wrap: wrap;
   display: flex;
-  gap: 8px;
+  gap: 0;
   margin-bottom: 16px;
   border-bottom: 1px solid #ddd;
 }
 
 .aba-btn {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
   font-family: var(--fonte-texto);
   padding: 12px 24px;
   background: transparent;

@@ -315,6 +315,73 @@ body {
   min-height: 58px !important;
 }
 
+/* Contorno completo somente quando a barra de abas ocupa mais de uma linha. */
+.abas-container.abas-quebradas > .aba-btn {
+  flex-grow: 1;
+  outline: 1px solid #ddd;
+  outline-offset: -1px;
+}
+
+.abas-container.abas-quebradas > .aba-btn.ativa {
+  outline: 2px solid var(--primary-color);
+  outline-offset: -2px;
+}
+
+.abas-container.abas-quebradas > .aba-btn:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+@media (max-width: 768px) {
+  /* Prevalece sobre a borda dos componentes com encapsulamento do Angular. */
+  body .abas-container[appAbasResponsivas] {
+    border-bottom: 0;
+  }
+
+  /* O perfil já recebe o contorno externo do cartão que envolve as abas. */
+  body :not(.perfil-dados) > .abas-container[appAbasResponsivas] {
+    border-left: 1px solid #e0e0e0;
+    border-top: 1px solid #e0e0e0;
+    border-radius: 8px 8px 0 0;
+  }
+
+  .abas-container[appAbasResponsivas] > .aba-btn {
+    flex-grow: 1;
+    margin-bottom: 0;
+    border: 0;
+    border-bottom: 1px solid #e0e0e0;
+    border-radius: 0;
+    outline: none;
+    box-shadow: inset -1px 0 0 #e0e0e0;
+  }
+
+  .abas-container[appAbasResponsivas] > .aba-btn:not(.ativa) {
+    background: #f5f5f5;
+  }
+
+  .abas-container[appAbasResponsivas] > .aba-btn.ativa {
+    background: var(--branco);
+    border-bottom-width: 2px;
+    border-bottom-color: var(--primary-color);
+    color: var(--primary-color);
+    outline: none;
+  }
+
+  .abas-container[appAbasResponsivas] > .aba-btn:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+  }
+
+  .abas-container[appAbasResponsivas] > .aba-superior-esquerda {
+    border-top-left-radius: 8px;
+  }
+
+  .abas-container[appAbasResponsivas] > .aba-superior-direita {
+    border-top-right-radius: 8px;
+  }
+
+}
+
 /* Ações secundárias de formulários, dentro e fora dos modais. */
 .form-acoes,
 .swal2-container .swal2-actions {

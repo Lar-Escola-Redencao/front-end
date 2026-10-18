@@ -72,7 +72,7 @@
       </aside>
 
       <main class="perfil-dados">
-        <nav class="abas-container" aria-label="Dados do usuário">
+        <nav appAbasResponsivas class="abas-container" aria-label="Dados do usuário">
           @for (aba of abasVisiveis; track aba.id) {
             <button type="button" class="aba-btn" [class.ativa]="abaAtiva === aba.id" (click)="selecionarAba(aba.id)">
               {{ aba.label }}

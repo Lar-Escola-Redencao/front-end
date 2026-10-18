@@ -1,3 +1,4 @@
+import { AbasResponsivas } from 'src/app/shared/directives/abas-responsivas';
 import { ChangeDetectorRef, Component, HostListener, NgZone, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
@@ -45,6 +46,7 @@ type OpcaoPeriodo = { valor: Periodo; label: string };
   selector: 'app-unidades-turmas',
   standalone: true,
   imports: [
+    AbasResponsivas,
     CommonModule,
     FormsModule,
     ReactiveFormsModule,

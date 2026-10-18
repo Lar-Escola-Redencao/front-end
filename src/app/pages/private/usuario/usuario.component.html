@@ -2,7 +2,7 @@
   <h1>Usuários</h1>
   <div class="conteudo">
 
-    <div class="abas-container">
+    <div appAbasResponsivas class="abas-container">
       <button type="button" class="aba-btn" [class.ativa]="abaAtiva === 'usuarios'"
         (click)="mudarAba('usuarios')">Usuários</button>
       <button *ngIf="!isMonitor" type="button" class="aba-btn" [class.ativa]="abaAtiva === 'contatos'"
