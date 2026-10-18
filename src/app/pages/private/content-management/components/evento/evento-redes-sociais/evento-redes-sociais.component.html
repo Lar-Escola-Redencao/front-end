@@ -21,7 +21,7 @@
     </div>
     } @else if (linhas.length === 0) {
     <div class="vinculo-estado">
-      <p>Nenhuma rede social cadastrada.</p>
+      <app-estado-vazio icone="link_off" mensagem="Nenhuma rede social cadastrada." [compacto]="true"></app-estado-vazio>
     </div>
     } @else {
     <table class="vinculo-tabela">

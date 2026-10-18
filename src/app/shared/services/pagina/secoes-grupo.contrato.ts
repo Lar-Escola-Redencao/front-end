@@ -26,6 +26,7 @@ export const CONTRATO_SECOES_GRUPO = {
   rotas: {
     /** Lista simples (sem paginação) com todas as seções da página, ativas ou não. */
     listar: (idPagina: number) => urlSecoes(idPagina),
+    listarPaginado: (idPagina: number) => `${urlSecoes(idPagina)}/admin`,
     /** Para os grupos `telefone` e `pix`, o back trata o POST como upsert. */
     criar: (idPagina: number) => urlSecoes(idPagina),
     /** Escopado pela página: seção de outra página responde 404. */

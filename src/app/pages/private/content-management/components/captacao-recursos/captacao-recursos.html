@@ -19,7 +19,7 @@
       <div class="acoes-lista">
         @if (exibeBusca) {
           <app-barra-busca
-            [placeholder]="'Buscar ' + grupoAtivo.nomeItem + ' por nome...'"
+            placeholder="Buscar por nome..."
             [valor]="busca"
             (buscar)="buscar($event)" />
         }
@@ -43,6 +43,17 @@
       (acao)="executarAcao($event)"
       (tentarNovamente)="carregarTabela()"
     />
+
+    @if (exibePaginacao) {
+      <app-paginacao
+        [paginaAtual]="pagina"
+        [totalPaginas]="totalPaginas"
+        [totalElementos]="totalElementos"
+        [tamanho]="tamanho"
+        [carregando]="carregando"
+        (paginaChange)="irParaPagina($event)"
+        (tamanhoChange)="mudarTamanhoPagina($event)" />
+    }
   }
 
   @if (ehContato) {

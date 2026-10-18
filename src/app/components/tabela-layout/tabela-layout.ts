@@ -1,3 +1,4 @@
+import { EstadoVazio } from 'src/app/components/estado-vazio/estado-vazio';
 import { CommonModule } from '@angular/common';
 
 import {
@@ -50,7 +51,7 @@ export interface TabelaOrdenacao {
   selector: 'app-tabela-layout',
   standalone: true,
 
-  imports: [
+  imports: [EstadoVazio,
     CommonModule,
     MatIconModule
   ],
@@ -67,7 +68,7 @@ export class TabelaLayout<T = any> {
 
   @Input() acoes: TabelaAcao<T>[] = [];
 
-  @Input() mensagemVazia = 'Nenhum registro encontrado.';
+  @Input() mensagemVazia = 'Nenhum registro cadastrado.';
 
   @Input() carregando = false;
 

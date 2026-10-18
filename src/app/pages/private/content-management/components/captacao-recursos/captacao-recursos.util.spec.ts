@@ -16,10 +16,10 @@ const grupoPorNome = (nome: string) =>
 describe('captacao-recursos.util', () => {
   const fb = new FormBuilder();
 
-  it('shows Produtos before Contato on the Grafica page', () => {
+  it('shows Produtos e serviços before Contato on the Grafica page', () => {
     const grafica = CAPTACAO_RECURSOS_CONFIG.find((pagina) => pagina.secao === 'grafica')!;
 
-    expect(grafica.grupos.map((grupo) => grupo.rotuloAba)).toEqual(['Produtos', 'Contato']);
+    expect(grafica.grupos.map((grupo) => grupo.rotuloAba)).toEqual(['Produtos e serviços', 'Contato']);
   });
 
   it('maps Telefone to titulo/conteudo with digits only and a fixed grupo', () => {

@@ -9,7 +9,7 @@
     [colunas]="colunas"
     [dados]="contatos"
     [acoes]="acoesVisiveis"
-    mensagemVazia="Nenhum contato vinculado a este usuário."
+    mensagemVazia="Nenhum contato cadastrado."
     (acao)="executarAcao($event)">
   </app-tabela-layout>
 </section>
@@ -173,7 +173,7 @@
         <span class="spinner azul" aria-hidden="true"></span>
       </div>
     } @else if (!vinculosContato.length) {
-      <p class="texto-vazio">Nenhum usuário vinculado a este contato.</p>
+      <app-estado-vazio icone="group_off" mensagem="Nenhum usuário vinculado a este contato." [compacto]="true"></app-estado-vazio>
     } @else {
       <div class="vinculo-card" *ngFor="let vinculo of vinculosContato">
         <div class="vinculo-avatar-linha">

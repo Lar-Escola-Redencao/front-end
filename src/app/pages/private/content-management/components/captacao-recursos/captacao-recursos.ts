@@ -3,13 +3,15 @@ import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, HostListener, Input, OnDestroy, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Subscription } from 'rxjs';
+import { Subscription, map } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
 
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 
 import { BarraBusca } from '@components/barra-busca/barra-busca';
+import { Paginacao } from '@components/paginacao/paginacao';
+import { lerParametrosPagina, TAMANHO_PAGINA_PADRAO } from 'src/app/shared/utils/paginacao-url';
 import { ModalLayout } from '@components/modal-layout/modal-layout';
 import { TabelaAcao, TabelaColuna, TabelaLayout } from '@components/tabela-layout/tabela-layout';
 
@@ -50,6 +52,7 @@ import {
     ModalLayout,
     TabelaLayout,
     BarraBusca,
+    Paginacao,
     MatFormFieldModule,
     MatInputModule,
   ],
@@ -89,6 +92,10 @@ export class CaptacaoRecursos implements OnInit, OnDestroy, ComponentComAlteraco
 
   /** Termo da barra de busca (só em abas de tabela com vários itens), espelhado em ?search= na URL. */
   busca = '';
+  pagina = 0;
+  tamanho = TAMANHO_PAGINA_PADRAO;
+  totalElementos = 0;
+  totalPaginas = 0;
 
   constructor(
     private fb: FormBuilder,
@@ -109,11 +116,15 @@ export class CaptacaoRecursos implements OnInit, OnDestroy, ComponentComAlteraco
 
       const novaBusca = params.get('search') ?? '';
       const buscaMudou = novaBusca !== this.busca;
+      const { pagina, tamanho } = lerParametrosPagina(params);
+      const paginacaoMudou = pagina !== this.pagina || tamanho !== this.tamanho;
+      this.pagina = pagina;
+      this.tamanho = tamanho;
       this.busca = novaBusca;
 
       if (destino === this.grupoAtivo) {
-        // Mesma aba: só a busca mudou — refaz o GET da tabela sem recarregar a página.
-        if (buscaMudou && this.ehTabela) {
+        // Mesma aba: atualiza a lista ao mudar busca ou paginação na URL.
+        if ((buscaMudou || paginacaoMudou) && this.ehTabela) {
           this.carregarTabela();
         }
         return;
@@ -134,11 +145,31 @@ export class CaptacaoRecursos implements OnInit, OnDestroy, ComponentComAlteraco
     return this.ehTabela && !this.grupoAtivo.registroUnico;
   }
 
+  get exibePaginacao(): boolean {
+    return this.ehTabela && !this.grupoAtivo.registroUnico;
+  }
+
+  irParaPagina(pagina: number): void {
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { page: pagina },
+      queryParamsHandling: 'merge',
+    });
+  }
+
+  mudarTamanhoPagina(tamanho: number): void {
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { size: tamanho, page: 0 },
+      queryParamsHandling: 'merge',
+    });
+  }
+
   /** Atualiza a URL (?search=termo); o queryParamMap.subscribe refaz o GET sem recarregar a página. */
   buscar(termo: string): void {
     this.router.navigate([], {
       relativeTo: this.route,
-      queryParams: { search: termo || null },
+      queryParams: { search: termo || null, page: 0 },
       queryParamsHandling: 'merge',
     });
   }
@@ -159,6 +190,7 @@ export class CaptacaoRecursos implements OnInit, OnDestroy, ComponentComAlteraco
       if (confirmado) {
         // A busca é por aba: zera antes de ativar, para a nova aba já carregar sem filtro.
         this.busca = '';
+        this.pagina = 0;
         // Ativa antes de navegar: a emissão do query param cai no `destino === grupoAtivo`.
         this.ativarGrupo(grupo);
         this.navegarParaAba(grupo);
@@ -169,7 +201,7 @@ export class CaptacaoRecursos implements OnInit, OnDestroy, ComponentComAlteraco
   private navegarParaAba(grupo: GrupoSecaoConfig, substituirHistorico = false): void {
     this.router.navigate([], {
       relativeTo: this.route,
-      queryParams: { aba: grupo.grupo, search: this.busca || null },
+      queryParams: { aba: grupo.grupo, search: this.busca || null, page: this.pagina },
       queryParamsHandling: 'merge',
       replaceUrl: substituirHistorico,
     });
@@ -212,11 +244,14 @@ export class CaptacaoRecursos implements OnInit, OnDestroy, ComponentComAlteraco
   }
 
   private prepararGrupoAtivo(): void {
+    this.listaSub?.unsubscribe();
     this.form = criarFormularioGrupo(this.fb, this.grupoAtivo);
     this.erros = {};
     // Registros da aba anterior não podem vazar: o id do contato era
     // reaproveitado ao criar um produto, virando PUT em vez de POST.
     this.itens = [];
+    this.totalElementos = 0;
+    this.totalPaginas = 0;
     this.secaoContato = null;
     this.itemEditando = null;
     this.modalAberto = false;
@@ -331,10 +366,28 @@ export class CaptacaoRecursos implements OnInit, OnDestroy, ComponentComAlteraco
     this.erroCarregamento = false;
 
     const busca = this.exibeBusca ? this.busca || undefined : undefined;
-    this.listaSub = this.secoesGrupoService.listarPorGrupo(this.config.idPagina, this.grupoAtivo.grupo, busca).subscribe({
-      next: (itens) => {
-        this.itens = itens;
+    const request = this.exibePaginacao
+      ? this.secoesGrupoService.listarPorGrupoPaginado(
+          this.config.idPagina, this.grupoAtivo.grupo, this.pagina, this.tamanho, busca,
+        )
+      : this.secoesGrupoService.listarPorGrupo(this.config.idPagina, this.grupoAtivo.grupo, busca).pipe(
+          map((content) => ({
+            content,
+            page: { number: 0, size: content.length, totalElements: content.length, totalPages: content.length ? 1 : 0 },
+          })),
+        );
+
+    this.listaSub = request.subscribe({
+      next: (resposta) => {
+        this.itens = resposta.content;
+        this.totalElementos = resposta.page.totalElements;
+        this.totalPaginas = resposta.page.totalPages;
         this.carregando = false;
+
+        if (this.exibePaginacao && this.itens.length === 0 && this.pagina > 0) {
+          this.irParaPagina(Math.max(0, this.totalPaginas - 1));
+        }
+
         this.cdr.detectChanges();
       },
       error: () => {
@@ -350,7 +403,8 @@ export class CaptacaoRecursos implements OnInit, OnDestroy, ComponentComAlteraco
     this.carregando = true;
     this.erroCarregamento = false;
 
-    this.secoesGrupoService.listarPorGrupo(this.config.idPagina, this.grupoAtivo.grupo).subscribe({
+    this.listaSub?.unsubscribe();
+    this.listaSub = this.secoesGrupoService.listarPorGrupo(this.config.idPagina, this.grupoAtivo.grupo).subscribe({
       next: (secoes) => {
         this.carregando = false;
         this.secaoContato = secoes[0] ?? null;

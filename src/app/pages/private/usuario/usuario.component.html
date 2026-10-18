@@ -587,7 +587,7 @@
         </div>
       </div>
       <ng-template #semContatos>
-        <p class="texto-vazio">Nenhum contacto associado.</p>
+        <app-estado-vazio mensagem="Nenhum contato associado." icone="group_off" [compacto]="true"></app-estado-vazio>
       </ng-template>
     </div>
   </div>
@@ -652,7 +652,7 @@
       <p style="margin-top:10px; color: var(--input-color); font-family: var(--fonte-texto);">Carregando vínculos...</p>
     </div>
     } @else if (!vinculosDoContato.length) {
-    <p class="texto-vazio">Nenhum usuário vinculado a este contato.</p>
+    <app-estado-vazio mensagem="Nenhum usuário vinculado a este contato." icone="group_off" [compacto]="true"></app-estado-vazio>
     } @else {
     <div class="vinculo-card" *ngFor="let vinculo of vinculosDoContato">
       <div class="vinculo-avatar-linha">

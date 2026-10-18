@@ -183,14 +183,14 @@ export class EventoComponent implements OnInit, OnDestroy, ComponentComAlteracoe
 
   get mensagemVazia(): string {
     if (this.busca) {
-      return `Nenhum evento encontrado para "${this.busca}"`;
+      return `Nenhum evento encontrado para "${this.busca}".`;
     }
     if (this.filtroDataInicial || this.filtroDataFinal || this.filtroValor !== 'todos') {
-      return 'Nenhum evento encontrado com os filtros selecionados';
+      return 'Nenhum evento encontrado com os filtros selecionados.';
     }
     return this.filtroTipo
-      ? `Nenhum evento do tipo ${this.formatarTextoExibicao(this.filtroTipo)} cadastrado ainda`
-      : 'Nenhum evento cadastrado ainda';
+      ? `Nenhum evento do tipo ${this.formatarTextoExibicao(this.filtroTipo)} cadastrado.`
+      : 'Nenhum evento cadastrado.';
   }
 
   formatarTextoExibicao(valor: string | null | undefined): string {

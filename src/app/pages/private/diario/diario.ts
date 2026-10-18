@@ -1,3 +1,4 @@
+import { EstadoVazio } from 'src/app/components/estado-vazio/estado-vazio';
 import { Component, OnInit, OnDestroy, inject, NgZone, ChangeDetectorRef, HostListener, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -26,7 +27,7 @@ type FiltrosDiario = { idUnidade: number | null; idTurma: number | null; data: s
 @Component({
   selector: 'app-diario',
   standalone: true,
-  imports: [
+  imports: [EstadoVazio,
     CommonModule, RouterLink, FormsModule, ReactiveFormsModule, ModalLayout,
     MatFormFieldModule, MatInputModule, MatSelectModule, MatIconModule
   ],

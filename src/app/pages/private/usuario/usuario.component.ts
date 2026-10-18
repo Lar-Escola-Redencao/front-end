@@ -1,3 +1,4 @@
+import { EstadoVazio } from 'src/app/components/estado-vazio/estado-vazio';
 import { AbasResponsivas } from 'src/app/shared/directives/abas-responsivas';
 import {
   ChangeDetectorRef,
@@ -76,7 +77,7 @@ import { environment } from 'src/environments/environment';
 @Component({
   selector: 'app-usuario',
   standalone: true,
-  imports: [
+  imports: [EstadoVazio,
     AbasResponsivas,
     CommonModule,
     RouterLink,
@@ -618,7 +619,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
         ? `Nenhum usuário encontrado para "${this.busca}".`
         : `Nenhum contato encontrado para "${this.busca}".`;
     }
-    return this.abaAtiva === 'usuarios' ? 'Nenhum usuário cadastrado ainda.' : 'Nenhum contato cadastrado ainda.';
+    return this.abaAtiva === 'usuarios' ? 'Nenhum usuário cadastrado.' : 'Nenhum contato cadastrado.';
   }
 
   carregarUsuarios(): void {

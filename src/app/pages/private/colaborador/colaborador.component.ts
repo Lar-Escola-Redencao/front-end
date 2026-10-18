@@ -316,16 +316,16 @@ export class ColaboradorComponent
 
   get mensagemVazia(): string {
     if (this.busca) {
-      return `Nenhum colaborador encontrado para "${this.busca}"`;
+      return `Nenhum colaborador encontrado para "${this.busca}".`;
     }
     const papelSelecionado = this.papeis.find(p => p.id === this.filtroPapel);
     const unidadeSelecionada = this.unidadesDisponiveis.find(u => u.id === this.filtroUnidade);
 
     if (papelSelecionado || unidadeSelecionada) {
-      return 'Nenhum colaborador encontrado com os filtros selecionados';
+      return 'Nenhum colaborador encontrado com os filtros selecionados.';
     }
 
-    return 'Nenhum colaborador cadastrado ainda';
+    return 'Nenhum colaborador cadastrado.';
   }
 
   get temAlteracoes(): boolean {

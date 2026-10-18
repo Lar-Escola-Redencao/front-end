@@ -389,14 +389,14 @@ export class UnidadesTurmas implements OnInit, OnDestroy, ComponentComAlteracoes
 
   get mensagemVazia(): string {
     return this.busca
-      ? `Nenhuma unidade encontrada para "${this.busca}"`
-      : 'Nenhuma unidade cadastrada ainda';
+      ? `Nenhuma unidade encontrada para "${this.busca}".`
+      : 'Nenhuma unidade cadastrada.';
   }
 
   get mensagemVaziaTurmas(): string {
     return this.busca
-      ? `Nenhuma turma encontrada para "${this.busca}"`
-      : 'Nenhuma turma cadastrada ainda';
+      ? `Nenhuma turma encontrada para "${this.busca}".`
+      : 'Nenhuma turma cadastrada.';
   }
 
   irParaPagina(pagina: number): void {

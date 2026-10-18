@@ -59,10 +59,7 @@
   <div class="diario-conteudo">
     
     @if (estadoTela === 'VAZIO' && !carregando) {
-      <div class="state-box empty-state">
-        <mat-icon class="empty-icon">rule</mat-icon>
-        <p>Selecione a unidade e a turma acima para carregar o diário.</p>
-      </div>
+      <app-estado-vazio icone="rule" mensagem="Selecione a unidade e a turma acima para carregar o diário."></app-estado-vazio>
     }
 
     @else if (carregando) {
@@ -72,9 +69,7 @@
       </div>
     } 
     @else if (usuarios.length === 0 && filtroForm.valid) {
-      <div class="state-box">
-        <p>Nenhum usuário matriculado nesta turma para a data selecionada.</p>
-      </div>
+      <app-estado-vazio icone="person_off" mensagem="Nenhum usuário matriculado nesta turma para a data selecionada."></app-estado-vazio>
     }
     @else if (usuarios.length > 0) {
       <div class="tabela-diario-wrapper">
@@ -262,7 +257,7 @@
             }
           </div>
         } @else {
-          <p class="texto-vazio ocorrencias-vazio">Não há ocorrências para este usuário neste dia.</p>
+          <app-estado-vazio icone="inbox" mensagem="Não há ocorrências para este usuário neste dia." [compacto]="true"></app-estado-vazio>
         }
       </div>
   </app-modal-layout>
