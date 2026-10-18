@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, inject, NgZone, ChangeDetectorRef, HostListener } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, NgZone, ChangeDetectorRef, HostListener, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -16,6 +16,8 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatIconModule } from '@angular/material/icon';
 import { Alertas } from 'src/app/shared/utils/alerts';
+import { inicioPeriodoDiario } from 'src/app/shared/utils/periodo-diario';
+import { diaPorDeslize } from 'src/app/shared/utils/deslize-dia';
 import { mapearErrosFormulario } from 'src/app/shared/utils/form-validations';
 import { ComponentComAlteracoesNaoSalvas } from 'src/app/shared/guards/can-deactivate.guard';
 
@@ -32,6 +34,39 @@ type FiltrosDiario = { idUnidade: number | null; idTurma: number | null; data: s
   styleUrl: './diario.css'
 })
 export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalvas {
+  private inicioDeslize?: { id: number; x: number; y: number; instante: number };
+
+  iniciarDeslizeData(event: PointerEvent): void {
+    if (!event.isPrimary || event.pointerType !== 'touch' || this.salvando || this.confirmandoTrocaFiltro) {
+      this.inicioDeslize = undefined;
+      return;
+    }
+    this.inicioDeslize = { id: event.pointerId, x: event.clientX, y: event.clientY, instante: event.timeStamp };
+    (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
+  }
+
+  finalizarDeslizeData(event: PointerEvent): void {
+    const inicio = this.inicioDeslize;
+    this.inicioDeslize = undefined;
+    if (!inicio || inicio.id !== event.pointerId) return;
+    const dias = diaPorDeslize(event.clientX - inicio.x, event.clientY - inicio.y, event.timeStamp - inicio.instante);
+    if (dias) this.alterarData(dias);
+  }
+
+  cancelarDeslizeData(): void {
+    this.inicioDeslize = undefined;
+  }
+
+  @ViewChild('regras') private regras?: ElementRef<HTMLDetailsElement>;
+
+  @HostListener('document:click', ['$event'])
+  fecharRegrasAoClicarFora(event: MouseEvent): void {
+    const painel = this.regras?.nativeElement;
+    if (painel?.open && !painel.contains(event.target as Node)) {
+      painel.open = false;
+    }
+  }
+
   private fb = inject(FormBuilder);
   private unidadeService = inject(UnidadeService);
   private turmaService = inject(TurmaService);
@@ -316,6 +351,7 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
   }
 
   get podeIniciarChamada(): boolean {
+    if (this.dataForaDoPeriodoPermitido) return false;
     const idTurma = this.filtroForm.get('idTurma')?.value;
     const dataSelecionada = this.filtroForm.get('data')?.value;
     if (!idTurma || !dataSelecionada || this.estadoTela !== 'INICIAL' || this.salvando || !this.usuarios.length) return false;
@@ -342,6 +378,7 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
 
   get podePreencherFrequencia(): boolean {
     return !this.salvando && this.estadoTela === 'PREENCHENDO'
+      && (this.podeEditarFrequencia || !this.dataForaDoPeriodoPermitido)
       && (this.podeEditarFrequencia || !this.usuarios.some(u => u.idFrequencia !== null));
   }
 
@@ -353,7 +390,35 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
   }
 
   podeEditarExcluirOcorrencia(oc: OcorrenciaResponseDTO): boolean {
-    return this.perfilEstrategico || (this.isMonitor && !!oc.dataCriacao && Date.now() - this.instanteBrasilia(oc.dataCriacao) <= 24 * 60 * 60 * 1000);
+    return this.perfilEstrategico || (this.isMonitor && !!oc.dataCriacao
+      && Date.now() - this.instanteBrasilia(oc.dataCriacao) <= 24 * 60 * 60 * 1000);
+  }
+
+  get perfilDoDiario(): string {
+    if (this.isMonitor) return 'Monitor';
+    return this.sessao.isAdministrador() ? 'Administrador' : 'Coordenador';
+  }
+
+  get regrasDoDiario(): { acao: string; regra: string }[] {
+    if (this.isMonitor) {
+      return [
+        { acao: 'Registrar nova chamada', regra: 'Desde o primeiro dia do mês anterior, após o horário de início da turma.' },
+        { acao: 'Editar presenças lançadas', regra: 'Até 48 horas após o início da aula.' },
+        { acao: 'Registrar ocorrências', regra: 'Até 7 dias anteriores ao dia atual. Datas futuras não são permitidas.' },
+        { acao: 'Editar ou excluir ocorrência lançada', regra: 'Até 24 horas após a criação do registro.' }
+      ];
+    }
+    return [
+      { acao: 'Registrar nova chamada', regra: 'Sem limite de retroatividade.' },
+      { acao: 'Editar presenças lançadas', regra: 'Sem limite de tempo.' },
+      { acao: 'Registrar ocorrências', regra: 'Sem limite de retroatividade. O horário deve estar dentro do turno da turma.' },
+      { acao: 'Editar ou excluir ocorrência lançada', regra: 'Sem limite de tempo.' }
+    ];
+  }
+
+  get dataForaDoPeriodoPermitido(): boolean {
+    const data = this.filtroForm.get('data')?.value;
+    return this.isMonitor && !!data && data < inicioPeriodoDiario(this.hojeFormatada());
   }
 
   get podeSalvarOcorrencia(): boolean {
@@ -369,6 +434,7 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
   }
 
   alterarData(dias: number) {
+    if (this.salvando || this.confirmandoTrocaFiltro) return;
     const dataAtual = new Date((this.filtroForm.get('data')?.value || this.hojeFormatada()) + 'T12:00:00');
     dataAtual.setDate(dataAtual.getDate() + dias);
     this.filtroForm.get('data')?.setValue(dataAtual.toISOString().split('T')[0]);

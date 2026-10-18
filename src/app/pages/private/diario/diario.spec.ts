@@ -74,6 +74,28 @@ describe('Diário de turma', () => {
 
   afterEach(() => { fixture.destroy(); vi.useRealTimers(); vi.restoreAllMocks(); });
 
+  it('limita apenas a nova chamada ao primeiro dia do mês passado', () => {
+    component.estadoTela = 'INICIAL';
+    component.filtroForm.get('data')!.setValue('2026-09-01');
+    expect(component.podeIniciarChamada).toBe(true);
+    expect(component.podeEditarFrequencia).toBe(false);
+    component.filtroForm.get('data')!.setValue('2026-08-31');
+    expect(component.podeIniciarChamada).toBe(false);
+    component.iniciarChamada();
+    expect(component.estadoTela).toBe('INICIAL');
+  });
+
+  it('exibe regras específicas para cada perfil', () => {
+    expect(component.perfilDoDiario).toBe('Monitor');
+    expect(component.regrasDoDiario.find(item => item.acao === 'Editar presenças lançadas')?.regra).toContain('48 horas');
+    for (const perfil of ['COORDENADOR', 'ADMINISTRADOR']) {
+      papel = perfil;
+      expect(component.perfilDoDiario).toBe(perfil === 'COORDENADOR' ? 'Coordenador' : 'Administrador');
+      expect(component.regrasDoDiario.every(item => item.regra.startsWith('Sem limite'))).toBe(true);
+      expect(component.podeEditarFrequencia).toBe(true);
+    }
+  });
+
   it('bloqueia salvar ocorrência inalterada e volta a bloquear ao desfazer a edição', () => {
     component.usuarioSelecionado = aluno();
     component.abrirFormOcorrencia(ocorrencia('2026-10-06T12:00:00'), 'EDITAR');
