@@ -8,11 +8,12 @@ import { Auth } from 'src/app/shared/services/auth/auth';
 import { PerfilService } from 'src/app/shared/services/colaborador/perfil.service';
 import { AlterarSenha } from 'src/app/pages/private/alterar-senha/alterar-senha';
 import Swal from 'sweetalert2';
+import { BloquearScroll } from '../../shared/directives/bloquear-scroll';
 
 @Component({
   selector: 'app-private-navbar',
   standalone: true,
-  imports: [MatButtonModule, NgClass, NgIf, RouterLink, RouterLinkActive, AlterarSenha],
+  imports: [MatButtonModule, NgClass, NgIf, RouterLink, RouterLinkActive, AlterarSenha, BloquearScroll],
   templateUrl: './private-navbar.html',
   styleUrl: './private-navbar.css'
 })

@@ -1,8 +1,10 @@
 import { Component, HostListener, input, output } from '@angular/core';
+import { BloquearScroll } from '../../directives/bloquear-scroll';
 
 @Component({
   selector: 'app-modal',
   standalone: true,
+  imports: [BloquearScroll],
   templateUrl: './modal.html',
   styleUrl: './modal.css',
 })

@@ -1,4 +1,4 @@
-<div class="navbar-overlay" *ngIf="menuVisivel" (click)="fecharMenu()"></div>
+<div appBloquearScroll class="navbar-overlay" *ngIf="menuVisivel" (click)="fecharMenu()"></div>
 
 <nav class="navbar" [ngClass]="{'expandido': menuVisivel}">
   <div class="navbar-header" (click)="abrirMenu()">

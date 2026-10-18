@@ -1,17 +1,19 @@
-import { Component, ElementRef, HostListener, inject, signal } from '@angular/core';
+import { Component, ElementRef, HostListener, Injector, afterNextRender, inject, signal } from '@angular/core';
 import { NgIf } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
+import { BloquearScroll } from '../../shared/directives/bloquear-scroll';
 
 @Component({
   selector: 'app-public-navbar',
   standalone: true, 
-  imports: [MatButtonModule, NgIf, RouterLink], 
+  imports: [MatButtonModule, NgIf, RouterLink, BloquearScroll],
   templateUrl: './public-navbar.html',
   styleUrl: './public-navbar.css',
 })
 export class PublicNavbar {
   private readonly elementRef = inject(ElementRef);
+  private readonly injector = inject(Injector);
 
   menuAberto = signal(false);
 
@@ -53,7 +55,8 @@ export class PublicNavbar {
         setTimeout(() => this.executarScroll(sectionId), 100);
       });
     } else {
-      this.executarScroll(sectionId);
+      // Aguarda a remoção do overlay e a restauração da posição da página.
+      afterNextRender(() => this.executarScroll(sectionId), { injector: this.injector });
     }
   }
 
