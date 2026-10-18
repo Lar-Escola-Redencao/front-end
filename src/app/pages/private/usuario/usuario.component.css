@@ -979,8 +979,8 @@ h1 {
   grid-template-columns: repeat(5, minmax(0, 1fr));
   align-items: flex-start;
   width: 100%;
-  max-width: 580px;
-  margin: 30px auto 20px;
+  max-width: none;
+  margin: 30px 0;
   padding: 0;
 }
 
@@ -988,10 +988,30 @@ h1 {
   position: relative;
   display: flex;
   min-width: 0;
+  min-height: 64px;
+  padding: 0 2px 8px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer;
   flex-direction: column;
   align-items: center;
   gap: 7px;
   text-align: center;
+}
+
+.stepper-indicador .step:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+.stepper-indicador .step:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.stepper-indicador .step:not(:disabled):hover .step-texto {
+  color: var(--primary-color);
 }
 
 .stepper-indicador .step-numero {
@@ -1015,11 +1035,11 @@ h1 {
 
 .stepper-indicador .step-texto {
   display: block;
-  width: 136px;
+  width: 100%;
   min-width: 0;
   color: #9a9a9a;
   font-family: var(--fonte-texto);
-  font-size: 0.68rem;
+  font-size: 0.8rem;
   font-weight: 400;
   line-height: 1.15;
   white-space: normal;
@@ -1030,12 +1050,12 @@ h1 {
 
 .stepper-indicador .step-texto span {
   display: block;
-  white-space: nowrap;
+  white-space: normal;
 }
 
 .stepper-indicador .step.ativo .step-texto {
-  color: #939393;
-  font-weight: 400;
+  color: var(--primary-color);
+  font-weight: 600;
 }
 
 .stepper-indicador .step:not(:last-child)::after {
@@ -1046,15 +1066,11 @@ h1 {
   width: calc(100% - 28px);
   height: 1px;
   background: #aaa;
+  pointer-events: none;
 }
 
 .stepper-indicador .step-linha {
   display: none;
-}
-
-.stepper-indicador .step.linha-ativa:not(:last-child)::after {
-  background: var(--primary-color);
-  height: 2px;
 }
 
 .cadastro-form {
@@ -1207,7 +1223,7 @@ h1 {
 .cadastro-voltar {
   align-self: flex-start;
   width: fit-content;
-  margin: -8px 0 16px;
+  margin: 0 0 16px;
   padding: 0;
   font-size: 0.84rem;
   font-weight: 400;
@@ -1717,7 +1733,6 @@ h1 {
 
   .stepper-indicador .step-texto {
     width: 100%;
-    font-size: 0.55rem;
     overflow-wrap: anywhere;
   }
 

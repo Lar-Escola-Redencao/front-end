@@ -54,6 +54,60 @@ describe('Contrato de edição de usuários', () => {
     vi.spyOn(component, 'processarUploadFoto').mockImplementation(() => {});
   });
 
+  it('permite visitar uma etapa futura sem validar ou perder os dados preenchidos', () => {
+    component.formUsuario.markAsUntouched();
+    component.formUsuario.get('nomeCompleto')!.setValue('');
+    const dados = component.formUsuario.getRawValue();
+    component.irParaEtapa(5);
+    expect(component.etapaModal).toBe(5);
+    expect(component.formUsuario.untouched).toBe(true);
+    expect(component.formUsuario.getRawValue()).toEqual(dados);
+  });
+
+  it('permite voltar a uma etapa e visitar outra sem exigir preenchimento', () => {
+    component.irParaEtapa(3);
+    expect(component.etapaModal).toBe(3);
+    component.irParaEtapa(1);
+    component.formUsuario.get('nomeCompleto')!.setValue('');
+    component.irParaEtapa(4);
+    expect(component.etapaModal).toBe(4);
+    expect(component.formUsuario.get('nomeCompleto')!.value).toBe('');
+  });
+
+  it('mantém a validação de Próximo e impede navegação enquanto salva', () => {
+    component.formUsuario.get('nomeCompleto')!.setValue('');
+    component.proximaEtapa();
+    expect(component.etapaModal).toBe(1);
+    expect(component.formUsuario.get('nomeCompleto')!.touched).toBe(true);
+    component.isLoading = true;
+    component.irParaEtapa(5);
+    expect(component.etapaModal).toBe(1);
+  });
+
+  it('ao salvar por uma etapa futura, abre a primeira etapa inválida', () => {
+    component.formUsuario.get('nomeCompleto')!.setValue('');
+    component.irParaEtapa(5);
+    component.salvar();
+    expect(component.etapaModal).toBe(1);
+    expect(service.atualizar).not.toHaveBeenCalled();
+  });
+
+  it('bloqueia o envio sem contatos mesmo ao pular diretamente para a matrícula', () => {
+    component.contatosArray.clear();
+    component.irParaEtapa(5);
+    component.salvar();
+    expect(component.etapaModal).toBe(2);
+    expect(service.atualizar).not.toHaveBeenCalled();
+  });
+
+  it('direciona para matrícula quando os dados da turma estão ausentes', () => {
+    component.formUsuario.get('idTurma')!.setValue(null);
+    component.etapaModal = 3;
+    component.salvar();
+    expect(component.etapaModal).toBe(5);
+    expect(service.atualizar).not.toHaveBeenCalled();
+  });
+
   it('preenche e reenvia família, zero, false e religião personalizada em um PUT com telefone novo e ID', () => {
     expect(component.familiaresArray.at(0).value.renda).toBe(0);
     expect(component.familiaresArray.at(0).value.idade).toBe(0);

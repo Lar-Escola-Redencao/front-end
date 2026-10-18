@@ -145,7 +145,7 @@
 @media (max-width: 1000px) {
   .dashboard-home {
     min-height: calc(100vh - 110px);
-    padding: 20px 54px 90px;
+    padding: 32px 54px 90px;
     grid-template-columns: 1fr;
     align-items: start;
     gap: 0px;
@@ -203,7 +203,7 @@
 
 @media (max-width: 600px) {
   .dashboard-home {
-    padding: 20px 40px 80px;
+    padding: 32px 40px 80px;
   }
 
   .grid-opcoes {

@@ -90,13 +90,15 @@
 <app-modal-layout class="cadastro-modal" [class.tremer]="modalTremendo"
   [titulo]="modoEdicao ? 'Editar usuário' : 'Cadastrar novo usuário'" (closed)="fecharModal()">
   
-  <div class="stepper-indicador" aria-label="Etapas do cadastro">
+  <nav class="stepper-indicador" aria-label="Etapas do cadastro">
     <ng-container *ngFor="let etapa of etapas; let i = index">
-    <div class="step" 
-     [class.ativo]="etapaModal >= i + 1" 
-     [class.linha-ativa]="etapaModal > i + 1" 
+    <button type="button" class="step"
+     (click)="irParaEtapa(i + 1)"
+     [disabled]="navegacaoEtapasBloqueada"
+     [class.ativo]="etapaModal === i + 1"
+     [attr.aria-label]="'Etapa ' + (i + 1) + ': ' + etapa"
      [attr.aria-current]="etapaModal === i + 1 ? 'step' : null">
-      <div class="step-numero">{{ i + 1 }}</div>
+      <span class="step-numero">{{ i + 1 }}</span>
         <span class="step-texto">
           <ng-container *ngIf="etapa.startsWith('Dados '); else tituloUnico">
             <span>Dados</span>
@@ -104,10 +106,9 @@
           </ng-container>
           <ng-template #tituloUnico>{{ etapa }}</ng-template>
         </span>
-      </div>
-      <div class="step-linha" *ngIf="i < 4" [class.ativo]="etapaModal > i + 1"></div>
+      </button>
     </ng-container>
-  </div>
+  </nav>
 
   <form class="form-modal cadastro-form" [formGroup]="formUsuario" (ngSubmit)="salvar()">
     @if (isCarregandoEdicao) {

@@ -184,6 +184,10 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
   isLoading = false;
   isCarregandoEdicao = false;
   etapaModal = 1;
+  private readonly camposDadosPessoais = [
+    'nomeCompleto', 'dataNascimento', 'cpf', 'tipoDocumento', 'documentoAuxiliar',
+    'endereco', 'numeroEndereco', 'cep', 'bairro', 'escola', 'periodoEscolar', 'serieEscolar',
+  ];
   contatoExpandidoIndex = 0;
   familiarExpandidoIndex = -1;
   usuarioSelecionadoId: number | null = null;
@@ -1324,15 +1328,41 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
     }, 400);
   }
 
+  get navegacaoEtapasBloqueada(): boolean {
+    return this.isLoading || this.isCarregandoEdicao;
+  }
+
+  irParaEtapa(etapa: number): void {
+    if (this.navegacaoEtapasBloqueada || !Number.isInteger(etapa) || etapa < 1 || etapa > this.etapas.length) return;
+    this.etapaModal = etapa;
+  }
+
+  private etapaValida(etapa: number): boolean {
+    const camposValidos = (campos: string[]) => campos.every(campo => {
+      const controle = this.formUsuario.get(campo);
+      return !!controle && !controle.invalid && !controle.pending;
+    });
+    switch (etapa) {
+      case 1: return camposValidos(this.camposDadosPessoais);
+      case 2: return this.contatosArray.length > 0 && this.contatosArray.valid
+        && !this.contatosArray.controls.some(contato => contato.get('buscarExistente')?.value && !contato.get('id')?.value);
+      case 3: return this.formUsuario.get('socioeconomico')?.valid === true;
+      case 4: return this.formUsuario.get('complementares')?.valid === true;
+      case 5: return camposValidos(['idUnidade', 'idTurma'])
+        && !!this.formUsuario.get('idUnidade')?.value && !!this.formUsuario.get('idTurma')?.value;
+      default: return false;
+    }
+  }
+
   proximaEtapa(): void {
-    if (this.consultandoCep) {
+    if (this.consultandoCep || this.navegacaoEtapasBloqueada) {
       return;
     }
     if (this.etapaModal === 1) {
-      for (const campo of ['nomeCompleto', 'dataNascimento', 'cpf', 'tipoDocumento', 'documentoAuxiliar', 'endereco', 'numeroEndereco', 'cep', 'bairro', 'escola', 'periodoEscolar', 'serieEscolar']) {
+      for (const campo of this.camposDadosPessoais) {
         this.formUsuario.get(campo)?.markAsTouched();
       }
-      if (['nomeCompleto', 'dataNascimento', 'cpf', 'tipoDocumento', 'documentoAuxiliar', 'endereco', 'numeroEndereco', 'cep', 'bairro', 'escola', 'periodoEscolar', 'serieEscolar'].some(c => this.formUsuario.get(c)?.invalid)) {
+      if (!this.etapaValida(1)) {
         this.verificarErros();
         return;
       }
@@ -1359,11 +1389,11 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
       return;
     }
     this.verificarErros();
-    if (this.etapaModal < 5) this.etapaModal++;
+    if (this.etapaModal < 5) this.irParaEtapa(this.etapaModal + 1);
   }
 
   voltarEtapa() {
-    if (this.etapaModal > 1) this.etapaModal--;
+    if (this.etapaModal > 1) this.irParaEtapa(this.etapaModal - 1);
   }
 
   adicionarContato(isPrincipal = false) {
@@ -1916,19 +1946,14 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
       (this.contatosArray.at(i) as FormGroup).markAllAsTouched();
     }
 
-    if (this.formUsuario.invalid || !this.formUsuario.get('idTurma')?.value || this.contatosArray.controls.some(c => c.get('buscarExistente')?.value && !c.get('id')?.value)) {
-      const dadosPessoais = ['nomeCompleto', 'dataNascimento', 'cpf', 'tipoDocumento', 'documentoAuxiliar', 'endereco', 'numeroEndereco', 'cep', 'bairro', 'escola', 'periodoEscolar', 'serieEscolar'];
-      if (dadosPessoais.some(campo => this.formUsuario.get(campo)?.invalid)) {
-        this.etapaModal = 1;
-      } else if (!this.contatosArray.length || this.contatosArray.invalid || this.contatosArray.controls.some(c => c.get('buscarExistente')?.value && !c.get('id')?.value)) {
-        this.etapaModal = 2;
+    const primeiraEtapaInvalida = [1, 2, 3, 4, 5].find(etapa => !this.etapaValida(etapa));
+    if (primeiraEtapaInvalida !== undefined) {
+      this.irParaEtapa(primeiraEtapaInvalida);
+      if (primeiraEtapaInvalida === 2) {
         this.contatoExpandidoIndex = Math.max(0, this.contatosArray.controls.findIndex(c => c.invalid || (c.get('buscarExistente')?.value && !c.get('id')?.value)));
-      } else if (this.formUsuario.get('socioeconomico')?.invalid) {
-        this.etapaModal = 3;
+      } else if (primeiraEtapaInvalida === 3) {
         const primeiroFamiliarInvalido = this.familiaresArray.controls.findIndex(c => c.invalid);
         if (primeiroFamiliarInvalido >= 0) this.familiarExpandidoIndex = primeiroFamiliarInvalido;
-      } else if (this.formUsuario.get('complementares')?.invalid) {
-        this.etapaModal = 4;
       }
       this.toastr.error('Verifique os campos obrigatórios do cadastro.', 'Atenção');
       return;
@@ -1941,6 +1966,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
     const ids = contatos.map((c: any) => c.id).filter((id: any) => id !== null);
 
     if (new Set(telefones).size !== telefones.length || (ids.length > 0 && new Set(ids).size !== ids.length)) {
+      this.irParaEtapa(2);
       this.toastr.warning('Não é possível adicionar o mesmo contato mais do que uma vez.', 'Contatos duplicados');
       return;
     }
