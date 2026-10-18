@@ -12,6 +12,12 @@
   font-display: swap;
 }
 
+.toast-container .toast-close-button {
+  font-family: var(--fonte-texto);
+  font-weight: 400;
+  text-shadow: none;
+}
+
 :root {
   --primary-color: #3682DC;
   --primary-hover-color: #1661bd;
