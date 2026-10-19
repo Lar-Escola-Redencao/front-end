@@ -1,3 +1,4 @@
+import { AbasResponsivas } from 'src/app/shared/directives/abas-responsivas';
 import { Component, OnInit, OnDestroy, ChangeDetectorRef, HostListener, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -42,6 +43,7 @@ interface DocumentoExibicao extends DocumentoAdmin {
   selector: 'app-transparencia',
   standalone: true,
   imports: [
+    AbasResponsivas,
     CommonModule,
     ReactiveFormsModule,
     ModalLayout,
@@ -475,7 +477,7 @@ export class Transparencia implements OnInit, OnDestroy, ComponentComAlteracoesN
     if (!this.modoEdicao) return this.formDocumento.dirty;
 
     // Como File object quebra no JSON.stringify, comparamos manualmente no caso de arquivo alterado
-    if (this.formDocumento.get('arquivo')?.dirty) return true;
+    if (this.formDocumento.get('arquivo')?.value) return true;
 
     const valorAtual = { ...this.formDocumento.getRawValue(), arquivo: null };
     const valorOriginal = { ...this.valoresOriginaisDocumento, arquivo: null };

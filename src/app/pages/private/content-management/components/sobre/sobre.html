@@ -1,6 +1,6 @@
 <section class="sobre-admin">
 
-  <div class="abas-container">
+  <div appAbasResponsivas class="abas-container">
     <button type="button" class="aba-btn" [class.ativa]="abaAtiva === 'historia'" (click)="mudarAba('historia')">
       Nossa História
     </button>
@@ -47,7 +47,7 @@
         </mat-form-field>
         <span class="error-text" *ngIf="errosTexto['conteudo']">{{ errosTexto['conteudo'] }}</span>
 
-        <div class="acoes-modal">
+        <div class="acoes-modal form-acoes">
           @if (!editandoTexto) {
             <button type="button" class="btn-primary" (click)="editarTexto()">Editar</button>
           } @else {
@@ -58,7 +58,7 @@
             <button
               type="submit"
               class="btn-primary"
-              [disabled]="isLoadingTexto || formTexto.invalid || !temAlteracoesTexto"
+              [disabled]="isLoadingTexto || (!!secaoTexto && !temAlteracoesTexto)"
             >
               <span *ngIf="isLoadingTexto" class="spinner" aria-hidden="true"></span>
               <span>{{ isLoadingTexto ? 'Salvando...' : 'Salvar' }}</span>
@@ -247,12 +247,12 @@
         </div>
       }
 
-      <div class="acoes-modal">
+      <div class="acoes-modal form-acoes">
         <button type="button" class="btn-cancelar" [disabled]="isLoadingHistoria" (click)="fecharModalHistoria()">
           Cancelar
         </button>
 
-        <button type="submit" class="btn-primary" [disabled]="isLoadingHistoria || formHistoria.invalid">
+        <button type="submit" class="btn-primary" [disabled]="isLoadingHistoria || (modoEdicaoHistoria && !temAlteracoesHistoria)">
           <span *ngIf="isLoadingHistoria" class="spinner" aria-hidden="true"></span>
           <span>{{ isLoadingHistoria ? 'Salvando...' : 'Salvar' }}</span>
         </button>

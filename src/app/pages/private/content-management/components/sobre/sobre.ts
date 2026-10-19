@@ -1,3 +1,4 @@
+import { AbasResponsivas } from 'src/app/shared/directives/abas-responsivas';
 import { Component, OnInit, OnDestroy, ChangeDetectorRef, HostListener, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -53,6 +54,7 @@ interface ClassificacaoSecoes {
   selector: 'app-sobre',
   standalone: true,
   imports: [
+    AbasResponsivas,
     CommonModule,
     ReactiveFormsModule,
     ModalLayout,
@@ -316,7 +318,7 @@ export class Sobre implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalvas
       return;
     }
 
-    if (!this.temAlteracoesTexto) {
+    if (this.secaoTexto && !this.temAlteracoesTexto) {
       this.toastr.info('Nenhum dado foi alterado.', 'Aviso');
       return;
     }
@@ -568,7 +570,7 @@ export class Sobre implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalvas
   }
 
   get temAlteracoesHistoria(): boolean {
-    if (this.formHistoria.get('imagem')?.dirty) {
+    if (this.formHistoria.get('imagem')?.value) {
       return true;
     }
 

@@ -1,6 +1,6 @@
 <section class="transparencia-admin">
 
-  <div class="abas-container">
+  <div appAbasResponsivas class="abas-container">
     <button type="button" class="aba-btn" [class.ativa]="abaAtiva === 'documentos'" (click)="mudarAba('documentos')">
       Documentos
     </button>
@@ -128,11 +128,11 @@
     </span>
     }
 
-    <div class="acoes-modal">
+    <div class="acoes-modal form-acoes">
       <button type="button" class="btn-cancelar" [disabled]="isLoading" (click)="fecharModal()">
         Cancelar
       </button>
-      <button type="submit" class="btn-primary" [disabled]="isLoading">
+      <button type="submit" class="btn-primary" [disabled]="isLoading || (modoEdicao && !temAlteracoesDocumento)">
         <span *ngIf="isLoading" class="spinner" aria-hidden="true"></span>
         <span>{{ isLoading ? 'Salvando...' : 'Salvar' }}</span>
       </button>
@@ -184,12 +184,12 @@
       {{ errosSecao['conteudo'] }}
     </span>
 
-    <div class="acoes-modal">
+    <div class="acoes-modal form-acoes">
       <button type="button" class="btn-cancelar" [disabled]="isLoading" (click)="fecharModal()">
         Cancelar
       </button>
 
-      <button type="submit" class="btn-primary" [disabled]="isLoading">
+      <button type="submit" class="btn-primary" [disabled]="isLoading || (modoEdicao && !temAlteracoesSecao)">
         <span *ngIf="isLoading" class="spinner" aria-hidden="true"></span>
         <span>{{ isLoading ? 'Salvando...' : 'Salvar' }}</span>
       </button>

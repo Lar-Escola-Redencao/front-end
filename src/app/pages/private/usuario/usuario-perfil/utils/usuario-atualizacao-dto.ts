@@ -6,9 +6,10 @@ export function montarBaseAtualizacaoUsuario(
   usuario: UsuarioResponseDTO,
   dados: Partial<BaseUsuarioAtualizacao> = {}
 ): BaseUsuarioAtualizacao {
-  const cpf = limparNumeros(dados.cpf ?? usuario.cpf);
-  const documentoAuxiliar = valorOuNull(dados.documentoAuxiliar ?? usuario.documentoAuxiliar);
-  const tipoDocumento = valorOuNull(dados.tipoDocumento ?? usuario.tipoDocumento);
+  // undefined mantém o cadastro; null representa a limpeza explícita do campo.
+  const cpf = limparNumeros(dados.cpf === undefined ? usuario.cpf : dados.cpf);
+  const documentoAuxiliar = valorOuNull(dados.documentoAuxiliar === undefined ? usuario.documentoAuxiliar : dados.documentoAuxiliar);
+  const tipoDocumento = valorOuNull(dados.tipoDocumento === undefined ? usuario.tipoDocumento : dados.tipoDocumento);
   const contatos = usuario.contatos ?? [];
 
   if (!cpf && (!documentoAuxiliar || !tipoDocumento)) {

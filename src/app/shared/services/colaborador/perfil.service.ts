@@ -25,4 +25,12 @@ export class PerfilService {
       tap((perfil) => this.perfilAtual.set(perfil))
     );
   }
+
+  alterarSenha(dto: { senhaAtual: string; novaSenha: string; confirmacaoSenha: string }): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/senha`, dto);
+  }
+
+  validarSenhaAtual(senhaAtual: string): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/senha/validar`, { senhaAtual });
+  }
 }

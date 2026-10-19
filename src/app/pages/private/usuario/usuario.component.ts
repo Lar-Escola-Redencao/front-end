@@ -1,3 +1,5 @@
+import { EstadoVazio } from 'src/app/components/estado-vazio/estado-vazio';
+import { AbasResponsivas } from 'src/app/shared/directives/abas-responsivas';
 import {
   ChangeDetectorRef,
   Component,
@@ -18,10 +20,11 @@ import {
   Validators
 } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { Subscription, of, forkJoin } from 'rxjs';
+import { Subscription, of, forkJoin, timer } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap, catchError, map, tap } from 'rxjs/operators';
 
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { ErrorStateMatcher } from '@angular/material/core';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatIconModule } from '@angular/material/icon';
@@ -40,6 +43,8 @@ import { BarraBusca } from '@components/barra-busca/barra-busca';
 
 import { ComponentComAlteracoesNaoSalvas } from 'src/app/shared/guards/can-deactivate.guard';
 import { UsuarioService } from 'src/app/shared/services/usuario/usuario.service';
+import { CepService } from 'src/app/shared/services/usuario/cep.service';
+import { montarEndereco, separarEndereco } from 'src/app/shared/utils/endereco';
 import { ContatoService } from 'src/app/shared/services/usuario/contato.service';
 import { SessaoService } from 'src/app/shared/services/auth/sessao.service';
 import { ArquivoSaudeDTO, UsuarioResponseDTO, CadastroUsuarioCompletoDTO } from 'src/app/shared/models/usuario.model';
@@ -72,7 +77,8 @@ import { environment } from 'src/environments/environment';
 @Component({
   selector: 'app-usuario',
   standalone: true,
-  imports: [
+  imports: [EstadoVazio,
+    AbasResponsivas,
     CommonModule,
     RouterLink,
     FormsModule,
@@ -94,6 +100,14 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
 
   private readonly fb = inject(FormBuilder);
   private readonly usuarioService = inject(UsuarioService);
+  private readonly cepService = inject(CepService);
+  consultandoCep = false;
+  erroCep = '';
+  readonly estadoErroCep: ErrorStateMatcher = {
+    isErrorState: (controle, formulario) => !!(
+      controle && controle.invalid && (controle.touched || formulario?.submitted)
+    )
+  };
   private readonly contatoService = inject(ContatoService);
   private readonly unidadeService = inject(UnidadeService);
   private readonly turmaService = inject(TurmaService);
@@ -170,6 +184,10 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
   isLoading = false;
   isCarregandoEdicao = false;
   etapaModal = 1;
+  private readonly camposDadosPessoais = [
+    'nomeCompleto', 'dataNascimento', 'cpf', 'tipoDocumento', 'documentoAuxiliar',
+    'endereco', 'numeroEndereco', 'cep', 'bairro', 'escola', 'periodoEscolar', 'serieEscolar',
+  ];
   contatoExpandidoIndex = 0;
   familiarExpandidoIndex = -1;
   usuarioSelecionadoId: number | null = null;
@@ -605,7 +623,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
         ? `Nenhum usuário encontrado para "${this.busca}".`
         : `Nenhum contato encontrado para "${this.busca}".`;
     }
-    return this.abaAtiva === 'usuarios' ? 'Nenhum usuário cadastrado ainda.' : 'Nenhum contato cadastrado ainda.';
+    return this.abaAtiva === 'usuarios' ? 'Nenhum usuário cadastrado.' : 'Nenhum contato cadastrado.';
   }
 
   carregarUsuarios(): void {
@@ -759,6 +777,8 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
   }
 
   iniciarFormulario() {
+    this.consultandoCep = false;
+    this.erroCep = '';
     this.formSubs.forEach(sub => sub.unsubscribe());
     this.formSubs = [];
     this.subsPorContato.clear();
@@ -770,7 +790,10 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
       usarOutroDocumento: [false],
       cpf: ['', [Validators.required, Validators.minLength(14)]],
       tipoDocumento: [''], documentoAuxiliar: [''], cadUnico: [''],
-      endereco: ['', Validators.required], bairro: ['', Validators.required], cep: [''],
+      endereco: ['', Validators.required], bairro: ['', Validators.required],
+      cep: ['', Validators.pattern(/^\d{5}-?\d{3}$/)],
+      numeroEndereco: ['', this.modoEdicao ? [Validators.pattern(/\S/)] : [Validators.required, Validators.pattern(/\S/)]],
+      complementoEndereco: [''],
       escola: ['', Validators.required], periodoEscolar: ['', Validators.required],
       serieEscolar: ['', Validators.required], raEscolar: [''],
       contatos: this.fb.array([]),
@@ -792,6 +815,50 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
       idUnidade: [null, Validators.required],
       idTurma: this.fb.control<number | null>({ value: null, disabled: true }, Validators.required)
     });
+    this.formSubs.push(this.formUsuario.get('cep')!.valueChanges.pipe(
+      map(valor => String(valor || '').replace(/\D/g, '')),
+      distinctUntilChanged(),
+      switchMap(cep => {
+        this.definirConsultaCep(false);
+        this.erroCep = '';
+        if (!cep || !this.formUsuario.get('cep')!.dirty) {
+          return of(null);
+        }
+        if (cep.length !== 8) {
+          this.erroCep = 'Informe um CEP com 8 dígitos.';
+          return of(null);
+        }
+        const endereco = this.formUsuario.get('endereco')!.value;
+        const bairro = this.formUsuario.get('bairro')!.value;
+        this.definirConsultaCep(true);
+        this.atualizarTela();
+        return timer(400).pipe(
+          switchMap(() => this.cepService.consultar(cep)),
+          map(dados => ({ dados, endereco, bairro })),
+          catchError(() => {
+            this.erroCep = 'Não foi possível consultar o CEP. Preencha o endereço manualmente.';
+            return of(null);
+          })
+        );
+      })
+    ).subscribe(resultado => {
+      this.definirConsultaCep(false);
+      if (resultado?.dados.erro) {
+        this.erroCep = 'Endereço não localizado. Preencha os campos manualmente.';
+      } else if (resultado) {
+        const { dados, endereco, bairro } = resultado;
+        if (dados.logradouro && this.formUsuario.get('endereco')!.value === endereco) {
+          this.formUsuario.get('endereco')!.setValue(dados.logradouro);
+        }
+        if (dados.bairro && this.formUsuario.get('bairro')!.value === bairro) {
+          this.formUsuario.get('bairro')!.setValue(dados.bairro);
+        }
+        const numero = this.formUsuario.get('numeroEndereco')!;
+        numero.setValidators([Validators.required, Validators.pattern(/\S/)]);
+        numero.updateValueAndValidity({ emitEvent: false });
+      }
+      this.atualizarTela();
+    }));
     this.formSubs.push(this.formUsuario.get('socioeconomico.tipoMoradia')!.valueChanges.subscribe(tipo => {
       const aluguel = this.formUsuario.get('socioeconomico.valorAluguel')!;
       aluguel.setValidators(tipo === 'ALUGADA' || tipo === 'APARTAMENTO_ALUGADO' ? [Validators.required, Validators.min(0)] : []);
@@ -1066,7 +1133,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
         this.formUsuario.patchValue({
           nomeCompleto: dadosCompletos.nomeCompleto,
           dataNascimento: dadosCompletos.dataNascimento ? dadosCompletos.dataNascimento.split('T')[0] : '',
-          endereco: dadosCompletos.endereco,
+          ...separarEndereco(dadosCompletos.endereco),
           bairro: dadosCompletos.bairro || '', cep: formatarCep(dadosCompletos.cep),
           escola: dadosCompletos.escola || '', periodoEscolar: dadosCompletos.periodoEscolar || '',
           serieEscolar: dadosCompletos.serieEscolar || '', raEscolar: dadosCompletos.raEscolar || '',
@@ -1075,16 +1142,18 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
           cpf: dadosCompletos.cpf ? formatarCpf(dadosCompletos.cpf) : '',
           tipoDocumento: dadosCompletos.tipoDocumento || '',
           documentoAuxiliar: dadosCompletos.documentoAuxiliar || '',
-          idUnidade: dadosCompletos.idUnidade || null
+          idUnidade: dadosCompletos.idUnidade || null,
+          idTurma: dadosCompletos.idTurma || null
         });
 
         if (dadosCompletos.idUnidade) {
           const turmaCtrl = this.formUsuario.get('idTurma');
           this.turmaService.listar(dadosCompletos.idUnidade).subscribe(turmas => {
+            if (!this.modalAberto || this.usuarioSelecionadoId !== usuarioLista.id
+              || turmaCtrl !== this.formUsuario.get('idTurma')
+              || this.formUsuario.get('idUnidade')?.value !== dadosCompletos.idUnidade) return;
             this.turmasDisponiveis = turmas.filter(t => t.unidade.id === dadosCompletos.idUnidade);
             turmaCtrl?.enable();
-            turmaCtrl?.setValue(dadosCompletos.idTurma || null);
-            this.valoresOriginaisDoFormulario = this.formUsuario.getRawValue();
             this.atualizarTela();
           });
         }
@@ -1259,12 +1328,41 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
     }, 400);
   }
 
+  get navegacaoEtapasBloqueada(): boolean {
+    return this.isLoading || this.isCarregandoEdicao;
+  }
+
+  irParaEtapa(etapa: number): void {
+    if (this.navegacaoEtapasBloqueada || !Number.isInteger(etapa) || etapa < 1 || etapa > this.etapas.length) return;
+    this.etapaModal = etapa;
+  }
+
+  private etapaValida(etapa: number): boolean {
+    const camposValidos = (campos: string[]) => campos.every(campo => {
+      const controle = this.formUsuario.get(campo);
+      return !!controle && !controle.invalid && !controle.pending;
+    });
+    switch (etapa) {
+      case 1: return camposValidos(this.camposDadosPessoais);
+      case 2: return this.contatosArray.length > 0 && this.contatosArray.valid
+        && !this.contatosArray.controls.some(contato => contato.get('buscarExistente')?.value && !contato.get('id')?.value);
+      case 3: return this.formUsuario.get('socioeconomico')?.valid === true;
+      case 4: return this.formUsuario.get('complementares')?.valid === true;
+      case 5: return camposValidos(['idUnidade', 'idTurma'])
+        && !!this.formUsuario.get('idUnidade')?.value && !!this.formUsuario.get('idTurma')?.value;
+      default: return false;
+    }
+  }
+
   proximaEtapa(): void {
+    if (this.consultandoCep || this.navegacaoEtapasBloqueada) {
+      return;
+    }
     if (this.etapaModal === 1) {
-      for (const campo of ['nomeCompleto', 'dataNascimento', 'cpf', 'tipoDocumento', 'documentoAuxiliar', 'endereco', 'bairro', 'escola', 'periodoEscolar', 'serieEscolar']) {
+      for (const campo of this.camposDadosPessoais) {
         this.formUsuario.get(campo)?.markAsTouched();
       }
-      if (['nomeCompleto', 'dataNascimento', 'cpf', 'tipoDocumento', 'documentoAuxiliar', 'endereco', 'bairro', 'escola', 'periodoEscolar', 'serieEscolar'].some(c => this.formUsuario.get(c)?.invalid)) {
+      if (!this.etapaValida(1)) {
         this.verificarErros();
         return;
       }
@@ -1291,11 +1389,11 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
       return;
     }
     this.verificarErros();
-    if (this.etapaModal < 5) this.etapaModal++;
+    if (this.etapaModal < 5) this.irParaEtapa(this.etapaModal + 1);
   }
 
   voltarEtapa() {
-    if (this.etapaModal > 1) this.etapaModal--;
+    if (this.etapaModal > 1) this.irParaEtapa(this.etapaModal - 1);
   }
 
   adicionarContato(isPrincipal = false) {
@@ -1445,6 +1543,28 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
     );
   }
 
+  descartarAlteracoesContato(index: number): void {
+    const grupo = this.contatosArray.at(index) as FormGroup;
+    const original = this.contatosOriginais.get(grupo);
+    if (!original) return;
+
+    grupo.patchValue({
+      nomeCompleto: original['nomeCompleto'],
+      telefone: formatarTelefone(original['telefone']),
+      email: original['email'],
+      endereco: original['endereco'],
+      cpf: formatarCpf(original['cpf']),
+      localTrabalho: original['localTrabalho']
+    }, { emitEvent: false });
+
+    for (const campo of this.camposCompartilhadosContato) {
+      grupo.get(campo)?.markAsPristine();
+      grupo.get(campo)?.markAsUntouched();
+    }
+    this.validarCpfsContatos();
+    this.atualizarTela();
+  }
+
   private validarCpfsContatos(): void {
     const cpfsVistos = new Set<string>();
     for (const grupo of this.contatosArray.controls) {
@@ -1516,6 +1636,11 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
     return valor ? formatarTelefone(valor) : '-';
   }
 
+  abrirCalendario(campo: HTMLInputElement): void {
+    campo.focus();
+    if (typeof campo.showPicker === 'function') campo.showPicker();
+  }
+
   hrefTelefoneContato(valor?: string | null): string | null {
     const telefone = String(valor ?? '').replace(/\D/g, '');
     return telefone ? `tel:${telefone}` : null;
@@ -1563,9 +1688,25 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
     return obterMensagemErro(e);
   }
 
+  get numeroEnderecoObrigatorio(): boolean {
+    return this.formUsuario.get('numeroEndereco')?.hasValidator(Validators.required) || false;
+  }
+
+  private definirConsultaCep(carregando: boolean): void {
+    this.consultandoCep = carregando;
+    for (const campo of ['cep', 'endereco', 'bairro', 'numeroEndereco', 'complementoEndereco']) {
+      const controle = this.formUsuario.get(campo)!;
+      if (carregando) {
+        controle.disable({ emitEvent: false });
+      } else {
+        controle.enable({ emitEvent: false });
+      }
+    }
+  }
+
   aplicarMascaraCep(event: Event): void {
     const input = event.target as HTMLInputElement;
-    this.formUsuario.get('cep')?.setValue(formatarCep(input.value), { emitEvent: false });
+    this.formUsuario.get('cep')?.setValue(formatarCep(input.value));
   }
 
   aplicarMascaraCpf(event: Event) {
@@ -1775,6 +1916,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
   }
 
   get temAlteracoes(): boolean {
+    if (this.fotoSelecionada || this.arquivosSaude.length > 0) return true;
     if (!this.modoEdicao) return this.formUsuario.dirty;
     return JSON.stringify(this.formUsuario.getRawValue()) !== JSON.stringify(this.valoresOriginaisDoFormulario);
   }
@@ -1794,7 +1936,8 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
   }
 
   salvar() {
-    if (this.isLoading || this.isCarregandoEdicao || !this.modalAberto) return;
+    if (this.isLoading || this.isCarregandoEdicao || this.consultandoCep || !this.modalAberto) return;
+    if (this.modoEdicao && !this.temAlteracoes) return;
     this.formUsuario.markAllAsTouched();
     this.validarCpfsContatos();
     this.verificarErros();
@@ -1803,19 +1946,14 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
       (this.contatosArray.at(i) as FormGroup).markAllAsTouched();
     }
 
-    if (this.formUsuario.invalid || !this.formUsuario.get('idTurma')?.value || this.contatosArray.controls.some(c => c.get('buscarExistente')?.value && !c.get('id')?.value)) {
-      const dadosPessoais = ['nomeCompleto', 'dataNascimento', 'cpf', 'tipoDocumento', 'documentoAuxiliar', 'endereco', 'bairro', 'escola', 'periodoEscolar', 'serieEscolar'];
-      if (dadosPessoais.some(campo => this.formUsuario.get(campo)?.invalid)) {
-        this.etapaModal = 1;
-      } else if (!this.contatosArray.length || this.contatosArray.invalid || this.contatosArray.controls.some(c => c.get('buscarExistente')?.value && !c.get('id')?.value)) {
-        this.etapaModal = 2;
+    const primeiraEtapaInvalida = [1, 2, 3, 4, 5].find(etapa => !this.etapaValida(etapa));
+    if (primeiraEtapaInvalida !== undefined) {
+      this.irParaEtapa(primeiraEtapaInvalida);
+      if (primeiraEtapaInvalida === 2) {
         this.contatoExpandidoIndex = Math.max(0, this.contatosArray.controls.findIndex(c => c.invalid || (c.get('buscarExistente')?.value && !c.get('id')?.value)));
-      } else if (this.formUsuario.get('socioeconomico')?.invalid) {
-        this.etapaModal = 3;
+      } else if (primeiraEtapaInvalida === 3) {
         const primeiroFamiliarInvalido = this.familiaresArray.controls.findIndex(c => c.invalid);
         if (primeiroFamiliarInvalido >= 0) this.familiarExpandidoIndex = primeiroFamiliarInvalido;
-      } else if (this.formUsuario.get('complementares')?.invalid) {
-        this.etapaModal = 4;
       }
       this.toastr.error('Verifique os campos obrigatórios do cadastro.', 'Atenção');
       return;
@@ -1828,6 +1966,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
     const ids = contatos.map((c: any) => c.id).filter((id: any) => id !== null);
 
     if (new Set(telefones).size !== telefones.length || (ids.length > 0 && new Set(ids).size !== ids.length)) {
+      this.irParaEtapa(2);
       this.toastr.warning('Não é possível adicionar o mesmo contato mais do que uma vez.', 'Contatos duplicados');
       return;
     }
@@ -1859,7 +1998,9 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
       cpf: dados.usarOutroDocumento ? null : dados.cpf?.replace(/\D/g, ''),
       documentoAuxiliar: dados.usarOutroDocumento ? dados.documentoAuxiliar : null,
       tipoDocumento: dados.usarOutroDocumento ? dados.tipoDocumento : null,
-      cadUnico: dados.cadUnico, endereco: dados.endereco, bairro: dados.bairro,
+      cadUnico: dados.cadUnico,
+      endereco: montarEndereco(dados.endereco, dados.numeroEndereco, dados.complementoEndereco),
+      bairro: dados.bairro,
       cep: dados.cep, escola: dados.escola, periodoEscolar: dados.periodoEscolar,
       serieEscolar: dados.serieEscolar, raEscolar: dados.raEscolar,
       idTurma: dados.idTurma, composicaoFamiliar: socio.composicaoFamiliar,
@@ -1961,7 +2102,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
     this.modalContatoAberto = true;
   }
 
-  private contatoTemAlteracoes(): boolean {
+  contatoTemAlteracoes(): boolean {
     return this.snapshotContatoEdicao() !== this.valoresOriginaisContato;
   }
 
@@ -1990,6 +2131,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
   }
 
   salvarEdicaoContato() {
+    if (this.isLoading || !this.contatoTemAlteracoes()) return;
     if (this.formEdicaoContato.invalid || !this.contatoEmEdicaoId) {
       this.formEdicaoContato.markAllAsTouched();
       return;

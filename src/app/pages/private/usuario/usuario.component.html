@@ -2,7 +2,7 @@
   <h1>Usuários</h1>
   <div class="conteudo">
 
-    <div class="abas-container">
+    <div appAbasResponsivas class="abas-container">
       <button type="button" class="aba-btn" [class.ativa]="abaAtiva === 'usuarios'"
         (click)="mudarAba('usuarios')">Usuários</button>
       <button *ngIf="!isMonitor" type="button" class="aba-btn" [class.ativa]="abaAtiva === 'contatos'"
@@ -56,7 +56,7 @@
           </mat-select>
         </mat-form-field>
 
-        <div class="acoes-filtros-usuarios">
+        <div class="acoes-filtros-usuarios form-acoes">
           <button type="button" class="btn-filtro-secundario" (click)="limparFiltrosUsuarios()">Limpar filtros</button>
           <button type="button" class="btn-primary" (click)="aplicarFiltrosModal()">Aplicar filtros</button>
         </div>
@@ -88,15 +88,17 @@
 
 @if (modalAberto) {
 <app-modal-layout class="cadastro-modal" [class.tremer]="modalTremendo"
-  [titulo]="modoEdicao ? 'Editar usuário' : 'Novo usuário'" (closed)="fecharModal()">
+  [titulo]="modoEdicao ? 'Editar usuário' : 'Cadastrar novo usuário'" (closed)="fecharModal()">
   
-  <div class="stepper-indicador" aria-label="Etapas do cadastro">
+  <nav class="stepper-indicador" aria-label="Etapas do cadastro">
     <ng-container *ngFor="let etapa of etapas; let i = index">
-    <div class="step" 
-     [class.ativo]="etapaModal >= i + 1" 
-     [class.linha-ativa]="etapaModal > i + 1" 
+    <button type="button" class="step"
+     (click)="irParaEtapa(i + 1)"
+     [disabled]="navegacaoEtapasBloqueada"
+     [class.ativo]="etapaModal === i + 1"
+     [attr.aria-label]="'Etapa ' + (i + 1) + ': ' + etapa"
      [attr.aria-current]="etapaModal === i + 1 ? 'step' : null">
-      <div class="step-numero">{{ i + 1 }}</div>
+      <span class="step-numero">{{ i + 1 }}</span>
         <span class="step-texto">
           <ng-container *ngIf="etapa.startsWith('Dados '); else tituloUnico">
             <span>Dados</span>
@@ -104,10 +106,9 @@
           </ng-container>
           <ng-template #tituloUnico>{{ etapa }}</ng-template>
         </span>
-      </div>
-      <div class="step-linha" *ngIf="i < 4" [class.ativo]="etapaModal > i + 1"></div>
+      </button>
     </ng-container>
-  </div>
+  </nav>
 
   <form class="form-modal cadastro-form" [formGroup]="formUsuario" (ngSubmit)="salvar()">
     @if (isCarregandoEdicao) {
@@ -123,8 +124,9 @@
         <mat-form-field appearance="outline"><mat-label>Nome completo*</mat-label><input matInput
             formControlName="nomeCompleto"><mat-error>{{ mensagemErro(formUsuario.get('nomeCompleto'))
             }}</mat-error></mat-form-field>
-        <mat-form-field appearance="outline"><mat-label>Data nascimento*</mat-label><input matInput type="date"
-            formControlName="dataNascimento"><mat-error>{{ mensagemErro(formUsuario.get('dataNascimento'))
+        <mat-form-field appearance="outline"><mat-label>Data nascimento*</mat-label><input #dataNascimento matInput type="date"
+            formControlName="dataNascimento"><button type="button" matSuffix class="btn-calendario-data"
+            aria-label="Abrir calendário da data de nascimento" (click)="abrirCalendario(dataNascimento)"><mat-icon>calendar_month</mat-icon></button><mat-error>{{ mensagemErro(formUsuario.get('dataNascimento'))
             }}</mat-error></mat-form-field>
         <ng-container *ngIf="!formUsuario.get('usarOutroDocumento')?.value; else outroDocumento">
           <mat-form-field appearance="outline"><mat-label>CPF/CIN*</mat-label><input matInput formControlName="cpf"
@@ -150,15 +152,36 @@
 
       <h3>Endereço</h3>
       <div class="step-grid">
-        <mat-form-field appearance="outline"><mat-label>CEP</mat-label><input matInput
-            formControlName="cep" inputmode="numeric" maxlength="9"
-            (input)="aplicarMascaraCep($event)"></mat-form-field>
+        <div class="cep-consulta">
+          <mat-form-field appearance="outline">
+            <mat-label>CEP</mat-label>
+            <input matInput formControlName="cep" inputmode="numeric" maxlength="9"
+              [errorStateMatcher]="estadoErroCep" (input)="aplicarMascaraCep($event)">
+            <mat-error>Informe um CEP com 8 dígitos.</mat-error>
+          </mat-form-field>
+          @if (erroCep && formUsuario.get('cep')?.valid && formUsuario.get('cep')?.value) {
+            <span class="aviso-cep" role="status">{{ erroCep }}</span>
+          }
+          <a class="cep-ajuda" href="https://buscacepinter.correios.com.br/app/endereco/index.php"
+            target="_blank" rel="noopener noreferrer" title="Consultar o CEP nos Correios em uma nova aba">
+            Consultar CEP nos Correios
+          </a>
+        </div>
         <mat-form-field appearance="outline"><mat-label>Bairro*</mat-label><input matInput
             formControlName="bairro"><mat-error>{{ mensagemErro(formUsuario.get('bairro'))
             }}</mat-error></mat-form-field>
         <mat-form-field class="wide" appearance="outline"><mat-label>Endereço*</mat-label><input matInput
             formControlName="endereco"><mat-error>{{ mensagemErro(formUsuario.get('endereco'))
             }}</mat-error></mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>{{ !modoEdicao || numeroEnderecoObrigatorio ? 'Número*' : 'Número' }}</mat-label>
+          <input matInput formControlName="numeroEndereco">
+          <mat-error>{{ mensagemErro(formUsuario.get('numeroEndereco')) }}</mat-error>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Complemento</mat-label>
+          <input matInput formControlName="complementoEndereco">
+        </mat-form-field>
       </div>
 
       <h3>Dados escolares</h3>
@@ -260,8 +283,10 @@
             <mat-form-field appearance="outline"><mat-label>Local de trabalho</mat-label><input matInput
                 formControlName="localTrabalho"></mat-form-field>
           </div>
-          <span class="aviso-contato-edicao" role="alert" *ngIf="contatoExistenteAlterado(i)">Este contato será
-            atualizado para todos os usuários vinculados a ele.</span>
+          <span class="aviso-contato-edicao" role="alert" *ngIf="contatoExistenteAlterado(i)">
+            Este contato será atualizado para todos os usuários vinculados a ele. Para desfazer, clique
+            <button type="button" class="link-desfazer-contato" (click)="descartarAlteracoesContato(i)">aqui</button>.
+          </span>
         </div>
       </div>
       <button type="button" class="btn-add-contato" *ngIf="contatosArray.length < 4"
@@ -437,11 +462,11 @@
       <span class="aviso-conflito-matricula" *ngIf="conflitoPeriodoMatricula">{{ avisoConflitoPeriodoMatricula }}</span>
     </div>
 
-    <div class="acoes-modal cadastro-acoes">
+    <div class="acoes-modal cadastro-acoes form-acoes">
       <span class="acoes-espaco"></span>
       <button type="button" class="btn-cancelar" (click)="fecharModal()" [disabled]="isLoading">Cancelar</button>
-      <button *ngIf="etapaModal < 5" type="button" class="btn-primary" (click)="proximaEtapa()">Próximo</button>
-      <button *ngIf="etapaModal === 5" type="submit" class="btn-primary" [disabled]="isLoading">{{ isLoading ?
+      <button *ngIf="etapaModal < 5" type="button" class="btn-primary" (click)="proximaEtapa()" [disabled]="consultandoCep">Próximo</button>
+      <button *ngIf="etapaModal === 5" type="submit" class="btn-primary" [disabled]="isLoading || isCarregandoEdicao || consultandoCep || (modoEdicao && !temAlteracoes)">{{ isLoading ?
         'Finalizando...' : 'Finalizar' }}</button>
     </div>
     }
@@ -493,11 +518,11 @@
       Ao editar estes dados, todos os outros vínculos deste contato também serão alterados.
     </span>
 
-    <div class="acoes-modal">
+    <div class="acoes-modal form-acoes">
       <button type="button" class="btn-cancelar" (click)="fecharModalContato()" [disabled]="isLoading">Cancelar</button>
-      <button type="submit" class="btn-primary" [disabled]="isLoading">
+      <button type="submit" class="btn-primary" [disabled]="isLoading || !contatoTemAlteracoes()">
         <span *ngIf="isLoading" class="spinner" aria-hidden="true"></span>
-        <span>{{ isLoading ? 'Salvando...' : 'Salvar alterações' }}</span>
+        <span>{{ isLoading ? 'Salvando...' : 'Salvar' }}</span>
       </button>
     </div>
 
@@ -563,7 +588,7 @@
         </div>
       </div>
       <ng-template #semContatos>
-        <p class="texto-vazio">Nenhum contacto associado.</p>
+        <app-estado-vazio mensagem="Nenhum contato associado." icone="group_off" [compacto]="true"></app-estado-vazio>
       </ng-template>
     </div>
   </div>
@@ -628,7 +653,7 @@
       <p style="margin-top:10px; color: var(--input-color); font-family: var(--fonte-texto);">Carregando vínculos...</p>
     </div>
     } @else if (!vinculosDoContato.length) {
-    <p class="texto-vazio">Nenhum usuário vinculado a este contato.</p>
+    <app-estado-vazio mensagem="Nenhum usuário vinculado a este contato." icone="group_off" [compacto]="true"></app-estado-vazio>
     } @else {
     <div class="vinculo-card" *ngFor="let vinculo of vinculosDoContato">
       <div class="vinculo-avatar-linha">
@@ -724,7 +749,7 @@
       *ngIf="formNovoVinculo.get('idUsuario')?.invalid && formNovoVinculo.get('idUsuario')?.touched">Selecione um
       usuário.</span>
 
-    <div class="acoes-modal">
+    <div class="acoes-modal form-acoes">
       <button type="button" class="btn-cancelar" (click)="fecharNovoVinculo()"
         [disabled]="isSalvandoVinculo">Cancelar</button>
       <button type="submit" class="btn-primary" [disabled]="isSalvandoVinculo">

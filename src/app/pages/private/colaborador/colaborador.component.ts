@@ -1,6 +1,7 @@
 import {
   ChangeDetectorRef,
   Component,
+  inject,
   HostListener,
   NgZone,
   OnDestroy,
@@ -16,7 +17,7 @@ import {
 } from '@angular/forms';
 
 import { ActivatedRoute, Router } from '@angular/router';
-import { Subscription } from 'rxjs';
+import { Subscription, forkJoin, of } from 'rxjs';
 
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -39,6 +40,7 @@ import { BarraBusca } from '@components/barra-busca/barra-busca';
 import { ComponentComAlteracoesNaoSalvas } from 'src/app/shared/guards/can-deactivate.guard';
 import { AtualizarColaboradorDTO, Colaborador, CriarColaboradorDTO } from 'src/app/shared/models/colaborador.model';
 import { Auth } from 'src/app/shared/services/auth/auth';
+import { SessaoService } from 'src/app/shared/services/auth/sessao.service';
 import { ColaboradorService } from 'src/app/shared/services/colaborador/colaborador.service';
 import { PapelService } from 'src/app/shared/services/colaborador/papel.service';
 import { UnidadeService } from 'src/app/shared/services/colaborador/unidade.service';
@@ -89,6 +91,8 @@ type Unidade = {
 export class ColaboradorComponent
   implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalvas {
 
+  private readonly sessao = inject(SessaoService);
+
   colaboradores: Colaborador[] = [];
   papeisDisponiveis: string[] = [];
   papeis: Papel[] = [];
@@ -121,6 +125,7 @@ export class ColaboradorComponent
   modalAberto = false;
   modoEdicao = false;
   colaboradorSelecionadoId: number | null = null;
+  private colaboradorEmEdicao: Colaborador | null = null;
   formColaborador: FormGroup;
   erros: { [key: string]: string } = {};
   mostrarSenha = false;
@@ -185,12 +190,14 @@ export class ColaboradorComponent
     {
       icone: 'edit',
       tooltip: 'Editar',
-      acao: 'editar'
+      acao: 'editar',
+      visivel: colaborador => this.podeGerenciarColaborador(colaborador)
     },
     {
       icone: 'delete',
       tooltip: 'Excluir',
-      acao: 'excluir'
+      acao: 'excluir',
+      visivel: colaborador => this.podeGerenciarColaborador(colaborador)
     }
   ];
 
@@ -312,16 +319,16 @@ export class ColaboradorComponent
 
   get mensagemVazia(): string {
     if (this.busca) {
-      return `Nenhum colaborador encontrado para "${this.busca}"`;
+      return `Nenhum colaborador encontrado para "${this.busca}".`;
     }
     const papelSelecionado = this.papeis.find(p => p.id === this.filtroPapel);
     const unidadeSelecionada = this.unidadesDisponiveis.find(u => u.id === this.filtroUnidade);
 
     if (papelSelecionado || unidadeSelecionada) {
-      return 'Nenhum colaborador encontrado com os filtros selecionados';
+      return 'Nenhum colaborador encontrado com os filtros selecionados.';
     }
 
-    return 'Nenhum colaborador cadastrado ainda';
+    return 'Nenhum colaborador cadastrado.';
   }
 
   get temAlteracoes(): boolean {
@@ -329,15 +336,26 @@ export class ColaboradorComponent
       return this.formColaborador.dirty;
     }
 
-    return (
-      JSON.stringify(this.formColaborador.getRawValue()) !==
-      JSON.stringify(this.valoresOriginaisDoFormulario)
-    );
+    const normalizar = (valores: any) => ({
+      ...valores,
+      idsUnidades: [...(valores?.idsUnidades || [])].sort((a, b) => a - b)
+    });
+    return JSON.stringify(normalizar(this.formColaborador.getRawValue())) !==
+      JSON.stringify(normalizar(this.valoresOriginaisDoFormulario));
   }
 
   /** Coordenador só faz a gestão de monitores; administrador vê e gerencia todos os papéis. */
   get somenteMonitores(): boolean {
     return this.auth.hasRole('COORDENADOR');
+  }
+
+  podeGerenciarColaborador(colaborador: Colaborador): boolean {
+    if (this.auth.hasRole('ADMINISTRADOR')) return true;
+    const membro = this.sessao.membro();
+    if (!this.somenteMonitores || membro?.nomePapel !== 'COORDENADOR' || colaborador.nomePapel !== 'MONITOR') return false;
+    const unidades = colaborador.unidades ?? [];
+    const permitidas = new Set((membro.unidades ?? []).map(unidade => unidade.id));
+    return unidades.length > 0 && unidades.every(unidade => permitidas.has(unidade.id));
   }
 
   get quantidadeFiltrosAplicados(): number {
@@ -382,11 +400,16 @@ export class ColaboradorComponent
   }
 
   carregarUnidades(): void {
-    this.unidadeService
-      .listarTodos()
+    forkJoin({
+      unidades: this.unidadeService.listarTodos(),
+      membro: this.somenteMonitores ? this.sessao.carregar() : of(null)
+    })
       .subscribe({
-        next: (dados: Unidade[]) => {
-          this.unidadesDisponiveis = dados;
+        next: ({ unidades, membro }) => {
+          const permitidas = new Set((membro?.unidades ?? []).map(unidade => unidade.id));
+          this.unidadesDisponiveis = this.somenteMonitores
+            ? unidades.filter(unidade => permitidas.has(unidade.id))
+            : unidades;
           this.cdr.detectChanges();
         },
         error: (err: any) => {
@@ -571,6 +594,7 @@ export class ColaboradorComponent
   }
 
   abrirCadastro(): void {
+    this.colaboradorEmEdicao = null;
     this.modoEdicao = false;
     this.colaboradorSelecionadoId = null;
     this.erros = {};
@@ -613,6 +637,8 @@ export class ColaboradorComponent
   }
 
   abrirEdicao(colaborador: Colaborador): void {
+    if (!this.podeGerenciarColaborador(colaborador)) return;
+    this.colaboradorEmEdicao = colaborador;
     this.modoEdicao = true;
     this.colaboradorSelecionadoId = colaborador.id;
     this.erros = {};
@@ -740,6 +766,7 @@ export class ColaboradorComponent
   }
 
   salvar(): void {
+    if (this.modoEdicao && (!this.colaboradorEmEdicao || !this.podeGerenciarColaborador(this.colaboradorEmEdicao))) return;
     this.formColaborador.markAllAsTouched();
     this.checarSenhasIguais();
     this.verificarErros();
@@ -788,10 +815,11 @@ export class ColaboradorComponent
   deletarColaborador(
     colaborador: Colaborador
   ): void {
+    if (!this.podeGerenciarColaborador(colaborador)) return;
     Alertas
       .confirmarExclusao()
       .then((confirmado: boolean) => {
-        if (!confirmado) {
+        if (!confirmado || !this.podeGerenciarColaborador(colaborador)) {
           return;
         }
 
@@ -963,6 +991,7 @@ export class ColaboradorComponent
   }
 
   private fecharModalSemConfirmacao(): void {
+    this.colaboradorEmEdicao = null;
     this.modalAberto = false;
     this.modalTremendo = false;
     this.isLoading = false;

@@ -161,18 +161,7 @@
 .modal-acoes {
   display: flex;
   justify-content: flex-end;
-  gap: 16px;
   margin-top: 14px;
-}
-
-.btn-cancelar {
-  border: 0;
-  background: transparent;
-  color: var(--input-color);
-  cursor: pointer;
-  font-family: var(--fonte-texto);
-  font-size: 14px;
-  font-weight: 700;
 }
 
 .spinner {

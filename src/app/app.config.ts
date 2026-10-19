@@ -23,6 +23,6 @@ export const appConfig: ApplicationConfig = {
     ),
 
     provideAnimations(),
-    provideToastr()
+    provideToastr({ closeButton: true })
   ]
 };

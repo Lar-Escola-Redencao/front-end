@@ -1,3 +1,4 @@
+import { EstadoVazio } from '@components/estado-vazio/estado-vazio';
 import { Component, OnInit, OnDestroy, HostListener, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Diretoria } from 'src/app/shared/models/diretoria.model';
@@ -6,7 +7,7 @@ import { PublicContentService } from 'src/app/shared/services/public-content/pub
 @Component({
   selector: 'app-public-diretoria',
   standalone: true,
-  imports: [CommonModule],
+  imports: [EstadoVazio, CommonModule],
   templateUrl: './public-diretoria.html',
   styleUrl: './public-diretoria.css'
 })

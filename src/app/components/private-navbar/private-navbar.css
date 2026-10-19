@@ -19,6 +19,10 @@
 }
 
 .navbar.expandido {
+  max-height: 100vh;
+  max-height: 100dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   border-bottom-left-radius: 50px;
   border-bottom-right-radius: 50px;
   padding-bottom: 32px;

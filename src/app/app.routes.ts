@@ -26,7 +26,7 @@ export const routes: Routes = [
             { path: 'usuarios/:id', canDeactivate: [canDeactivateGuard], loadComponent: () => import('@pages/private/usuario/usuario-perfil/usuario-perfil').then(m => m.UsuarioPerfil), canActivate: [roleGuard], data: { modulo: 'perfil-usuario' } },
             { path: 'diario', canDeactivate: [canDeactivateGuard], loadComponent: () => import('@pages/private/diario/diario').then(m => m.Diario), canActivate: [roleGuard], data: { modulo: 'diario' } },
             { path: 'unidades-turmas', loadComponent: () => import('@pages/private/unidades-turmas/unidades-turmas').then(m => m.UnidadesTurmas), canActivate: [roleGuard], data: { modulo: 'unidades-turmas' } },
-            { path: 'perfil', loadComponent: () => import('@pages/private/perfil/perfil').then(m => m.Perfil)}
+            { path: 'perfil', canDeactivate: [canDeactivateGuard], loadComponent: () => import('@pages/private/perfil/perfil').then(m => m.Perfil)}
         ]
     },
     {

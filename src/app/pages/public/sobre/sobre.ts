@@ -13,6 +13,7 @@ import { ActivatedRoute } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { PublicFooter } from '@components/public-footer/public-footer';
 import { PublicNavbar } from '@components/public-navbar/public-navbar';
+import { EstadoVazio } from '@components/estado-vazio/estado-vazio';
 import { PublicDiretoriaComponent } from './public-diretoria/public-diretoria';
 import { PublicUnidadesComponent } from '../home/public-unidades/public-unidades';
 import {
@@ -23,7 +24,7 @@ import {
 
 @Component({
   selector: 'app-sobre',
-  imports: [PublicNavbar, PublicFooter, PublicDiretoriaComponent, PublicUnidadesComponent],
+  imports: [PublicNavbar, PublicFooter, PublicDiretoriaComponent, PublicUnidadesComponent, EstadoVazio],
   templateUrl: './sobre.html',
   styleUrl: './sobre.css',
   host: { '(window:resize)': 'atualizarLargura()' },

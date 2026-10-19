@@ -134,12 +134,12 @@
     </div>
     }
 
-    <div class="acoes-modal">
+    <div class="acoes-modal form-acoes">
       <button type="button" class="btn-cancelar" [disabled]="isLoading" (click)="fecharModal()">
         Cancelar
       </button>
 
-      <button type="submit" class="btn-primary" [disabled]="isLoading || isCarregandoEdicao">
+      <button type="submit" class="btn-primary" [disabled]="isLoading || isCarregandoEdicao || (modoEdicao && !temAlteracoes)">
         <span *ngIf="isLoading" class="spinner" aria-hidden="true"></span>
         <span>{{ isLoading ? 'Salvando...' : 'Salvar' }}</span>
       </button>

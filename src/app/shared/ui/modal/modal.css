@@ -3,6 +3,7 @@
 }
 
 .modal-backdrop {
+  overscroll-behavior: contain;
   position: fixed;
   inset: 0;
   background: rgba(17, 24, 33, 0.45);
@@ -54,6 +55,7 @@
 }
 
 .modal-body {
+  overscroll-behavior: contain;
   padding: 1.25rem;
   overflow-y: auto;
 }

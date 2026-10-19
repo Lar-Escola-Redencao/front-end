@@ -1,3 +1,4 @@
+import { ToastrService } from 'ngx-toastr';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -10,8 +11,10 @@ import { Login } from './login';
 describe('Login', () => {
   let queryParamMap$: BehaviorSubject<ParamMap>;
   let fixture: ComponentFixture<Login>;
+  let toastr: { warning: ReturnType<typeof vi.fn>; clear: ReturnType<typeof vi.fn> };
 
   function setup(initialParams: Record<string, string> = {}): void {
+    toastr = { warning: vi.fn(() => ({ toastId: 1 })), clear: vi.fn() };
     queryParamMap$ = new BehaviorSubject(convertToParamMap(initialParams));
 
     TestBed.configureTestingModule({
@@ -20,6 +23,7 @@ describe('Login', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([]),
+        { provide: ToastrService, useValue: toastr },
         {
           provide: ActivatedRoute,
           useValue: {
@@ -35,51 +39,40 @@ describe('Login', () => {
     TestBed.flushEffects();
   }
 
-  function toastEl(): Element | null {
-    return fixture.nativeElement.querySelector('.toast');
-  }
-
-  afterEach(() => {
-    vi.useRealTimers();
-  });
-
-  it('does not show the session-alert toast on a plain visit to /login', () => {
+  it('does not show a session warning on a plain login visit', () => {
     setup();
-
-    expect(toastEl()).toBeNull();
+    expect(toastr.warning).not.toHaveBeenCalled();
   });
 
-  it('shows the session-expired toast when redirected with reason=expired', () => {
+  it('uses the standard yellow toast at the top right for expired sessions', () => {
     setup({ reason: 'expired' });
-
-    expect(toastEl()?.textContent).toContain('Sua autenticação expirou');
+    expect(toastr.warning).toHaveBeenCalledExactlyOnceWith(
+      expect.stringContaining('expirou'), expect.any(String),
+      { positionClass: 'toast-top-right', timeOut: 6000, closeButton: true },
+    );
+    expect(fixture.nativeElement.querySelector('.toast')).toBeNull();
   });
 
-  it('shows the access-denied toast when redirected with reason=invalid', () => {
+  it('uses the same standard toast for invalid authentication', () => {
     setup({ reason: 'invalid' });
-
-    expect(toastEl()?.textContent).toContain('Acesso negado');
+    expect(toastr.warning).toHaveBeenCalledExactlyOnceWith(
+      expect.stringContaining('Acesso negado'), expect.any(String),
+      { positionClass: 'toast-top-right', timeOut: 6000, closeButton: true },
+    );
   });
 
-  it('hides the toast when its close button is clicked', () => {
+  it('does not duplicate the warning when unrelated query params change', () => {
     setup({ reason: 'expired' });
-
-    (toastEl()!.querySelector('.toast-close') as HTMLButtonElement).click();
+    queryParamMap$.next(convertToParamMap({ reason: 'expired', returnUrl: '/dashboard' }));
     fixture.detectChanges();
-
-    expect(toastEl()).toBeNull();
+    TestBed.flushEffects();
+    expect(toastr.warning).toHaveBeenCalledTimes(1);
   });
 
-  it('auto-dismisses the toast after a few seconds', () => {
-    vi.useFakeTimers();
+  it('clears only its session warning when leaving the login page', () => {
     setup({ reason: 'expired' });
-
-    expect(toastEl()).not.toBeNull();
-
-    vi.advanceTimersByTime(6000);
-    fixture.detectChanges();
-
-    expect(toastEl()).toBeNull();
+    fixture.destroy();
+    expect(toastr.clear).toHaveBeenCalledWith(1);
   });
 
   describe('identifier field (e-mail/CPF mask)', () => {

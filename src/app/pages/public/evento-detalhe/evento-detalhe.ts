@@ -1,4 +1,5 @@
-import { ChangeDetectorRef, Component, HostListener, OnDestroy, OnInit, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, DestroyRef, ElementRef, HostListener, Input, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { PublicNavbar } from '@components/public-navbar/public-navbar';
@@ -14,6 +15,9 @@ import { EventoPublicoService } from 'src/app/shared/services/evento-publico/eve
   styleUrl: './evento-detalhe.css'
 })
 export class EventoDetalhe implements OnInit, OnDestroy {
+  @Input() modoPreview = false;
+  @Input() eventoId: number | null = null;
+  private readonly destroyRef = inject(DestroyRef);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly eventoPublicoService = inject(EventoPublicoService);
@@ -36,10 +40,46 @@ export class EventoDetalhe implements OnInit, OnDestroy {
   parceirosAnimando = false;
   private parceirosAutoPlayInterval: number | null = null;
   private returnUrl: string | null = null;
+  private janelaParceiros?: HTMLElement;
+  private parceirosResizeObserver?: ResizeObserver;
+  private quantidadeParceirosVisiveis = 3;
+  private larguraDisponivelParceiros = 0;
+
+  @ViewChild('parceirosJanela')
+  set parceirosJanela(elemento: ElementRef<HTMLElement> | undefined) {
+    this.parceirosResizeObserver?.disconnect();
+    this.janelaParceiros = elemento?.nativeElement;
+    if (!this.janelaParceiros) return;
+    if (typeof ResizeObserver !== 'undefined') {
+      this.parceirosResizeObserver = new ResizeObserver(() => this.ajustarParceirosVisiveis());
+      this.parceirosResizeObserver.observe(this.janelaParceiros);
+      if (this.janelaParceiros.parentElement) {
+        this.parceirosResizeObserver.observe(this.janelaParceiros.parentElement);
+      }
+    }
+    queueMicrotask(() => {
+      if (!this.destroyRef.destroyed) this.ajustarParceirosVisiveis();
+    });
+  }
+
+  private ajustarParceirosVisiveis(): void {
+    const largura = this.janelaParceiros?.clientWidth ?? 0;
+    if (largura <= 0 || this.destroyRef.destroyed) return;
+    const tinhaCarrossel = this.possuiCarrosselParceiros;
+    // Mede o contêiner completo: as setas reduzem a janela ao aparecer e
+    // não podem fazer o carrossel alternar indefinidamente entre os modos.
+    this.larguraDisponivelParceiros = this.janelaParceiros?.parentElement?.clientWidth || largura;
+    const quantidade = Math.max(1, Math.min(3, Math.floor(largura / 112)));
+    const mudouModo = tinhaCarrossel !== this.possuiCarrosselParceiros;
+    if (quantidade === this.quantidadeParceirosVisiveis && !mudouModo) return;
+    this.quantidadeParceirosVisiveis = quantidade;
+    if (mudouModo) this.iniciarAutoPlayParceiros();
+    this.atualizarTela();
+  }
 
   ngOnInit(): void {
-    this.returnUrl = this.obterReturnUrl();
-    const id = Number(this.route.snapshot.paramMap.get('id'));
+    this.returnUrl = this.modoPreview ? null : this.obterReturnUrl();
+    const id = this.modoPreview ? this.eventoId : Number(this.route.snapshot.paramMap.get('id'));
 
     if (!id) {
       this.carregando = false;
@@ -47,24 +87,29 @@ export class EventoDetalhe implements OnInit, OnDestroy {
       return;
     }
 
-    this.eventoPublicoService.buscarPorId(id).subscribe({
+    this.eventoPublicoService.buscarPorId(id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (evento) => {
         this.evento = evento;
         this.iniciarAutoPlayParceiros();
         this.carregando = false;
-        this.cdr.detectChanges();
+        this.atualizarTela();
       },
       error: () => {
         this.carregando = false;
         this.naoEncontrado = true;
-        this.cdr.detectChanges();
+        this.atualizarTela();
       }
     });
   }
 
+  private atualizarTela(): void {
+    if (!this.destroyRef.destroyed) this.cdr.detectChanges();
+  }
+
   ngOnDestroy(): void {
+    this.parceirosResizeObserver?.disconnect();
     this.pararAutoPlayParceiros();
-    document.body.style.overflow = '';
+    if (!this.modoPreview) document.body.style.overflow = '';
   }
 
   get imagemPrincipal(): string {
@@ -90,7 +135,11 @@ export class EventoDetalhe implements OnInit, OnDestroy {
   }
 
   get possuiCarrosselParceiros(): boolean {
-    return this.parceiros.length >= 3;
+    if (this.parceiros.length < 2) return false;
+    if (this.parceiros.length >= 3) return true;
+    const larguraCard = this.modoPreview || window.innerWidth <= 640 ? 112 : 136;
+    return this.larguraDisponivelParceiros > 0
+      && this.larguraDisponivelParceiros < larguraCard * 2 + 16;
   }
 
   get parceirosCarousel(): Parceiro[] {
@@ -99,7 +148,7 @@ export class EventoDetalhe implements OnInit, OnDestroy {
   }
 
   get parceirosPorPagina(): number {
-    return window.innerWidth <= 360 ? 1 : 3;
+    return Math.max(1, Math.min(this.parceiros.length, this.quantidadeParceirosVisiveis));
   }
 
   get parceiroTrackTransform(): string {
@@ -110,7 +159,8 @@ export class EventoDetalhe implements OnInit, OnDestroy {
 
   @HostListener('window:resize')
   onResize(): void {
-    this.cdr.detectChanges();
+    this.ajustarParceirosVisiveis();
+    this.atualizarTela();
   }
 
   proximoParceiro(): void {
@@ -122,12 +172,12 @@ export class EventoDetalhe implements OnInit, OnDestroy {
       setTimeout(() => {
         this.parceirosEmTransicao = false;
         this.indiceParceiroAtual = this.parceiros.length;
-        this.cdr.detectChanges();
+        this.atualizarTela();
 
         setTimeout(() => {
           this.parceirosEmTransicao = true;
           this.parceirosAnimando = false;
-          this.cdr.detectChanges();
+          this.atualizarTela();
         }, 30);
       }, 500);
       return;
@@ -135,7 +185,7 @@ export class EventoDetalhe implements OnInit, OnDestroy {
 
     setTimeout(() => {
       this.parceirosAnimando = false;
-      this.cdr.detectChanges();
+      this.atualizarTela();
     }, 500);
   }
 
@@ -148,12 +198,12 @@ export class EventoDetalhe implements OnInit, OnDestroy {
       setTimeout(() => {
         this.parceirosEmTransicao = false;
         this.indiceParceiroAtual = this.parceiros.length * 2 - 1;
-        this.cdr.detectChanges();
+        this.atualizarTela();
 
         setTimeout(() => {
           this.parceirosEmTransicao = true;
           this.parceirosAnimando = false;
-          this.cdr.detectChanges();
+          this.atualizarTela();
         }, 30);
       }, 500);
       return;
@@ -161,21 +211,17 @@ export class EventoDetalhe implements OnInit, OnDestroy {
 
     setTimeout(() => {
       this.parceirosAnimando = false;
-      this.cdr.detectChanges();
+      this.atualizarTela();
     }, 500);
   }
 
   iniciarAutoPlayParceiros(): void {
     this.pararAutoPlayParceiros();
-    if (!this.possuiCarrosselParceiros) {
-      this.indiceParceiroAtual = 0;
-      return;
-    }
-
-    this.indiceParceiroAtual = this.parceiros.length;
+    this.indiceParceiroAtual = this.possuiCarrosselParceiros ? this.parceiros.length : 0;
+    if (!this.possuiCarrosselParceiros) return;
     this.parceirosAutoPlayInterval = window.setInterval(() => {
       this.proximoParceiro();
-      this.cdr.detectChanges();
+      this.atualizarTela();
     }, 3000);
   }
 
@@ -207,12 +253,12 @@ export class EventoDetalhe implements OnInit, OnDestroy {
   abrirLightbox(): void {
     if (!this.imagemPrincipal || this.imagemPrincipalIndisponivel) return;
     this.lightboxAberto = true;
-    document.body.style.overflow = 'hidden';
+    if (!this.modoPreview) document.body.style.overflow = 'hidden';
   }
 
   fecharLightbox(): void {
     this.lightboxAberto = false;
-    document.body.style.overflow = '';
+    if (!this.modoPreview) document.body.style.overflow = '';
   }
 
   onIconeRedeError(event: Event): void {

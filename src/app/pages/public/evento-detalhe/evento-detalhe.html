@@ -1,7 +1,9 @@
-<app-public-navbar></app-public-navbar>
+@if (!modoPreview) {
+  <app-public-navbar></app-public-navbar>
+}
 
-<main class="evento-detalhe-page">
-  @if (!carregando) {
+<main class="evento-detalhe-page" [class.preview]="modoPreview">
+  @if (!carregando && !modoPreview) {
   <button type="button" class="link-voltar" (click)="voltar()">
     <span class="material-symbols-outlined">arrow_back</span>
     Voltar
@@ -97,7 +99,7 @@
               @if (possuiCarrosselParceiros) {
                 <button
                   type="button"
-                  class="evento-parceiros-seta evento-parceiros-seta-anterior apenas-mobile"
+                  class="evento-parceiros-seta evento-parceiros-seta-anterior"
                   (click)="parceiroAnterior()"
                   [disabled]="parceirosAnimando"
                   aria-label="Parceiros anteriores"
@@ -106,7 +108,7 @@
                 </button>
               }
 
-              <div class="evento-parceiros-janela">
+              <div #parceirosJanela class="evento-parceiros-janela">
                 <div
                   class="evento-parceiros-trilho"
                   [class.sem-transicao]="!parceirosEmTransicao"
@@ -169,4 +171,6 @@
   </div>
 }
 
-<app-public-footer></app-public-footer>
+@if (!modoPreview) {
+  <app-public-footer></app-public-footer>
+}

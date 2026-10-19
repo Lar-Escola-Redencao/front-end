@@ -216,53 +216,6 @@ form{
   }
 }
 
-.toast {
-  position: fixed;
-  top: 1.25rem;
-  left: 50%;
-  translate: -50% 0;
-  z-index: 1100;
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  max-width: min(90vw, 480px);
-  padding: 0.9rem 1rem;
-  border-radius: 10px;
-  font-size: 0.9rem;
-  line-height: 1.4;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-  animation: toast-in 0.2s ease;
-}
-
-.toast-warning {
-  background: #fffbeb;
-  color: #92400e;
-  border: 1px solid #fcd34d;
-}
-
-.toast-close {
-  border: 0;
-  background: none;
-  padding: 0;
-  margin-left: auto;
-  font-size: 1.1rem;
-  line-height: 1;
-  color: inherit;
-  cursor: pointer;
-  flex-shrink: 0;
-}
-
-@keyframes toast-in {
-  from {
-    opacity: 0;
-    translate: -50% -0.5rem;
-  }
-  to {
-    opacity: 1;
-    translate: -50% 0;
-  }
-}
-
 .link-button{
   text-decoration: none;
 }

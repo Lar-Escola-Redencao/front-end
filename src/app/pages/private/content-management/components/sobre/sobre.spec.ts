@@ -61,6 +61,29 @@ describe('Sobre', () => {
     expect(component).toBeTruthy();
   });
 
+  it('não considera uma seleção de imagem desfeita como alteração no marco histórico', () => {
+    component.abrirModalHistoria({ id: 1, titulo: '2000', conteudo: 'Fundação', ativo: true } as Secao);
+    const imagem = component.formHistoria.get('imagem')!;
+    imagem.setValue(new File(['imagem'], 'foto.png', { type: 'image/png' }));
+    imagem.markAsDirty();
+    expect(component.temAlteracoesHistoria).toBe(true);
+    imagem.setValue(null);
+    expect(component.temAlteracoesHistoria).toBe(false);
+  });
+
+  it('permite tentar salvar o texto sobre vazio quando ainda não existe registro', () => {
+    component.abaAtiva = 'texto';
+    component.editarTexto();
+    fixture.detectChanges();
+    const salvar = fixture.nativeElement.querySelector('button[type="submit"]') as HTMLButtonElement;
+    expect(salvar.disabled).toBe(false);
+    salvar.click();
+    fixture.detectChanges();
+    expect(component.formTexto.get('conteudo')!.touched).toBe(true);
+    expect(fixture.nativeElement.querySelector('.error-text')).toBeTruthy();
+    expect(sobreService.criarSecao).not.toHaveBeenCalled();
+  });
+
   // -----------------------------------------------------------------
   // validarAno()
   // -----------------------------------------------------------------
