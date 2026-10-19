@@ -1,7 +1,7 @@
 <section class="partners-manager">
   <div class="acoes-partners">
     <app-barra-busca
-      placeholder="Buscar parceiro por nome..."
+      placeholder="Buscar por nome..."
       [valor]="busca"
       (buscar)="buscar($event)" />
 
@@ -110,12 +110,12 @@
     <!-- AÇÕES DO MODAL -->
     <!-- ================================================= -->
 
-    <div class="acoes-modal">
+    <div class="acoes-modal form-acoes">
       <button type="button" class="btn-cancelar" [disabled]="isLoading" (click)="fecharModal()">
         Cancelar
       </button>
 
-      <button type="submit" class="btn-primary" [disabled]="isLoading">
+      <button type="submit" class="btn-primary" [disabled]="isLoading || (modoEdicao && !temAlteracoes)">
         <span *ngIf="isLoading" class="spinner" aria-hidden="true"></span>
         <span>
           {{ isLoading ? 'Salvando...' : 'Salvar' }}

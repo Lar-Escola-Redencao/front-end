@@ -54,6 +54,60 @@ describe('Contrato de edição de usuários', () => {
     vi.spyOn(component, 'processarUploadFoto').mockImplementation(() => {});
   });
 
+  it('permite visitar uma etapa futura sem validar ou perder os dados preenchidos', () => {
+    component.formUsuario.markAsUntouched();
+    component.formUsuario.get('nomeCompleto')!.setValue('');
+    const dados = component.formUsuario.getRawValue();
+    component.irParaEtapa(5);
+    expect(component.etapaModal).toBe(5);
+    expect(component.formUsuario.untouched).toBe(true);
+    expect(component.formUsuario.getRawValue()).toEqual(dados);
+  });
+
+  it('permite voltar a uma etapa e visitar outra sem exigir preenchimento', () => {
+    component.irParaEtapa(3);
+    expect(component.etapaModal).toBe(3);
+    component.irParaEtapa(1);
+    component.formUsuario.get('nomeCompleto')!.setValue('');
+    component.irParaEtapa(4);
+    expect(component.etapaModal).toBe(4);
+    expect(component.formUsuario.get('nomeCompleto')!.value).toBe('');
+  });
+
+  it('mantém a validação de Próximo e impede navegação enquanto salva', () => {
+    component.formUsuario.get('nomeCompleto')!.setValue('');
+    component.proximaEtapa();
+    expect(component.etapaModal).toBe(1);
+    expect(component.formUsuario.get('nomeCompleto')!.touched).toBe(true);
+    component.isLoading = true;
+    component.irParaEtapa(5);
+    expect(component.etapaModal).toBe(1);
+  });
+
+  it('ao salvar por uma etapa futura, abre a primeira etapa inválida', () => {
+    component.formUsuario.get('nomeCompleto')!.setValue('');
+    component.irParaEtapa(5);
+    component.salvar();
+    expect(component.etapaModal).toBe(1);
+    expect(service.atualizar).not.toHaveBeenCalled();
+  });
+
+  it('bloqueia o envio sem contatos mesmo ao pular diretamente para a matrícula', () => {
+    component.contatosArray.clear();
+    component.irParaEtapa(5);
+    component.salvar();
+    expect(component.etapaModal).toBe(2);
+    expect(service.atualizar).not.toHaveBeenCalled();
+  });
+
+  it('direciona para matrícula quando os dados da turma estão ausentes', () => {
+    component.formUsuario.get('idTurma')!.setValue(null);
+    component.etapaModal = 3;
+    component.salvar();
+    expect(component.etapaModal).toBe(5);
+    expect(service.atualizar).not.toHaveBeenCalled();
+  });
+
   it('preenche e reenvia família, zero, false e religião personalizada em um PUT com telefone novo e ID', () => {
     expect(component.familiaresArray.at(0).value.renda).toBe(0);
     expect(component.familiaresArray.at(0).value.idade).toBe(0);
@@ -70,6 +124,19 @@ describe('Contrato de edição de usuários', () => {
     expect(dto.fichaSocioeconomica).toMatchObject({ despesaAgua: 0, utilizaCarro: false, gastoCarro: 0, religiao: 'Budista' });
     component.contatosArray.at(0).get('telefone')?.setValue('(11) 99999-9999');
     expect(component.contatoExistenteAlterado(0)).toBe(false);
+  });
+
+  it('preserva alterações digitadas antes de chegar a consulta de turmas da edição', () => {
+    const resposta = new Subject<any[]>();
+    vi.spyOn(TestBed.inject(TurmaService), 'listar').mockReturnValue(resposta);
+    component.abrirEdicao(usuario);
+    expect(component.temAlteracoes).toBe(false);
+    component.formUsuario.get('nomeCompleto')!.setValue('Maria Atualizada');
+    resposta.next([{ id: 2, unidade: { id: 1 } }]);
+    expect(component.temAlteracoes).toBe(true);
+    component.salvar();
+    expect(service.atualizar).toHaveBeenCalledOnce();
+    expect(service.atualizar.mock.calls[0][1].nomeCompleto).toBe('Maria Atualizada');
   });
 
   it('bloqueia os campos de endereço enquanto consulta e os libera ao terminar', async () => {
@@ -116,14 +183,34 @@ describe('Contrato de edição de usuários', () => {
     }
   });
 
-  it('mostra a obrigatoriedade do CEP vazio após sair do campo', () => {
+  it('aceita CEP vazio mesmo após sair do campo e não exibe erro de consulta anterior', () => {
     const controle = component.formUsuario.get('cep')!;
     controle.setValue('');
     controle.markAsUntouched();
     expect(component.estadoErroCep.isErrorState(controle as any, null)).toBe(false);
     controle.markAsTouched();
-    expect(controle.hasError('required')).toBe(true);
-    expect(component.estadoErroCep.isErrorState(controle as any, null)).toBe(true);
+    expect(controle.valid).toBe(true);
+    component.erroCep = 'CEP não encontrado.';
+    expect(component.estadoErroCep.isErrorState(controle as any, null)).toBe(false);
+  });
+
+  it('mantém o CEP válido quando a consulta não encontra o endereço', async () => {
+    vi.useFakeTimers();
+    try {
+      cep.consultar.mockReturnValue(of({ erro: true } as any));
+      const controle = component.formUsuario.get('cep')!;
+      controle.markAsDirty();
+      controle.markAsTouched();
+      controle.setValue('14801-000');
+      await vi.advanceTimersByTimeAsync(450);
+      expect(component.erroCep).toContain('Endereço não localizado');
+      expect(controle.valid).toBe(true);
+      expect(component.estadoErroCep.isErrorState(controle as any, null)).toBe(false);
+      expect(component.consultandoCep).toBe(false);
+      expect(component.formUsuario.get('endereco')!.enabled).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('ignora a consulta anterior ao trocar o CEP e preserva edição durante a consulta', async () => {
@@ -414,6 +501,7 @@ describe('Contrato de edição de usuários', () => {
   it('exibe erro de telefone retornado pela API e permite corrigir o campo', () => {
     const mensagem = 'Já existe outro contato cadastrado com este telefone.';
     service.atualizar.mockReturnValue(throwError(() => ({ error: { message: mensagem } })));
+    component.contatosArray.at(0).get('telefone')!.setValue('(11) 97777-7777');
     component.salvar();
     const telefone = component.contatosArray.at(0).get('telefone')!;
     expect(component.etapaModal).toBe(2);
@@ -424,6 +512,7 @@ describe('Contrato de edição de usuários', () => {
 
   it('exibe conflito de telefone na edição centralizada', () => {
     component.abrirEdicaoContato({ id: 8, nomeCompleto: 'Ana', telefone: '11999999999', quantidadeVinculos: 0 });
+    component.formEdicaoContato.get('telefone')!.setValue('(11) 97777-7777');
     const mensagem = 'Já existe outro contato cadastrado com este telefone.';
     (TestBed.inject(ContatoService) as any).atualizarContato = vi.fn(() => throwError(() => ({ error: { message: mensagem } })));
     component.salvarEdicaoContato();

@@ -1,3 +1,4 @@
+import { AbasResponsivas } from 'src/app/shared/directives/abas-responsivas';
 import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, HostListener, NgZone, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -33,6 +34,7 @@ type AbaPerfil = 'acompanhamento' | 'contatos' | 'saude' | 'dados-pessoais' | 'd
   selector: 'app-usuario-perfil',
   standalone: true,
   imports: [
+    AbasResponsivas,
     CommonModule,
     ReactiveFormsModule,
     MatFormFieldModule,
@@ -560,8 +562,7 @@ export class UsuarioPerfil implements OnInit, OnDestroy, ComponentComAlteracoesN
       confirmButtonText: botaoConfirmar,
       cancelButtonText: 'Cancelar',
       confirmButtonColor,
-      cancelButtonColor: '#757575',
-      reverseButtons: true,
+      reverseButtons: false,
       inputValidator: valor => valor?.trim().toLowerCase() === textoConfirmacao.toLowerCase()
         ? undefined
         : `Digite exatamente: ${textoConfirmacao}`

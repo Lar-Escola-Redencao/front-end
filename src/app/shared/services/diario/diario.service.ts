@@ -11,6 +11,7 @@ export interface OcorrenciaResponseDTO {
   descricao: string;
   tipoOcorrencia: 'COMPORTAMENTO' | 'SAUDE' | 'ASSISTENCIA' | 'OUTRO';
   nomeMembro: string;
+  idMembro?: number;
 }
 
 export interface FrequenciaUsuarioResponseDTO {
@@ -19,6 +20,9 @@ export interface FrequenciaUsuarioResponseDTO {
   nomeUsuario: string;
   imagemPerfil: string;
   idFrequencia: number | null;
+  dataCriacao?: string | null;
+  chamadaRegistrada?: boolean;
+  dataCriacaoChamada?: string | null;
   presente: boolean | null;
   statusMatricula?: string; /* Adicionado para capturar o EXCLUIDO */
   permiteAcessoPerfil?: boolean;

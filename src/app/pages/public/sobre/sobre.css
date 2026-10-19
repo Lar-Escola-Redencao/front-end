@@ -27,13 +27,15 @@ h2 {
   white-space: nowrap;
 }
 .sobre-texto {
-  display: grid;
-  grid-template-columns: 360px 1fr;
-  align-items: center;
-  gap: 32px;
+  display: flow-root;
   padding: 100px 24px 80px;
 }
 .sobre-texto h2 {
+  float: left;
+  width: 360px;
+  max-width: 40%;
+  margin: 24px 32px 24px 0;
+  overflow-wrap: anywhere;
   text-align: right;
 }
 .texto-institucional {
@@ -357,12 +359,14 @@ button:focus-visible,
 }
 @media (max-width: 768px) {
   .sobre-texto {
-    grid-template-columns: 1fr;
-    gap: 24px;
     padding-top: 64px;
     padding-bottom: 48px;
   }
   .sobre-texto h2 {
+    float: none;
+    width: auto;
+    max-width: none;
+    margin: 0 0 24px;
     text-align: center;
   }
   .mosaico-grupo {

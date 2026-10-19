@@ -69,11 +69,11 @@ export const CAPTACAO_RECURSOS_CONFIG: CaptacaoRecursosConfig[] = [
     grupos: [
       {
         grupo: GRUPOS_SECAO.produtos,
-        rotuloAba: 'Produtos',
+        rotuloAba: 'Produtos e serviços',
         exibicao: 'tabela',
-        nomeItem: 'produto',
-        campos: [{ campo: 'titulo', rotulo: 'Nome do produto', obrigatorio: true, tipo: 'texto' }],
-        imagem: { rotulo: 'Imagem do produto', obrigatoria: true },
+        nomeItem: 'produto ou serviço',
+        campos: [{ campo: 'titulo', rotulo: 'Nome do produto ou serviço', obrigatorio: true, tipo: 'texto' }],
+        imagem: { rotulo: 'Imagem do produto ou serviço', obrigatoria: true },
         controlaAtivo: true,
       },
       {

@@ -1,3 +1,4 @@
+import { EstadoVazio } from 'src/app/components/estado-vazio/estado-vazio';
 import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, EventEmitter, HostListener, Input, NgZone, OnDestroy, Output, inject } from '@angular/core';
 import { AbstractControl, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -24,7 +25,7 @@ type ModoModalContato = 'novo' | 'editar' | 'visualizar';
 @Component({
   selector: 'app-usuario-perfil-contatos',
   standalone: true,
-  imports: [
+  imports: [EstadoVazio,
     CommonModule,
     ReactiveFormsModule,
     MatAutocompleteModule,
@@ -230,6 +231,10 @@ export class UsuarioPerfilContatos implements OnDestroy {
       && this.snapshotFormulario() !== this.valoresOriginaisFormulario;
   }
 
+  get temAlteracoes(): boolean {
+    return this.snapshotFormulario() !== this.valoresOriginaisFormulario;
+  }
+
   @HostListener('window:beforeunload', ['$event'])
   avisarAntesDeFechar(event: BeforeUnloadEvent): void {
     if (this.formularioTemAlteracoesNaoSalvas()) {
@@ -354,6 +359,7 @@ export class UsuarioPerfilContatos implements OnDestroy {
 
   async salvar(): Promise<void> {
     if (!this.usuario?.id || this.somenteLeitura || this.salvando || this.modoModal === 'visualizar') return;
+    if (this.modoModal === 'editar' && !this.temAlteracoes) return;
     this.form.markAllAsTouched();
 
     if (this.form.get('buscarExistente')?.value && !this.form.get('id')?.value) {

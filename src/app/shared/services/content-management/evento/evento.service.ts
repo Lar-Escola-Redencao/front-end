@@ -12,6 +12,7 @@ import {
 } from 'src/app/shared/models/evento.model';
 import { PaginaResposta } from 'src/app/shared/models/pagina.model';
 import { construirHttpParams } from 'src/app/shared/utils/paginacao-url';
+import type { FiltrosEventos } from '@components/filtros-eventos/filtros-eventos';
 
 @Injectable({
   providedIn: 'root'
@@ -21,8 +22,12 @@ export class EventoService {
 
   constructor(private http: HttpClient) { }
 
-  listarTodos(pagina: number, tamanho: number, sort?: string, tipo?: TipoEvento | '', search?: string): Observable<PaginaResposta<Evento>> {
-    const params = construirHttpParams({ pagina, tamanho, sort, extras: { tipo: tipo || undefined, search } });
+  listarTodos(pagina: number, tamanho: number, sort?: string, tipo?: TipoEvento | '', search?: string, filtros?: FiltrosEventos): Observable<PaginaResposta<Evento>> {
+    const params = construirHttpParams({ pagina, tamanho, sort, extras: {
+      tipo: tipo || undefined, search, dataInicial: filtros?.dataInicial || undefined,
+      dataFinal: filtros?.dataFinal || undefined,
+      valor: filtros?.valor === 'todos' ? undefined : filtros?.valor
+    } });
     return this.http.get<PaginaResposta<Evento>>(`${this.apiUrl}/todos`, { params });
   }
 

@@ -1,7 +1,7 @@
 <section class="unidades-admin">
   <h1>Unidades e Turmas</h1>
   <div class="conteudo">
-    <div class="abas-container">
+    <div appAbasResponsivas class="abas-container">
       <button
         type="button"
         class="aba-btn"
@@ -282,7 +282,7 @@
         </div>
       }
 
-      <div class="acoes-modal">
+      <div class="acoes-modal form-acoes">
         <button type="button" class="btn-cancelar" [disabled]="isLoading" (click)="fecharModal()">
           Cancelar
         </button>
@@ -397,7 +397,7 @@
         {{ errosTurma['unidadeId'] }}
       </span>
 
-      <div class="acoes-modal">
+      <div class="acoes-modal form-acoes">
         <button
           type="button"
           class="btn-cancelar"
@@ -412,8 +412,6 @@
           class="btn-primary"
           [disabled]="
             isLoadingTurma ||
-            formTurma.invalid ||
-            unidades.length === 0 ||
             (modoEdicaoTurma && !temAlteracoesTurma)
           "
         >
@@ -430,48 +428,10 @@
 @if (modalVisualizacaoAberto) {
   <app-modal-layout titulo="Detalhes da unidade" (closed)="fecharVisualizacao()">
     <div class="modal-body-preview" *ngIf="unidadeVisualizacao">
-      <div class="preview-capa" *ngIf="tratarImagem(unidadeVisualizacao.imagem)">
-        <img [src]="tratarImagem(unidadeVisualizacao.imagem)" alt="Imagem da unidade" />
-      </div>
-
-      <div class="preview-info">
-        <div class="tag-cor" [style.background]="unidadeVisualizacao.corHex || corPadrao">
-          <span class="material-symbols-outlined">location_on</span>
-        </div>
-
-        <h2>{{ unidadeVisualizacao.nome }}</h2>
-
-        <p class="preview-linha">
-          <span class="material-symbols-outlined">location_on</span>
-          {{ unidadeVisualizacao.endereco }}
-        </p>
-
-        <p class="preview-linha">
-          <span class="material-symbols-outlined">call</span>
-          {{ unidadeVisualizacao.telefone }}
-        </p>
-
-        <p class="preview-linha">
-          <span class="material-symbols-outlined">mail</span>
-          {{ unidadeVisualizacao.email }}
-        </p>
-
-        <p class="preview-linha">
-          <span class="material-symbols-outlined">event</span>
-          {{ formatarDiasFuncionamento(unidadeVisualizacao.diasFuncionamento) }}
-        </p>
-
-        <p class="preview-linha">
-          <span class="material-symbols-outlined">schedule</span>
-          {{ formatarHorario(unidadeVisualizacao.horarioAbertura) }} às
-          {{ formatarHorario(unidadeVisualizacao.horarioFechamento) }}
-        </p>
-
-        <p class="preview-linha">
-          <span class="material-symbols-outlined">groups</span>
-          Atende de {{ unidadeVisualizacao.idadeMin }} a {{ unidadeVisualizacao.idadeMax }} anos
-        </p>
-      </div>
+      <app-unidade-card
+        [unidade]="unidadeVisualizacao"
+        [numero]="numeroUnidadeVisualizacao"
+        [imagemUrl]="tratarImagem(unidadeVisualizacao.imagem) || ''" />
     </div>
   </app-modal-layout>
 }

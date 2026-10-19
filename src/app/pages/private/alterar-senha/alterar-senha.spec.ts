@@ -1,4 +1,4 @@
-import { TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of, Subject, throwError } from 'rxjs';
 import { vi } from 'vitest';
 import { AlterarSenha } from './alterar-senha';
@@ -9,6 +9,7 @@ import Swal from 'sweetalert2';
 
 describe('Alteração de senha em duas etapas', () => {
   let component: AlterarSenha;
+  let fixture: ComponentFixture<AlterarSenha>;
   let service: {
     validarSenhaAtual: ReturnType<typeof vi.fn>;
     alterarSenha: ReturnType<typeof vi.fn>;
@@ -28,8 +29,8 @@ describe('Alteração de senha em duas etapas', () => {
       { provide: Auth, useValue: auth },
       { provide: Router, useValue: router }
     ] });
-    TestBed.overrideComponent(AlterarSenha, { set: { template: '' } });
-    component = TestBed.createComponent(AlterarSenha).componentInstance;
+    fixture = TestBed.createComponent(AlterarSenha);
+    component = fixture.componentInstance;
   });
 
   function confirmarAtual(): void {
@@ -119,14 +120,23 @@ describe('Alteração de senha em duas etapas', () => {
     expect(component.formAtual.enabled).toBe(true);
   });
 
-  it('mostra a opção de recuperação quando a senha atual está incorreta', () => {
-    service.validarSenhaAtual.mockReturnValue(
-      throwError(() => ({ error: { message: 'A senha atual está incorreta.' } }))
-    );
-
+  it('permite enviar os dois passos vazios para exibir os campos obrigatórios', () => {
+    fixture.detectChanges();
+    const enviar = () => fixture.nativeElement.querySelector('button[type="submit"]') as HTMLButtonElement;
+    expect(enviar().disabled).toBe(false);
+    enviar().click();
+    fixture.detectChanges();
+    expect(component.formAtual.controls.senhaAtual.touched).toBe(true);
+    expect(fixture.nativeElement.querySelector('mat-error')).toBeTruthy();
+    expect(service.validarSenhaAtual).not.toHaveBeenCalled();
     confirmarAtual();
-
-    expect(component.mostrarRecuperacaoSenha()).toBe(true);
+    fixture.detectChanges();
+    expect(enviar().disabled).toBe(false);
+    enviar().click();
+    fixture.detectChanges();
+    expect(component.formSenha.controls.novaSenha.touched).toBe(true);
+    expect(fixture.nativeElement.querySelector('mat-error')).toBeTruthy();
+    expect(service.alterarSenha).not.toHaveBeenCalled();
   });
 
   it('desloga e navega para a recuperação de senha somente após confirmar o descarte', async () => {

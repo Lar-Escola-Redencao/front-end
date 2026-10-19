@@ -149,6 +149,24 @@ describe('UnidadesTurmas', () => {
     expect(component).toBeTruthy();
   });
 
+  it('abre o preview com um único card público da unidade selecionada', async () => {
+    component.abrirVisualizacao(unidades[0]);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const modal = fixture.nativeElement.querySelector('app-modal-layout');
+    expect(modal.querySelectorAll('app-unidade-card')).toHaveLength(1);
+    expect(modal.querySelector('.card-titulo')?.textContent).toContain('Sede');
+    expect(modal.querySelector('.card-corpo')?.textContent).toContain('08h às 18h de Segunda a Sexta');
+    expect(modal.querySelector('.card-corpo')?.textContent).toContain('Meninos de 6 a 12 anos');
+    expect(modal.querySelector('.unidades-seta')).toBeNull();
+    expect(modal.querySelector('.unidades-descricao')).toBeNull();
+    component.fecharVisualizacao();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('app-unidade-card')).toBeNull();
+  });
+
   it('carrega a lista de turmas ao iniciar (aba padrão)', () => {
     expect(turmaService.listarPaginado).toHaveBeenCalledWith(0, 10, null, undefined);
     expect(component.turmas).toEqual([turma]);

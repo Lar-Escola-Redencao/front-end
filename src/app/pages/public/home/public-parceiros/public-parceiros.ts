@@ -1,3 +1,4 @@
+import { EstadoVazio } from '@components/estado-vazio/estado-vazio';
 import { Component, OnInit, OnDestroy, OnChanges, Input, HostListener, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { PublicContentService } from 'src/app/shared/services/public-content/public-content.service';
@@ -11,7 +12,7 @@ export interface ParceiroExibicao {
 @Component({
   selector: 'app-public-parceiros',
   standalone: true,
-  imports: [CommonModule],
+  imports: [EstadoVazio, CommonModule],
   templateUrl: './public-parceiros.html',
   styleUrl: './public-parceiros.css'
 })

@@ -72,6 +72,10 @@
   }
 
   .nav-content {
+    max-height: calc(100vh - 82px);
+    max-height: calc(100dvh - 82px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
     display: none;
     position: absolute;
     top: 100%;

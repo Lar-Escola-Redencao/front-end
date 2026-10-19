@@ -1,3 +1,5 @@
+import { UnidadeCard } from '@components/unidade-card/unidade-card';
+import { AbasResponsivas } from 'src/app/shared/directives/abas-responsivas';
 import { ChangeDetectorRef, Component, HostListener, NgZone, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
@@ -45,10 +47,12 @@ type OpcaoPeriodo = { valor: Periodo; label: string };
   selector: 'app-unidades-turmas',
   standalone: true,
   imports: [
+    AbasResponsivas,
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
     ModalLayout,
+    UnidadeCard,
     TabelaLayout,
     Paginacao,
     BarraBusca,
@@ -387,14 +391,14 @@ export class UnidadesTurmas implements OnInit, OnDestroy, ComponentComAlteracoes
 
   get mensagemVazia(): string {
     return this.busca
-      ? `Nenhuma unidade encontrada para "${this.busca}"`
-      : 'Nenhuma unidade cadastrada ainda';
+      ? `Nenhuma unidade encontrada para "${this.busca}".`
+      : 'Nenhuma unidade cadastrada.';
   }
 
   get mensagemVaziaTurmas(): string {
     return this.busca
-      ? `Nenhuma turma encontrada para "${this.busca}"`
-      : 'Nenhuma turma cadastrada ainda';
+      ? `Nenhuma turma encontrada para "${this.busca}".`
+      : 'Nenhuma turma cadastrada.';
   }
 
   irParaPagina(pagina: number): void {
@@ -888,6 +892,13 @@ export class UnidadesTurmas implements OnInit, OnDestroy, ComponentComAlteracoes
     if (evento.tipo === 'excluir') {
       this.deletarTurma(evento.linha);
     }
+  }
+
+  get numeroUnidadeVisualizacao(): number {
+    const indice = this.unidades.findIndex(unidade => unidade.id === this.unidadeVisualizacao?.id);
+    if (indice >= 0) return indice + 1;
+    const indiceNaPagina = this.unidadesTabela.findIndex(unidade => unidade.id === this.unidadeVisualizacao?.id);
+    return indiceNaPagina >= 0 ? this.pagina * this.tamanho + indiceNaPagina + 1 : 1;
   }
 
   abrirVisualizacao(unidade: Unidade): void {

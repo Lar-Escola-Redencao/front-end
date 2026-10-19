@@ -67,12 +67,13 @@
           }
         </div>
 
-        <button type="button" class="excluir-usuario" (click)="excluirUsuario()">Excluir usuário</button>
+        <button type="button" class="btn-cancelar excluir-usuario" (click)="excluirUsuario()">Excluir usuário</button>
         }
       </aside>
 
+      <div class="perfil-area-painel">
       <main class="perfil-dados">
-        <nav class="abas-container" aria-label="Dados do usuário">
+        <nav appAbasResponsivas class="abas-container" aria-label="Dados do usuário">
           @for (aba of abasVisiveis; track aba.id) {
             <button type="button" class="aba-btn" [class.ativa]="abaAtiva === aba.id" (click)="selecionarAba(aba.id)">
               {{ aba.label }}
@@ -119,6 +120,7 @@
           }
         </div>
       </main>
+      </div>
     </div>
 
     @if (modalDesligamentoAberto) {
@@ -143,7 +145,7 @@
           }
         </form>
 
-        <div class="perfil-modal-acoes">
+        <div class="perfil-modal-acoes form-acoes">
           <button type="button" class="btn-cancelar-modal" (click)="fecharModalDesligamento()" [disabled]="salvandoDesligamento">Cancelar</button>
           <button type="button" class="btn-primary" (click)="confirmarDesligamento()" [disabled]="salvandoDesligamento">
             {{ salvandoDesligamento ? 'Enviando...' : 'Confirmar' }}
@@ -209,7 +211,7 @@
           }
         </form>
 
-        <div class="perfil-modal-acoes">
+        <div class="perfil-modal-acoes form-acoes">
           <button type="button" class="btn-cancelar-modal" (click)="fecharModalTransferencia()" [disabled]="salvandoTransferencia">Cancelar</button>
           <button type="button" class="btn-primary" (click)="confirmarSelecaoTurma()" [disabled]="salvandoTransferencia">
             {{ salvandoTransferencia ? 'Enviando...' : (modoSelecaoTurma === 'rematricula' ? 'Matricular' : 'Confirmar') }}

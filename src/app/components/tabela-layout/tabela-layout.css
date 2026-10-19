@@ -219,7 +219,6 @@
 .etiqueta-celula {
   display: inline-flex;
   align-items: center;
-  margin-left: 8px;
   padding: 3px 8px;
   border-radius: 999px;
   font-size: 11px;
@@ -302,7 +301,7 @@
 }
 
 .tabela-vazia {
-  padding: 40px 24px;
+  padding: 0;
   text-align: center;
   color: rgba(0, 0, 0, 0.6);
   background: var(--branco);

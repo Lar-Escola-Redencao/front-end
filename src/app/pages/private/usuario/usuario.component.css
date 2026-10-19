@@ -1,6 +1,7 @@
 .abas-container {
+  flex-wrap: wrap;
   display: flex;
-  gap: 24px;
+  gap: 0;
   margin-bottom: 24px;
   border-bottom: 1px solid #e0e0e0;
   width: 100%;
@@ -9,8 +10,13 @@
 }
 
 .aba-btn {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
   font-family: var(--fonte-texto);
-  padding: 12px 4px;
+  padding: 12px 16px;
   background: transparent;
   border: none;
   border-bottom: 2px solid transparent;
@@ -126,7 +132,6 @@ h1 {
 .acoes-filtros-usuarios {
   display: flex;
   justify-content: flex-end;
-  gap: 12px;
   margin-top: 4px;
 }
 
@@ -460,18 +465,7 @@ h1 {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 28px;
   margin-top: 4px;
-}
-
-.btn-cancelar {
-  border: 0;
-  background: transparent;
-  color: var(--input-color);
-  cursor: pointer;
-  font-family: var(--fonte-texto);
-  font-size: 1rem;
-  font-weight: 700;
 }
 
 /* modal de preview */
@@ -850,7 +844,6 @@ h1 {
 
   .acoes-modal {
     flex-direction: column-reverse;
-    gap: 12px;
     width: 100%;
   }
 
@@ -986,8 +979,8 @@ h1 {
   grid-template-columns: repeat(5, minmax(0, 1fr));
   align-items: flex-start;
   width: 100%;
-  max-width: 580px;
-  margin: 30px auto 20px;
+  max-width: none;
+  margin: 30px 0;
   padding: 0;
 }
 
@@ -995,10 +988,30 @@ h1 {
   position: relative;
   display: flex;
   min-width: 0;
+  min-height: 64px;
+  padding: 0 2px 8px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer;
   flex-direction: column;
   align-items: center;
   gap: 7px;
   text-align: center;
+}
+
+.stepper-indicador .step:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+.stepper-indicador .step:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.stepper-indicador .step:not(:disabled):hover .step-texto {
+  color: var(--primary-color);
 }
 
 .stepper-indicador .step-numero {
@@ -1022,11 +1035,11 @@ h1 {
 
 .stepper-indicador .step-texto {
   display: block;
-  width: 136px;
+  width: 100%;
   min-width: 0;
   color: #9a9a9a;
   font-family: var(--fonte-texto);
-  font-size: 0.68rem;
+  font-size: 0.8rem;
   font-weight: 400;
   line-height: 1.15;
   white-space: normal;
@@ -1037,12 +1050,12 @@ h1 {
 
 .stepper-indicador .step-texto span {
   display: block;
-  white-space: nowrap;
+  white-space: normal;
 }
 
 .stepper-indicador .step.ativo .step-texto {
-  color: #939393;
-  font-weight: 400;
+  color: var(--primary-color);
+  font-weight: 600;
 }
 
 .stepper-indicador .step:not(:last-child)::after {
@@ -1053,15 +1066,11 @@ h1 {
   width: calc(100% - 28px);
   height: 1px;
   background: #aaa;
+  pointer-events: none;
 }
 
 .stepper-indicador .step-linha {
   display: none;
-}
-
-.stepper-indicador .step.linha-ativa:not(:last-child)::after {
-  background: var(--primary-color);
-  height: 2px;
 }
 
 .cadastro-form {
@@ -1170,7 +1179,18 @@ h1 {
 }
 
 :host ::ng-deep app-modal-layout.cadastro-modal .mat-mdc-form-field.mat-form-field-disabled .mdc-text-field {
-  background: #d5d5d5;
+  background-color: #eeeeee !important;
+  opacity: 1;
+}
+
+:host ::ng-deep app-modal-layout.cadastro-modal .mat-mdc-form-field.mat-form-field-disabled .mat-mdc-floating-label {
+  background-color: #eeeeee !important;
+  padding: 0 4px;
+  z-index: 2;
+}
+
+:host ::ng-deep app-modal-layout.cadastro-modal .mat-mdc-form-field.mat-form-field-disabled .mdc-notched-outline__notch {
+  background-color: transparent !important;
 }
 
 .cadastro-form .checkbox-discreto {
@@ -1203,7 +1223,7 @@ h1 {
 .cadastro-voltar {
   align-self: flex-start;
   width: fit-content;
-  margin: -8px 0 16px;
+  margin: 0 0 16px;
   padding: 0;
   font-size: 0.84rem;
   font-weight: 400;
@@ -1298,6 +1318,43 @@ h1 {
   color: #777;
   font-size: 0.8rem;
   line-height: 1.35;
+}
+
+.cadastro-form .link-desfazer-contato {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--primary-color);
+  font: inherit;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.cadastro-form .link-desfazer-contato:hover,
+.cadastro-form .link-desfazer-contato:focus-visible {
+  text-decoration: underline;
+}
+
+.cadastro-form .btn-calendario-data {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  margin-right: 2px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--input-color);
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.cadastro-form .btn-calendario-data:hover,
+.cadastro-form .btn-calendario-data:focus-visible {
+  background-color: #f0f0f0;
+  color: var(--primary-color);
 }
 
 .busca-contato-error {
@@ -1638,7 +1695,6 @@ h1 {
 
 .cadastro-acoes {
   display: flex;
-  gap: 18px;
   justify-content: flex-end;
   margin-top: 28px;
 }
@@ -1652,9 +1708,16 @@ h1 {
 }
 
 @media (max-width: 650px) {
+  :host ::ng-deep app-modal-layout.cadastro-modal .modal-backdrop {
+    align-items: flex-end;
+    padding: 0;
+  }
+
   :host ::ng-deep app-modal-layout.cadastro-modal .modal-card {
     width: 100%;
     max-width: none;
+    max-height: 90vh;
+    max-height: 90dvh;
     padding: 22px 18px;
     border-radius: 20px 20px 0 0;
   }
@@ -1670,7 +1733,6 @@ h1 {
 
   .stepper-indicador .step-texto {
     width: 100%;
-    font-size: 0.55rem;
     overflow-wrap: anywhere;
   }
 
@@ -1709,7 +1771,6 @@ h1 {
 
   .cadastro-acoes {
     flex-direction: row;
-    gap: 12px;
   }
 
   .cadastro-acoes button {
@@ -1853,7 +1914,7 @@ h1 {
   color: #d98200;
   font-family: var(--fonte-texto);
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 400;
   line-height: 1.35;
   text-align: left;
 }

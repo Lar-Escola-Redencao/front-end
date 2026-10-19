@@ -5,7 +5,7 @@
       @if (!editando) {
         <button type="button" class="btn-primary" (click)="editar()">Editar</button>
       } @else {
-        <div class="acoes-edicao">
+        <div class="acoes-edicao form-acoes">
           <button type="button" class="btn-cancelar" [disabled]="salvando" (click)="cancelar()">Cancelar</button>
           <button type="submit" class="btn-primary" [disabled]="salvando || !temAlteracoes">
             <span *ngIf="salvando" class="spinner" aria-hidden="true"></span>
@@ -110,7 +110,7 @@
         }
       </div>
     } @else {
-      <p class="texto-vazio">Nenhum documento de saúde anexado.</p>
+      <app-estado-vazio icone="folder_open" mensagem="Nenhum documento de saúde anexado." [compacto]="true"></app-estado-vazio>
     }
   </form>
 </section>

@@ -8,7 +8,7 @@
     [erro]="loadError"
     mensagemErro="Não foi possivel carregar as redes sociais."
     [ordenacao]="ordenacao"
-    mensagemVazia="Nenhuma rede social cadastrada ainda."
+    mensagemVazia="Nenhuma rede social cadastrada."
     (acao)="executarAcao($event)"
     (ordenar)="ordenarPor($event)"
     (tentarNovamente)="carregarRedesSociais()"
@@ -80,7 +80,7 @@
     </span>
     }
 
-    <div class="acoes-modal">
+    <div class="acoes-modal form-acoes">
 
       <button
         type="button"
@@ -94,7 +94,7 @@
       <button
         type="submit"
         class="btn-primary"
-        [disabled]="isSalvando"
+        [disabled]="isSalvando || (modoEdicao && !temAlteracoes)"
       >
         <span
           *ngIf="isSalvando"

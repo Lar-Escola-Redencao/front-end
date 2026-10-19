@@ -1,6 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
+import { PaginaResposta } from 'src/app/shared/models/pagina.model';
+import { construirHttpParams } from 'src/app/shared/utils/paginacao-url';
 import { CONTRATO_SECOES_GRUPO, GrupoSecao } from './secoes-grupo.contrato';
 
 export interface SecaoGrupo {
@@ -43,6 +45,25 @@ export class SecoesGrupoService {
     return this.http.get<Record<string, any>[]>(rotas.listar(idPagina), { params }).pipe(
       map((resposta) => resposta.map((item) => this.mapearSecao(item))),
       map((secoes) => secoes.filter((secao) => secao.grupo === grupo)),
+    );
+  }
+
+  listarPorGrupoPaginado(
+    idPagina: number,
+    grupo: GrupoSecao,
+    pagina: number,
+    tamanho: number,
+    search?: string,
+  ): Observable<PaginaResposta<SecaoGrupo>> {
+    const params = construirHttpParams({
+      pagina, tamanho, sort: 'ordem,asc', extras: { grupo, search },
+    }).append('sort', 'id,asc');
+
+    return this.http.get<PaginaResposta<Record<string, any>>>(rotas.listarPaginado(idPagina), { params }).pipe(
+      map((resposta) => ({
+        content: resposta.content.map((item) => this.mapearSecao(item)),
+        page: resposta.page,
+      })),
     );
   }
 

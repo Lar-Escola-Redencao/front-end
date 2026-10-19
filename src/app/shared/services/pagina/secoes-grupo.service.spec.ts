@@ -59,6 +59,27 @@ describe('SecoesGrupoService', () => {
     ]);
   });
 
+  it('paginates products on the admin route with group, search and stable ordering', () => {
+    let resultado: any;
+    service.listarPorGrupoPaginado(3, 'produtos', 1, 5, 'Caneca').subscribe((pagina) => resultado = pagina);
+
+    const req = httpMock.expectOne((request) => request.url === `${base}/3/secoes/admin`);
+    expect(req.request.params.get('grupo')).toBe('produtos');
+    expect(req.request.params.get('page')).toBe('1');
+    expect(req.request.params.get('size')).toBe('5');
+    expect(req.request.params.get('search')).toBe('Caneca');
+    expect(req.request.params.getAll('sort')).toEqual(['ordem,asc', 'id,asc']);
+    req.flush({
+      content: [{ id: 2, grupo: 'produtos', titulo: 'Caneca', ativo: false }],
+      page: { number: 1, size: 5, totalElements: 6, totalPages: 2 },
+    });
+
+    expect(resultado.content[0].titulo).toBe('Caneca');
+    expect(resultado.content[0].ativo).toBe(false);
+    expect(resultado.page.totalElements).toBe(6);
+    expect(resultado.page.totalPages).toBe(2);
+  });
+
   it('creates with multipart sending only the given fields and no manual Content-Type', () => {
     service.criar(3, { grupo: 'telefone', titulo: '11999998888', conteudo: '' }).subscribe();
 

@@ -57,6 +57,16 @@ describe('Proteção de alterações não salvas em Meu perfil', () => {
     component.formDados.get('nomeCompleto')!.setValue('Nome alterado');
   }
 
+  it('não envia o perfil sem alterações, inclusive depois de desfazer uma edição', () => {
+    component.habilitarEdicao();
+    component.salvar();
+    expect(service.atualizar).not.toHaveBeenCalled();
+    component.formDados.get('nomeCompleto')!.setValue('Outro nome');
+    component.formDados.get('nomeCompleto')!.setValue(perfil.nomeCompleto);
+    component.salvar();
+    expect(service.atualizar).not.toHaveBeenCalled();
+  });
+
   it('protege navegação e recarregamento quando somente o modal de senha tem dados', async () => {
     alterarSenha.formAtual.controls.senhaAtual.setValue('admin123');
     expect(component.formularioTemAlteracoesNaoSalvas()).toBe(true);

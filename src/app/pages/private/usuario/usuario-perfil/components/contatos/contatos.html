@@ -9,7 +9,7 @@
     [colunas]="colunas"
     [dados]="contatos"
     [acoes]="acoesVisiveis"
-    mensagemVazia="Nenhum contato vinculado a este usuário."
+    mensagemVazia="Nenhum contato cadastrado."
     (acao)="executarAcao($event)">
   </app-tabela-layout>
 </section>
@@ -152,9 +152,9 @@
           <span class="aviso-contato-edicao" role="alert">Ao editar estes dados, todos os outros vínculos deste contato também serão alterados.</span>
         }
 
-        <div class="modal-acoes">
+        <div class="modal-acoes form-acoes">
           <button type="button" class="btn-cancelar" [disabled]="salvando" (click)="fecharModal()">Cancelar</button>
-          <button type="submit" class="btn-primary" [disabled]="salvando">
+          <button type="submit" class="btn-primary" [disabled]="salvando || (modoModal === 'editar' && !temAlteracoes)">
             <span *ngIf="salvando" class="spinner" aria-hidden="true"></span>
             <span>{{ salvando ? 'Salvando...' : 'Salvar' }}</span>
           </button>
@@ -173,7 +173,7 @@
         <span class="spinner azul" aria-hidden="true"></span>
       </div>
     } @else if (!vinculosContato.length) {
-      <p class="texto-vazio">Nenhum usuário vinculado a este contato.</p>
+      <app-estado-vazio icone="group_off" mensagem="Nenhum usuário vinculado a este contato." [compacto]="true"></app-estado-vazio>
     } @else {
       <div class="vinculo-card" *ngFor="let vinculo of vinculosContato">
         <div class="vinculo-avatar-linha">

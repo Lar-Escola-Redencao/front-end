@@ -12,6 +12,12 @@
   font-display: swap;
 }
 
+.toast-container .toast-close-button {
+  font-family: var(--fonte-texto);
+  font-weight: 400;
+  text-shadow: none;
+}
+
 :root {
   --primary-color: #3682DC;
   --primary-hover-color: #1661bd;
@@ -313,6 +319,190 @@ body {
 
 .btn-primary-thick {
   min-height: 58px !important;
+}
+
+/* Contorno completo somente quando a barra de abas ocupa mais de uma linha. */
+.abas-container.abas-quebradas > .aba-btn {
+  flex-grow: 1;
+  outline: 1px solid #ddd;
+  outline-offset: -1px;
+}
+
+.abas-container.abas-quebradas > .aba-btn.ativa {
+  outline: 2px solid var(--primary-color);
+  outline-offset: -2px;
+}
+
+.abas-container.abas-quebradas > .aba-btn:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+@media (max-width: 768px) {
+  /* Prevalece sobre a borda dos componentes com encapsulamento do Angular. */
+  body .abas-container[appAbasResponsivas] {
+    border-bottom: 0;
+  }
+
+  /* O perfil já recebe o contorno externo do cartão que envolve as abas. */
+  body :not(.perfil-dados) > .abas-container[appAbasResponsivas] {
+    border-left: 1px solid #e0e0e0;
+    border-top: 1px solid #e0e0e0;
+    border-radius: 8px 8px 0 0;
+  }
+
+  .abas-container[appAbasResponsivas] > .aba-btn {
+    flex-grow: 1;
+    margin-bottom: 0;
+    border: 0;
+    border-bottom: 1px solid #e0e0e0;
+    border-radius: 0;
+    outline: none;
+    box-shadow: inset -1px 0 0 #e0e0e0;
+  }
+
+  .abas-container[appAbasResponsivas] > .aba-btn:not(.ativa) {
+    background: #f5f5f5;
+  }
+
+  .abas-container[appAbasResponsivas] > .aba-btn.ativa {
+    background: var(--branco);
+    border-bottom-width: 2px;
+    border-bottom-color: var(--primary-color);
+    color: var(--primary-color);
+    outline: none;
+  }
+
+  .abas-container[appAbasResponsivas] > .aba-btn:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+  }
+
+  .abas-container[appAbasResponsivas] > .aba-superior-esquerda {
+    border-top-left-radius: 8px;
+  }
+
+  .abas-container[appAbasResponsivas] > .aba-superior-direita {
+    border-top-right-radius: 8px;
+  }
+
+}
+
+/* Ações secundárias de formulários, dentro e fora dos modais. */
+.form-acoes,
+.swal2-container .swal2-actions {
+  gap: 8px;
+}
+
+.swal2-container .swal2-actions > button {
+  margin: 0;
+}
+
+.btn-cancelar,
+.btn-cancelar-modal,
+.swal2-container .swal2-actions .swal2-cancel {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 45px;
+  min-width: 45px;
+  padding: 10px 24px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  box-shadow: none;
+  color: var(--input-color);
+  cursor: pointer;
+  font-family: var(--fonte-texto);
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.25;
+  transition: color 0.2s ease;
+}
+
+.btn-cancelar:hover:not(:disabled),
+.btn-cancelar-modal:hover:not(:disabled) {
+  color: #666;
+}
+
+.swal2-container .swal2-actions :is(.swal2-cancel, .swal2-retornar) {
+  background: var(--input-color);
+  color: var(--branco);
+  font-weight: 400;
+}
+
+.swal2-container .swal2-actions :is(.swal2-cancel, .swal2-retornar):hover:not(:disabled),
+.swal2-container .swal2-actions :is(.swal2-cancel, .swal2-retornar):active:not(:disabled) {
+  background: #666;
+  color: var(--branco);
+}
+
+.btn-cancelar:focus-visible,
+.btn-cancelar-modal:focus-visible,
+.swal2-container .swal2-actions :is(.swal2-cancel, .swal2-retornar):focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 3px;
+}
+
+.btn-cancelar:disabled,
+.btn-cancelar-modal:disabled,
+.swal2-container .swal2-actions .swal2-cancel:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Ações com cancelamento: preserva o texto e a área de toque no mobile. */
+@media (max-width: 768px) {
+  body .form-acoes:has(> .btn-cancelar, > .btn-cancelar-modal) {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: stretch;
+    justify-content: flex-end;
+    gap: 8px;
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  body .form-acoes:has(> .btn-cancelar, > .btn-cancelar-modal) > :is(.btn-primary, .btn-cancelar, .btn-cancelar-modal) {
+    /* Mantém a largura do texto sem esticar os botões. */
+    flex: 0 0 max-content;
+    box-sizing: border-box;
+    min-width: max-content;
+    max-width: 100%;
+    min-height: 48px;
+    padding: 10px 16px;
+    white-space: nowrap;
+    overflow-wrap: normal;
+    word-break: normal;
+  }
+
+  .form-acoes > .acoes-espaco {
+    display: none;
+  }
+
+  .swal2-container .swal2-actions > :is(.swal2-confirm, .swal2-cancel, .swal2-deny) {
+    min-width: 48px;
+    min-height: 48px;
+    padding: 10px 16px;
+    white-space: nowrap;
+  }
+
+  /* Edição nas abas do usuário: uma ação por linha, sem atingir os modais. */
+  body .perfil-dados .aba-cabecalho .form-acoes {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  body .perfil-dados .aba-cabecalho > .btn-primary,
+  body .perfil-dados .aba-cabecalho .form-acoes > button {
+    flex: 0 0 auto;
+    width: 100%;
+    min-width: 0;
+    min-height: 48px;
+    box-sizing: border-box;
+  }
 }
 
 /* =========================

@@ -1,3 +1,4 @@
+import { EstadoVazio } from 'src/app/components/estado-vazio/estado-vazio';
 import { ChangeDetectorRef, Component, EventEmitter, Input, NgZone, OnInit, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -30,7 +31,7 @@ interface LinhaRedeSocial {
 @Component({
   selector: 'app-evento-redes-sociais',
   standalone: true,
-  imports: [FormsModule, MatFormFieldModule, MatIconModule, MatInputModule, ModalLayout],
+  imports: [EstadoVazio, FormsModule, MatFormFieldModule, MatIconModule, MatInputModule, ModalLayout],
   templateUrl: './evento-redes-sociais.component.html',
   styleUrls: ['./evento-redes-sociais.component.css']
 })

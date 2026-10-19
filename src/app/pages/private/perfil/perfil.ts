@@ -1,6 +1,7 @@
 import { ChangeDetectorRef, Component, HostListener, NgZone, OnInit, ViewChild } from '@angular/core';
 import { AlterarSenha } from '../alterar-senha/alterar-senha';
 import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -20,6 +21,7 @@ import { Alertas } from 'src/app/shared/utils/alerts';
   standalone: true,
   imports: [
     CommonModule,
+    RouterLink,
     AlterarSenha,
     ReactiveFormsModule,
     MatFormFieldModule,
@@ -89,6 +91,10 @@ export class Perfil implements OnInit, ComponentComAlteracoesNaoSalvas {
     return Object.keys(this.valoresOriginais).some(
       campo => valores[campo] !== this.valoresOriginais[campo]
     );
+  }
+
+  get temAlteracoes(): boolean {
+    return this.dadosTemAlteracoesNaoSalvas();
   }
 
   @HostListener('window:beforeunload', ['$event'])
@@ -161,6 +167,7 @@ export class Perfil implements OnInit, ComponentComAlteracoesNaoSalvas {
   }
 
   salvar(): void {
+    if (this.salvando || !this.temAlteracoes) return;
     this.formDados.markAllAsTouched();
     this.verificarErros();
 

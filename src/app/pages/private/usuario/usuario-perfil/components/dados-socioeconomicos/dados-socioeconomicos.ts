@@ -1,3 +1,4 @@
+import { EstadoVazio } from 'src/app/components/estado-vazio/estado-vazio';
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, inject } from '@angular/core';
 import { FormArray, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -14,7 +15,7 @@ import { montarBaseAtualizacaoUsuario, montarFichaSocioeconomicaBase } from '../
 @Component({
   selector: 'app-usuario-perfil-dados-socioeconomicos',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MatFormFieldModule, MatIconModule, MatInputModule, MatSelectModule],
+  imports: [EstadoVazio, CommonModule, ReactiveFormsModule, MatFormFieldModule, MatIconModule, MatInputModule, MatSelectModule],
   templateUrl: './dados-socioeconomicos.html',
   styleUrl: './dados-socioeconomicos.css'
 })

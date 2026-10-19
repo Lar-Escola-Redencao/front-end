@@ -11,8 +11,11 @@
 }
 
 .aba-cabecalho {
-  display: block;
-  margin-bottom: 6px;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  min-height: 48px;
+  margin-bottom: 12px;
 }
 
 .form-socioeconomico h3 {
@@ -24,26 +27,16 @@
 }
 
 .acoes-edicao {
-  display: inline-flex;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   align-items: center;
-  gap: 16px;
 }
 
 .aba-cabecalho > .btn-primary,
-.aba-cabecalho .acoes-edicao {
-  position: absolute;
-  top: 0;
-  right: 0;
-}
-
-.btn-cancelar {
-  border: 0;
-  background: transparent;
-  color: var(--input-color);
-  cursor: pointer;
-  font-family: var(--fonte-texto);
-  font-size: 14px;
-  font-weight: 700;
+.acoes-edicao > button {
+  min-height: 48px;
+  white-space: nowrap;
 }
 
 .descricao-etapa,
@@ -476,15 +469,4 @@ input[type='radio'] {
     grid-column: auto;
   }
 
-  .aba-cabecalho,
-  .acoes-edicao {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .aba-cabecalho > .btn-primary,
-  .aba-cabecalho .acoes-edicao {
-    position: static;
-    margin-top: 10px;
-  }
 }

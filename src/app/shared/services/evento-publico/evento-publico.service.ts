@@ -3,14 +3,15 @@ import {
   HttpClient,
   HttpParams
 } from '@angular/common/http';
-import { Observable, forkJoin, of } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { EMPTY, Observable, forkJoin, of } from 'rxjs';
+import { catchError, expand, map, reduce } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
 import { Evento, EventoRedeSocial, TipoEvento } from 'src/app/shared/models/evento.model';
 
 interface EventoPagedResponse {
   content?: Evento[];
   _embedded?: Record<string, Evento[]>;
+  page?: { number: number; totalPages: number };
 }
 
 @Injectable({
@@ -38,20 +39,34 @@ export class EventoPublicoService {
 
   listarPublicos(
     page = 0,
-    size = 1000,
+    size = 50,
     tipo?: TipoEvento
   ): Observable<Evento[]> {
     let params = new HttpParams()
-      .set('page', page)
-      .set('size', size);
+      .set('size', size)
+      .append('sort', 'dataEvento,asc')
+      .append('sort', 'id,asc');
 
     if (tipo) {
       params = params.set('tipo', tipo);
     }
 
-    return this.http.get<Evento[] | EventoPagedResponse>(`${this.apiUrl}/todos`, { params }).pipe(
-      map(resposta =>
-        this.extrairEventos(resposta)
+    const carregarPagina = (numero: number) =>
+      this.http.get<Evento[] | EventoPagedResponse>(`${this.apiUrl}/todos`, {
+        params: params.set('page', numero),
+      });
+
+    // O backend limita cada página a 50 itens. Percorre os metadados para
+    // carregar o histórico completo antes da busca e paginação locais.
+    return carregarPagina(page).pipe(
+      expand(resposta => {
+        if (Array.isArray(resposta) || !resposta.page) return EMPTY;
+        const proxima = resposta.page.number + 1;
+        return proxima < resposta.page.totalPages ? carregarPagina(proxima) : EMPTY;
+      }),
+      reduce((eventos, resposta) => eventos.concat(this.extrairEventos(resposta)), [] as Evento[]),
+      map(eventos =>
+        eventos
           .map(evento => ({ ...evento, imagem: this.tratarImagem(evento.imagem) }))
           .sort((a, b) => new Date(a.dataEvento).getTime() - new Date(b.dataEvento).getTime())
       )

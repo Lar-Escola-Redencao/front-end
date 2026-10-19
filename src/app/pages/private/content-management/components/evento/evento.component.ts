@@ -5,11 +5,13 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatIconModule } from '@angular/material/icon';
 import { MatOption, MatSelect } from '@angular/material/select';
 import { ToastrService } from 'ngx-toastr';
 import { ModalLayout } from '@components/modal-layout/modal-layout';
 import { Paginacao } from '@components/paginacao/paginacao';
 import { BarraBusca } from '@components/barra-busca/barra-busca';
+import { FiltrosEventosComponent, FiltrosEventos } from '@components/filtros-eventos/filtros-eventos';
 import { TabelaAcao, TabelaColuna, TabelaLayout } from '@components/tabela-layout/tabela-layout';
 import { ComponentComAlteracoesNaoSalvas } from 'src/app/shared/guards/can-deactivate.guard';
 import { AtualizarEventoDTO, CriarEventoDTO, Evento, TipoEvento } from 'src/app/shared/models/evento.model';
@@ -25,6 +27,7 @@ import { EventoService } from 'src/app/shared/services/content-management/evento
 import { ParceiroService } from 'src/app/shared/services/content-management/evento/parceiro.service';
 import { environment } from 'src/environments/environment';
 import { EventoRedesSociaisComponent } from './evento-redes-sociais/evento-redes-sociais.component';
+import { EventoDetalhe } from 'src/app/pages/public/evento-detalhe/evento-detalhe';
 
 @Component({
   selector: 'app-evento',
@@ -37,11 +40,14 @@ import { EventoRedesSociaisComponent } from './evento-redes-sociais/evento-redes
     TabelaLayout,
     Paginacao,
     BarraBusca,
+    FiltrosEventosComponent,
     MatFormFieldModule,
     MatInputModule,
+    MatIconModule,
     MatSelect,
     MatOption,
-    EventoRedesSociaisComponent
+    EventoRedesSociaisComponent,
+    EventoDetalhe
   ],
   templateUrl: './evento.component.html',
   styleUrls: ['./evento.component.css']
@@ -56,6 +62,9 @@ export class EventoComponent implements OnInit, OnDestroy, ComponentComAlteracoe
 
   eventos: Evento[] = [];
   filtroTipo: TipoEvento | null = null;
+  filtroDataInicial = '';
+  filtroDataFinal = '';
+  filtroValor: FiltrosEventos['valor'] = 'todos';
   tiposDisponiveis = Object.values(TipoEvento);
   parceiros: { id: number; nome: string; logo?: string }[] = [];
 
@@ -160,6 +169,10 @@ export class EventoComponent implements OnInit, OnDestroy, ComponentComAlteracoe
       this.sort = sort;
       this.ordenacao = analisarOrdenacao(sort);
       this.filtroTipo = (params.get('tipo') as TipoEvento | null) ?? null;
+      this.filtroDataInicial = params.get('dataInicial') ?? '';
+      this.filtroDataFinal = params.get('dataFinal') ?? '';
+      const valor = params.get('valor');
+      this.filtroValor = valor === 'gratuito' || valor === 'pago' ? valor : 'todos';
       this.busca = params.get('search') ?? '';
       this.carregarEventos();
     });
@@ -172,11 +185,14 @@ export class EventoComponent implements OnInit, OnDestroy, ComponentComAlteracoe
 
   get mensagemVazia(): string {
     if (this.busca) {
-      return `Nenhum evento encontrado para "${this.busca}"`;
+      return `Nenhum evento encontrado para "${this.busca}".`;
+    }
+    if (this.filtroDataInicial || this.filtroDataFinal || this.filtroValor !== 'todos') {
+      return 'Nenhum evento encontrado com os filtros selecionados.';
     }
     return this.filtroTipo
-      ? `Nenhum evento do tipo ${this.formatarTextoExibicao(this.filtroTipo)} cadastrado ainda`
-      : 'Nenhum evento cadastrado ainda';
+      ? `Nenhum evento do tipo ${this.formatarTextoExibicao(this.filtroTipo)} cadastrado.`
+      : 'Nenhum evento cadastrado.';
   }
 
   formatarTextoExibicao(valor: string | null | undefined): string {
@@ -217,7 +233,7 @@ export class EventoComponent implements OnInit, OnDestroy, ComponentComAlteracoe
 
     const tipo = this.filtroTipo ? (this.filtroTipo as TipoEvento) : undefined;
 
-    this.listaSub = this.eventoService.listarTodos(this.pagina, this.tamanho, this.sort, tipo, this.busca || undefined).subscribe({
+    this.listaSub = this.eventoService.listarTodos(this.pagina, this.tamanho, this.sort, tipo, this.busca || undefined, this.filtrosAplicados).subscribe({
       next: (resposta) => {
         this.ngZone.run(() => {
           this.eventos = [...resposta.content];
@@ -252,6 +268,15 @@ export class EventoComponent implements OnInit, OnDestroy, ComponentComAlteracoe
 
   aplicarFiltro(): void {
     this.navegar({ page: 0, tipo: this.filtroTipo || null });
+  }
+
+  get filtrosAplicados(): FiltrosEventos {
+    return { dataInicial: this.filtroDataInicial, dataFinal: this.filtroDataFinal, valor: this.filtroValor, tipo: this.filtroTipo };
+  }
+
+  filtrar(filtros: FiltrosEventos): void {
+    this.navegar({ page: 0, tipo: filtros.tipo, dataInicial: filtros.dataInicial || null,
+      dataFinal: filtros.dataFinal || null, valor: filtros.valor === 'todos' ? null : filtros.valor });
   }
 
   /** Atualiza a URL (?search=termo); o queryParamMap.subscribe refaz o GET sem recarregar a página. */
@@ -518,6 +543,11 @@ export class EventoComponent implements OnInit, OnDestroy, ComponentComAlteracoe
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
   }
 
+  abrirCalendario(campo: HTMLInputElement): void {
+    campo.focus();
+    if (typeof campo.showPicker === 'function') campo.showPicker();
+  }
+
   salvar(): void {
     this.formEvento.markAllAsTouched();
     this.verificarErros();
@@ -653,7 +683,7 @@ export class EventoComponent implements OnInit, OnDestroy, ComponentComAlteracoe
       endereco: valor.endereco,
       tipoEvento: valor.tipoEvento,
       valor: this.valorNumerico,
-      parceirosIds: valor.parceirosIds || []
+      parceirosIds: [...(valor.parceirosIds || [])].sort((a, b) => a - b)
     };
   }
 }

@@ -1,4 +1,4 @@
-<div class="navbar-overlay" *ngIf="menuVisivel" (click)="fecharMenu()"></div>
+<div appBloquearScroll class="navbar-overlay" *ngIf="menuVisivel" (click)="fecharMenu()"></div>
 
 <nav class="navbar" [ngClass]="{'expandido': menuVisivel}">
   <div class="navbar-header" (click)="abrirMenu()">
@@ -28,6 +28,10 @@
         <button type="button" class="menu-usuario-item" (click)="irParaPerfil()">
           <span class="material-symbols-outlined">person</span>
           <span>Meu perfil</span>
+        </button>
+        <button type="button" class="menu-usuario-item" (click)="abrirAlteracaoSenha()">
+          <span class="material-symbols-outlined" aria-hidden="true">key</span>
+          <span>Alterar senha</span>
         </button>
         <button type="button" class="menu-usuario-item menu-usuario-item--sair" (click)="sair()">
           <span class="material-symbols-outlined">logout</span>
@@ -82,3 +86,7 @@
 </nav>
 
 <div class="navbar-spacer"></div>
+
+@if (modalSenhaAberto) {
+  <app-alterar-senha (closed)="modalSenhaAberto = false"></app-alterar-senha>
+}

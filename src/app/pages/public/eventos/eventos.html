@@ -3,91 +3,15 @@
 <main class="eventos-page">
   <h1 class="titulo-pagina">Eventos</h1>
 
-  <ng-template #camposFiltro>
-    <div class="campo-grupo">
-      <label class="campo campo-texto">
-        <input
-          type="text"
-          name="filtroTitulo"
-          placeholder="Busque por evento"
-          [(ngModel)]="filtroTitulo"
-        />
-      </label>
-      @if (tituloAbaixoDoMinimo) {
-        <span class="error-text">Digite ao menos {{ tamanhoMinimoTitulo }} caracteres</span>
-      }
-    </div>
-
-    <label class="campo campo-data">
-      <span class="rotulo-data">Inicio</span>
-      <input
-        type="date"
-        name="filtroDataInicial"
-        [(ngModel)]="filtroDataInicial"
-      />
-    </label>
-
-    <label class="campo campo-data">
-      <span class="rotulo-data">Fim</span>
-      <input
-        type="date"
-        name="filtroDataFinal"
-        [(ngModel)]="filtroDataFinal"
-      />
-    </label>
-
-    <mat-form-field appearance="outline" class="campo-select">
-      <mat-label>Valor</mat-label>
-      <mat-select
-        name="filtroValor"
-        [(ngModel)]="filtroValor"
-        panelClass="eventos-select-panel">
-        <mat-option value="todos">Gratuito ou pago</mat-option>
-        <mat-option value="gratuito">Gratuito</mat-option>
-        <mat-option value="pago">Pago</mat-option>
-      </mat-select>
-    </mat-form-field>
-    <button type="submit" class="botao-buscar">
-      <span class="material-symbols-outlined">search</span>
-    </button>
-    @if (possuiFiltrosAplicados) {
-      <button
-        type="button"
-        class="botao-limpar-filtros"
-        (click)="limparFiltros()"
-      >
-        <span class="material-symbols-outlined">close</span>
-        Limpar filtros
-      </button>
-    }
-  </ng-template>
-
-  <button
-    type="button"
-    class="botao-filtros-mobile"
-    (click)="abrirFiltrosMobile()"
-    aria-label="Abrir filtros de eventos"
-  >
-    Filtros
-    <span class="material-symbols-outlined">filter_list</span>
-  </button>
-
-  <form class="barra-busca barra-busca-desktop" (ngSubmit)="buscar()">
-    <ng-container *ngTemplateOutlet="camposFiltro"></ng-container>
-  </form>
-
-  @if (filtrosMobileAberto) {
-    <app-modal-layout titulo="Filtrar eventos" (closed)="fecharFiltrosMobile()">
-      <form class="barra-busca barra-busca-mobile" (ngSubmit)="buscarMobile()">
-        <ng-container *ngTemplateOutlet="camposFiltro"></ng-container>
-      </form>
-    </app-modal-layout>
-  }
+  <div class="acoes-eventos">
+    <app-barra-busca placeholder="Buscar por nome do evento..." [valor]="filtroTitulo" (buscar)="buscar($event)" />
+    <app-filtros-eventos [filtros]="filtrosAplicados" (aplicar)="filtrar($event)" />
+  </div>
 
   @if (carregando) {
     <p class="mensagem-estado">Carregando eventos...</p>
   } @else if (eventosFiltrados.length === 0) {
-    <p class="mensagem-estado">Nenhum evento encontrado para os filtros selecionados.</p>
+    <app-estado-vazio icone="event" [mensagem]="mensagemVazia" />
   } @else {
     <div class="grade-eventos">
       @for (evento of eventosPaginados; track evento.id) {

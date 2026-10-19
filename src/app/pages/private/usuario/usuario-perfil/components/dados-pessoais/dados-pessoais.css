@@ -1,3 +1,23 @@
+.cep-consulta {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.aviso-cep,
+.cep-status {
+  color: #d98200;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.4;
+  text-align: left;
+}
+
+.cep-status {
+  color: var(--input-color);
+}
+
 .aba-conteudo,
 .form-dados-pessoais {
   display: flex;
@@ -11,8 +31,11 @@
 }
 
 .aba-cabecalho {
-  display: block;
-  margin-bottom: 6px;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  min-height: 48px;
+  margin-bottom: 12px;
 }
 
 .aba-cabecalho h2,
@@ -29,26 +52,16 @@
 }
 
 .acoes-edicao {
-  display: inline-flex;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   align-items: center;
-  gap: 16px;
 }
 
 .aba-cabecalho > .btn-primary,
-.aba-cabecalho .acoes-edicao {
-  position: absolute;
-  top: 0;
-  right: 0;
-}
-
-.btn-cancelar {
-  border: 0;
-  background: transparent;
-  color: var(--input-color);
-  cursor: pointer;
-  font-family: var(--fonte-texto);
-  font-size: 14px;
-  font-weight: 700;
+.acoes-edicao > button {
+  min-height: 48px;
+  white-space: nowrap;
 }
 
 .step-grid {
@@ -360,18 +373,6 @@
 @media (max-width: 650px) {
   .step-grid {
     grid-template-columns: 1fr;
-  }
-
-  .aba-cabecalho,
-  .acoes-edicao {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .aba-cabecalho > .btn-primary,
-  .aba-cabecalho .acoes-edicao {
-    position: static;
-    margin-top: 10px;
   }
 
   .documento-duplo {

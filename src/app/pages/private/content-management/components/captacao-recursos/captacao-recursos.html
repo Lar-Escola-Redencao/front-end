@@ -1,6 +1,6 @@
 <section class="captacao-recursos">
   @if (config.grupos.length > 1) {
-    <div class="abas-container">
+    <div appAbasResponsivas class="abas-container">
       @for (grupo of config.grupos; track grupo.grupo) {
         <button
           type="button"
@@ -19,7 +19,7 @@
       <div class="acoes-lista">
         @if (exibeBusca) {
           <app-barra-busca
-            [placeholder]="'Buscar ' + grupoAtivo.nomeItem + ' por nome...'"
+            placeholder="Buscar por nome..."
             [valor]="busca"
             (buscar)="buscar($event)" />
         }
@@ -43,6 +43,17 @@
       (acao)="executarAcao($event)"
       (tentarNovamente)="carregarTabela()"
     />
+
+    @if (exibePaginacao) {
+      <app-paginacao
+        [paginaAtual]="pagina"
+        [totalPaginas]="totalPaginas"
+        [totalElementos]="totalElementos"
+        [tamanho]="tamanho"
+        [carregando]="carregando"
+        (paginaChange)="irParaPagina($event)"
+        (tamanhoChange)="mudarTamanhoPagina($event)" />
+    }
   }
 
   @if (ehContato) {
@@ -90,7 +101,7 @@
           }
         </div>
 
-        <div class="acoes-modal acoes-contato">
+        <div class="acoes-modal acoes-contato form-acoes">
           @if (!editandoContato) {
             <button type="button" class="btn-primary" (click)="editarContato()">Editar</button>
           } @else {
@@ -98,7 +109,7 @@
               Cancelar
             </button>
 
-            <button type="submit" class="btn-primary" [disabled]="salvando || form.invalid || !temAlteracoes">
+            <button type="submit" class="btn-primary" [disabled]="salvando || (!!secaoContato && !temAlteracoes)">
               <span *ngIf="salvando" class="spinner" aria-hidden="true"></span>
               <span>{{ salvando ? 'Salvando...' : 'Salvar' }}</span>
             </button>
@@ -184,7 +195,7 @@
         }
       }
 
-      <div class="acoes-modal">
+      <div class="acoes-modal form-acoes">
         <button type="button" class="btn-cancelar" [disabled]="salvando" (click)="fecharModal()">
           Cancelar
         </button>
