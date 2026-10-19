@@ -200,7 +200,7 @@
            <div class="rodape-diario rodape-status rodape-status--bloqueado is-locked">
               <div class="info-status info-status--aviso" role="status">
                 <mat-icon aria-hidden="true">lock</mat-icon>
-                <span>O prazo de edição desta chamada foi encerrado. Para corrigir presenças, procure a coordenação.</span>
+                <span>{{ mensagemBloqueioEdicaoChamada }}</span>
               </div>
            </div>
         }
@@ -271,6 +271,10 @@
     (closed)="fecharModalOcorrenciaDetalhe()">
 
     <p class="modal-subtitulo">{{ subtituloOcorrencia }}</p>
+
+    @if (modoOcorrencia !== 'NOVO' && ocorrenciaSelecionada) {
+      <p class="modal-subtitulo">Registrado por {{ ocorrenciaSelecionada.nomeMembro }} em {{ formatarDataHora(ocorrenciaSelecionada.dataCriacao) }}</p>
+    }
 
     @if (modoOcorrencia === 'VER' && ocorrenciaSelecionada) {
       <div class="ocorrencia-preview">

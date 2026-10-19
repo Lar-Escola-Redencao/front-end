@@ -202,7 +202,7 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
         })
       ).subscribe(dados => {
         this.usuarios = dados;
-        this.estadoTela = dados.some(u => u.idFrequencia !== null) ? 'SALVO' : 'INICIAL';
+        this.estadoTela = dados.some(u => u.chamadaRegistrada || u.idFrequencia !== null) ? 'SALVO' : 'INICIAL';
         this.cdr.markForCheck();
       })
     );
@@ -374,25 +374,39 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
 
   get podeEditarFrequencia(): boolean {
     if (this.perfilEstrategico) return true;
-    return this.isMonitor && Date.now() - this.inicioDaTurma <= 48 * 60 * 60 * 1000;
+    const criacao = this.usuarios.find(u => u.dataCriacaoChamada)?.dataCriacaoChamada;
+    const decorrido = criacao ? Date.now() - this.instanteBrasilia(criacao) : NaN;
+    return this.isMonitor && Date.now() >= this.inicioDaTurma
+      && decorrido >= 0 && decorrido <= 48 * 60 * 60 * 1000;
+  }
+
+  get mensagemBloqueioEdicaoChamada(): string {
+    if (Date.now() < this.inicioDaTurma) {
+      return 'A edição das presenças ficará disponível após o início da aula.';
+    }
+    if (!this.usuarios.some(u => u.dataCriacaoChamada)) {
+      return 'Esta chamada não possui data de cadastro conhecida. Para corrigir presenças, procure a coordenação.';
+    }
+    return 'O prazo de 48 horas após o primeiro registro desta chamada foi encerrado. Para corrigir presenças, procure a coordenação.';
   }
 
   get podePreencherFrequencia(): boolean {
     return !this.salvando && this.estadoTela === 'PREENCHENDO'
-      && (this.podeEditarFrequencia || !this.dataForaDoPeriodoPermitido)
-      && (this.podeEditarFrequencia || !this.usuarios.some(u => u.idFrequencia !== null));
+      && (this.perfilEstrategico || (this.isMonitor && Date.now() >= this.inicioDaTurma
+        && (this.usuarios.some(u => u.chamadaRegistrada || u.idFrequencia !== null)
+          ? this.podeEditarFrequencia : !this.dataForaDoPeriodoPermitido)));
   }
 
   get podeAdicionarOcorrencia(): boolean {
     if (this.perfilEstrategico) return true;
-    const data = this.filtroForm.get('data')?.value;
-    const diffDias = (Date.parse(this.hojeFormatada()) - Date.parse(data)) / (24 * 60 * 60 * 1000);
-    return this.isMonitor && diffDias >= 0 && diffDias <= 7;
+    return this.isMonitor && !this.dataForaDoPeriodoPermitido && Date.now() >= this.inicioDaTurma;
   }
 
   podeEditarExcluirOcorrencia(oc: OcorrenciaResponseDTO): boolean {
-    return this.perfilEstrategico || (this.isMonitor && !!oc.dataCriacao
-      && Date.now() - this.instanteBrasilia(oc.dataCriacao) <= 24 * 60 * 60 * 1000);
+    const decorrido = oc.dataCriacao ? Date.now() - this.instanteBrasilia(oc.dataCriacao) : NaN;
+    return this.perfilEstrategico || (this.isMonitor && oc.idMembro != null
+      && oc.idMembro === this.sessao.membro()?.id && decorrido >= 0
+      && decorrido <= 24 * 60 * 60 * 1000);
   }
 
   get perfilDoDiario(): string {
@@ -404,9 +418,9 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
     if (this.isMonitor) {
       return [
         { acao: 'Registrar nova chamada', regra: 'Desde o primeiro dia do mês anterior, após o horário de início da turma.' },
-        { acao: 'Editar presenças lançadas', regra: 'Até 48 horas após o início da aula.' },
-        { acao: 'Registrar ocorrências', regra: 'Até 7 dias anteriores ao dia atual. Datas futuras não são permitidas.' },
-        { acao: 'Editar ou excluir ocorrência lançada', regra: 'Até 24 horas após a criação do registro.' }
+        { acao: 'Editar presenças lançadas', regra: 'Qualquer monitor com acesso à turma, até 48 horas após o primeiro registro da chamada. A virada do mês não encerra esse prazo.' },
+        { acao: 'Registrar ocorrências', regra: 'Desde o primeiro dia do mês anterior, após o início da turma. O horário do fato deve estar dentro da aula e não pode ser futuro.' },
+        { acao: 'Editar ou excluir ocorrência lançada', regra: 'Somente as de sua autoria, até 24 horas após o cadastro. Alterações e virada do mês não renovam nem encerram esse prazo.' }
       ];
     }
     return [
@@ -632,7 +646,8 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
     if (this.formOcorrencia.invalid) {
       this.errosOcorrencia = mapearErrosFormulario(this.formOcorrencia, {
         horaStr: {
-          horarioForaDaTurma: this.mensagemHorarioForaDaTurma()
+          horarioForaDaTurma: this.mensagemHorarioForaDaTurma(),
+          horarioFuturo: 'O horário da ocorrência não pode estar no futuro.'
         }
       });
       return;
@@ -756,9 +771,15 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
     const selecionada = this.normalizarHoraMinuto(hora);
     const errosAtuais = { ...(controle.errors ?? {}) };
     delete errosAtuais['horarioForaDaTurma'];
+    delete errosAtuais['horarioFuturo'];
 
     if (selecionada < inicio || selecionada > fim) {
       controle.setErrors({ ...errosAtuais, horarioForaDaTurma: true });
+      return;
+    }
+
+    if (this.isMonitor && this.instanteBrasilia(`${this.filtroForm.get('data')?.value}T${hora}`) > Date.now()) {
+      controle.setErrors({ ...errosAtuais, horarioFuturo: true });
       return;
     }
 
@@ -793,7 +814,7 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
   }
 
   formatarDataHora(isoStr: string): string {
-    return new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(this.instanteBrasilia(isoStr)).replace(':', 'h');
+    return new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(this.instanteBrasilia(isoStr)).replace(', ', ' às ').replace(':', 'h');
   }
 
   formatarHoraRegistro(isoStr: string): string {
