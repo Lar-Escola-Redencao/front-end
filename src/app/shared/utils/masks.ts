@@ -23,6 +23,10 @@ export function formatarCpf(valor: string | null | undefined): string {
     .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
 }
 
+export function formatarCep(valor: string | null | undefined): string {
+  return String(valor ?? '').replace(/\D/g, '').slice(0, 8).replace(/(\d{5})(\d)/, '$1-$2');
+}
+
 export function formatarTelefone(valor: string | null | undefined): string {
   if (!valor) return '';
   let v = String(valor).replace(/\D/g, '');

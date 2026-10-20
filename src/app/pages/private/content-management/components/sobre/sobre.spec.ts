@@ -61,6 +61,29 @@ describe('Sobre', () => {
     expect(component).toBeTruthy();
   });
 
+  it('não considera uma seleção de imagem desfeita como alteração no marco histórico', () => {
+    component.abrirModalHistoria({ id: 1, titulo: '2000', conteudo: 'Fundação', ativo: true } as Secao);
+    const imagem = component.formHistoria.get('imagem')!;
+    imagem.setValue(new File(['imagem'], 'foto.png', { type: 'image/png' }));
+    imagem.markAsDirty();
+    expect(component.temAlteracoesHistoria).toBe(true);
+    imagem.setValue(null);
+    expect(component.temAlteracoesHistoria).toBe(false);
+  });
+
+  it('permite tentar salvar o texto sobre vazio quando ainda não existe registro', () => {
+    component.abaAtiva = 'texto';
+    component.editarTexto();
+    fixture.detectChanges();
+    const salvar = fixture.nativeElement.querySelector('button[type="submit"]') as HTMLButtonElement;
+    expect(salvar.disabled).toBe(false);
+    salvar.click();
+    fixture.detectChanges();
+    expect(component.formTexto.get('conteudo')!.touched).toBe(true);
+    expect(fixture.nativeElement.querySelector('.error-text')).toBeTruthy();
+    expect(sobreService.criarSecao).not.toHaveBeenCalled();
+  });
+
   // -----------------------------------------------------------------
   // validarAno()
   // -----------------------------------------------------------------
@@ -99,7 +122,10 @@ describe('Sobre', () => {
   // -----------------------------------------------------------------
 
   describe('classificarSecoes()', () => {
-    const secao = (id: number, titulo: string): Secao => ({ id, titulo, ativo: true });
+    const secao = (id: number, titulo: string): Secao => ({
+      id, titulo, ativo: true,
+      grupo: titulo === TITULO_CARROSSEL ? 'carrossel' : /^\d{4}$/.test(titulo) ? 'historia' : 'texto-sobre',
+    });
 
     it('separa corretamente texto, carrossel e história', () => {
       const secoes: Secao[] = [
@@ -128,35 +154,35 @@ describe('Sobre', () => {
   });
 
   // -----------------------------------------------------------------
-  // Grade fixa de 10 slots do carrossel
+  // Grade fixa de 8 slots do carrossel
   // -----------------------------------------------------------------
 
   describe('montarSlotsCarrossel()', () => {
-    const secao = (id: number): Secao => ({ id, titulo: TITULO_CARROSSEL, ativo: true });
+    const secao = (id: number): Secao => ({ id, titulo: TITULO_CARROSSEL, ativo: true, ordem: id });
 
-    it('sempre produz 10 slots, mesmo recebendo menos seções da API', () => {
+    it('sempre produz 8 slots, mesmo recebendo menos seções da API', () => {
       const slots = component.montarSlotsCarrossel([secao(3), secao(1), secao(2)]);
 
-      expect(slots.length).toBe(10);
+      expect(slots.length).toBe(8);
       expect(slots[0]?.id).toBe(1);
       expect(slots[1]?.id).toBe(2);
       expect(slots[2]?.id).toBe(3);
       expect(slots.slice(3).every((slot) => slot === null)).toBe(true);
     });
 
-    it('sempre produz 10 slots mesmo sem nenhuma seção de carrossel', () => {
+    it('sempre produz 8 slots mesmo sem nenhuma seção de carrossel', () => {
       const slots = component.montarSlotsCarrossel([]);
 
-      expect(slots.length).toBe(10);
+      expect(slots.length).toBe(8);
       expect(slots.every((slot) => slot === null)).toBe(true);
     });
 
-    it('nunca excede 10 slots, mesmo recebendo mais de 10 seções', () => {
+    it('nunca excede 8 slots, mesmo recebendo mais de 8 seções', () => {
       const secoes = Array.from({ length: 12 }, (_, indice) => secao(indice + 1));
 
       const slots = component.montarSlotsCarrossel(secoes);
 
-      expect(slots.length).toBe(10);
+      expect(slots.length).toBe(8);
     });
   });
 

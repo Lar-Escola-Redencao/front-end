@@ -1,5 +1,7 @@
-import { ChangeDetectorRef, Component, NgZone, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, HostListener, NgZone, OnInit, ViewChild } from '@angular/core';
+import { AlterarSenha } from '../alterar-senha/alterar-senha';
 import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -11,12 +13,16 @@ import { Perfil as PerfilModel } from 'src/app/shared/models/perfil.model';
 import { PerfilService } from 'src/app/shared/services/colaborador/perfil.service';
 import { mapearErrosFormulario } from 'src/app/shared/utils/form-validations';
 import { formatarTelefone } from 'src/app/shared/utils/masks';
+import { ComponentComAlteracoesNaoSalvas } from 'src/app/shared/guards/can-deactivate.guard';
+import { Alertas } from 'src/app/shared/utils/alerts';
 
 @Component({
   selector: 'app-perfil',
   standalone: true,
   imports: [
     CommonModule,
+    RouterLink,
+    AlterarSenha,
     ReactiveFormsModule,
     MatFormFieldModule,
     MatInputModule
@@ -24,11 +30,13 @@ import { formatarTelefone } from 'src/app/shared/utils/masks';
   templateUrl: './perfil.html',
   styleUrl: './perfil.css'
 })
-export class Perfil implements OnInit {
+export class Perfil implements OnInit, ComponentComAlteracoesNaoSalvas {
+  @ViewChild(AlterarSenha) private alterarSenha?: AlterarSenha;
   perfil: PerfilModel | null = null;
   carregando = true;
   erroCarregar = false;
 
+  modalSenhaAberto = false;
   modoEdicao = false;
   salvando = false;
 
@@ -59,6 +67,42 @@ export class Perfil implements OnInit {
 
   ngOnInit(): void {
     this.carregarPerfil();
+  }
+
+  formularioTemAlteracoesNaoSalvas(): boolean {
+    return !!this.alterarSenha?.formularioTemAlteracoesNaoSalvas() || this.dadosTemAlteracoesNaoSalvas();
+  }
+
+  confirmarDescarte(): Promise<boolean> {
+    if (this.alterarSenha?.formularioTemAlteracoesNaoSalvas()) {
+      return this.alterarSenha.confirmarDesistencia(this.dadosTemAlteracoesNaoSalvas()
+        ? 'Deseja desistir de alterar a senha e descartar as alterações não salvas do perfil?'
+        : undefined);
+    }
+    return Alertas.confirmarDescarte();
+  }
+
+  private dadosTemAlteracoesNaoSalvas(): boolean {
+    if (!this.modoEdicao || !this.valoresOriginais) {
+      return false;
+    }
+
+    const valores = this.formDados.getRawValue();
+    return Object.keys(this.valoresOriginais).some(
+      campo => valores[campo] !== this.valoresOriginais[campo]
+    );
+  }
+
+  get temAlteracoes(): boolean {
+    return this.dadosTemAlteracoesNaoSalvas();
+  }
+
+  @HostListener('window:beforeunload', ['$event'])
+  avisarAntesDeFechar(event: BeforeUnloadEvent): void {
+    if (this.formularioTemAlteracoesNaoSalvas()) {
+      event.preventDefault();
+      event.returnValue = '';
+    }
   }
 
   get nomesUnidades(): string {
@@ -123,6 +167,7 @@ export class Perfil implements OnInit {
   }
 
   salvar(): void {
+    if (this.salvando || !this.temAlteracoes) return;
     this.formDados.markAllAsTouched();
     this.verificarErros();
 

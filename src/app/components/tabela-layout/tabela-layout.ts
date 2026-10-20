@@ -1,3 +1,6 @@
+import { EstadoVazio } from 'src/app/components/estado-vazio/estado-vazio';
+import { CommonModule } from '@angular/common';
+
 import {
   Component,
   EventEmitter,
@@ -14,7 +17,7 @@ export interface TabelaColuna<T = any> {
   titulo: string;
   formatar?: (valor: any, linha: T) => string;
   principalMobile?: boolean;
-  tipo?: 'texto' | 'status' | 'imagem' | 'documento';
+  tipo?: 'texto' | 'status' | 'matricula-status' | 'imagem' | 'documento' | 'telefone';
   /** Quando true, o cabeçalho fica clicável e emite (ordenar). */
   ordenavel?: boolean;
   /**
@@ -22,6 +25,12 @@ export interface TabelaColuna<T = any> {
    * (ex.: coluna exibe `nomePapel`, mas o back ordena por `papel.nomePapel`).
    */
   campoOrdenacao?: string;
+  /** Texto de uma tag exibida ao lado do valor (ex.: "Encerrado"); null/'' não exibe. */
+  etiqueta?: (linha: T) => string | null;
+  documentoLabel?: string;
+  documentoTitle?: string;
+  documentoIndisponivel?: (linha: T) => boolean;
+  aoClicarDocumento?: (linha: T, url: string, event: Event) => void;
 }
 
 export interface TabelaAcao<T = any> {
@@ -29,6 +38,8 @@ export interface TabelaAcao<T = any> {
   tooltip: string;
   acao: string;
   executar?: (linha: T) => void;
+  /** Quando informado, a ação só aparece nas linhas em que retornar true. */
+  visivel?: (linha: T) => boolean;
 }
 
 export interface TabelaOrdenacao {
@@ -40,7 +51,8 @@ export interface TabelaOrdenacao {
   selector: 'app-tabela-layout',
   standalone: true,
 
-  imports: [
+  imports: [EstadoVazio,
+    CommonModule,
     MatIconModule
   ],
 
@@ -56,7 +68,7 @@ export class TabelaLayout<T = any> {
 
   @Input() acoes: TabelaAcao<T>[] = [];
 
-  @Input() mensagemVazia = 'Nenhum registro encontrado.';
+  @Input() mensagemVazia = 'Nenhum registro cadastrado.';
 
   @Input() carregando = false;
 
@@ -87,11 +99,18 @@ export class TabelaLayout<T = any> {
   }
 
   obterValorPrincipal(linha: T): string {
-    const colunaPrincipal =
-      this.colunas.find(c => c.principalMobile) ||
-      this.colunas[0];
+    return this.obterValor(linha, this.colunaPrincipal);
+  }
 
-    return this.obterValor(linha, colunaPrincipal);
+  obterEtiquetaPrincipal(linha: T): string | null {
+    return this.obterEtiqueta(linha, this.colunaPrincipal);
+  }
+
+  get colunaPrincipal(): TabelaColuna<T> {
+    return (
+      this.colunas.find(c => c.principalMobile) ||
+      this.colunas[0]
+    );
   }
 
   get valorTotalColunas(): number {
@@ -118,6 +137,14 @@ export class TabelaLayout<T = any> {
       : '-';
   }
 
+  obterEtiqueta(linha: T, coluna: TabelaColuna<T>): string | null {
+    return coluna.etiqueta?.(linha) || null;
+  }
+
+  acoesVisiveis(linha: T): TabelaAcao<T>[] {
+    return this.acoes.filter(acao => !acao.visivel || acao.visivel(linha));
+  }
+
   obterUrlImagem(valor: any): string | null {
     if (!valor) {
       return null;
@@ -127,7 +154,9 @@ export class TabelaLayout<T = any> {
 
     if (
       valorString.startsWith('http://') ||
-      valorString.startsWith('https://')
+      valorString.startsWith('https://') ||
+      valorString.startsWith('data:') ||
+      valorString.startsWith('/images/')
     ) {
       return valorString;
     }
@@ -153,10 +182,35 @@ export class TabelaLayout<T = any> {
     return `${this.apiUrl}${valorString}`;
   }
 
+  documentoLabel(coluna: TabelaColuna<T>): string {
+    return coluna.documentoLabel || 'Baixar';
+  }
+
+  documentoTitle(coluna: TabelaColuna<T>): string {
+    return coluna.documentoTitle || 'Baixar documento';
+  }
+
+  documentoIndisponivel(linha: T, coluna: TabelaColuna<T>): boolean {
+    return coluna.documentoIndisponivel?.(linha) || false;
+  }
+
+  clicarDocumento(linha: T, coluna: TabelaColuna<T>, url: string, event: Event): void {
+    coluna.aoClicarDocumento?.(linha, url, event);
+  }
+
+  obterHrefTelefone(valor: any): string | null {
+    const telefone = String(valor ?? '').replace(/\D/g, '');
+    return telefone ? `tel:${telefone}` : null;
+  }
+
   obterStatus(valor: any): string {
     return valor === true
       ? 'Ativo'
       : 'Inativo';
+  }
+
+  obterClasseStatusMatricula(valor: unknown): string {
+    return String(valor ?? '').toLowerCase();
   }
 
 

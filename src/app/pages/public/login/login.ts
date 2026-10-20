@@ -11,6 +11,7 @@ import {
 } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { PublicFooter } from '@components/public-footer/public-footer';
+import { ToastrService } from 'ngx-toastr';
 
 import { PublicNavbar } from '@components/public-navbar/public-navbar';
 import { Auth } from 'src/app/shared/services/auth/auth';
@@ -44,6 +45,7 @@ export class Login {
   private readonly auth = inject(Auth);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
+  private readonly toastr = inject(ToastrService);
 
   protected readonly loading = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
@@ -54,35 +56,21 @@ export class Login {
   
   private readonly reasonParam = computed(() => this.queryParams()?.get('reason'));
   
-  private readonly isSessionAlert = computed(
-    () => this.reasonParam() === 'expired' || this.reasonParam() === 'invalid'
-  );
-
-  private readonly toastDismissed = signal(false);
-  
-  protected readonly showSessionAlertToast = computed(
-    () => this.isSessionAlert() && !this.toastDismissed(),
-  );
-
-  protected readonly sessionAlertMessage = computed(() => {
-    if (this.reasonParam() === 'invalid') {
-      return 'Acesso negado. Autenticação inválida ou corrompida.';
-    }
-    return 'Sua autenticação expirou. Para sua segurança, faça login novamente.';
-  });
-
   constructor() {
     effect((onCleanup) => {
-      if (!this.isSessionAlert()) {
-        return;
-      }
-      const timer = setTimeout(() => this.toastDismissed.set(true), SESSION_EXPIRED_TOAST_MS);
-      onCleanup(() => clearTimeout(timer));
-    });
-  }
+      const reason = this.reasonParam();
+      if (reason !== 'expired' && reason !== 'invalid') return;
 
-  protected dismissSessionAlertToast(): void {
-    this.toastDismissed.set(true);
+      const mensagem = reason === 'invalid'
+        ? 'Acesso negado. Autenticação inválida ou corrompida.'
+        : 'Sua autenticação expirou. Para sua segurança, faça login novamente.';
+      const aviso = this.toastr.warning(mensagem, 'Atenção', {
+        positionClass: 'toast-top-right',
+        timeOut: SESSION_EXPIRED_TOAST_MS,
+        closeButton: true,
+      });
+      onCleanup(() => this.toastr.clear(aviso.toastId));
+    });
   }
 
   protected alternarVisibilidadeSenha(): void {

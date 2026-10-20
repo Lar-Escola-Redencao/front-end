@@ -13,7 +13,6 @@
 
   <div class="tabela-carregando">
     <span class="spinner" aria-hidden="true"></span>
-    <p>Carregando...</p>
   </div>
 
   } @else if (dados.length > 0) {
@@ -57,9 +56,24 @@
           <!-- ================================================= -->
 
           <td class="header-mobile" (click)="toggleLinha($index)">
-            <span class="titulo-mobile">
-              {{ obterValorPrincipal(linha) }}
-            </span>
+            @if (colunaPrincipal.tipo === 'matricula-status') {
+              <span class="titulo-mobile titulo-mobile--status">
+                <span class="badge-status" [ngClass]="'status-matricula-' + obterClasseStatusMatricula(linha[colunaPrincipal.chave])">
+                  {{ obterValorPrincipal(linha) }}
+                </span>
+              </span>
+            } @else {
+              <span class="titulo-mobile">
+                {{ obterValorPrincipal(linha) }}
+              </span>
+            }
+            @if (obterEtiquetaPrincipal(linha); as etiqueta) {
+              @if (etiqueta === 'kid_star') {
+                <img class="etiqueta-icone" src="/icons/kid-star-filled.svg" alt="Contato principal" />
+              } @else {
+                <span class="etiqueta-celula">{{ etiqueta }}</span>
+              }
+            }
             <mat-icon>
               {{
               linhaExpandida === $index
@@ -117,13 +131,14 @@
 
           <a
             class="tabela-documento"
+            [class.tabela-documento-indisponivel]="documentoIndisponivel(linha, coluna)"
             [href]="obterUrlDocumento(linha[coluna.chave])"
             target="_blank"
             rel="noopener noreferrer"
-            download
-            title="Baixar documento"
+            [title]="documentoTitle(coluna)"
+            (click)="clicarDocumento(linha, coluna, obterUrlDocumento(linha[coluna.chave])!, $event)"
           >
-            <span>Baixar</span>
+            <span>{{ documentoLabel(coluna) }}</span>
           </a>
 
         } @else {
@@ -152,6 +167,34 @@
 
       }
 
+      @else if (coluna.tipo === 'matricula-status') {
+
+        @if (linha[coluna.chave] === 'INATIVO') {
+          <span class="badge-status status-matricula-inativo">TRANSFERIDA</span>
+        } @else {
+          <span class="badge-status" [class]="'badge-status status-matricula-' + obterClasseStatusMatricula(linha[coluna.chave])">
+            {{ obterValor(linha, coluna) }}
+          </span>
+        }
+
+      }
+
+      <!-- ============================= -->
+      <!-- TELEFONE -->
+      <!-- ============================= -->
+
+      @else if (coluna.tipo === 'telefone') {
+
+        @if (obterHrefTelefone(linha[coluna.chave])) {
+          <a class="tabela-telefone" [href]="obterHrefTelefone(linha[coluna.chave])">
+            {{ obterValor(linha, coluna) }}
+          </a>
+        } @else {
+          {{ obterValor(linha, coluna) }}
+        }
+
+      }
+
       <!-- ============================= -->
       <!-- TEXTO -->
       <!-- ============================= -->
@@ -159,6 +202,14 @@
       @else {
 
         {{ obterValor(linha, coluna) }}
+
+        @if (obterEtiqueta(linha, coluna); as etiqueta) {
+          @if (etiqueta === 'kid_star') {
+            <img class="etiqueta-icone" src="/icons/kid-star-filled.svg" alt="Contato principal" />
+          } @else {
+            <span class="etiqueta-celula">{{ etiqueta }}</span>
+          }
+        }
 
       }
 
@@ -176,10 +227,10 @@
           @if (acoes.length > 0) {
           <td class="coluna-acoes" data-label="Ações">
             <div class="acoes">
-              @for (acao of acoes; track acao.acao) {
+              @for (acao of acoesVisiveis(linha); track acao.acao) {
               <button type="button" class="botao-acao" [class.botao-excluir]="acao.acao === 'excluir'"
                 [title]="acao.tooltip" (click)="executarAcao(acao, linha)">
-                <mat-icon>
+                <mat-icon class="material-symbols-outlined">
                   {{ acao.icone }}
                 </mat-icon>
               </button>
@@ -201,7 +252,7 @@
   <!-- ======================================================= -->
 
   <div class="tabela-vazia">
-    {{ mensagemVazia }}
+    <app-estado-vazio [mensagem]="mensagemVazia"></app-estado-vazio>
   </div>
 
   }

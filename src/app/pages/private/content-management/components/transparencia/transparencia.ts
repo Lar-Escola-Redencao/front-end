@@ -1,3 +1,4 @@
+import { AbasResponsivas } from 'src/app/shared/directives/abas-responsivas';
 import { Component, OnInit, OnDestroy, ChangeDetectorRef, HostListener, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -9,6 +10,7 @@ import {
   validarDocumento
 } from 'src/app/shared/utils/form-validations';
 import { Alertas } from 'src/app/shared/utils/alerts';
+import { visualizarArquivoComVerificacao } from 'src/app/shared/utils/arquivo-acesso';
 
 import { ComponentComAlteracoesNaoSalvas } from 'src/app/shared/guards/can-deactivate.guard';
 import { ModalLayout } from '@components/modal-layout/modal-layout';
@@ -18,6 +20,7 @@ import {
   TabelaAcao
 } from '@components/tabela-layout/tabela-layout';
 import { Paginacao } from '@components/paginacao/paginacao';
+import { BarraBusca } from '@components/barra-busca/barra-busca';
 
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -40,11 +43,13 @@ interface DocumentoExibicao extends DocumentoAdmin {
   selector: 'app-transparencia',
   standalone: true,
   imports: [
+    AbasResponsivas,
     CommonModule,
     ReactiveFormsModule,
     ModalLayout,
     TabelaLayout,
     Paginacao,
+    BarraBusca,
     MatFormFieldModule,
     MatInputModule,
     MatSelect,
@@ -76,9 +81,15 @@ export class Transparencia implements OnInit, OnDestroy, ComponentComAlteracoesN
   erroLista = false;
 
   private routeSub?: Subscription;
+  private listaSub?: Subscription;
+
+  /** Termo da barra de busca, espelhado em ?search= na URL. */
+  busca = '';
 
   // --- TABELAS ---
   documentos: DocumentoExibicao[] = [];
+  documentosIndisponiveis = new Set<string>();
+  private timeoutsDocumentosIndisponiveis = new Map<string, ReturnType<typeof setTimeout>>();
 
   /** Lista completa de seções (não paginada), usada só pelo <select> do modal de documento. */
   secoesParaSelecao: Secao[] = [];
@@ -86,7 +97,15 @@ export class Transparencia implements OnInit, OnDestroy, ComponentComAlteracoesN
   colunasDocumentos: TabelaColuna<DocumentoExibicao>[] = [
     { chave: 'titulo', titulo: 'Documento', principalMobile: true, ordenavel: true },
     { chave: 'secaoTitulo', titulo: 'Seção', ordenavel: true, campoOrdenacao: 'secao.titulo' },
-    { chave: 'arquivo', titulo: 'Documento', tipo: 'documento' },
+    {
+      chave: 'arquivo',
+      titulo: 'Documento',
+      tipo: 'documento',
+      documentoLabel: 'Visualizar',
+      documentoTitle: 'Visualizar documento',
+      documentoIndisponivel: linha => this.documentoIndisponivel(linha),
+      aoClicarDocumento: (linha, url, event) => this.visualizarDocumento(event, linha, url)
+    },
     { chave: 'tipo', titulo: 'Tipo' }
   ];
 
@@ -165,6 +184,7 @@ export class Transparencia implements OnInit, OnDestroy, ComponentComAlteracoesN
       this.sort = sort;
       this.ordenacao = analisarOrdenacao(sort);
       this.abaAtiva = params.get('aba') === 'secoes' ? 'secoes' : 'documentos';
+      this.busca = params.get('search') ?? '';
 
       this.carregarListaAtiva();
     });
@@ -172,6 +192,7 @@ export class Transparencia implements OnInit, OnDestroy, ComponentComAlteracoesN
 
   ngOnDestroy(): void {
     this.routeSub?.unsubscribe();
+    this.listaSub?.unsubscribe();
   }
 
   mudarAba(aba: 'documentos' | 'secoes'): void {
@@ -179,10 +200,20 @@ export class Transparencia implements OnInit, OnDestroy, ComponentComAlteracoesN
       return;
     }
 
-    this.navegar({ aba, page: 0, sort: null });
+    this.navegar({ aba, page: 0, sort: null, search: null });
+  }
+
+  /** Atualiza a URL (?search=termo); o queryParamMap.subscribe refaz o GET sem recarregar a página. */
+  buscar(termo: string): void {
+    this.navegar({ page: 0, search: termo || null });
   }
 
   get mensagemVazia(): string {
+    if (this.busca) {
+      return this.abaAtiva === 'documentos'
+        ? `Nenhum documento encontrado para "${this.busca}".`
+        : `Nenhuma seção encontrada para "${this.busca}".`;
+    }
     return this.abaAtiva === 'documentos'
       ? 'Nenhum documento cadastrado.'
       : 'Nenhuma seção cadastrada.';
@@ -202,14 +233,13 @@ export class Transparencia implements OnInit, OnDestroy, ComponentComAlteracoesN
   }
 
   carregarDocumentos(): void {
-    if (this.carregandoLista) {
-      return;
-    }
+    // Uma nova busca cancela a requisição anterior em andamento: vale sempre a mais recente.
+    this.listaSub?.unsubscribe();
 
     this.carregandoLista = true;
     this.erroLista = false;
 
-    this.transparenciaService.listarDocumentosAdmin(this.pagina, this.tamanho, this.sort).subscribe({
+    this.listaSub = this.transparenciaService.listarDocumentosAdmin(this.pagina, this.tamanho, this.sort, this.busca || undefined).subscribe({
       next: (resposta) => {
         this.documentos = resposta.content.map(doc => this.mapearDocumento(doc));
         this.totalElementos = resposta.page.totalElements;
@@ -233,14 +263,12 @@ export class Transparencia implements OnInit, OnDestroy, ComponentComAlteracoesN
   }
 
   carregarSecoes(): void {
-    if (this.carregandoLista) {
-      return;
-    }
+    this.listaSub?.unsubscribe();
 
     this.carregandoLista = true;
     this.erroLista = false;
 
-    this.transparenciaService.listarSecoesAdmin(this.pagina, this.tamanho, this.sort).subscribe({
+    this.listaSub = this.transparenciaService.listarSecoesAdmin(this.pagina, this.tamanho, this.sort, this.busca || undefined).subscribe({
       next: (resposta) => {
         this.secoes = resposta.content;
         this.totalElementos = resposta.page.totalElements;
@@ -283,6 +311,38 @@ export class Transparencia implements OnInit, OnDestroy, ComponentComAlteracoesN
         ? doc.arquivo.split('.').pop()?.toUpperCase() ?? 'N/A'
         : 'N/A'
     };
+  }
+
+  visualizarDocumento(event: Event, documento: DocumentoExibicao, url: string): void {
+    event.preventDefault();
+    if (this.documentoIndisponivel(documento)) {
+      this.toastr.warning('Arquivo não encontrado ou indisponível.', 'Arquivo indisponível');
+      return;
+    }
+
+    visualizarArquivoComVerificacao(url, arquivoUrl => this.transparenciaService.carregarArquivo(arquivoUrl), this.toastr, () => {
+      this.bloquearDocumentoTemporariamente(documento);
+    });
+  }
+
+  documentoIndisponivel(documento: DocumentoExibicao): boolean {
+    return this.documentosIndisponiveis.has(this.chaveDocumento(documento));
+  }
+
+  private bloquearDocumentoTemporariamente(documento: DocumentoExibicao): void {
+    const chave = this.chaveDocumento(documento);
+    this.documentosIndisponiveis.add(chave);
+    clearTimeout(this.timeoutsDocumentosIndisponiveis.get(chave));
+    this.timeoutsDocumentosIndisponiveis.set(chave, setTimeout(() => {
+      this.documentosIndisponiveis.delete(chave);
+      this.timeoutsDocumentosIndisponiveis.delete(chave);
+      this.cdr.detectChanges();
+    }, 2000));
+    this.cdr.detectChanges();
+  }
+
+  private chaveDocumento(documento: DocumentoExibicao): string {
+    return documento.arquivo || String(documento.id);
   }
 
   irParaPagina(pagina: number): void {
@@ -417,7 +477,7 @@ export class Transparencia implements OnInit, OnDestroy, ComponentComAlteracoesN
     if (!this.modoEdicao) return this.formDocumento.dirty;
 
     // Como File object quebra no JSON.stringify, comparamos manualmente no caso de arquivo alterado
-    if (this.formDocumento.get('arquivo')?.dirty) return true;
+    if (this.formDocumento.get('arquivo')?.value) return true;
 
     const valorAtual = { ...this.formDocumento.getRawValue(), arquivo: null };
     const valorOriginal = { ...this.valoresOriginaisDocumento, arquivo: null };

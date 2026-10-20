@@ -21,13 +21,19 @@ h1 {
 }
 
 .abas-container {
+  flex-wrap: wrap;
   display: flex;
-  gap: 8px;
+  gap: 0;
   margin-bottom: 16px;
   border-bottom: 1px solid #ddd;
 }
 
 .aba-btn {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
   font-family: var(--fonte-texto);
   padding: 12px 24px;
   background: transparent;
@@ -56,12 +62,9 @@ h1 {
   margin-top: 24px;
   margin-bottom: 24px;
   justify-content: flex-start;
-  align-items: flex-start;
+  align-items: center;
 }
 
-.acoes-turmas {
-  justify-content: space-between;
-}
 
 .filtro-unidade {
   width: min(100%, 260px);
@@ -226,75 +229,15 @@ h1 {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 28px;
   margin-top: 4px;
 }
 
-.btn-cancelar {
-  border: 0;
-  background: transparent;
-  color: var(--input-color);
-  cursor: pointer;
-  font-family: var(--fonte-texto);
-  font-size: 1rem;
-  font-weight: 700;
-}
-
 .modal-body-preview {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  text-align: left;
-}
-
-.preview-capa img {
   width: 100%;
-  max-height: 220px;
-  object-fit: cover;
-  border-radius: var(--input-radius);
-}
-
-.preview-info {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.tag-cor {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  align-self: flex-start;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  color: var(--branco);
-}
-
-.tag-cor .material-symbols-outlined {
-  font-size: 20px;
-}
-
-.preview-info h2 {
-  margin: 0;
-  color: var(--preto);
-  font-family: var(--fonte-titulo);
-  font-size: 1.5rem;
-}
-
-.preview-linha {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin: 0;
-  color: var(--input-color);
-  font-family: var(--fonte-texto);
-  line-height: 1.5;
-}
-
-.preview-linha .material-symbols-outlined {
-  color: var(--primary-color);
-  font-size: 1.2rem;
+  max-width: 340px;
+  margin: 0 auto;
+  padding: 38px 16px 8px;
+  box-sizing: border-box;
 }
 
 .image-preview img {

@@ -16,6 +16,11 @@ export class SocialLinksService {
     return firstValueFrom(this.http.get<SocialLink[]>(`${this.baseUrl}/todas`));
   }
 
+  async listarParaVinculoEvento(): Promise<SocialLink[]> {
+    const redesSociais = await this.listarTodas();
+    return redesSociais.filter(rede => rede.nome.trim().toLowerCase() !== 'whatsapp');
+  }
+
   /** Rota autenticada e paginada, usada pela tela de gerenciamento. */
   listarAdmin(pagina: number, tamanho: number, sort?: string): Promise<PaginaResposta<SocialLink>> {
     const params = construirHttpParams({ pagina, tamanho, sort });

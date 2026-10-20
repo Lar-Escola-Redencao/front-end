@@ -8,17 +8,24 @@ import { EventoComponent } from './components/evento/evento.component';
 import { PartnersManager } from './components/parceiro/partners-manager';
 import { SocialLinksManager } from './components/redes-sociais/social-links-manager';
 import { DiretoriaComponent } from './components/diretoria/diretoria.component';
+import { CaptacaoRecursos } from './components/captacao-recursos/captacao-recursos';
+import { CAPTACAO_RECURSOS_CONFIG, CaptacaoRecursosConfig } from './components/captacao-recursos/captacao-recursos.config';
 
 @Component({
   selector: 'app-content-management',
   standalone: true,
-  imports: [MatFormFieldModule, MatSelect, MatOption, DiretoriaComponent,EventoComponent,PartnersManager,SocialLinksManager,Transparencia,Sobre],
+  imports: [MatFormFieldModule, MatSelect, MatOption, DiretoriaComponent,EventoComponent,PartnersManager,SocialLinksManager,Transparencia,Sobre,CaptacaoRecursos],
   templateUrl: './content-management.html',
   styleUrl: './content-management.css'
 })
 export class ContentManagement implements OnInit {
   secaoSelecionada: string = 'evento';
-  private secoesPermitidas = ['diretoria', 'evento', 'parceiro', 'redes-sociais', 'transparencia', 'sobre'];
+  /** Páginas montadas pela configuração declarativa (Gráfica, Pix). */
+  readonly captacaoRecursos = CAPTACAO_RECURSOS_CONFIG;
+  private secoesPermitidas = [
+    'diretoria', 'evento', 'parceiro', 'redes-sociais', 'transparencia', 'sobre',
+    ...this.captacaoRecursos.map(pagina => pagina.secao),
+  ];
 
   constructor(private route: ActivatedRoute, private router: Router) {}
 
@@ -32,6 +39,10 @@ export class ContentManagement implements OnInit {
 
       this.secaoSelecionada = secao;
     });
+  }
+
+  get captacaoRecursosSelecionada(): CaptacaoRecursosConfig | undefined {
+    return this.captacaoRecursos.find(pagina => pagina.secao === this.secaoSelecionada);
   }
 
   mudarSecao(secao: string) {

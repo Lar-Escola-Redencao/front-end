@@ -7,26 +7,33 @@ export interface Evento {
   imagem: string;
   valor?: number;
   tipoEvento: TipoEvento;
+  // Calculado pelo back a partir da dataEvento.
+  encerrado?: boolean;
   comentarioPosEvento?: string;
   parceiros: Parceiro[];
-  // Fotos da cobertura pós-evento (tabela midia_evento), já resolvidas para URLs
-  // pelo EventoPublicoService a partir do array de objetos retornado pela API.
-  midiaEvento?: MidiaEvento[];
+  // Redes sociais de cobertura deste evento especificamente (GET /evento/{id}/redes-sociais).
+  redesSociais?: EventoRedeSocial[];
 }
 
-export type TipoMidiaEvento = 'IMAGEM' | 'VIDEO';
-
-export interface MidiaEvento {
-  url: string;
-  tipo: TipoMidiaEvento;
+export interface EventoRedeSocial {
+  idRedeSocial: number;
+  nome: string;
+  icone: string;
+  urlLink: string;
 }
 
-export interface MidiaEventoDTO {
-  id: number;
-  tipoMidia?: TipoMidiaEvento;
-  urlMidia?: string;
-  tipo_midia?: TipoMidiaEvento;
-  url_midia?: string;
+// Link do evento em uma rede social (tabela evento_rede_social), usado no pós-evento.
+export interface EventoRedeSocial {
+  idRedeSocial: number;
+  nome: string;
+  icone: string;
+  urlLink: string;
+}
+
+export interface VincularRedeSocialEventoDTO {
+  idRedeSocial: number;
+  // Opcional: vazio faz o back usar a url cadastrada na própria rede social.
+  urlLink?: string;
 }
 
 export interface CriarEventoDTO {
@@ -48,7 +55,6 @@ export interface AtualizarEventoDTO {
   imagem?: File;
   valor?: number;
   tipoEvento?: TipoEvento;
-  comentarioPosEvento?: string;
   parceirosIds?: number[];
 }
 

@@ -8,6 +8,7 @@ import { LoginRequest, LoginRequestDto, LoginResponse } from '../../models/auth.
 import { Modulo, Role, parseRole, roleTemAcesso } from '../../models/permissao.model';
 import { JwtPayload, decodeJwtPayload, isJwtInvalid } from '../../utils/jwt.util';
 import { TokenStorage } from './token-storage';
+import { SessaoService } from './sessao.service';
 
 @Injectable({
   providedIn: 'root',
@@ -16,6 +17,7 @@ export class Auth {
   private readonly http = inject(HttpClient);
   private readonly tokenStorage = inject(TokenStorage);
   private readonly router = inject(Router);
+  private readonly sessao = inject(SessaoService);
 
   /**
    * Set when a stored token is dropped for being expired/invalid, so a redirect to /login can
@@ -75,6 +77,7 @@ export class Auth {
     this.clearExpiryTimer();
     this.tokenStorage.clear();
     this.token.set(null);
+    this.sessao.limpar();
   }
 
   getToken(): string | null {
@@ -123,6 +126,7 @@ export class Auth {
     this.expiryTimer = undefined;
     this.tokenStorage.clear();
     this.token.set(null);
+    this.sessao.limpar();
     this.router.navigate(['/entrar'], { queryParams: { reason: 'expired' } });
   }
 }

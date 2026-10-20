@@ -1,33 +1,62 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpContext } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
-import { CriarAssistidoDTO, AssistidoResponseDTO } from '../../models/usuario.model';
+import { ArquivoSaudeDTO, CadastroUsuarioCompletoDTO, MatriculaHistoricoDTO, UsuarioResponseDTO } from '../../models/usuario.model';
 import {
   AtualizarVinculoDTO,
   ContatoDTO,
   VincularContatoExistenteDTO
 } from '../../models/contato.model';
+import { SILENCIAR_TOAST_ACESSO } from '../../interceptors/acesso-toast.context';
 
 @Injectable({ providedIn: 'root' })
-export class AssistidoService {
+export class UsuarioService {
   private readonly http = inject(HttpClient);
-  private readonly apiUrl = `${environment.apiUrl}/assistidos`;
+  private readonly apiUrl = `${environment.apiUrl}/usuarios`;
 
-  listarAssistidos(): Observable<AssistidoResponseDTO[]> {
-    return this.http.get<AssistidoResponseDTO[]>(this.apiUrl);
+  listarUsuarios(filtros?: string | {
+    search?: string;
+    idUnidade?: number | null;
+    idTurma?: number | null;
+    statusMatricula?: string | null;
+  }): Observable<UsuarioResponseDTO[]> {
+    if (typeof filtros === 'string') {
+      filtros = { search: filtros };
+    }
+    const params: Record<string, string> = {};
+    if (filtros?.search) params['search'] = filtros.search;
+    if (filtros?.idUnidade) params['idUnidade'] = String(filtros.idUnidade);
+    if (filtros?.idTurma) params['idTurma'] = String(filtros.idTurma);
+    if (filtros?.statusMatricula) params['statusMatricula'] = filtros.statusMatricula;
+    return this.http.get<UsuarioResponseDTO[]>(this.apiUrl, { params });
   }
 
-  buscarPorId(id: number): Observable<AssistidoResponseDTO> {
-    return this.http.get<AssistidoResponseDTO>(`${this.apiUrl}/${id}`);
+  buscarAutocomplete(termo: string, unidadeId: number): Observable<UsuarioResponseDTO[]> {
+    return this.http.get<UsuarioResponseDTO[]>(`${this.apiUrl}/buscar`, { params: { termo, unidadeId } });
   }
 
-  criar(dto: CriarAssistidoDTO): Observable<AssistidoResponseDTO> {
-    return this.http.post<AssistidoResponseDTO>(this.apiUrl, dto);
+  buscarPorId(id: number, silenciarToastAcesso = false): Observable<UsuarioResponseDTO> {
+    const options = silenciarToastAcesso
+      ? { context: new HttpContext().set(SILENCIAR_TOAST_ACESSO, true) }
+      : {};
+    return this.http.get<UsuarioResponseDTO>(`${this.apiUrl}/${id}`, options);
   }
 
-  atualizar(id: number, dto: CriarAssistidoDTO): Observable<AssistidoResponseDTO> {
-    return this.http.put<AssistidoResponseDTO>(`${this.apiUrl}/${id}`, dto);
+  listarMatriculas(id: number): Observable<MatriculaHistoricoDTO[]> {
+    return this.http.get<MatriculaHistoricoDTO[]>(`${this.apiUrl}/${id}/matriculas`);
+  }
+
+  criar(dto: CadastroUsuarioCompletoDTO, arquivosSaude: File[] = []): Observable<UsuarioResponseDTO> {
+    if (!arquivosSaude.length) return this.http.post<UsuarioResponseDTO>(this.apiUrl, dto);
+    const formData = new FormData();
+    formData.append('dados', new Blob([JSON.stringify(dto)], { type: 'application/json' }));
+    arquivosSaude.forEach(arquivo => formData.append('arquivosSaude', arquivo));
+    return this.http.post<UsuarioResponseDTO>(this.apiUrl, formData);
+  }
+
+  atualizar(id: number, dto: Partial<CadastroUsuarioCompletoDTO>): Observable<UsuarioResponseDTO> {
+    return this.http.put<UsuarioResponseDTO>(`${this.apiUrl}/${id}`, dto);
   }
 
   atualizarFotoPerfil(id: number, arquivo: File): Observable<void> {
@@ -36,24 +65,51 @@ export class AssistidoService {
     return this.http.post<void>(`${this.apiUrl}/${id}/foto`, formData);
   }
 
+  transferirTurma(id: number, idTurmaNova: number, dataTransferencia: string): Observable<UsuarioResponseDTO> {
+    return this.http.put<UsuarioResponseDTO>(`${this.apiUrl}/${id}/turma`, { idTurmaNova, dataTransferencia });
+  }
+
+  rematricular(id: number, idTurmaNova: number): Observable<UsuarioResponseDTO> {
+    return this.http.put<UsuarioResponseDTO>(`${this.apiUrl}/${id}/rematricular`, { idTurmaNova });
+  }
+
+  inativar(id: number, dto: { dataDesligamento: string; justificativa: string }): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/${id}/inativar`, dto);
+  }
+
+  uploadArquivoSaude(id: number, arquivo: File): Observable<unknown> {
+    const formData = new FormData();
+    formData.append('titulo', arquivo.name);
+    formData.append('arquivo', arquivo);
+    return this.http.post(`${this.apiUrl}/${id}/arquivos-saude`, formData);
+  }
+
+  listarArquivosSaude(id: number): Observable<ArquivoSaudeDTO[]> {
+    return this.http.get<ArquivoSaudeDTO[]>(`${this.apiUrl}/${id}/arquivos-saude`);
+  }
+
+  deletarArquivoSaude(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/arquivos-saude/${id}`);
+  }
+
+  carregarArquivo(url: string): Observable<Blob> {
+    return this.http.get(url, { responseType: 'blob' });
+  }
+
   deletar(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
 
-  // ---- Vínculos com contatos (usados no modal "Novo vínculo" / "Usuários vinculados") ----
-
-  /** Cria um contato novo já vinculado ao usuário informado. */
-  vincularNovoContato(idUsuario: number, dto: ContatoDTO): Observable<AssistidoResponseDTO> {
-    return this.http.post<AssistidoResponseDTO>(`${this.apiUrl}/${idUsuario}/contatos`, dto);
+  vincularNovoContato(idUsuario: number, dto: ContatoDTO): Observable<UsuarioResponseDTO> {
+    return this.http.post<UsuarioResponseDTO>(`${this.apiUrl}/${idUsuario}/contatos`, dto);
   }
 
-  /** Vincula um contato já existente a um usuário (fluxo do modal "Novo vínculo"). */
   vincularContatoExistente(
     idUsuario: number,
     idContato: number,
     dto: VincularContatoExistenteDTO
-  ): Observable<AssistidoResponseDTO> {
-    return this.http.post<AssistidoResponseDTO>(
+  ): Observable<UsuarioResponseDTO> {
+    return this.http.post<UsuarioResponseDTO>(
       `${this.apiUrl}/${idUsuario}/contatos/${idContato}/vincular`,
       dto
     );

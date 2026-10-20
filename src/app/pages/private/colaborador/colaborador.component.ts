@@ -1,6 +1,7 @@
 import {
   ChangeDetectorRef,
   Component,
+  inject,
   HostListener,
   NgZone,
   OnDestroy,
@@ -16,7 +17,7 @@ import {
 } from '@angular/forms';
 
 import { ActivatedRoute, Router } from '@angular/router';
-import { Subscription } from 'rxjs';
+import { Subscription, forkJoin, of } from 'rxjs';
 
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -34,10 +35,12 @@ import {
 } from '@components/tabela-layout/tabela-layout';
 
 import { Paginacao } from '@components/paginacao/paginacao';
+import { BarraBusca } from '@components/barra-busca/barra-busca';
 
 import { ComponentComAlteracoesNaoSalvas } from 'src/app/shared/guards/can-deactivate.guard';
 import { AtualizarColaboradorDTO, Colaborador, CriarColaboradorDTO } from 'src/app/shared/models/colaborador.model';
 import { Auth } from 'src/app/shared/services/auth/auth';
+import { SessaoService } from 'src/app/shared/services/auth/sessao.service';
 import { ColaboradorService } from 'src/app/shared/services/colaborador/colaborador.service';
 import { PapelService } from 'src/app/shared/services/colaborador/papel.service';
 import { UnidadeService } from 'src/app/shared/services/colaborador/unidade.service';
@@ -75,6 +78,7 @@ type Unidade = {
     ModalLayout,
     TabelaLayout,
     Paginacao,
+    BarraBusca,
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
@@ -87,12 +91,21 @@ type Unidade = {
 export class ColaboradorComponent
   implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalvas {
 
+  private readonly sessao = inject(SessaoService);
+
   colaboradores: Colaborador[] = [];
   papeisDisponiveis: string[] = [];
   papeis: Papel[] = [];
 
   // Filtro por papel agora é feito no back-end (idPapel), não em memória.
   filtroPapel: number | null = null;
+  filtroUnidade: number | null = null;
+  filtroModalPapel: number | null = null;
+  filtroModalUnidade: number | null = null;
+  filtrosAberto = false;
+
+  /** Termo da barra de busca, espelhado em ?search= na URL. */
+  busca = '';
 
   unidadesDisponiveis: Unidade[] = [];
 
@@ -106,10 +119,13 @@ export class ColaboradorComponent
   erroLista = false;
 
   private routeSub?: Subscription;
+  private papelSub?: Subscription;
+  private listaSub?: Subscription;
 
   modalAberto = false;
   modoEdicao = false;
   colaboradorSelecionadoId: number | null = null;
+  private colaboradorEmEdicao: Colaborador | null = null;
   formColaborador: FormGroup;
   erros: { [key: string]: string } = {};
   mostrarSenha = false;
@@ -174,12 +190,14 @@ export class ColaboradorComponent
     {
       icone: 'edit',
       tooltip: 'Editar',
-      acao: 'editar'
+      acao: 'editar',
+      visivel: colaborador => this.podeGerenciarColaborador(colaborador)
     },
     {
       icone: 'delete',
       tooltip: 'Excluir',
-      acao: 'excluir'
+      acao: 'excluir',
+      visivel: colaborador => this.podeGerenciarColaborador(colaborador)
     }
   ];
 
@@ -248,6 +266,9 @@ export class ColaboradorComponent
         Validators.required
       ]
     });
+    this.papelSub = this.formColaborador.get('idPapel')!.valueChanges.subscribe(() => {
+      this.atualizarCampoUnidades();
+    });
   }
 
   ngOnInit(): void {
@@ -269,6 +290,13 @@ export class ColaboradorComponent
         ? papelBruto
         : null;
 
+      const unidadeBruta = Number(params.get('unidade') ?? params.get('idUnidade'));
+      this.filtroUnidade = Number.isFinite(unidadeBruta) && unidadeBruta > 0
+        ? unidadeBruta
+        : null;
+
+      this.busca = params.get('search') ?? '';
+
       this.carregarColaboradores();
     });
 
@@ -285,13 +313,22 @@ export class ColaboradorComponent
 
   ngOnDestroy(): void {
     this.routeSub?.unsubscribe();
+    this.papelSub?.unsubscribe();
+    this.listaSub?.unsubscribe();
   }
 
   get mensagemVazia(): string {
+    if (this.busca) {
+      return `Nenhum colaborador encontrado para "${this.busca}".`;
+    }
     const papelSelecionado = this.papeis.find(p => p.id === this.filtroPapel);
-    return papelSelecionado
-      ? `Nenhum colaborador com o papel ${this.obterNomePapel(papelSelecionado)} cadastrado ainda`
-      : 'Nenhum colaborador cadastrado ainda';
+    const unidadeSelecionada = this.unidadesDisponiveis.find(u => u.id === this.filtroUnidade);
+
+    if (papelSelecionado || unidadeSelecionada) {
+      return 'Nenhum colaborador encontrado com os filtros selecionados.';
+    }
+
+    return 'Nenhum colaborador cadastrado.';
   }
 
   get temAlteracoes(): boolean {
@@ -299,10 +336,12 @@ export class ColaboradorComponent
       return this.formColaborador.dirty;
     }
 
-    return (
-      JSON.stringify(this.formColaborador.getRawValue()) !==
-      JSON.stringify(this.valoresOriginaisDoFormulario)
-    );
+    const normalizar = (valores: any) => ({
+      ...valores,
+      idsUnidades: [...(valores?.idsUnidades || [])].sort((a, b) => a - b)
+    });
+    return JSON.stringify(normalizar(this.formColaborador.getRawValue())) !==
+      JSON.stringify(normalizar(this.valoresOriginaisDoFormulario));
   }
 
   /** Coordenador só faz a gestão de monitores; administrador vê e gerencia todos os papéis. */
@@ -310,8 +349,33 @@ export class ColaboradorComponent
     return this.auth.hasRole('COORDENADOR');
   }
 
+  podeGerenciarColaborador(colaborador: Colaborador): boolean {
+    if (this.auth.hasRole('ADMINISTRADOR')) return true;
+    const membro = this.sessao.membro();
+    if (!this.somenteMonitores || membro?.nomePapel !== 'COORDENADOR' || colaborador.nomePapel !== 'MONITOR') return false;
+    const unidades = colaborador.unidades ?? [];
+    const permitidas = new Set((membro.unidades ?? []).map(unidade => unidade.id));
+    return unidades.length > 0 && unidades.every(unidade => permitidas.has(unidade.id));
+  }
+
+  get quantidadeFiltrosAplicados(): number {
+    return Number(Boolean(this.filtroUnidade)) +
+      Number(Boolean(!this.somenteMonitores && this.filtroPapel));
+  }
+
   private get idPapelMonitor(): number | null {
     return this.papeis.find(p => (p.nomePapel || p.nome || '').toUpperCase() === 'MONITOR')?.id ?? null;
+  }
+
+  get papelSelecionadoAdministrador(): boolean {
+    const papel = this.papeis.find(p => p.id === this.formColaborador.get('idPapel')?.value);
+    return (papel?.nomePapel || papel?.nome || '').toUpperCase() === 'ADMINISTRADOR';
+  }
+
+  private atualizarCampoUnidades(): void {
+    const unidades = this.formColaborador.get('idsUnidades')!;
+    if (this.papelSelecionadoAdministrador) unidades.disable({ emitEvent: false });
+    else unidades.enable({ emitEvent: false });
   }
 
   carregarPapeis(): void {
@@ -326,6 +390,7 @@ export class ColaboradorComponent
         this.papeisDisponiveis = this.papeis
           .map((papel) => this.obterNomePapel(papel))
           .filter((nome): nome is string => Boolean(nome));
+        this.atualizarCampoUnidades();
         this.cdr.detectChanges();
       },
       error: (err: any) => {
@@ -335,11 +400,16 @@ export class ColaboradorComponent
   }
 
   carregarUnidades(): void {
-    this.unidadeService
-      .listarTodos()
+    forkJoin({
+      unidades: this.unidadeService.listarTodos(),
+      membro: this.somenteMonitores ? this.sessao.carregar() : of(null)
+    })
       .subscribe({
-        next: (dados: Unidade[]) => {
-          this.unidadesDisponiveis = dados;
+        next: ({ unidades, membro }) => {
+          const permitidas = new Set((membro?.unidades ?? []).map(unidade => unidade.id));
+          this.unidadesDisponiveis = this.somenteMonitores
+            ? unidades.filter(unidade => permitidas.has(unidade.id))
+            : unidades;
           this.cdr.detectChanges();
         },
         error: (err: any) => {
@@ -352,9 +422,8 @@ export class ColaboradorComponent
   }
 
   carregarColaboradores(): void {
-    if (this.carregandoLista) {
-      return;
-    }
+    // Uma nova busca/filtro cancela a requisição anterior em andamento: vale sempre a mais recente.
+    this.listaSub?.unsubscribe();
 
     // Para o coordenador a lista é sempre restrita a monitores; aguarda os papéis
     // carregarem para saber o id do papel MONITOR (carregarPapeis recarrega a lista).
@@ -369,8 +438,15 @@ export class ColaboradorComponent
       ? this.idPapelMonitor!
       : this.filtroPapel ?? undefined;
 
-    this.colaboradorService
-      .listarTodos(this.pagina, this.tamanho, this.sort, idPapel)
+    this.listaSub = this.colaboradorService
+      .listarTodos(
+        this.pagina,
+        this.tamanho,
+        this.sort,
+        idPapel,
+        this.filtroUnidade,
+        this.busca || undefined
+      )
       .subscribe({
         next: (resposta) => {
           this.ngZone.run(() => {
@@ -402,17 +478,71 @@ export class ColaboradorComponent
       });
   }
 
-  /** Atualiza a URL (?papel=id); o próprio queryParamMap.subscribe recarrega a lista. */
-  filtrarPorPapel(idPapel: number | null): void {
+  abrirFiltros(): void {
+    this.filtroModalUnidade = this.filtroUnidade;
+    this.filtroModalPapel = this.filtroPapel;
+    this.filtrosAberto = true;
+  }
+
+  async fecharFiltros(confirmarDescarte = true): Promise<void> {
+    if (confirmarDescarte && this.filtrosModalAlterados()) {
+      const acao = await Alertas.confirmarSaidaFiltros();
+
+      if (acao === 'voltar') {
+        return;
+      }
+    }
+
+    this.filtrosAberto = false;
+  }
+
+  aplicarFiltrosModal(): void {
     this.router.navigate([], {
       relativeTo: this.route,
-      queryParams: { papel: idPapel || null, page: 0 },
+      queryParams: {
+        unidade: this.filtroModalUnidade || null,
+        papel: this.somenteMonitores ? null : this.filtroModalPapel || null,
+        page: 0
+      },
+      queryParamsHandling: 'merge'
+    });
+    this.fecharFiltros(false);
+  }
+
+  limparFiltros(): void {
+    this.filtroModalUnidade = null;
+    this.filtroModalPapel = null;
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { unidade: null, papel: null, page: 0 },
       queryParamsHandling: 'merge'
     });
   }
 
-  removerFiltroPapel(): void {
-    this.filtrarPorPapel(null);
+  selecionarUnidadeFiltro(valor: number | string | null): void {
+    this.filtroModalUnidade = valor === 'todas' || valor === null
+      ? null
+      : Number(valor);
+  }
+
+  selecionarPapelFiltro(valor: number | string | null): void {
+    this.filtroModalPapel = valor === 'todos' || valor === null
+      ? null
+      : Number(valor);
+  }
+
+  private filtrosModalAlterados(): boolean {
+    return this.filtroModalUnidade !== this.filtroUnidade ||
+      this.filtroModalPapel !== this.filtroPapel;
+  }
+
+  /** Atualiza a URL (?search=termo); o queryParamMap.subscribe refaz o GET sem recarregar a página. */
+  buscar(termo: string): void {
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { search: termo || null, page: 0 },
+      queryParamsHandling: 'merge'
+    });
   }
 
   ordenarPor(campo: string): void {
@@ -464,6 +594,7 @@ export class ColaboradorComponent
   }
 
   abrirCadastro(): void {
+    this.colaboradorEmEdicao = null;
     this.modoEdicao = false;
     this.colaboradorSelecionadoId = null;
     this.erros = {};
@@ -506,6 +637,8 @@ export class ColaboradorComponent
   }
 
   abrirEdicao(colaborador: Colaborador): void {
+    if (!this.podeGerenciarColaborador(colaborador)) return;
+    this.colaboradorEmEdicao = colaborador;
     this.modoEdicao = true;
     this.colaboradorSelecionadoId = colaborador.id;
     this.erros = {};
@@ -633,6 +766,7 @@ export class ColaboradorComponent
   }
 
   salvar(): void {
+    if (this.modoEdicao && (!this.colaboradorEmEdicao || !this.podeGerenciarColaborador(this.colaboradorEmEdicao))) return;
     this.formColaborador.markAllAsTouched();
     this.checarSenhasIguais();
     this.verificarErros();
@@ -681,10 +815,11 @@ export class ColaboradorComponent
   deletarColaborador(
     colaborador: Colaborador
   ): void {
+    if (!this.podeGerenciarColaborador(colaborador)) return;
     Alertas
       .confirmarExclusao()
       .then((confirmado: boolean) => {
-        if (!confirmado) {
+        if (!confirmado || !this.podeGerenciarColaborador(colaborador)) {
           return;
         }
 
@@ -856,6 +991,7 @@ export class ColaboradorComponent
   }
 
   private fecharModalSemConfirmacao(): void {
+    this.colaboradorEmEdicao = null;
     this.modalAberto = false;
     this.modalTremendo = false;
     this.isLoading = false;

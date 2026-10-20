@@ -167,6 +167,11 @@ form {
   margin-bottom: 2rem;
 }
 
+.btn-continuar {
+  width: 100%;
+  box-sizing: border-box;
+}
+
 .otp-input {
   width: 48px;
   height: 56px;
@@ -245,6 +250,10 @@ form {
 .success-state {
   text-align: center;
   padding: 2rem 0;
+}
+
+.success-state .btn-primary {
+  margin-inline: auto;
 }
 
 .icon-circle {

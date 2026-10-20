@@ -1,19 +1,18 @@
 import {
   ChangeDetectorRef,
   Component,
-  HostListener,
   OnInit
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatSelectModule } from '@angular/material/select';
-import { ModalLayout } from '@components/modal-layout/modal-layout';
+import { BarraBusca } from '@components/barra-busca/barra-busca';
+import { FiltrosEventosComponent, FiltrosEventos } from '@components/filtros-eventos/filtros-eventos';
 import { PublicNavbar } from '@components/public-navbar/public-navbar';
-import { Evento } from 'src/app/shared/models/evento.model';
+import { Evento, TipoEvento } from 'src/app/shared/models/evento.model';
 import { EventoPublicoService } from 'src/app/shared/services/evento-publico/evento-publico.service';
 import { PublicFooter } from '@components/public-footer/public-footer';
+import { EstadoVazio } from '@components/estado-vazio/estado-vazio';
 
 type FiltroValor = 'todos' | 'gratuito' | 'pago';
 
@@ -24,11 +23,11 @@ type FiltroValor = 'todos' | 'gratuito' | 'pago';
     CommonModule,
     RouterLink,
     FormsModule,
-    MatFormFieldModule,
-    MatSelectModule,
-    ModalLayout,
+    BarraBusca,
+    FiltrosEventosComponent,
     PublicNavbar,
-    PublicFooter
+    PublicFooter,
+    EstadoVazio
   ],
   templateUrl: './eventos.html',
   styleUrl: './eventos.css'
@@ -43,12 +42,13 @@ export class Eventos implements OnInit {
   filtroDataInicial = '';
   filtroDataFinal = '';
   filtroValor: FiltroValor = 'todos';
+  filtroTipo: TipoEvento | null = null;
 
   paginaAtual = 0;
   tamanhoPagina = 6;
   readonly tamanhosPagina = [6];
   readonly tamanhoMinimoTitulo = 3;
-  filtrosMobileAberto = false;
+  private readonly imagensIndisponiveis = new Set<number>();
 
   constructor(
     private eventoPublicoService: EventoPublicoService,
@@ -63,7 +63,7 @@ export class Eventos implements OnInit {
     this.carregando = true;
     this.eventoPublicoService.listarPublicos().subscribe({
       next: (dados) => {
-        this.eventos = dados.sort(
+        this.eventos = [...dados].sort(
           (eventoAtual, proximoEvento) =>
             new Date(proximoEvento.dataEvento).getTime() - new Date(eventoAtual.dataEvento).getTime()
         );
@@ -78,49 +78,29 @@ export class Eventos implements OnInit {
     });
   }
 
-  buscar(): void {
+  buscar(termo = this.filtroTitulo): void {
+    this.filtroTitulo = termo;
     this.paginaAtual = 0;
     this.aplicarFiltros();
   }
 
-  buscarMobile(): void {
+  get filtrosAplicados(): FiltrosEventos {
+    return { dataInicial: this.filtroDataInicial, dataFinal: this.filtroDataFinal, valor: this.filtroValor, tipo: this.filtroTipo };
+  }
+
+  filtrar(filtros: FiltrosEventos): void {
+    this.filtroDataInicial = filtros.dataInicial;
+    this.filtroDataFinal = filtros.dataFinal;
+    this.filtroValor = filtros.valor;
+    this.filtroTipo = filtros.tipo;
     this.buscar();
-    this.fecharFiltrosMobile();
-  }
-
-  limparFiltros(): void {
-    this.filtroTitulo = '';
-    this.filtroDataInicial = '';
-    this.filtroDataFinal = '';
-    this.filtroValor = 'todos';
-    this.buscar();
-  }
-
-  abrirFiltrosMobile(): void {
-    this.filtrosMobileAberto = true;
-  }
-
-  fecharFiltrosMobile(): void {
-    this.filtrosMobileAberto = false;
-  }
-
-  @HostListener('window:resize')
-  aoRedimensionarJanela(): void {
-    if (window.innerWidth > 640 && this.filtrosMobileAberto) {
-      this.fecharFiltrosMobile();
-    }
-  }
-
-  get tituloAbaixoDoMinimo(): boolean {
-    const tamanho = this.filtroTitulo.trim().length;
-    return tamanho > 0 && tamanho < this.tamanhoMinimoTitulo;
   }
 
   aplicarFiltros(): void {
     const tituloBruto = this.filtroTitulo.trim();
     const titulo = tituloBruto.length >= this.tamanhoMinimoTitulo ? tituloBruto.toLowerCase() : '';
-    const dataInicial = this.filtroDataInicial ? new Date(this.filtroDataInicial) : null;
-    const dataFinal = this.filtroDataFinal ? new Date(this.filtroDataFinal) : null;
+    const dataInicial = this.filtroDataInicial ? new Date(`${this.filtroDataInicial}T00:00:00`) : null;
+    const dataFinal = this.filtroDataFinal ? new Date(`${this.filtroDataFinal}T23:59:59.999`) : null;
 
     this.eventosFiltrados = this.eventos.filter(evento => {
       const dataEvento = new Date(evento.dataEvento);
@@ -134,9 +114,7 @@ export class Eventos implements OnInit {
       }
 
       if (dataFinal) {
-        const fimDoDia = new Date(dataFinal);
-        fimDoDia.setHours(23, 59, 59, 999);
-        if (dataEvento > fimDoDia) {
+        if (dataEvento > dataFinal) {
           return false;
         }
       }
@@ -149,7 +127,7 @@ export class Eventos implements OnInit {
         return false;
       }
 
-      return true;
+      return !this.filtroTipo || evento.tipoEvento === this.filtroTipo;
     });
 
     if (this.paginaAtual >= this.totalPaginas) {
@@ -191,8 +169,14 @@ export class Eventos implements OnInit {
       this.filtroTitulo.trim() ||
       this.filtroDataInicial ||
       this.filtroDataFinal ||
-      this.filtroValor !== 'todos'
+      this.filtroValor !== 'todos' || this.filtroTipo
     );
+  }
+
+  get mensagemVazia(): string {
+    return this.possuiFiltrosAplicados
+      ? 'Nenhum evento encontrado para a busca ou os filtros selecionados.'
+      : 'Nenhum evento disponível no momento.';
   }
 
   irParaPagina(pagina: number): void {
@@ -248,7 +232,15 @@ export class Eventos implements OnInit {
   }
 
   obterUrlImagem(caminho: string | null | undefined): string {
-    return this.eventoPublicoService.tratarImagem(caminho);
+    return caminho ?? '';
+  }
+
+  onEventoImageError(eventoId: number): void {
+    this.imagensIndisponiveis.add(eventoId);
+  }
+
+  eventoImagemIndisponivel(eventoId: number): boolean {
+    return this.imagensIndisponiveis.has(eventoId);
   }
 
   private atualizarPagina(): void {

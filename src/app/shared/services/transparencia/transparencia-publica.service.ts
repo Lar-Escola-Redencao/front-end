@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { Documento, Secao } from 'src/app/shared/models/transparencia.model';
@@ -25,5 +25,13 @@ export class TransparenciaPublicaService {
 
   urlBaixar(documento: Documento): string {
     return `${this.apiUrl}/documentos/${documento.id}/download`;
+  }
+
+  carregarArquivo(url: string): Observable<Blob> {
+    return this.http.get(url, { responseType: 'blob' });
+  }
+
+  carregarDownload(url: string): Observable<HttpResponse<Blob>> {
+    return this.http.get(url, { responseType: 'blob', observe: 'response' });
   }
 }

@@ -28,7 +28,7 @@
 }
 
 .seletor-secao {
-  width: min(100%, 442px);
+  width: min(100%, 360px);
 }
 
 .conteudo-mutavel {
@@ -51,6 +51,10 @@
 }
 
 @media (max-width: 768px) {
+  .seletor-secao {
+    width: 100%;
+  }
+
   .content-management-page {
     padding: 24px 16px 40px;
   }

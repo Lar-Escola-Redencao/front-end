@@ -1,21 +1,15 @@
 <section class="eventos-admin">
   <div class="acoes-eventos">
+    <app-barra-busca
+      placeholder="Buscar por título, descrição, data, endereço..."
+      [valor]="busca"
+      (buscar)="buscar($event)" />
+
+    <app-filtros-eventos [filtros]="filtrosAplicados" (aplicar)="filtrar($event)" />
+
     <button type="button" class="btn-primary btn-primary-thick" (click)="abrirCadastro()">
       Novo evento
     </button>
-
-    <mat-form-field appearance="outline" class="filtro-tipo">
-      <mat-label>Categoria</mat-label>
-      <mat-select
-        [(ngModel)]="filtroTipo"
-        [canSelectNullableOptions]="true"
-        (selectionChange)="aplicarFiltro()">
-        <mat-option [value]="null">Todos os eventos</mat-option>
-        <mat-option *ngFor="let tipo of tiposDisponiveis" [value]="tipo">
-          {{ formatarTextoExibicao(tipo) }}
-        </mat-option>
-      </mat-select>
-    </mat-form-field>
   </div>
 
   <app-tabela-layout
@@ -83,7 +77,9 @@
       <div>
       <mat-form-field appearance="outline">
         <mat-label>Data e hora</mat-label>
-        <input matInput type="datetime-local" formControlName="dataEvento" (blur)="verificarErros()" />
+        <input #dataEvento matInput type="datetime-local" formControlName="dataEvento" (blur)="verificarErros()" />
+        <button type="button" matSuffix class="btn-calendario-data" aria-label="Abrir seletor de data e hora"
+          (click)="abrirCalendario(dataEvento)"><mat-icon>calendar_month</mat-icon></button>
       </mat-form-field>
       <span class="error-text" *ngIf="erros['dataEvento']">{{ erros['dataEvento'] }}</span>
       </div>
@@ -166,12 +162,12 @@
     </div>
     }
 
-    <div class="acoes-modal">
+    <div class="acoes-modal form-acoes">
       <button type="button" class="btn-cancelar" [disabled]="isLoading" (click)="fecharModal()">
         Cancelar
       </button>
 
-      <button type="submit" class="btn-primary" [disabled]="isLoading">
+      <button type="submit" class="btn-primary" [disabled]="isLoading || (modoEdicao && !temAlteracoes)">
         <span *ngIf="isLoading" class="spinner" aria-hidden="true"></span>
         <span>{{ isLoading ? 'Salvando...' : 'Salvar' }}</span>
       </button>
@@ -182,43 +178,12 @@
 
 @if (modalVisualizacaoAberto) {
 <app-modal-layout titulo="Detalhes do evento" (closed)="fecharVisualizacao()">
-  <div class="modal-body-preview" *ngIf="eventoVisualizacao">
-    <div class="preview-capa" *ngIf="eventoVisualizacao.imagem">
-      <img [src]="tratarImagem(eventoVisualizacao.imagem)" alt="Capa do evento" />
-    </div>
-
-    <div class="preview-info">
-      <div class="tag-tipo">{{ formatarTextoExibicao(eventoVisualizacao.tipoEvento) }}</div>
-      <h2>{{ eventoVisualizacao.titulo }}</h2>
-
-      <p class="preview-data-local">
-        <span class="material-symbols-outlined">calendar_today</span>
-        {{ formatarDataTabela(eventoVisualizacao.dataEvento) }}<br />
-        <span class="material-symbols-outlined">location_on</span>
-        {{ eventoVisualizacao.endereco }}
-      </p>
-
-      <div class="preview-desc">
-        <h4>Sobre o evento</h4>
-        <p>{{ eventoVisualizacao.descricao }}</p>
-      </div>
-
-      <div class="preview-extra">
-        <p>
-          <strong>Valor:</strong>
-          {{ eventoVisualizacao.valor ? (eventoVisualizacao.valor | currency:'BRL') : 'Gratuito' }}
-        </p>
-
-        <div *ngIf="eventoVisualizacao.parceiros && eventoVisualizacao.parceiros.length > 0">
-          <h4>Parceiros</h4>
-          <div class="preview-parceiros-logos">
-            <div class="parceiro-logo-item" *ngFor="let p of eventoVisualizacao.parceiros" [title]="p.nome">
-              <img [src]="tratarImagem(p.logo)" [alt]="p.nome" />
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+  @if (eventoVisualizacao) {
+    <app-evento-detalhe [modoPreview]="true" [eventoId]="eventoVisualizacao.id" />
+  }
 </app-modal-layout>
+}
+
+@if (eventoVinculoRedes) {
+<app-evento-redes-sociais [evento]="eventoVinculoRedes" (fechado)="fecharVinculoRedes()" />
 }
