@@ -149,4 +149,15 @@ describe('ColaboradorComponent', () => {
       expect(component.formColaborador.get('idsUnidades')!.hasError('required')).toBe(true);
     }
   });
+
+  it('oculta editar e excluir a própria conta e oferece Meu perfil', () => {
+    configurarPerfil('ADMINISTRADOR');
+    const propriaConta = { ...monitor([1], 'ADMINISTRADOR'), id: 10 };
+    const acoes = component.acoesTabela.filter(acao => !acao.visivel || acao.visivel(propriaConta));
+
+    expect(acoes.map(acao => acao.acao)).toEqual(['meu-perfil', 'visualizar']);
+    component.abrirEdicao(propriaConta);
+    expect(component.modalAberto).toBe(false);
+    expect(component.podeGerenciarColaborador(monitor([1]))).toBe(true);
+  });
 });

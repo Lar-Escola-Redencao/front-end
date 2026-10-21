@@ -18,7 +18,7 @@ import {
 } from '@angular/forms';
 
 import { ActivatedRoute, Router } from '@angular/router';
-import { Subscription, forkJoin, of } from 'rxjs';
+import { Subscription, forkJoin } from 'rxjs';
 
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -191,6 +191,12 @@ export class ColaboradorComponent
 
   acoesTabela: TabelaAcao<Colaborador>[] = [
     {
+      icone: 'account_circle',
+      tooltip: 'Meu perfil',
+      acao: 'meu-perfil',
+      visivel: colaborador => this.ehPropriaConta(colaborador)
+    },
+    {
       icone: 'visibility',
       tooltip: 'Visualizar',
       acao: 'visualizar'
@@ -357,7 +363,12 @@ export class ColaboradorComponent
     return this.auth.hasRole('COORDENADOR');
   }
 
+  ehPropriaConta(colaborador: Colaborador): boolean {
+    return colaborador.id === this.sessao.membro()?.id;
+  }
+
   podeGerenciarColaborador(colaborador: Colaborador): boolean {
+    if (!this.sessao.membro() || this.ehPropriaConta(colaborador)) return false;
     if (this.auth.hasRole('ADMINISTRADOR')) return true;
     const membro = this.sessao.membro();
     if (!this.somenteMonitores || membro?.nomePapel !== 'COORDENADOR' || colaborador.nomePapel !== 'MONITOR') return false;
@@ -410,7 +421,7 @@ export class ColaboradorComponent
   carregarUnidades(): void {
     forkJoin({
       unidades: this.unidadeService.listarTodos(),
-      membro: this.somenteMonitores ? this.sessao.carregar() : of(null)
+      membro: this.sessao.carregar()
     })
       .subscribe({
         next: ({ unidades, membro }) => {
@@ -810,6 +821,11 @@ export class ColaboradorComponent
       linha: Colaborador;
     }
   ): void {
+    if (evento.tipo === 'meu-perfil' && this.ehPropriaConta(evento.linha)) {
+      void this.router.navigate(['/dashboard/perfil']);
+      return;
+    }
+
     if (evento.tipo === 'visualizar') {
       this.colaboradorPreview = evento.linha;
       return;
