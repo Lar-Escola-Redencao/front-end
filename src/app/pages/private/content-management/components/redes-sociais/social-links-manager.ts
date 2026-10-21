@@ -1,3 +1,4 @@
+import { HistoricoContextual } from '@components/historico-contextual/historico-contextual';
 import {
   ChangeDetectorRef,
   Component,
@@ -64,6 +65,7 @@ const URL_PATTERN = /^https?:\/\/.+/i;
   selector: 'app-social-links-manager',
   standalone: true,
   imports: [
+    HistoricoContextual,
     CommonModule,
     ReactiveFormsModule,
     ModalLayout,

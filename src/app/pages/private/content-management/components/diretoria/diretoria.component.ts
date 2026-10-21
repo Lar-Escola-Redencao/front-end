@@ -1,3 +1,4 @@
+import { HistoricoContextual } from '@components/historico-contextual/historico-contextual';
 import { Component, ChangeDetectorRef, HostListener, NgZone, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -27,6 +28,7 @@ import {
   selector: 'app-diretoria',
   standalone: true,
   imports: [
+    HistoricoContextual,
     CommonModule,
     ReactiveFormsModule,
     ModalLayout,

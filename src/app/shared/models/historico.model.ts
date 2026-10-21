@@ -6,7 +6,9 @@ export type TipoRegistroHistorico =
   | 'PRESENCAS'
   | 'OCORRENCIAS'
   | 'UNIDADES'
-  | 'TURMAS';
+  | 'TURMAS'
+  | 'EVENTOS' | 'DIRETORIA' | 'PARCEIROS' | 'REDES_SOCIAIS'
+  | 'TRANSPARENCIA' | 'CONHECA_OSC' | 'GRAFICA' | 'PIX';
 
 export type TipoAlteracaoHistorico = 'CADASTRO' | 'EDICAO' | 'EXCLUSAO';
 

@@ -13,7 +13,7 @@
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
-  gap: 48px;
+  gap: 24px;
   flex-wrap: nowrap;
 }
 
@@ -65,4 +65,10 @@
     gap: 16px;
     margin-top: 8px;
   }
+}
+
+.titulo-conteudo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }

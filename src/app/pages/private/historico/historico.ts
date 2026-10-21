@@ -67,11 +67,20 @@ export class Historico implements OnInit, OnDestroy {
     { valor: 'PRESENCAS', nome: 'Presenças', busca: 'Buscar por usuário ou turma...' },
     { valor: 'OCORRENCIAS', nome: 'Ocorrências', busca: 'Buscar por usuário, tipo ou descrição...' },
     { valor: 'UNIDADES', nome: 'Unidades', busca: 'Buscar por unidade...' },
-    { valor: 'TURMAS', nome: 'Turmas', busca: 'Buscar por período ou unidade...' }
+    { valor: 'TURMAS', nome: 'Turmas', busca: 'Buscar por período ou unidade...' },
+    { valor: 'EVENTOS', nome: 'Eventos', busca: 'Buscar por título ou informação do evento...' },
+    { valor: 'DIRETORIA', nome: 'Diretoria', busca: 'Buscar por nome ou cargo...' },
+    { valor: 'PARCEIROS', nome: 'Parceiros', busca: 'Buscar por nome do parceiro...' },
+    { valor: 'REDES_SOCIAIS', nome: 'Redes sociais', busca: 'Buscar por nome ou endereço do link...' },
+    { valor: 'TRANSPARENCIA', nome: 'Transparência', busca: 'Buscar por seção ou documento...' },
+    { valor: 'CONHECA_OSC', nome: 'Conheça a OSC', busca: 'Buscar por título ou conteúdo...' },
+    { valor: 'GRAFICA', nome: 'Gráfica', busca: 'Buscar por produto, serviço ou contato...' },
+    { valor: 'PIX', nome: 'Pix', busca: 'Buscar por informação da doação...' }
   ];
 
   readonly gruposAreas = [
-    { nome: 'Gestão interna', tipos: this.tiposRegistro }
+    { nome: 'Gestão interna', tipos: this.tiposRegistro.slice(0, 8) },
+    { nome: 'Conteúdo público', tipos: this.tiposRegistro.slice(8) }
   ];
 
   readonly nomesAlteracao: Record<TipoAlteracaoHistorico, string> = {

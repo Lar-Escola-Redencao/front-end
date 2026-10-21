@@ -1,3 +1,4 @@
+import { HistoricoContextual } from '@components/historico-contextual/historico-contextual';
 import { Component, OnInit, OnDestroy, HostListener, ChangeDetectorRef, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -33,6 +34,7 @@ import { EventoDetalhe } from 'src/app/pages/public/evento-detalhe/evento-detalh
   selector: 'app-evento',
   standalone: true,
   imports: [
+    HistoricoContextual,
     CommonModule,
     FormsModule,
     ReactiveFormsModule,

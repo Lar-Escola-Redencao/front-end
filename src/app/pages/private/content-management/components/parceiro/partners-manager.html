@@ -21,6 +21,10 @@
 
 @if (modalAberto) {
 <app-modal-layout [titulo]="modoEdicao ? 'Editar parceiro' : 'Cadastrar novo parceiro'" (closed)="fecharModal()">
+  @if (modoEdicao && partnerSelecionadoId) {
+    <app-historico-contextual modal-title-extra tipo="PARCEIROS" [idRegistro]="partnerSelecionadoId"
+      titulo="Histórico deste registro" />
+  }
   <form class="form-modal" [formGroup]="form" (ngSubmit)="salvarParceiro()">
 
     <!-- ================================================= -->
