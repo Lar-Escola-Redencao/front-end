@@ -476,6 +476,11 @@
 
 @if (modalContatoAberto) {
 <app-modal-layout titulo="Editar contato" (closed)="fecharModalContato()">
+  <span modal-title-extra>
+    @if (contatoEmEdicaoId) {
+      <app-historico-contextual [idContato]="contatoEmEdicaoId" titulo="Histórico deste contato e seus vínculos" />
+    }
+  </span>
   <form class="form-modal contato-edicao-form" [formGroup]="formEdicaoContato" (ngSubmit)="salvarEdicaoContato()">
 
     <div class="step-grid">
@@ -533,6 +538,11 @@
 <!-- MODAL DE PREVIEW DE USUÁRIO (Padrão Eventos) -->
 @if (modalPreviewUsuarioAberto) {
 <app-modal-layout titulo="Detalhes do usuário" (closed)="fecharPreviewUsuario()">
+  <span modal-title-extra>
+    @if (usuarioPreview) {
+      <app-historico-contextual [idUsuario]="usuarioPreview.id" titulo="Histórico deste usuário" />
+    }
+  </span>
   <div class="form-modal preview-evento-style" *ngIf="usuarioPreview">
 
     <div class="preview-badge-container">
@@ -598,6 +608,11 @@
 <!-- MODAL DE PREVIEW DE CONTATO -->
 @if (modalPreviewContatoAberto) {
 <app-modal-layout [titulo]="contatoPreview?.nomeCompleto || 'Contato'" (closed)="fecharPreviewContato()">
+  <span modal-title-extra>
+    @if (contatoPreview) {
+      <app-historico-contextual [idContato]="contatoPreview.id" titulo="Histórico deste contato e seus vínculos" />
+    }
+  </span>
   <div class="contato-preview" *ngIf="contatoPreview as contato" [attr.aria-busy]="carregandoPreviewContato">
     <p class="contato-preview-status" role="status" *ngIf="carregandoPreviewContato">Carregando dados completos...</p>
     <div class="contato-preview-erro" role="alert" *ngIf="erroPreviewContato">
@@ -639,6 +654,11 @@
 <!-- MODAL "USUÁRIOS VINCULADOS" -->
 @if (modalVinculosAberto) {
 <app-modal-layout titulo="Usuários vinculados" (closed)="fecharVinculos()">
+  <span modal-title-extra>
+    @if (contatoSelecionado) {
+      <app-historico-contextual [idContato]="contatoSelecionado.id" titulo="Histórico deste contato e seus vínculos" />
+    }
+  </span>
   <div class="form-modal vinculos-modal-style">
     <p class="novo-vinculo-subtitulo" *ngIf="contatoSelecionado">Contato: {{ contatoSelecionado.nomeCompleto }}</p>
 

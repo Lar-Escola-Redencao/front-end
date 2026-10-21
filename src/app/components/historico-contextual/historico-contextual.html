@@ -1,0 +1,73 @@
+@if (auth.podeAcessar('historico-alteracoes')) {
+  <button type="button" class="botao-acao botao-historico" (click)="abrir()" [matTooltip]="titulo"
+    [attr.aria-label]="titulo + (temNovidades ? ': há alterações novas' : '')">
+    <mat-icon aria-hidden="true">history</mat-icon>
+    @if (temNovidades) {
+      <span class="novidade" aria-hidden="true"></span>
+    }
+  </button>
+}
+
+@if (aberto && !atividadeSelecionada) {
+  <app-modal-layout [titulo]="titulo" (closed)="fechar()">
+    @if (diario) {
+      <div class="abas-container" role="group" aria-label="Histórico do diário">
+        <button type="button" class="aba-btn" [class.ativa]="abaDiario === 'PRESENCAS'"
+          [attr.aria-pressed]="abaDiario === 'PRESENCAS'" (click)="selecionarAba('PRESENCAS')">Presenças</button>
+        <button type="button" class="aba-btn" [class.ativa]="abaDiario === 'OCORRENCIAS'"
+          [attr.aria-pressed]="abaDiario === 'OCORRENCIAS'" (click)="selecionarAba('OCORRENCIAS')">Ocorrências</button>
+      </div>
+    }
+    @if (erroLeitura) {
+      <p role="status">Não foi possível atualizar a leitura.</p>
+    }
+    @if (carregando) {
+      <p role="status">Carregando histórico...</p>
+    } @else if (erro) {
+      <p role="alert">Não foi possível carregar o histórico.</p>
+      <button type="button" class="btn-cancelar" (click)="abrir()">Tentar novamente</button>
+    } @else {
+      <ul class="atividades">
+        @for (atividade of atividades; track atividade.evento.id) {
+          <li>
+            <div class="atividade">
+              <p>
+                @if (atividadesNovas.has(atividade.evento.id)) {
+                  <span class="etiqueta-novo">Novo</span>
+                }
+                <em>
+                  @if (mostrarRegistro) {
+                    {{ atividade.evento.identificacaoRegistro }}:
+                  }
+                  {{ atividade.resumo }}
+                </em>
+              </p>
+              <time>{{ atividade.evento.dataHora | date:'dd/MM/yyyy, HH:mm':'-0300' }}</time>
+            </div>
+            <button type="button" class="botao-acao" matTooltip="Ver detalhes" aria-label="Ver detalhes da alteração"
+              (click)="atividadeSelecionada = atividade">
+              <mat-icon aria-hidden="true">visibility</mat-icon>
+            </button>
+          </li>
+        } @empty {
+          <li class="vazio">Nenhuma alteração registrada.</li>
+        }
+      </ul>
+    }
+    <div class="rodape">
+      <a routerLink="/dashboard/historico-alteracoes" [queryParams]="parametrosPagina" (click)="fechar()">
+        Ver histórico completo
+        <mat-icon aria-hidden="true">arrow_forward</mat-icon>
+      </a>
+    </div>
+  </app-modal-layout>
+}
+
+@if (aberto && atividadeSelecionada; as atividade) {
+  <app-modal-layout titulo="Detalhes da alteração" (closed)="atividadeSelecionada = null">
+    <app-historico-detalhe [registros]="atividade.registros" />
+    <div class="rodape">
+      <button type="button" class="btn-cancelar" (click)="atividadeSelecionada = null">Voltar</button>
+    </div>
+  </app-modal-layout>
+}

@@ -1,30 +1,34 @@
 import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { AbasResponsivas } from 'src/app/shared/directives/abas-responsivas';
 import { FormsModule, NgForm } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { Subscription } from 'rxjs';
+import { ActivatedRoute, Router } from '@angular/router';
+import { HistoricoDetalheComponent } from '@components/historico-detalhe/historico-detalhe';
 
 import { BarraBusca } from '@components/barra-busca/barra-busca';
 import { ModalLayout } from '@components/modal-layout/modal-layout';
 import { Paginacao } from '@components/paginacao/paginacao';
 import { TabelaAcao, TabelaColuna, TabelaLayout } from '@components/tabela-layout/tabela-layout';
 import {
-  CampoHistorico,
+  AtividadeHistorico,
+  ResponsavelHistorico,
   FiltrosHistorico,
-  HistoricoDetalhe,
   HistoricoEvento,
   TipoAlteracaoHistorico,
-  TipoRegistroHistorico,
-  ValorHistorico
+  TipoRegistroHistorico
 } from 'src/app/shared/models/historico.model';
 import { HistoricoService } from 'src/app/shared/services/historico/historico.service';
+import { TAMANHOS_PAGINA_PERMITIDOS } from 'src/app/shared/utils/paginacao-url';
 
 @Component({
   selector: 'app-historico',
   standalone: true,
   imports: [
+    AbasResponsivas,
     FormsModule,
     MatFormFieldModule,
     MatIconModule,
@@ -33,7 +37,8 @@ import { HistoricoService } from 'src/app/shared/services/historico/historico.se
     BarraBusca,
     ModalLayout,
     Paginacao,
-    TabelaLayout
+    TabelaLayout,
+    HistoricoDetalheComponent
   ],
   templateUrl: './historico.html',
   styleUrl: './historico.css'
@@ -42,7 +47,17 @@ export class Historico implements OnInit, OnDestroy {
   private readonly historicoService = inject(HistoricoService);
   private readonly changeDetector = inject(ChangeDetectorRef);
   private listaSub?: Subscription;
-  private detalheSub?: Subscription;
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private rotaSub?: Subscription;
+  private responsaveisSub?: Subscription;
+  responsaveis: ResponsavelHistorico[] = [];
+  erroResponsaveis = false;
+  periodo: 'RECENTES' | 'ARQUIVADOS' | 'TODOS' = 'RECENTES';
+  contexto: FiltrosHistorico = {};
+  atividades: AtividadeHistorico[] = [];
+  registrosDetalhe: HistoricoEvento[] = [];
+  todasAreas = true;
 
   readonly tiposRegistro: { valor: TipoRegistroHistorico; nome: string; busca: string }[] = [
     { valor: 'COLABORADORES', nome: 'Colaboradores', busca: 'Buscar por nome, CPF, e-mail...' },
@@ -50,7 +65,13 @@ export class Historico implements OnInit, OnDestroy {
     { valor: 'CONTATOS', nome: 'Contatos', busca: 'Buscar por contato ou usuário vinculado...' },
     { valor: 'VINCULOS_CONTATOS', nome: 'Vínculos de contatos', busca: 'Buscar por contato ou usuário vinculado...' },
     { valor: 'PRESENCAS', nome: 'Presenças', busca: 'Buscar por usuário ou turma...' },
-    { valor: 'OCORRENCIAS', nome: 'Ocorrências', busca: 'Buscar por usuário, tipo ou descrição...' }
+    { valor: 'OCORRENCIAS', nome: 'Ocorrências', busca: 'Buscar por usuário, tipo ou descrição...' },
+    { valor: 'UNIDADES', nome: 'Unidades', busca: 'Buscar por unidade...' },
+    { valor: 'TURMAS', nome: 'Turmas', busca: 'Buscar por período ou unidade...' }
+  ];
+
+  readonly gruposAreas = [
+    { nome: 'Gestão interna', tipos: this.tiposRegistro }
   ];
 
   readonly nomesAlteracao: Record<TipoAlteracaoHistorico, string> = {
@@ -62,21 +83,20 @@ export class Historico implements OnInit, OnDestroy {
   readonly colunas: TabelaColuna<HistoricoEvento>[] = [
     { chave: 'dataHora', titulo: 'Data e hora', formatar: valor => this.formatarDataHora(valor) },
     {
-      chave: 'nomeResponsavel',
-      titulo: 'Responsável',
-      formatar: (_, evento) => this.identificarResponsavel(evento)
-    },
-    {
       chave: 'identificacaoRegistro',
-      titulo: 'Registro afetado',
+      titulo: 'Registro',
       principalMobile: true,
-      formatar: (_, evento) => `${evento.identificacaoRegistro} — ${evento.informacaoAlterada}`,
+      formatar: (_, evento) => evento.identificacaoRegistro,
       etiqueta: evento => evento.registroExcluido ? 'Excluído' : null
     },
     {
+      chave: 'nomeResponsavel',
+      titulo: 'Responsável'
+    },
+    {
       chave: 'tipoAlteracao',
-      titulo: 'Tipo de alteração',
-      formatar: (_, evento) => this.nomesAlteracao[evento.tipoAlteracao]
+      titulo: 'Ação',
+      formatar: (_, evento) => this.formatarAcao(evento)
     }
   ];
 
@@ -105,39 +125,96 @@ export class Historico implements OnInit, OnDestroy {
   erroFiltros = '';
 
   detalhesAberto = false;
-  carregandoDetalhe = false;
-  erroDetalhe = false;
-  detalhe: HistoricoDetalhe | null = null;
-  private idDetalhe: number | null = null;
+
+  formatarAcao(evento: HistoricoEvento): string {
+    const atividade = this.atividades.find(item => item.evento.id === evento.id);
+    const acoes = new Set((atividade?.registros ?? [evento]).map(registro => registro.tipoAlteracao));
+    return Array.from(acoes).map(acao => this.nomesAlteracao[acao]).join(' / ');
+  }
 
   get orientacaoBusca(): string {
+    if (this.todasAreas) return 'Buscar por pessoa, turma ou informação alterada...';
     return this.tiposRegistro.find(tipo => tipo.valor === this.tipoRegistro)?.busca ?? 'Buscar...';
   }
 
   get quantidadeFiltros(): number {
-    return Object.values(this.filtros).filter(valor => valor !== null && valor !== '').length;
-  }
-
-  get camposDetalhe(): CampoHistorico[] {
-    const campos = this.detalhe?.campos ?? [];
-    return this.detalhe?.evento.tipoRegistro === 'PRESENCAS'
-      ? campos.filter(campo => campo.campo !== 'id')
-      : campos;
-  }
-
-  get autorOriginal(): ValorHistorico {
-    return this.detalhe?.contextoNovo['autorOriginal']
-      ?? this.detalhe?.contextoAnterior['autorOriginal']
-      ?? null;
+    return Object.values(this.filtros).filter(valor => valor != null && valor !== '').length;
   }
 
   ngOnInit(): void {
-    this.carregarEventos();
+    this.carregarResponsaveis();
+    this.rotaSub = this.route.queryParamMap.subscribe(parametros => {
+      const area = parametros.get('tipoRegistro');
+      this.todasAreas = !this.tiposRegistro.some(tipo => tipo.valor === area);
+      if (this.tiposRegistro.some(tipo => tipo.valor === area)) {
+        this.tipoRegistro = area as TipoRegistroHistorico;
+      }
+      const numero = (nome: string): number | null => {
+        const valor = Number(parametros.get(nome));
+        return Number.isSafeInteger(valor) && valor > 0 ? valor : null;
+      };
+      this.contexto = { idRegistro: numero('idRegistro'), idUsuario: numero('idUsuario'),
+        idTurma: numero('idTurma'), idContato: numero('idContato') };
+      const periodo = parametros.get('periodo');
+      this.periodo = periodo === 'ARQUIVADOS' || periodo === 'TODOS' ? periodo : 'RECENTES';
+      this.filtros = {
+        dataInicial: parametros.get('dataInicial') ?? '', dataFinal: parametros.get('dataFinal') ?? '',
+        idResponsavel: numero('idResponsavel'), dataAula: parametros.get('dataAula') ?? '',
+        tipoAlteracao: (parametros.get('tipoAlteracao') ?? '') as TipoAlteracaoHistorico | ''
+      };
+      this.busca = parametros.get('search') ?? '';
+      this.pagina = Math.max(0, Number(parametros.get('page')) || 0);
+      const tamanho = Number(parametros.get('size'));
+      if (TAMANHOS_PAGINA_PERMITIDOS.includes(tamanho)) {
+        this.tamanho = tamanho;
+      }
+      this.carregarEventos();
+    });
+  }
+
+  carregarResponsaveis(): void {
+    this.erroResponsaveis = false;
+    this.responsaveisSub?.unsubscribe();
+    this.responsaveisSub = this.historicoService.responsaveis().subscribe({
+      next: responsaveis => {
+        this.responsaveis = responsaveis;
+        this.changeDetector.markForCheck();
+      },
+      error: () => {
+        this.erroResponsaveis = true;
+        this.changeDetector.markForCheck();
+      }
+    });
+  }
+
+  private atualizarConsulta(): void {
+    void this.router.navigate([], { relativeTo: this.route, queryParams: {
+      ...this.contexto, ...this.filtros, tipoRegistro: this.todasAreas ? 'TODOS' : this.tipoRegistro,
+      periodo: this.periodo, search: this.busca || null, page: this.pagina || null, size: this.tamanho
+    }});
+  }
+
+  trocarPeriodo(periodo: 'RECENTES' | 'ARQUIVADOS' | 'TODOS'): void {
+    this.periodo = periodo;
+    this.pagina = 0;
+    this.atualizarConsulta();
+  }
+
+  removerContexto(): void {
+    this.contexto = {};
+    this.filtros.dataAula = '';
+    this.pagina = 0;
+    this.atualizarConsulta();
+  }
+
+  get temContexto(): boolean {
+    return Object.values(this.contexto).some(valor => valor != null);
   }
 
   ngOnDestroy(): void {
     this.listaSub?.unsubscribe();
-    this.detalheSub?.unsubscribe();
+    this.rotaSub?.unsubscribe();
+    this.responsaveisSub?.unsubscribe();
   }
 
   carregarEventos(): void {
@@ -145,11 +222,14 @@ export class Historico implements OnInit, OnDestroy {
     this.carregandoLista = true;
     this.erroLista = false;
 
-    this.listaSub = this.historicoService.listar(
-      this.tipoRegistro, this.pagina, this.tamanho, this.busca, this.filtros
+    this.listaSub = this.historicoService.atividades(
+      this.todasAreas ? null : this.tipoRegistro, this.pagina, this.tamanho, this.busca,
+      { ...this.contexto, ...this.filtros, periodo: this.periodo }
     ).subscribe({
       next: resposta => {
-        this.eventos = resposta.content;
+        this.erroLista = false;
+        this.atividades = resposta.content;
+        this.eventos = resposta.content.map(atividade => atividade.evento);
         this.totalPaginas = resposta.page.totalPages;
         this.totalElementos = resposta.page.totalElements;
         this.carregandoLista = false;
@@ -163,31 +243,32 @@ export class Historico implements OnInit, OnDestroy {
     });
   }
 
-  trocarTipo(tipo: TipoRegistroHistorico): void {
-    this.tipoRegistro = tipo;
-    this.busca = '';
-    this.filtros = {};
+  trocarTipo(tipo: TipoRegistroHistorico | 'TODOS'): void {
+    this.todasAreas = tipo === 'TODOS';
+    if (tipo !== 'TODOS') this.tipoRegistro = tipo;
+    if (tipo !== 'PRESENCAS' && tipo !== 'TODOS') this.filtros.dataAula = '';
+    this.contexto.idRegistro = null;
     this.filtrosModal = {};
     this.pagina = 0;
     this.eventos = [];
-    this.carregarEventos();
+    this.atualizarConsulta();
   }
 
   buscar(termo: string): void {
     this.busca = termo;
     this.pagina = 0;
-    this.carregarEventos();
+    this.atualizarConsulta();
   }
 
   irParaPagina(pagina: number): void {
     this.pagina = pagina;
-    this.carregarEventos();
+    this.atualizarConsulta();
   }
 
   mudarTamanho(tamanho: number): void {
     this.tamanho = tamanho;
     this.pagina = 0;
-    this.carregarEventos();
+    this.atualizarConsulta();
   }
 
   abrirFiltros(): void {
@@ -202,22 +283,16 @@ export class Historico implements OnInit, OnDestroy {
       return;
     }
 
-    const { dataInicial, dataFinal, idRegistro, idResponsavel } = this.filtrosModal;
+    const { dataInicial, dataFinal } = this.filtrosModal;
     if (dataInicial && dataFinal && dataInicial > dataFinal) {
       this.erroFiltros = 'A data final não pode ser anterior à data inicial.';
-      return;
-    }
-
-    const ids = [idRegistro, idResponsavel];
-    if (ids.some(id => id != null && (!Number.isInteger(id) || id < 1))) {
-      this.erroFiltros = 'Informe IDs inteiros e positivos.';
       return;
     }
 
     this.filtros = { ...this.filtrosModal };
     this.filtrosAberto = false;
     this.pagina = 0;
-    this.carregarEventos();
+    this.atualizarConsulta();
   }
 
   limparFiltros(): void {
@@ -225,47 +300,17 @@ export class Historico implements OnInit, OnDestroy {
     this.filtrosModal = {};
     this.filtrosAberto = false;
     this.pagina = 0;
-    this.carregarEventos();
+    this.atualizarConsulta();
   }
 
   abrirDetalhes(id: number): void {
-    this.detalheSub?.unsubscribe();
-    this.idDetalhe = id;
-    this.detalhe = null;
+    this.registrosDetalhe = this.atividades.find(atividade => atividade.evento.id === id)?.registros ?? [];
     this.detalhesAberto = true;
-    this.carregandoDetalhe = true;
-    this.erroDetalhe = false;
-
-    this.detalheSub = this.historicoService.detalhar(id).subscribe({
-      next: detalhe => {
-        this.detalhe = detalhe;
-        this.carregandoDetalhe = false;
-        this.changeDetector.markForCheck();
-      },
-      error: () => {
-        this.erroDetalhe = true;
-        this.carregandoDetalhe = false;
-        this.changeDetector.markForCheck();
-      }
-    });
-  }
-
-  tentarDetalhesNovamente(): void {
-    if (this.idDetalhe !== null) {
-      this.abrirDetalhes(this.idDetalhe);
-    }
   }
 
   fecharDetalhes(): void {
-    this.detalheSub?.unsubscribe();
     this.detalhesAberto = false;
-    this.detalhe = null;
-  }
-
-  identificarResponsavel(evento: HistoricoEvento): string {
-    return evento.idResponsavel === null
-      ? evento.nomeResponsavel
-      : `${evento.nomeResponsavel} (ID ${evento.idResponsavel})`;
+    this.registrosDetalhe = [];
   }
 
   formatarDataHora(valor: string): string {
@@ -276,45 +321,4 @@ export class Historico implements OnInit, OnDestroy {
     }).format(new Date(valor)).replace(', ', ' às ');
   }
 
-  formatarValorAnterior(campo: CampoHistorico): string {
-    if (!campo.anteriorConhecido) {
-      return 'Referência desconhecida';
-    }
-    if (this.detalhe?.evento.tipoAlteracao === 'CADASTRO') {
-      return 'Não se aplica';
-    }
-    return this.formatarValor(campo.valorAnterior);
-  }
-
-  formatarValorNovo(campo: CampoHistorico): string {
-    if (this.detalhe?.evento.tipoAlteracao === 'EXCLUSAO') {
-      return 'Registro excluído';
-    }
-    return this.formatarValor(campo.valorNovo);
-  }
-
-  formatarValor(valor: ValorHistorico): string {
-    if (valor === null || valor === '') {
-      return 'Vazio';
-    }
-    if (typeof valor === 'boolean') {
-      return valor ? 'Sim' : 'Não';
-    }
-    if (Array.isArray(valor)) {
-      return valor.length ? valor.map(item => this.formatarValor(item)).join('; ') : 'Nenhum';
-    }
-    if (typeof valor === 'object') {
-      const nome = valor['nome'] ?? valor['nomeCompleto'] ?? valor['nome_completo'];
-      if (nome) {
-        return valor['id'] ? `${nome} (ID ${valor['id']})` : String(nome);
-      }
-      return Object.entries(valor)
-        .map(([campo, conteudo]) => `${campo}: ${this.formatarValor(conteudo)}`)
-        .join('; ') || 'Não informado';
-    }
-    if (typeof valor === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(valor)) {
-      return valor.split('-').reverse().join('/');
-    }
-    return String(valor);
-  }
 }

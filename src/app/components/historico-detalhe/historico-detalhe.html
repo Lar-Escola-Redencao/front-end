@@ -1,0 +1,72 @@
+@if (carregando) {
+  <p role="status">Carregando detalhes...</p>
+} @else if (erro) {
+  <p role="alert">Não foi possível carregar esta alteração.</p>
+  <button type="button" class="btn-cancelar" (click)="carregar()">Tentar novamente</button>
+} @else if (detalhes.length) {
+  <dl class="identificacao">
+    <div><dt>Registro</dt><dd>{{ registroPrincipal }}</dd></div>
+    <div><dt>Responsável</dt><dd>{{ registros[0].nomeResponsavel }}</dd></div>
+    <div><dt>Data e hora</dt><dd>{{ registros[0].dataHora | date:'dd/MM/yyyy, HH:mm':'-0300' }}</dd></div>
+  </dl>
+  @if (chamadaRegistrada) {
+    <div class="cabecalho-chamada"><h3>Chamada</h3><span class="acao">Cadastro</span></div>
+    <div class="grupos-presenca">
+      @for (presente of [true, false]; track presente) {
+        <section class="grupo-presenca" [class.ausentes]="!presente">
+          <h3>{{ presente ? 'Presentes' : 'Ausentes' }} <span>{{ alunosPorPresenca(presente).length }}</span></h3>
+          <ul>
+            @for (aluno of alunosPorPresenca(presente); track aluno.evento.id) {
+              <li>{{ nomeAluno(aluno) }}</li>
+            } @empty {
+              <li class="sem-registros">Nenhum aluno</li>
+            }
+          </ul>
+        </section>
+      }
+    </div>
+  } @else {
+    @for (dados of detalhes; track dados.evento.id) {
+      <section class="secao-alteracao">
+        <h3>{{ somentePresenca(dados) ? nomeAluno(dados) : tituloSecao(dados) }}
+          <span class="acao">{{ nomeAcao(dados.evento.tipoAlteracao) }}</span>
+        </h3>
+        @if (dados.observacao) {
+          <p class="aviso">{{ dados.observacao }}</p>
+        }
+        @if (somentePresenca(dados)) {
+          <p class="mudanca-presenca"><span class="valor-anterior">{{ presenca(dados, true) }}</span><span aria-label="alterado para"> → </span><strong>{{ presenca(dados, false) }}</strong></p>
+        } @else {
+          <ul class="campos">
+            @for (campo of campos(dados); track campo.campo) {
+              <li>
+                <strong class="nome-campo">{{ nomeCampo(campo) }}</strong>
+                @if (ehArquivo(campo)) {
+                  <span class="valor-novo">{{ alteracaoArquivo(dados, campo) }}</span>
+                } @else {
+                  @switch (dados.evento.tipoAlteracao) {
+                    @case ('CADASTRO') {
+                      <span class="valor-novo">{{ valor(dados, campo, false) }}</span>
+                    }
+                    @case ('EXCLUSAO') {
+                      <span class="valor-anterior">{{ valor(dados, campo, true) }}</span>
+                    }
+                    @default {
+                      @if (campo.anteriorConhecido) {
+                        <span class="comparacao"><span class="valor-anterior">{{ valor(dados, campo, true) }}</span><span aria-label="alterado para"> → </span><span class="valor-novo">{{ valor(dados, campo, false) }}</span></span>
+                      } @else {
+                        <span class="valor-novo">{{ valor(dados, campo, false) }}</span>
+                      }
+                    }
+                }
+                }
+              </li>
+            } @empty {
+              <li>Nenhum campo disponível para comparação.</li>
+            }
+          </ul>
+        }
+      </section>
+    }
+  }
+}

@@ -17,15 +17,6 @@ h1 {
   font-size: 2rem;
 }
 
-.cabecalho p,
-.orientacao {
-  color: var(--input-color);
-  line-height: 1.6;
-}
-
-.cabecalho p {
-  margin-top: 8px;
-}
 
 .conteudo {
   width: min(100%, 1100px);
@@ -49,8 +40,7 @@ app-barra-busca {
 }
 
 .btn-filtros,
-.btn-atualizar,
-.btn-secundario {
+.btn-atualizar {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -69,7 +59,6 @@ app-barra-busca {
 }
 
 .btn-filtros:hover,
-.btn-secundario:hover,
 .btn-atualizar:hover {
   color: var(--primary-color);
   border-color: var(--primary-color);
@@ -84,14 +73,8 @@ app-barra-busca {
   font-size: 0.75rem;
 }
 
-.resumo-listagem {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  margin: 20px 0 12px;
-  color: var(--input-color);
-  font-size: 0.85rem;
+.acoes-historico {
+  margin-bottom: 20px;
 }
 
 .btn-atualizar {
@@ -109,8 +92,7 @@ button:disabled {
   gap: 16px;
 }
 
-.form-row,
-.comparacao-valores {
+.form-row {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
@@ -128,133 +110,10 @@ button:disabled {
   margin-top: 8px;
 }
 
-.btn-secundario {
-  min-height: 44px;
-  padding: 10px 14px;
-  border: 1px solid var(--input-border);
-  border-radius: var(--input-radius);
-}
 
 .erro-formulario {
   color: var(--error-color);
   font-size: 0.9rem;
-}
-
-.estado-detalhe {
-  padding: 24px 0;
-  text-align: center;
-  color: var(--input-color);
-}
-
-.estado-detalhe button {
-  margin-top: 16px;
-}
-
-.detalhe-evento {
-  display: grid;
-  gap: 24px;
-}
-
-.identificacao-evento h3 {
-  margin: 12px 0 6px;
-  font-size: 1.05rem;
-  line-height: 1.5;
-  overflow-wrap: anywhere;
-}
-
-.identificacao-evento > p,
-.metadados-evento dt {
-  color: var(--input-color);
-  font-size: 0.85rem;
-}
-
-.tipo-alteracao {
-  display: inline-block;
-  padding: 6px 12px;
-  border-radius: 999px;
-  background: #edf4fd;
-  color: var(--primary-color);
-  font-size: 0.8rem;
-  font-weight: 700;
-}
-
-.tipo-alteracao.exclusao {
-  background: #fff0ef;
-  color: #b42318;
-}
-
-.metadados-evento {
-  display: grid;
-  gap: 14px;
-}
-
-.metadados-evento dd {
-  margin-top: 4px;
-  font-size: 0.95rem;
-  overflow-wrap: anywhere;
-}
-
-.aviso-referencia {
-  padding: 12px;
-  border-radius: var(--input-radius);
-  background: #fff8e5;
-  color: #795a13;
-  font-size: 0.9rem;
-  line-height: 1.5;
-}
-
-.campos-alterados {
-  display: grid;
-  gap: 16px;
-}
-
-.campo-alterado {
-  border: 1px solid #e3e7ec;
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.campo-alterado h4 {
-  padding: 12px 14px;
-  border-bottom: 1px solid #e3e7ec;
-  background: #f7f9fc;
-  font-size: 0.9rem;
-}
-
-.comparacao-valores {
-  gap: 0;
-}
-
-.comparacao-valores > div {
-  padding: 14px;
-  min-width: 0;
-}
-
-.comparacao-valores span {
-  color: var(--input-color);
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-
-.comparacao-valores p {
-  margin-top: 8px;
-  font-size: 0.9rem;
-  line-height: 1.5;
-  overflow-wrap: anywhere;
-  white-space: pre-wrap;
-}
-
-.valor-novo {
-  border-left: 1px solid #e3e7ec;
-  background: #f5f9ff;
-}
-
-.rodape-detalhe {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  color: var(--input-color);
-  font-size: 0.8rem;
 }
 
 @media (max-width: 640px) {
@@ -286,4 +145,50 @@ button:disabled {
   .acoes-modal > button {
     flex: 1 1 170px;
   }
+}
+
+.abas-container {
+  flex-wrap: wrap;
+  display: flex;
+  gap: 0;
+  margin-bottom: 24px;
+  border-bottom: 1px solid #e0e0e0;
+  width: 100%;
+  justify-content: flex-start;
+  padding-left: 0;
+}
+
+.aba-btn {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  font-family: var(--fonte-texto);
+  padding: 12px 16px;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #757575;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-bottom: -1px;
+}
+
+.aba-btn:hover {
+  color: var(--primary-color);
+}
+
+.aba-btn.ativa {
+  color: var(--primary-color);
+  border-bottom-color: var(--primary-color);
+  font-weight: 600;
+}
+
+.contexto-consulta {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 12px;
 }

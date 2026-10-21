@@ -1,10 +1,18 @@
 <section class="historico-admin" aria-labelledby="titulo-historico">
   <header class="cabecalho">
     <h1 id="titulo-historico">Histórico de Alterações</h1>
-    <p>Consulte as alterações dos registros de todas as unidades.</p>
   </header>
 
   <div class="conteudo">
+    <div appAbasResponsivas class="abas-container" role="group" aria-label="Período do histórico">
+      <button type="button" class="aba-btn" [class.ativa]="periodo === 'RECENTES'"
+        [attr.aria-pressed]="periodo === 'RECENTES'" (click)="trocarPeriodo('RECENTES')">Recentes</button>
+      <button type="button" class="aba-btn" [class.ativa]="periodo === 'ARQUIVADOS'"
+        [attr.aria-pressed]="periodo === 'ARQUIVADOS'" (click)="trocarPeriodo('ARQUIVADOS')">Arquivados</button>
+      <button type="button" class="aba-btn" [class.ativa]="periodo === 'TODOS'"
+        [attr.aria-pressed]="periodo === 'TODOS'" (click)="trocarPeriodo('TODOS')">Todos</button>
+    </div>
+
     <div class="acoes-historico">
       <app-barra-busca
         [placeholder]="orientacaoBusca"
@@ -12,10 +20,15 @@
         (buscar)="buscar($event)" />
 
       <mat-form-field appearance="outline" subscriptSizing="dynamic" class="seletor-tipo">
-        <mat-label>Tipo de registro</mat-label>
-        <mat-select [ngModel]="tipoRegistro" (ngModelChange)="trocarTipo($event)">
-          @for (tipo of tiposRegistro; track tipo.valor) {
-            <mat-option [value]="tipo.valor">{{ tipo.nome }}</mat-option>
+        <mat-label>Área do sistema</mat-label>
+        <mat-select [ngModel]="todasAreas ? 'TODOS' : tipoRegistro" (ngModelChange)="trocarTipo($event)">
+          <mat-option value="TODOS">Todas as áreas</mat-option>
+          @for (grupo of gruposAreas; track grupo.nome) {
+            <mat-optgroup [label]="grupo.nome">
+              @for (tipo of grupo.tipos; track tipo.valor) {
+                <mat-option [value]="tipo.valor">{{ tipo.nome }}</mat-option>
+              }
+            </mat-optgroup>
           }
         </mat-select>
       </mat-form-field>
@@ -29,14 +42,14 @@
       </button>
     </div>
 
-    <div class="resumo-listagem">
-      <span>Alterações mais recentes primeiro</span>
-      <button type="button" class="btn-atualizar" [disabled]="carregandoLista" (click)="carregarEventos()">
-        <mat-icon aria-hidden="true">refresh</mat-icon>
-        Atualizar
-      </button>
-    </div>
-
+    @if (temContexto) {
+      <div class="contexto-consulta">
+        <button type="button" class="btn-atualizar" (click)="removerContexto()">
+          <mat-icon aria-hidden="true">filter_alt_off</mat-icon>
+          Limpar contexto
+        </button>
+      </div>
+    }
     <app-tabela-layout
       [colunas]="colunas"
       [dados]="eventos"
@@ -61,20 +74,19 @@
 @if (filtrosAberto) {
   <app-modal-layout titulo="Filtrar alterações" (closed)="filtrosAberto = false">
     <form #formFiltros="ngForm" class="form-filtros" (ngSubmit)="aplicarFiltros(formFiltros)">
-      <div class="form-row">
-        @if (tipoRegistro !== 'PRESENCAS') {
-          <mat-form-field appearance="outline">
-            <mat-label>ID do registro afetado</mat-label>
-            <input matInput type="number" name="idRegistro" min="1" step="1" [(ngModel)]="filtrosModal.idRegistro" />
-          </mat-form-field>
-        }
-
-        <mat-form-field appearance="outline">
-          <mat-label>ID do responsável</mat-label>
-          <input matInput type="number" name="idResponsavel" min="1" step="1" [(ngModel)]="filtrosModal.idResponsavel" />
-        </mat-form-field>
-      </div>
-
+      <mat-form-field appearance="outline">
+        <mat-label>Quem fez a alteração</mat-label>
+        <mat-select name="idResponsavel" [(ngModel)]="filtrosModal.idResponsavel">
+          <mat-option [value]="null">Todos os responsáveis</mat-option>
+          @for (responsavel of responsaveis; track responsavel.id) {
+            <mat-option [value]="responsavel.id">{{ responsavel.nome }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      @if (erroResponsaveis) {
+        <p role="alert">Não foi possível carregar os responsáveis.</p>
+        <button type="button" class="btn-cancelar" (click)="carregarResponsaveis()">Tentar novamente</button>
+      }
       <div class="form-row">
         <mat-form-field appearance="outline">
           <mat-label>Alterações a partir de</mat-label>
@@ -88,7 +100,7 @@
       </div>
 
       <mat-form-field appearance="outline">
-        <mat-label>Tipo de alteração</mat-label>
+        <mat-label>Ação realizada</mat-label>
         <mat-select name="tipoAlteracao" [(ngModel)]="filtrosModal.tipoAlteracao">
           <mat-option value="">Todos os tipos</mat-option>
           <mat-option value="CADASTRO">Cadastro</mat-option>
@@ -97,25 +109,20 @@
         </mat-select>
       </mat-form-field>
 
-      @if (tipoRegistro === 'PRESENCAS') {
+      @if (todasAreas || tipoRegistro === 'PRESENCAS') {
         <mat-form-field appearance="outline">
           <mat-label>Data da aula</mat-label>
           <input matInput type="date" name="dataAula" [(ngModel)]="filtrosModal.dataAula" />
         </mat-form-field>
       }
 
-      @if (tipoRegistro === 'USUARIOS') {
-        <p class="orientacao">Use o ID do usuário para incluir suas matrículas e informações vinculadas.</p>
-      } @else if (tipoRegistro === 'VINCULOS_CONTATOS') {
-        <p class="orientacao">Use o ID do contato para consultar seus vínculos com usuários.</p>
-      }
 
       @if (erroFiltros) {
         <p class="erro-formulario" role="alert">{{ erroFiltros }}</p>
       }
 
       <div class="acoes-modal">
-        <button type="button" class="btn-secundario" (click)="limparFiltros()">Limpar filtros</button>
+        <button type="button" class="btn-cancelar" (click)="limparFiltros()">Limpar filtros</button>
         <button type="submit" class="btn-primary" [disabled]="formFiltros.invalid">Aplicar filtros</button>
       </div>
     </form>
@@ -124,75 +131,6 @@
 
 @if (detalhesAberto) {
   <app-modal-layout titulo="Detalhes da alteração" (closed)="fecharDetalhes()">
-    @if (carregandoDetalhe) {
-      <p class="estado-detalhe" role="status">Carregando alteração...</p>
-    } @else if (erroDetalhe) {
-      <div class="estado-detalhe" role="alert">
-        <p>Não foi possível carregar os detalhes.</p>
-        <button type="button" class="btn-secundario" (click)="tentarDetalhesNovamente()">Tentar novamente</button>
-      </div>
-    } @else if (detalhe; as dados) {
-      <div class="detalhe-evento">
-        <div class="identificacao-evento">
-          <span class="tipo-alteracao" [class.exclusao]="dados.evento.tipoAlteracao === 'EXCLUSAO'">
-            {{ nomesAlteracao[dados.evento.tipoAlteracao] }}
-          </span>
-          <h3>{{ dados.evento.identificacaoRegistro }}</h3>
-          <p>{{ dados.evento.informacaoAlterada }}</p>
-        </div>
-
-        <dl class="metadados-evento">
-          <div>
-            <dt>Responsável pela alteração</dt>
-            <dd>{{ identificarResponsavel(dados.evento) }}</dd>
-          </div>
-          <div>
-            <dt>Data e hora</dt>
-            <dd>{{ formatarDataHora(dados.evento.dataHora) }}</dd>
-          </div>
-          @if (dados.evento.tipoRegistro !== 'PRESENCAS') {
-            <div>
-              <dt>Identificação do registro específico</dt>
-              <dd>{{ dados.identificadorEspecifico }}</dd>
-            </div>
-          }
-          @if (dados.evento.tipoRegistro === 'OCORRENCIAS' && autorOriginal) {
-            <div>
-              <dt>Autor do registro original</dt>
-              <dd>{{ formatarValor(autorOriginal) }}</dd>
-            </div>
-          }
-        </dl>
-
-        @if (dados.observacao) {
-          <p class="aviso-referencia">{{ dados.observacao }}</p>
-        }
-
-        <div class="campos-alterados">
-          @for (campo of camposDetalhe; track campo.campo) {
-            <article class="campo-alterado">
-              <h4>{{ campo.nome }}</h4>
-              <div class="comparacao-valores">
-                <div>
-                  <span>Antes</span>
-                  <p>{{ formatarValorAnterior(campo) }}</p>
-                </div>
-                <div class="valor-novo">
-                  <span>Depois</span>
-                  <p>{{ formatarValorNovo(campo) }}</p>
-                </div>
-              </div>
-            </article>
-          } @empty {
-            <p class="orientacao">Nenhum campo disponível neste evento.</p>
-          }
-        </div>
-
-        <div class="rodape-detalhe">
-          <span>Evento {{ dados.evento.id }}</span>
-          <button type="button" class="btn-secundario" (click)="fecharDetalhes()">Fechar</button>
-        </div>
-      </div>
-    }
+    <app-historico-detalhe [registros]="registrosDetalhe" />
   </app-modal-layout>
 }

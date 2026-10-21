@@ -1,3 +1,4 @@
+import { HistoricoContextual } from '@components/historico-contextual/historico-contextual';
 import { EstadoVazio } from 'src/app/components/estado-vazio/estado-vazio';
 import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, EventEmitter, HostListener, Input, NgZone, OnDestroy, Output, inject } from '@angular/core';
@@ -25,7 +26,9 @@ type ModoModalContato = 'novo' | 'editar' | 'visualizar';
 @Component({
   selector: 'app-usuario-perfil-contatos',
   standalone: true,
-  imports: [EstadoVazio,
+  imports: [
+    HistoricoContextual,
+    EstadoVazio,
     CommonModule,
     ReactiveFormsModule,
     MatAutocompleteModule,

@@ -1,118 +1,104 @@
 import { TestBed } from '@angular/core/testing';
 import { NgForm } from '@angular/forms';
-import { of, Subject, throwError } from 'rxjs';
+import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
+import { BehaviorSubject, Subject, of, throwError } from 'rxjs';
 import { vi } from 'vitest';
-
 import { HistoricoService } from 'src/app/shared/services/historico/historico.service';
-import { HistoricoDetalhe, HistoricoEvento } from 'src/app/shared/models/historico.model';
+import { AtividadeHistorico, HistoricoEvento } from 'src/app/shared/models/historico.model';
 import { Historico } from './historico';
 
-describe('Historico', () => {
-  const evento: HistoricoEvento = {
-    id: 1,
-    revisao: 2,
-    dataHora: '2026-10-20T23:30:00-03:00',
-    idResponsavel: 3,
-    nomeResponsavel: 'Responsável',
-    tipoRegistro: 'CONTATOS',
-    informacaoAlterada: 'Contato',
-    idRegistro: 4,
-    identificacaoRegistro: 'Maria (ID 4)',
-    registroExcluido: false,
-    tipoAlteracao: 'EDICAO'
-  };
-  const resposta = { content: [evento], page: { number: 0, size: 10, totalElements: 1, totalPages: 1 } };
+const evento: HistoricoEvento = {
+  id: 1, revisao: 2, dataHora: '2026-10-20T23:30:00-03:00', idResponsavel: 3,
+  nomeResponsavel: 'Ana', tipoRegistro: 'CONTATOS', informacaoAlterada: 'Contato',
+  idRegistro: 4, identificacaoRegistro: 'Maria', registroExcluido: false, tipoAlteracao: 'EDICAO'
+};
+const atividade: AtividadeHistorico = { evento, resumo: 'Ana alterou telefone.', registros: [evento] };
+const resposta = { content: [atividade], page: { number: 0, size: 10, totalElements: 1, totalPages: 1 } };
+
+describe('Histórico de atividades', () => {
   let componente: Historico;
-  let servico: { listar: ReturnType<typeof vi.fn>; detalhar: ReturnType<typeof vi.fn> };
+  let parametros: BehaviorSubject<ReturnType<typeof convertToParamMap>>;
+  let servico: { atividades: ReturnType<typeof vi.fn>; responsaveis: ReturnType<typeof vi.fn> };
+  let navegar: ReturnType<typeof vi.fn>;
 
   beforeEach(async () => {
-    servico = { listar: vi.fn().mockReturnValue(of(resposta)), detalhar: vi.fn() };
+    parametros = new BehaviorSubject(convertToParamMap({}));
+    servico = { atividades: vi.fn().mockReturnValue(of(resposta)), responsaveis: vi.fn().mockReturnValue(of([])) };
+    navegar = vi.fn().mockResolvedValue(true);
     await TestBed.configureTestingModule({
       imports: [Historico],
-      providers: [{ provide: HistoricoService, useValue: servico }]
+      providers: [
+        { provide: HistoricoService, useValue: servico },
+        { provide: ActivatedRoute, useValue: { queryParamMap: parametros } },
+        { provide: Router, useValue: { navigate: navegar } }
+      ]
     }).compileComponents();
     componente = TestBed.createComponent(Historico).componentInstance;
   });
 
-  it('carrega eventos e paginação retornados pela API', () => {
+  afterEach(() => componente.ngOnDestroy());
+
+  it('pagina atividades agrupadas preservando todos os registros nos detalhes', () => {
     componente.ngOnInit();
     expect(componente.eventos).toEqual([evento]);
     expect(componente.totalElementos).toBe(1);
-    expect(componente.carregandoLista).toBe(false);
+    componente.abrirDetalhes(1);
+    expect(componente.registrosDetalhe).toEqual([evento]);
   });
 
-  it('troca a categoria limpando busca, filtros e página', () => {
+  it('abre todas as áreas quando a URL não informa uma área', () => {
+    parametros.next(convertToParamMap({}));
+    componente.ngOnInit();
+    expect(componente.todasAreas).toBe(true);
+    expect(servico.atividades).toHaveBeenLastCalledWith(null, 0, 10, '', expect.anything());
+  });
+
+  it('restaura o contexto do usuário recebido pelo histórico local', () => {
+    parametros.next(convertToParamMap({ tipoRegistro: 'TODOS', idUsuario: '12', periodo: 'TODOS' }));
+    componente.ngOnInit();
+    expect(servico.atividades).toHaveBeenLastCalledWith(null, 0, 10, '', expect.objectContaining({ idUsuario: 12, periodo: 'TODOS' }));
+    expect(componente.temContexto).toBe(true);
+  });
+
+  it('separa arquivados mantendo busca e contexto na URL', () => {
+    componente.contexto = { idUsuario: 12 };
     componente.busca = 'Maria';
-    componente.filtros = { idRegistro: 4 };
-    componente.pagina = 2;
-    componente.trocarTipo('PRESENCAS');
-    expect(servico.listar).toHaveBeenLastCalledWith('PRESENCAS', 0, 10, '', {});
+    componente.pagina = 3;
+    componente.trocarPeriodo('ARQUIVADOS');
+    expect(navegar).toHaveBeenCalledWith([], expect.objectContaining({ queryParams: expect.objectContaining({
+      idUsuario: 12, search: 'Maria', periodo: 'ARQUIVADOS', page: null
+    }) }));
   });
 
-  it('cancela consulta antiga para não sobrescrever a categoria atual', () => {
-    const antiga = new Subject<typeof resposta>();
-    servico.listar.mockReturnValueOnce(antiga);
-    componente.carregarEventos();
+  it('preserva filtros compatíveis ao trocar de área', () => {
+    componente.filtros = { idResponsavel: 3, dataInicial: '2026-10-01', dataAula: '2026-10-20' };
     componente.trocarTipo('CONTATOS');
+    expect(componente.filtros.idResponsavel).toBe(3);
+    expect(componente.filtros.dataInicial).toBe('2026-10-01');
+    expect(componente.filtros.dataAula).toBe('');
+  });
+
+  it('cancela respostas antigas quando uma nova consulta começa', () => {
+    const antiga = new Subject<typeof resposta>();
+    servico.atividades.mockReturnValueOnce(antiga);
+    componente.carregarEventos();
+    componente.carregarEventos();
     antiga.next({ ...resposta, content: [] });
     expect(componente.eventos).toEqual([evento]);
   });
 
-  it('mostra falha de listagem e permite nova tentativa', () => {
-    servico.listar.mockReturnValueOnce(throwError(() => new Error('Falha de rede')));
+  it('permite tentar novamente após falha de carregamento', () => {
+    servico.atividades.mockReturnValueOnce(throwError(() => new Error('Falha de rede')));
     componente.carregarEventos();
     expect(componente.erroLista).toBe(true);
-    expect(componente.carregandoLista).toBe(false);
     componente.carregarEventos();
     expect(componente.erroLista).toBe(false);
-    expect(componente.eventos).toEqual([evento]);
   });
 
-  it('combina filtros válidos com a busca e retorna à primeira página', () => {
-    componente.busca = 'Maria';
-    componente.pagina = 2;
-    componente.filtrosModal = { idResponsavel: 3, dataInicial: '2026-10-20', dataFinal: '2026-10-20' };
-    componente.aplicarFiltros({ invalid: false } as NgForm);
-    expect(servico.listar).toHaveBeenLastCalledWith('COLABORADORES', 0, 10, 'Maria', componente.filtrosModal);
-    expect(componente.filtrosAberto).toBe(false);
-  });
-
-  it('rejeita intervalo invertido e IDs fracionários sem consultar a API', () => {
+  it('rejeita intervalo invertido antes de navegar', () => {
     componente.filtrosModal = { dataInicial: '2026-10-21', dataFinal: '2026-10-20' };
     componente.aplicarFiltros({ invalid: false } as NgForm);
     expect(componente.erroFiltros).toContain('data final');
-    componente.filtrosModal = { idRegistro: 1.5 };
-    componente.aplicarFiltros({ invalid: false } as NgForm);
-    expect(componente.erroFiltros).toContain('inteiros');
-    expect(servico.listar).not.toHaveBeenCalled();
-  });
-
-  it('recupera detalhe após erro e não exibe ID de frequência como campo', () => {
-    const detalhe: HistoricoDetalhe = {
-      evento: { ...evento, tipoRegistro: 'PRESENCAS', idRegistro: null },
-      identificadorEspecifico: '4',
-      referenciaAnteriorDisponivel: true,
-      observacao: null,
-      contextoAnterior: {},
-      contextoNovo: {},
-      campos: [
-        { campo: 'id', nome: 'ID', valorAnterior: null, valorNovo: 4, anteriorConhecido: true },
-        { campo: 'presente', nome: 'Presença', valorAnterior: false, valorNovo: true, anteriorConhecido: true }
-      ]
-    };
-    servico.detalhar.mockReturnValueOnce(throwError(() => new Error('Falha'))).mockReturnValueOnce(of(detalhe));
-    componente.abrirDetalhes(1);
-    expect(componente.erroDetalhe).toBe(true);
-    componente.tentarDetalhesNovamente();
-    expect(componente.erroDetalhe).toBe(false);
-    expect(componente.camposDetalhe.map(campo => campo.campo)).toEqual(['presente']);
-  });
-
-  it('distingue referência desconhecida, campo vazio e valores preenchidos', () => {
-    expect(componente.formatarValorAnterior({ campo: 'nome', nome: 'Nome', valorAnterior: null, valorNovo: 'Maria', anteriorConhecido: false })).toBe('Referência desconhecida');
-    expect(componente.formatarValor(null)).toBe('Vazio');
-    expect(componente.formatarValor(false)).toBe('Não');
-    expect(componente.formatarValor('2026-10-20')).toBe('20/10/2026');
-    expect(componente.formatarValor([{ id: 2, nome: 'Unidade' }])).toBe('Unidade (ID 2)');
+    expect(navegar).not.toHaveBeenCalled();
   });
 });

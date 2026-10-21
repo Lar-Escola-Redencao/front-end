@@ -1,3 +1,4 @@
+import { HistoricoContextual } from '@components/historico-contextual/historico-contextual';
 import { EstadoVazio } from 'src/app/components/estado-vazio/estado-vazio';
 import { AbasResponsivas } from 'src/app/shared/directives/abas-responsivas';
 import {
@@ -77,7 +78,9 @@ import { environment } from 'src/environments/environment';
 @Component({
   selector: 'app-usuario',
   standalone: true,
-  imports: [EstadoVazio,
+  imports: [
+    HistoricoContextual,
+    EstadoVazio,
     AbasResponsivas,
     CommonModule,
     RouterLink,

@@ -146,6 +146,11 @@
         </table>
       </div>
 
+      <div class="historico-diario">
+        <app-historico-contextual [diario]="true" [idTurma]="filtroForm.get('idTurma')?.value"
+          [dataAula]="filtroForm.get('data')?.value ?? ''" titulo="Histórico do diário" />
+      </div>
+
       <!-- Rodapé: INICIAL -->
       @if (estadoTela === 'INICIAL') {
         <div class="rodape-diario rodape-status rodape-inicial">

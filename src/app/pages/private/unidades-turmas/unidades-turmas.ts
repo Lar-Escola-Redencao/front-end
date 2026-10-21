@@ -1,3 +1,4 @@
+import { HistoricoContextual } from '@components/historico-contextual/historico-contextual';
 import { UnidadeCard } from '@components/unidade-card/unidade-card';
 import { AbasResponsivas } from 'src/app/shared/directives/abas-responsivas';
 import { ChangeDetectorRef, Component, HostListener, NgZone, OnDestroy, OnInit } from '@angular/core';
@@ -53,6 +54,7 @@ type OpcaoPeriodo = { valor: Periodo; label: string };
     ReactiveFormsModule,
     ModalLayout,
     UnidadeCard,
+    HistoricoContextual,
     TabelaLayout,
     Paginacao,
     BarraBusca,

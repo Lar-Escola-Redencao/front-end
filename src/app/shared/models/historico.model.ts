@@ -4,7 +4,9 @@ export type TipoRegistroHistorico =
   | 'CONTATOS'
   | 'VINCULOS_CONTATOS'
   | 'PRESENCAS'
-  | 'OCORRENCIAS';
+  | 'OCORRENCIAS'
+  | 'UNIDADES'
+  | 'TURMAS';
 
 export type TipoAlteracaoHistorico = 'CADASTRO' | 'EDICAO' | 'EXCLUSAO';
 
@@ -23,6 +25,27 @@ export interface FiltrosHistorico {
   dataFinal?: string;
   tipoAlteracao?: TipoAlteracaoHistorico | '';
   dataAula?: string;
+  idUsuario?: number | null;
+  idTurma?: number | null;
+  idContato?: number | null;
+  periodo?: 'RECENTES' | 'ARQUIVADOS' | 'TODOS';
+}
+
+export interface AtividadeHistorico {
+  evento: HistoricoEvento;
+  resumo: string;
+  registros: HistoricoEvento[];
+}
+
+export interface LeituraHistorico {
+  ultimoEvento: number;
+  temNovidades: boolean;
+  ultimoLido: number;
+}
+
+export interface ResponsavelHistorico {
+  id: number;
+  nome: string;
 }
 
 export interface HistoricoEvento {

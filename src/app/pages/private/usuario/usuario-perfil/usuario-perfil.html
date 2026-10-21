@@ -26,6 +26,7 @@
             }
           </div>
 
+          <app-historico-contextual class="perfil-historico" [idUsuario]="usuario.id" titulo="Histórico deste usuário" />
           <h1>{{ usuario.nomeCompleto }}</h1>
 
           @if (desligado) {

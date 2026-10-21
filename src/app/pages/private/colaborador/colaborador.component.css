@@ -440,3 +440,31 @@ h1{
     width: 100%;
   }
 }
+
+.colaborador-preview {
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+
+.colaborador-preview h3 {
+  margin: 0 0 20px;
+  font-family: var(--fonte-texto);
+  font-size: 1.1rem;
+}
+
+.colaborador-preview dl {
+  display: grid;
+  gap: 16px;
+  margin: 0;
+}
+
+.colaborador-preview dt {
+  margin-bottom: 4px;
+  color: var(--input-color);
+  font-size: 0.8rem;
+}
+
+.colaborador-preview dd {
+  margin: 0;
+  font-size: 0.95rem;
+}

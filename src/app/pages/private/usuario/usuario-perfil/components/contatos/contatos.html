@@ -16,6 +16,11 @@
 
 @if (modalAberto) {
   <app-modal-layout class="contato-modal" [titulo]="tituloModal" (closed)="fecharModal()">
+    <span modal-title-extra>
+      @if (contatoSelecionado) {
+        <app-historico-contextual [idContato]="contatoSelecionado.id" titulo="Histórico deste contato e seus vínculos" />
+      }
+    </span>
     @if (modoModal === 'visualizar' && contatoSelecionado?.principal) {
       <span modal-title-extra class="principal-title ativo" title="Contato principal">
         <img class="principal-star preenchida" src="/icons/kid-star-filled.svg" alt="Contato principal">

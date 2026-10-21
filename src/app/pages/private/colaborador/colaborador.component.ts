@@ -1,3 +1,4 @@
+import { HistoricoContextual } from '@components/historico-contextual/historico-contextual';
 import {
   ChangeDetectorRef,
   Component,
@@ -72,6 +73,7 @@ type Unidade = {
   selector: 'app-colaborador',
   standalone: true,
   imports: [
+    HistoricoContextual,
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
@@ -123,6 +125,7 @@ export class ColaboradorComponent
   private listaSub?: Subscription;
 
   modalAberto = false;
+  colaboradorPreview: Colaborador | null = null;
   modoEdicao = false;
   colaboradorSelecionadoId: number | null = null;
   private colaboradorEmEdicao: Colaborador | null = null;
@@ -187,6 +190,11 @@ export class ColaboradorComponent
   ];
 
   acoesTabela: TabelaAcao<Colaborador>[] = [
+    {
+      icone: 'visibility',
+      tooltip: 'Visualizar',
+      acao: 'visualizar'
+    },
     {
       icone: 'edit',
       tooltip: 'Editar',
@@ -802,6 +810,11 @@ export class ColaboradorComponent
       linha: Colaborador;
     }
   ): void {
+    if (evento.tipo === 'visualizar') {
+      this.colaboradorPreview = evento.linha;
+      return;
+    }
+
     if (evento.tipo === 'editar') {
       this.abrirEdicao(evento.linha);
       return;
@@ -852,7 +865,7 @@ export class ColaboradorComponent
     return this.formatarTextoExibicao(papel.nomePapel || papel.nome || '');
   }
 
-  private formatarTextoExibicao(valor: string | null | undefined): string {
+  formatarTextoExibicao(valor: string | null | undefined): string {
     if (!valor) {
       return '';
     }
