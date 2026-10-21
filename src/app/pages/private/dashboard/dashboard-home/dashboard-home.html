@@ -37,6 +37,13 @@
         </a>
       }
 
+      @if (podeAcessar('historico-alteracoes')) {
+        <a class="card-opcao" routerLink="/dashboard/historico-alteracoes" routerLinkActive="ativo">
+          <span class="material-symbols-outlined">history</span>
+          <span class="texto-link">Histórico de Alterações</span>
+        </a>
+      }
+
       @if (podeAcessar('conteudo-publico')) {
         <a class="card-opcao" routerLink="/dashboard/conteudo-publico" routerLinkActive="ativo">
           <span class="material-symbols-outlined">captive_portal</span>
