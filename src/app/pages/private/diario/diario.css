@@ -71,6 +71,36 @@
   }
 }
 
+.btn-exportar {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid var(--primary-color);
+  border-radius: 6px;
+  background: var(--branco);
+  color: var(--primary-color);
+  cursor: pointer;
+  font-family: var(--fonte-texto);
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.btn-exportar:hover:not(:disabled) {
+  background: #f3f8fe;
+}
+
+.btn-exportar:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+.btn-exportar:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
 .titulo-ajuda {
   position: relative;
   display: flex;
@@ -864,6 +894,11 @@
 
   .titulo-linha h1 {
     width: 100%;
+  }
+
+  .btn-exportar {
+    width: 100%;
+    justify-content: center;
   }
 
   .data-nav {

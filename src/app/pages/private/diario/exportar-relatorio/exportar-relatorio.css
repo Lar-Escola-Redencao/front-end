@@ -1,0 +1,153 @@
+.tipos-relatorio {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.tipo-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 16px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: var(--fonte-texto);
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.tipo-card input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.tipo-card:has(input:focus-visible) {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+.tipo-card.ativo {
+  border: 2px solid var(--primary-color);
+  padding: 13px 15px;
+  background: #f3f8fe;
+}
+
+.tipo-titulo {
+  color: var(--preto);
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.tipo-descricao {
+  color: #666;
+  font-size: 0.85rem;
+  line-height: 1.35;
+}
+
+.form-exportar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.campos-2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.campo .mat-mdc-form-field {
+  width: 100%;
+}
+
+.campo .error-text {
+  margin: -14px 0 8px 4px;
+  font-size: 0.8rem;
+}
+
+.formato {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-family: var(--fonte-texto);
+}
+
+.formato legend {
+  width: 100%;
+  margin-bottom: 6px;
+  color: var(--input-color);
+  font-size: 0.9rem;
+}
+
+.opcao-formato,
+.checkbox-ocorrencias {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  font-family: var(--fonte-texto);
+  cursor: pointer;
+}
+
+.opcao-formato input,
+.checkbox-ocorrencias input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--primary-color);
+}
+
+.nota {
+  margin: 4px 0 0;
+  color: #666;
+  font-family: var(--fonte-texto);
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+.erro-geracao {
+  margin-top: 8px;
+  padding: 12px 14px;
+  border: 1px solid var(--error-color);
+  border-radius: 6px;
+  background: #fdecea;
+  color: #8a1c13;
+  font-family: var(--fonte-texto);
+  font-size: 0.9rem;
+}
+
+.acoes-modal {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+@media (max-width: 600px) {
+  .tipos-relatorio,
+  .campos-2 {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .acoes-modal {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .acoes-modal .btn-primary {
+    width: 100%;
+  }
+}

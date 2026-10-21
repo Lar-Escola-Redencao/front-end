@@ -1,0 +1,117 @@
+<app-modal-layout titulo="Exportar relatório" (closed)="cancelar()">
+  <div class="tipos-relatorio" role="radiogroup" aria-label="Tipo de relatório">
+    <label class="tipo-card" [class.ativo]="tipo() === 'PRESENCAS'">
+      <input type="radio" name="tipoRelatorio" [checked]="tipo() === 'PRESENCAS'" [disabled]="gerando()"
+        (change)="selecionarTipo('PRESENCAS')">
+      <span class="tipo-titulo">Presenças detalhadas por período</span>
+      <span class="tipo-descricao">Presença e falta de cada aluno de uma turma, data a data.</span>
+    </label>
+    <label class="tipo-card" [class.ativo]="tipo() === 'RESUMO'">
+      <input type="radio" name="tipoRelatorio" [checked]="tipo() === 'RESUMO'" [disabled]="gerando()"
+        (change)="selecionarTipo('RESUMO')">
+      <span class="tipo-titulo">Resumo de frequência por período</span>
+      <span class="tipo-descricao">Totais e percentual de presença por aluno, em uma ou mais turmas.</span>
+    </label>
+  </div>
+
+  <form class="form-exportar" [formGroup]="formAtual" (ngSubmit)="gerar()" novalidate>
+    @if (tipo() === 'PRESENCAS') {
+      <div class="campos-2">
+        <div class="campo">
+          <mat-form-field appearance="outline">
+            <mat-label>Unidade</mat-label>
+            <mat-select formControlName="idUnidade">
+              @for (unidade of unidades(); track unidade.id) {
+                <mat-option [value]="unidade.id">{{ unidade.nome }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+          @if (erroCampo('idUnidade'); as mensagem) { <span class="error-text">{{ mensagem }}</span> }
+        </div>
+        <div class="campo">
+          <mat-form-field appearance="outline">
+            <mat-label>Turma</mat-label>
+            <mat-select formControlName="idTurma">
+              @for (turma of turmasDaUnidade(); track turma.id) {
+                <mat-option [value]="turma.id">{{ rotuloTurma(turma) }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+          @if (erroCampo('idTurma'); as mensagem) { <span class="error-text">{{ mensagem }}</span> }
+        </div>
+      </div>
+    } @else {
+      <div class="campo">
+        <mat-form-field appearance="outline">
+          <mat-label>Turmas</mat-label>
+          <mat-select formControlName="idsTurmas" multiple>
+            @for (grupo of turmasPorUnidade(); track grupo.unidade.id) {
+              <mat-optgroup [label]="grupo.unidade.nome">
+                @for (turma of grupo.turmas; track turma.id) {
+                  <mat-option [value]="turma.id">{{ rotuloTurma(turma) }}</mat-option>
+                }
+              </mat-optgroup>
+            }
+          </mat-select>
+          @if (carregandoTurmas()) { <mat-hint>Carregando turmas...</mat-hint> }
+        </mat-form-field>
+        @if (erroCampo('idsTurmas'); as mensagem) { <span class="error-text">{{ mensagem }}</span> }
+      </div>
+    }
+
+    <div class="campos-2">
+      <div class="campo">
+        <mat-form-field appearance="outline">
+          <mat-label>Data inicial</mat-label>
+          <input matInput type="date" formControlName="dataInicio">
+        </mat-form-field>
+        @if (erroCampo('dataInicio'); as mensagem) { <span class="error-text">{{ mensagem }}</span> }
+      </div>
+      <div class="campo">
+        <mat-form-field appearance="outline">
+          <mat-label>Data final</mat-label>
+          <input matInput type="date" formControlName="dataFim" [min]="formAtual.get('dataInicio')?.value">
+        </mat-form-field>
+        @if (erroCampo('dataFim'); as mensagem) {
+          <span class="error-text">{{ mensagem }}</span>
+        } @else if (erroPeriodo) {
+          <span class="error-text">{{ erroPeriodo }}</span>
+        }
+      </div>
+    </div>
+
+    <fieldset class="formato">
+      <legend>Formato</legend>
+      <label class="opcao-formato">
+        <input type="radio" value="PDF" formControlName="formato">
+        <span>PDF</span>
+      </label>
+      <label class="opcao-formato">
+        <input type="radio" value="XLSX" formControlName="formato">
+        <span>XLSX (planilha)</span>
+      </label>
+    </fieldset>
+
+    @if (tipo() === 'PRESENCAS') {
+      <label class="checkbox-ocorrencias">
+        <input type="checkbox" formControlName="incluirOcorrencias">
+        <span>Incluir ocorrências</span>
+      </label>
+    } @else {
+      <p class="nota">O percentual considera somente os dias com frequência registrada. Ocorrências não fazem parte deste relatório.</p>
+    }
+
+    @if (erro()) {
+      <div class="erro-geracao" role="alert">
+        <span>{{ erro() }}</span>
+      </div>
+    }
+
+    <div class="acoes-modal form-acoes">
+      <button type="button" class="btn-cancelar" (click)="cancelar()">Cancelar</button>
+      <button type="submit" class="btn-primary" [disabled]="gerando()" [attr.aria-busy]="gerando()">
+        @if (gerando()) { <span class="spinner"></span> Gerando... } @else { {{ erro() ? 'Tentar novamente' : 'Gerar arquivo' }} }
+      </button>
+    </div>
+  </form>
+</app-modal-layout>

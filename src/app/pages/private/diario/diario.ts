@@ -11,6 +11,7 @@ import { TurmaService } from 'src/app/shared/services/turma/turma.service';
 import { SessaoService } from 'src/app/shared/services/auth/sessao.service';
 import { DiarioService, FrequenciaUsuarioResponseDTO, OcorrenciaResponseDTO } from 'src/app/shared/services/diario/diario.service';
 import { ModalLayout } from '@components/modal-layout/modal-layout';
+import { ExportarRelatorio } from './exportar-relatorio/exportar-relatorio';
 
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -28,7 +29,7 @@ type FiltrosDiario = { idUnidade: number | null; idTurma: number | null; data: s
   selector: 'app-diario',
   standalone: true,
   imports: [EstadoVazio,
-    CommonModule, RouterLink, FormsModule, ReactiveFormsModule, ModalLayout,
+    CommonModule, RouterLink, FormsModule, ReactiveFormsModule, ModalLayout, ExportarRelatorio,
     MatFormFieldModule, MatInputModule, MatSelectModule, MatIconModule
   ],
   templateUrl: './diario.html',
@@ -103,6 +104,7 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
   private idTurmaInicialPendente: number | null = null;
   private deveAplicarSelecaoInicialTurma = false;
 
+  modalExportarAberto = false;
   modalOcorrenciaAberto = false;
   modoOcorrencia: 'LISTA' | 'NOVO' | 'EDITAR' | 'VER' = 'LISTA';
   modalOcorrenciaDetalheAberto = false;
@@ -446,6 +448,16 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
   get subtituloOcorrencia(): string {
     const nome = this.usuarioSelecionado?.nomeUsuario ?? '';
     return `Usuário: ${nome} em ${this.formatarData(this.filtroForm.get('data')?.value)}`;
+  }
+
+  abrirExportacao(): void {
+    if (this.salvando || !this.unidades.length) return;
+    this.modalExportarAberto = true;
+  }
+
+  fecharExportacao(): void {
+    this.modalExportarAberto = false;
+    this.cdr.markForCheck();
   }
 
   alterarData(dias: number) {
