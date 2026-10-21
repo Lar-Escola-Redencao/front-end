@@ -15,47 +15,32 @@ import {
 export type ExibicaoGrupo = 'formulario' | 'tabela';
 
 export interface CampoTextoConfig {
-  /** Campo do DTO que recebe o valor. */
   campo: 'titulo' | 'conteudo';
   rotulo: string;
   obrigatorio: boolean;
-  /** `telefone` aplica máscara na tela e envia só os dígitos. */
   tipo: 'texto' | 'telefone' | 'telefoneOuEmail';
 }
 
 export interface CampoImagemConfig {
   rotulo: string;
-  /** Obrigatória enquanto o registro ainda não tiver imagem salva. */
   obrigatoria: boolean;
 }
 
 export interface GrupoSecaoConfig {
   grupo: GrupoSecao;
-  /** Texto da aba; só aparece quando a página tem mais de um grupo. */
   rotuloAba: string;
   exibicao: ExibicaoGrupo;
-  /** Nome do item no singular, como aparece no meio de uma frase (títulos e mensagens). */
   nomeItem: string;
-  /** Só os campos listados aqui são enviados — o resto do DTO fica de fora. */
   campos: CampoTextoConfig[];
   imagem?: CampoImagemConfig;
-  /**
-   * Só na exibição `tabela`: o back guarda um único registro do grupo
-   * (POST é upsert), então o botão de adicionar some depois do primeiro.
-   */
   registroUnico?: boolean;
-  /** Só na exibição `tabela`: mostra a ação de excluir (padrão: true). */
   permiteExcluir?: boolean;
-  /** Só na exibição `tabela`: imagem antes dos campos de texto, na tabela e no modal. */
   imagemPrimeiro?: boolean;
-  /** Mostra e envia a flag de exibição do item. */
   controlaAtivo?: boolean;
 }
 
 export interface CaptacaoRecursosConfig {
-  /** Segmento da rota /dashboard/conteudo-publico/:secao. */
   secao: string;
-  /** Texto exibido no dropdown do CMS. */
   rotulo: string;
   idPagina: number;
   grupos: GrupoSecaoConfig[];
@@ -72,8 +57,18 @@ export const CAPTACAO_RECURSOS_CONFIG: CaptacaoRecursosConfig[] = [
         rotuloAba: 'Produtos e serviços',
         exibicao: 'tabela',
         nomeItem: 'produto ou serviço',
-        campos: [{ campo: 'titulo', rotulo: 'Nome do produto ou serviço', obrigatorio: true, tipo: 'texto' }],
-        imagem: { rotulo: 'Imagem do produto ou serviço', obrigatoria: true },
+        campos: [
+          {
+            campo: 'titulo',
+            rotulo: 'Nome do produto ou serviço',
+            obrigatorio: true,
+            tipo: 'texto',
+          },
+        ],
+        imagem: {
+          rotulo: 'Imagem do produto ou serviço',
+          obrigatoria: true,
+        },
         controlaAtivo: true,
       },
       {
@@ -82,7 +77,12 @@ export const CAPTACAO_RECURSOS_CONFIG: CaptacaoRecursosConfig[] = [
         exibicao: 'formulario',
         nomeItem: 'contato',
         campos: [
-          { campo: 'titulo', rotulo: 'WhatsApp', obrigatorio: true, tipo: 'telefone' },
+          {
+            campo: 'titulo',
+            rotulo: 'WhatsApp',
+            obrigatorio: true,
+            tipo: 'telefone',
+          },
           {
             campo: 'conteudo',
             rotulo: 'Contato secundário (Telefone ou E-mail)',
@@ -106,8 +106,19 @@ export const CAPTACAO_RECURSOS_CONFIG: CaptacaoRecursosConfig[] = [
         registroUnico: true,
         permiteExcluir: false,
         imagemPrimeiro: true,
-        campos: [{ campo: 'conteudo', rotulo: 'Chave Pix', obrigatorio: true, tipo: 'texto' }],
-        imagem: { rotulo: 'QR Code', obrigatoria: true },
+        controlaAtivo: true,
+        campos: [
+          {
+            campo: 'conteudo',
+            rotulo: 'Chave Pix',
+            obrigatorio: true,
+            tipo: 'texto',
+          },
+        ],
+        imagem: {
+          rotulo: 'QR Code',
+          obrigatoria: true,
+        },
       },
     ],
   },

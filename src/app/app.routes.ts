@@ -14,6 +14,10 @@ export const routes: Routes = [
     { path: 'eventos', component: Eventos},
     { path: 'eventos/:id', component: EventoDetalhe},
     {
+      path: 'como-ajudar',
+      loadComponent: () => import('./pages/public/como-ajudar/como-ajudar').then((m) => m.ComoAjudar),
+    },
+    {
         path: 'dashboard',
         canActivate: [authGuard],
         loadComponent: () => import('./pages/private/dashboard/dashboard').then(m => m.Dashboard),

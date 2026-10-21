@@ -1,0 +1,83 @@
+<app-public-navbar></app-public-navbar>
+
+<main class="como-ajudar">
+  <header class="page-header">
+    <h1>Como ajudar?</h1>
+    <p>Conheça as formas de contribuir com o Lar Escola Redenção.</p>
+  </header>
+
+  @if (carregando()) {
+  <div class="estado-carregamento" role="status" aria-live="polite">
+    <span class="indicador-carregamento" aria-hidden="true"></span>
+    <p>Carregando informações de doação...</p>
+  </div>
+  } @else if (erroCarregamento()) {
+  <div class="estado-erro" role="alert">
+    <p>Não foi possível carregar as informações de doação.</p>
+    <button type="button" class="botao-tentar-novamente" (click)="carregarPix()">
+      Tentar novamente
+    </button>
+  </div>
+  } @else if (pix(); as dadosPix) {
+  <section id="pix" class="secao-pix" aria-labelledby="titulo-pix">
+    <div class="pix-informacoes">
+      <div class="pix-marca">
+        <img src="/images/logo_pix.png" alt="Pix" />
+      </div>
+
+      <h2 id="titulo-pix">Faça sua doação via Pix</h2>
+
+      <p>
+        Você pode contribuir com qualquer valor para apoiar as atividades
+        da instituição.
+      </p>
+
+      <p>
+        Acesse o aplicativo do seu banco e escaneie o QR Code ou utilize
+        a chave Pix abaixo.
+      </p>
+
+      <div class="chave-pix">
+        <span class="chave-pix-rotulo">Chave Pix</span>
+        <p class="chave-pix-valor">{{ dadosPix.conteudo }}</p>
+      </div>
+    </div>
+
+    <div class="pix-imagem">
+      @if (imagemPix() && !erroImagem()) {
+      <img [src]="imagemPix()" alt="QR Code para doação via Pix ao Lar Escola Redenção" width="240" height="240"
+        (error)="marcarErroImagem()" />
+      <p class="qr-code-legenda">Escaneie para doar</p>
+      } @else {
+      <p class="imagem-indisponivel" role="status">
+        QR Code indisponível. Utilize a chave Pix para contribuir.
+      </p>
+      }
+    </div>
+  </section>
+  }
+
+  <section id="imposto-de-renda" class="secao-doacao" aria-labelledby="titulo-imposto-de-renda">
+    <h2 id="titulo-imposto-de-renda">Imposto de Renda</h2>
+
+    <div class="secao-conteudo">
+      <p>
+        Em breve, disponibilizaremos as orientações para contribuir
+        por meio do Imposto de Renda.
+      </p>
+    </div>
+  </section>
+
+  <section id="notas-fiscais" class="secao-doacao" aria-labelledby="titulo-notas-fiscais">
+    <h2 id="titulo-notas-fiscais">Doação de notas fiscais</h2>
+
+    <div class="secao-conteudo">
+      <p>
+        Em breve, disponibilizaremos as informações para apoiar
+        a instituição com a doação de notas fiscais.
+      </p>
+    </div>
+  </section>
+</main>
+
+<app-public-footer></app-public-footer>
