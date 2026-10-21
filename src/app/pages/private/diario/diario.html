@@ -33,11 +33,6 @@
           <input type="date" aria-label="Data do diário" formControlName="data" class="input-data-invisivel">
         </div>
       </div>
-
-      <button type="button" class="btn-exportar" [disabled]="!unidades.length || salvando" (click)="abrirExportacao()">
-        <mat-icon aria-hidden="true">download</mat-icon>
-        Exportar relatório
-      </button>
     </div>
 
     <div class="filtros-turma">
@@ -58,6 +53,11 @@
           }
         </mat-select>
       </mat-form-field>
+
+      <button type="button" class="btn-exportar" [disabled]="!unidades.length || salvando" (click)="abrirExportacao()">
+        <mat-icon aria-hidden="true">download</mat-icon>
+        Exportar relatório
+      </button>
     </div>
   </div>
 
