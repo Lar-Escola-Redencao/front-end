@@ -302,6 +302,7 @@ export class UsuarioPerfilDadosSocioeconomicos implements OnChanges, OnDestroy {
 
   private criarFamiliar(familiar?: ComposicaoFamiliarDTO) {
     return this.fb.group({
+      id: [familiar?.id ?? null],
       nomeCompleto: [familiar?.nomeCompleto ?? '', Validators.required],
       idade: [familiar?.idade ?? null],
       parentescoVinculo: [familiar?.parentescoVinculo ?? '', Validators.required],
@@ -319,6 +320,7 @@ export class UsuarioPerfilDadosSocioeconomicos implements OnChanges, OnDestroy {
     return {
       ...montarBaseAtualizacaoUsuario(this.usuario!),
       composicaoFamiliar: (dados.composicaoFamiliar as ComposicaoFamiliarDTO[]).map(familiar => ({
+        id: familiar.id,
         nomeCompleto: familiar.nomeCompleto || '',
         idade: Number(familiar.idade) || 0,
         parentescoVinculo: familiar.parentescoVinculo || '',

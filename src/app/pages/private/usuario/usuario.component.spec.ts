@@ -17,7 +17,7 @@ const usuario = {
   cpf: '12345678901', endereco: 'Rua A', bairro: 'Centro', cep: '14801000', escola: 'Escola',
   periodoEscolar: 'MANHA', serieEscolar: 'PRIMEIRO_ANO', idUnidade: 1, idTurma: 2,
   contatos: [{ id: 8, nomeCompleto: 'Ana Silva', telefone: '11999999999', cpf: '', parentesco: 'MAE', principal: true }],
-  composicaoFamiliar: [{ nomeCompleto: 'Ana Silva', parentescoVinculo: 'MAE', idade: 0, escolaridade: 'MEDIO_COMPLETO', renda: 0, beneficios: 0 }],
+  composicaoFamiliar: [{ id: 12, nomeCompleto: 'Ana Silva', parentescoVinculo: 'MAE', idade: 0, escolaridade: 'MEDIO_COMPLETO', renda: 0, beneficios: 0 }],
   fichaSocioeconomica: { tipoMoradia: 'PROPRIA', despesaAgua: 25, utilizaCarro: false, gastoCarro: 100, temAlergia: false, religiao: 'Budista' }
 };
 
@@ -121,6 +121,7 @@ describe('Contrato de edição de usuários', () => {
     const dto = service.atualizar.mock.calls[0][1];
     expect(dto.contatos[0]).toMatchObject({ id: 8, telefone: '11988888888' });
     expect(dto.composicaoFamiliar[0].renda).toBe(0);
+    expect(dto.composicaoFamiliar[0].id).toBe(12);
     expect(dto.fichaSocioeconomica).toMatchObject({ despesaAgua: 0, utilizaCarro: false, gastoCarro: 0, religiao: 'Budista' });
     component.contatosArray.at(0).get('telefone')?.setValue('(11) 99999-9999');
     expect(component.contatoExistenteAlterado(0)).toBe(false);

@@ -939,6 +939,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
 
   adicionarFamiliar(): void {
     this.familiaresArray.push(this.fb.group({
+      id: [null as number | null],
       nomeCompleto: ['', Validators.required], idade: [null],
       parentescoVinculo: ['', Validators.required], escolaridade: ['', Validators.required],
       renda: [null], beneficios: [null]
