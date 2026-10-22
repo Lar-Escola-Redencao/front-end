@@ -578,7 +578,12 @@ export class CaptacaoRecursos implements OnInit, OnDestroy, ComponentComAlteraco
     }
 
     this.salvando = true;
-    const dto = montarDtoGrupo(this.grupoAtivo, this.form, this.arquivoSelecionado);
+    const dto = montarDtoGrupo(
+      this.grupoAtivo,
+      this.form,
+      this.arquivoSelecionado,
+      this.itemEditando ?? this.secaoContato,
+    );
 
     // Contato edita o registro único do grupo; nas tabelas, só há id ao editar
     // um item — criar é sempre POST.

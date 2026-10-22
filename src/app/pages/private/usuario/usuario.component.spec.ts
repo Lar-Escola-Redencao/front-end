@@ -122,9 +122,46 @@ describe('Contrato de edição de usuários', () => {
     expect(dto.contatos[0]).toMatchObject({ id: 8, telefone: '11988888888' });
     expect(dto.composicaoFamiliar[0].renda).toBe(0);
     expect(dto.composicaoFamiliar[0].id).toBe(12);
-    expect(dto.fichaSocioeconomica).toMatchObject({ despesaAgua: 0, utilizaCarro: false, gastoCarro: 0, religiao: 'Budista' });
+    expect(dto.fichaSocioeconomica).toMatchObject({ despesaAgua: 0, utilizaCarro: false, gastoCarro: 100, religiao: 'Budista' });
     component.contatosArray.at(0).get('telefone')?.setValue('(11) 99999-9999');
     expect(component.contatoExistenteAlterado(0)).toBe(false);
+  });
+
+  it('preserva campos vazios da ficha ao editar somente o nome', () => {
+    const ficha = { ...usuario.fichaSocioeconomica, despesaAgua: null, religiao: '', gastoCarro: null };
+    service.buscarPorId.mockReturnValue(of({ ...usuario, fichaSocioeconomica: ficha }));
+    component.abrirEdicao(usuario);
+    component.formUsuario.get('nomeCompleto')!.setValue('Maria Atualizada');
+    component.salvar();
+
+    expect(service.atualizar).toHaveBeenCalledOnce();
+    expect(service.atualizar.mock.calls[0][1].fichaSocioeconomica).toEqual(ficha);
+  });
+
+  it('limpa o gasto de transporte quando a utilização é desmarcada explicitamente', () => {
+    service.buscarPorId.mockReturnValue(of({ ...usuario,
+      fichaSocioeconomica: { ...usuario.fichaSocioeconomica, utilizaCarro: true }
+    }));
+    component.abrirEdicao(usuario);
+    component.formUsuario.get('complementares.utilizaCarro')!.setValue(false);
+    component.salvar();
+
+    expect(service.atualizar).toHaveBeenCalledOnce();
+    expect(service.atualizar.mock.calls[0][1].fichaSocioeconomica).toMatchObject({ utilizaCarro: false, gastoCarro: 0 });
+  });
+
+  it('preserva CPF e documento auxiliar preexistentes ao editar somente o nome na listagem', () => {
+    service.buscarPorId.mockReturnValue(of({
+      ...usuario, documentoAuxiliar: 'CERTIDAO-123', tipoDocumento: 'CERTIDAO_NASCIMENTO'
+    }));
+    component.abrirEdicao(usuario);
+    component.formUsuario.get('nomeCompleto')!.setValue('Maria Atualizada');
+    component.salvar();
+
+    expect(service.atualizar).toHaveBeenCalledOnce();
+    expect(service.atualizar.mock.calls[0][1]).toMatchObject({
+      cpf: usuario.cpf, documentoAuxiliar: 'CERTIDAO-123', tipoDocumento: 'CERTIDAO_NASCIMENTO'
+    });
   });
 
   it('preserva alterações digitadas antes de chegar a consulta de turmas da edição', () => {
@@ -202,7 +239,7 @@ describe('Contrato de edição de usuários', () => {
       const controle = component.formUsuario.get('cep')!;
       controle.markAsDirty();
       controle.markAsTouched();
-      controle.setValue('14801-000');
+      controle.setValue('14802-000');
       await vi.advanceTimersByTimeAsync(450);
       expect(component.erroCep).toContain('Endereço não localizado');
       expect(controle.valid).toBe(true);
@@ -247,7 +284,7 @@ describe('Contrato de edição de usuários', () => {
       cep.consultar.mockReturnValueOnce(of({ erro: true }));
       controle.setValue('99999999');
       await vi.advanceTimersByTimeAsync(401);
-      expect(component.erroCep).toContain('não encontrado');
+      expect(component.erroCep).toContain('não localizado');
       cep.consultar.mockReturnValueOnce(throwError(() => new Error('Indisponível')));
       controle.setValue('01001000');
       await vi.advanceTimersByTimeAsync(401);

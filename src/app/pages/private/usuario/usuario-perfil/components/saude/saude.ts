@@ -11,7 +11,12 @@ import { environment } from 'src/environments/environment';
 import { ArquivoSaudeDTO, CadastroUsuarioCompletoDTO, UsuarioResponseDTO } from 'src/app/shared/models/usuario.model';
 import { UsuarioService } from 'src/app/shared/services/usuario/usuario.service';
 import { baixarArquivoComVerificacao, visualizarArquivoComVerificacao } from 'src/app/shared/utils/arquivo-acesso';
-import { montarBaseAtualizacaoUsuario, montarFichaSocioeconomicaBase } from '../../utils/usuario-atualizacao-dto';
+import {
+  dependenciasFichaSocioeconomica,
+  montarBaseAtualizacaoUsuario,
+  montarFichaSocioeconomicaBase,
+  preservarCamposNaoEditados
+} from '../../utils/usuario-atualizacao-dto';
 import {
   TAMANHO_MAXIMO_ARQUIVO_BYTES,
   obterMensagemErro,
@@ -293,7 +298,7 @@ export class UsuarioPerfilSaude implements OnChanges {
 
     return {
       ...montarBaseAtualizacaoUsuario(this.usuario!),
-      fichaSocioeconomica: {
+      fichaSocioeconomica: preservarCamposNaoEditados(ficha, {
         ...ficha,
         possuiProblemaSaude: !!dados.possuiProblemaSaude,
         descProblemaSaude: dados.possuiProblemaSaude ? dados.descProblemaSaude || '' : '',
@@ -301,7 +306,7 @@ export class UsuarioPerfilSaude implements OnChanges {
         descMedicacao: dados.usaMedicacao ? dados.descMedicacao || '' : '',
         temAlergia: !!dados.temAlergia,
         descAlergia: dados.temAlergia ? dados.descAlergia || '' : ''
-      }
+      }, this.valoresOriginais as Record<string, unknown>, dados, dependenciasFichaSocioeconomica)
     };
   }
 

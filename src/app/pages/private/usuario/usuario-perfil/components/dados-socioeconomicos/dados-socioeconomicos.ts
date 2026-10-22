@@ -10,7 +10,12 @@ import { ToastrService } from 'ngx-toastr';
 import { Subscription } from 'rxjs';
 import { CadastroUsuarioCompletoDTO, ComposicaoFamiliarDTO, UsuarioResponseDTO } from 'src/app/shared/models/usuario.model';
 import { UsuarioService } from 'src/app/shared/services/usuario/usuario.service';
-import { montarBaseAtualizacaoUsuario, montarFichaSocioeconomicaBase } from '../../utils/usuario-atualizacao-dto';
+import {
+  dependenciasFichaSocioeconomica,
+  montarBaseAtualizacaoUsuario,
+  montarFichaSocioeconomicaBase,
+  preservarCamposNaoEditados
+} from '../../utils/usuario-atualizacao-dto';
 
 @Component({
   selector: 'app-usuario-perfil-dados-socioeconomicos',
@@ -319,16 +324,27 @@ export class UsuarioPerfilDadosSocioeconomicos implements OnChanges, OnDestroy {
 
     return {
       ...montarBaseAtualizacaoUsuario(this.usuario!),
-      composicaoFamiliar: (dados.composicaoFamiliar as ComposicaoFamiliarDTO[]).map(familiar => ({
-        id: familiar.id,
-        nomeCompleto: familiar.nomeCompleto || '',
-        idade: Number(familiar.idade) || 0,
-        parentescoVinculo: familiar.parentescoVinculo || '',
-        escolaridade: familiar.escolaridade || '',
-        renda: Number(familiar.renda) || 0,
-        beneficios: Number(familiar.beneficios) || 0
-      })),
-      fichaSocioeconomica: {
+      composicaoFamiliar: (dados.composicaoFamiliar as ComposicaoFamiliarDTO[]).map(familiar => {
+        const original = this.usuario!.composicaoFamiliar?.find(atual => atual.id === familiar.id);
+        const atualizado = {
+          id: familiar.id,
+          nomeCompleto: familiar.nomeCompleto || '',
+          idade: Number(familiar.idade) || 0,
+          parentescoVinculo: familiar.parentescoVinculo || '',
+          escolaridade: familiar.escolaridade || '',
+          renda: Number(familiar.renda) || 0,
+          beneficios: Number(familiar.beneficios) || 0
+        };
+        if (!original) return atualizado;
+
+        return preservarCamposNaoEditados(
+          original,
+          atualizado,
+          original as unknown as Record<string, unknown>,
+          familiar as unknown as Record<string, unknown>
+        );
+      }),
+      fichaSocioeconomica: preservarCamposNaoEditados(fichaAtual, {
         ...fichaAtual,
         tipoMoradia: dados.tipoMoradia || 'OUTRO',
         valorAluguel: ['ALUGADA', 'APARTAMENTO_ALUGADO'].includes(dados.tipoMoradia || '') ? Number(dados.valorAluguel) || 0 : 0,
@@ -351,7 +367,7 @@ export class UsuarioPerfilDadosSocioeconomicos implements OnChanges, OnDestroy {
         gastoVan: Number(dados.gastoVan) || 0,
         andandoOuBicicleta: !!dados.andandoOuBicicleta,
         religiao: religiao || 'Sem Religião'
-      }
+      }, this.valoresOriginais as Record<string, unknown>, dados, dependenciasFichaSocioeconomica)
     };
   }
 }

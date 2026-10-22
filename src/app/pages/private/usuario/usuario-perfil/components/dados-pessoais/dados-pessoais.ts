@@ -260,7 +260,7 @@ export class UsuarioPerfilDadosPessoais implements OnChanges {
       tipoDocumento: this.usuario?.tipoDocumento ?? 'CERTIDAO_NASCIMENTO',
       documentoAuxiliar: this.usuario?.documentoAuxiliar ?? '',
       cadUnico: this.usuario?.cadUnico ?? '',
-      usarOutroDocumento: !!this.usuario?.documentoAuxiliar,
+      usarOutroDocumento: !this.usuario?.cpf && !!this.usuario?.documentoAuxiliar,
       cep: formatarCep(this.usuario?.cep ?? ''),
       bairro: this.usuario?.bairro ?? '',
       endereco: this.usuario?.endereco ?? '',
@@ -279,12 +279,17 @@ export class UsuarioPerfilDadosPessoais implements OnChanges {
 
   private montarDtoAtualizacao(): Partial<CadastroUsuarioCompletoDTO> {
     const dados = this.form.getRawValue();
+    const documentosAlterados = ['cpf', 'documentoAuxiliar', 'tipoDocumento', 'usarOutroDocumento']
+      .some(campo => this.form.get(campo)?.value !== (this.valoresOriginais as Record<string, unknown>)?.[campo]);
+    const documentos = documentosAlterados ? {
+      cpf: dados.usarOutroDocumento ? null : dados.cpf?.replace(/\D/g, '') || null,
+      documentoAuxiliar: dados.usarOutroDocumento ? dados.documentoAuxiliar || null : null,
+      tipoDocumento: dados.usarOutroDocumento ? dados.tipoDocumento || null : null
+    } : {};
     return montarBaseAtualizacaoUsuario(this.usuario!, {
       nomeCompleto: dados.nomeCompleto || '',
       dataNascimento: dados.dataNascimento || '',
-      cpf: dados.usarOutroDocumento ? null : dados.cpf?.replace(/\D/g, '') || null,
-      documentoAuxiliar: dados.usarOutroDocumento ? dados.documentoAuxiliar || null : null,
-      tipoDocumento: dados.usarOutroDocumento ? dados.tipoDocumento || null : null,
+      ...documentos,
       cadUnico: dados.cadUnico || '',
       cep: dados.cep?.replace(/\D/g, '') || '',
       bairro: dados.bairro || '',
