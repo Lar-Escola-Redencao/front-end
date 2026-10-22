@@ -3,6 +3,7 @@ import { DatePipe } from '@angular/common';
 import { Subscription, forkJoin } from 'rxjs';
 import { CampoHistorico, HistoricoDetalhe, HistoricoEvento, TipoAlteracaoHistorico, ValorHistorico } from '../../shared/models/historico.model';
 import { HistoricoService } from '../../shared/services/historico/historico.service';
+import { formatarCep, formatarCpf, formatarTelefone } from '../../shared/utils/masks';
 
 @Component({
   selector: 'app-historico-detalhe',
@@ -16,6 +17,13 @@ export class HistoricoDetalheComponent implements OnChanges, OnDestroy {
   private readonly service = inject(HistoricoService);
   private readonly cdr = inject(ChangeDetectorRef);
   private requisicao?: Subscription;
+  private readonly moeda = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
+  private readonly camposMonetarios = new Set([
+    'valor', 'renda', 'beneficios', 'valorAluguel', 'valorFinanciamento',
+    'despesaEnergia', 'despesaAgua', 'despesaInternet', 'despesaTelefone',
+    'despesaMercado', 'despesaFarmacia', 'despesaFinanciamentos', 'despesaOutras',
+    'gastoCarro', 'gastoMoto', 'gastoTransportePublico', 'gastoVan'
+  ]);
   detalhes: HistoricoDetalhe[] = [];
   carregando = false;
   erro = false;
@@ -172,6 +180,33 @@ export class HistoricoDetalheComponent implements OnChanges, OnDestroy {
         return this.formatar(informacao);
       }
       return valor == null ? 'Sem vínculo' : 'Nome do vínculo indisponível neste registro';
+    }
+    return this.formatarCampo(detalhe, campo, valor);
+  }
+
+  private formatarCampo(detalhe: HistoricoDetalhe, campo: CampoHistorico, valor: ValorHistorico): string {
+    if (valor === null || valor === '' || (typeof valor !== 'string' && typeof valor !== 'number')) {
+      return this.formatar(valor);
+    }
+
+    const texto = String(valor);
+    const numeros = texto.replace(/\D/g, '');
+    const contatoGrafica = detalhe.evento.tipoRegistro === 'GRAFICA'
+      && detalhe.evento.informacaoAlterada === 'Contato da gráfica'
+      && ['titulo', 'conteudo'].includes(campo.campo);
+    const telefone = campo.campo === 'telefone' || contatoGrafica;
+
+    if (telefone && /^[\d\s()+.\-]+$/.test(texto) && [10, 11].includes(numeros.length)) {
+      return formatarTelefone(texto);
+    }
+    if (campo.campo === 'cpf' && /^[\d.\-\s]+$/.test(texto) && numeros.length === 11) {
+      return formatarCpf(texto);
+    }
+    if (campo.campo === 'cep' && /^[\d\-\s]+$/.test(texto) && numeros.length === 8) {
+      return formatarCep(texto);
+    }
+    if (this.camposMonetarios.has(campo.campo) && texto.trim() !== '' && Number.isFinite(Number(valor))) {
+      return this.moeda.format(Number(valor));
     }
     return this.formatar(valor);
   }
