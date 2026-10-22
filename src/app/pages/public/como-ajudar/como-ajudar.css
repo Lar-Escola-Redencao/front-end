@@ -186,9 +186,25 @@ p {
 }
 
 .chave-pix {
-  margin-top: 28px;
-  padding-top: 20px;
-  border-top: 1px solid #cbdcf0;
+  width: 100%;
+  min-width: 0;
+}
+
+.pix-separador {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  color: #595959;
+  font-size: 0.75rem;
+}
+
+.pix-separador::before,
+.pix-separador::after {
+  flex: 1;
+  height: 1px;
+  background-color: #d8e5f3;
+  content: '';
 }
 
 .chave-pix-rotulo {

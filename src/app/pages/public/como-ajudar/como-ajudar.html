@@ -20,10 +20,6 @@
         <a class="btn-primary abertura-botao" routerLink="/como-ajudar" fragment="pix">
           Como contribuir
         </a>
-
-        <p class="abertura-convite">
-          Você escolhe o valor da sua doação.
-        </p>
       }
     </div>
 
@@ -79,21 +75,25 @@
 
           <ol class="pix-passos">
             <li>Abra o aplicativo do seu banco e escolha a opção Pix.</li>
-            <li>Escaneie o QR Code ou utilize a chave abaixo.</li>
+            <li>Utilize a chave Pix ou escaneie o QR Code.</li>
             <li>Escolha o valor e confira os dados antes de confirmar.</li>
           </ol>
+        </div>
 
+        <div class="pix-imagem">
           @if (dadosPix.conteudo) {
             <div class="chave-pix">
               <span class="chave-pix-rotulo">Chave Pix</span>
               <p class="chave-pix-valor">{{ dadosPix.conteudo }}</p>
             </div>
           }
-        </div>
 
-        <div class="pix-imagem">
           @if (imagemPix() && !erroImagem()) {
-            <p class="qr-code-titulo">Aponte a câmera do seu banco</p>
+            @if (dadosPix.conteudo) {
+              <span class="pix-separador">OU</span>
+            }
+
+            <p class="chave-pix-rotulo">QR Code</p>
 
             <img
               [src]="imagemPix()"
