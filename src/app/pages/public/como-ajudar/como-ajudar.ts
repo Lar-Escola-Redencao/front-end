@@ -1,6 +1,7 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DestroyRef } from '@angular/core';
+import { RouterLink } from '@angular/router';
 
 import { PublicNavbar } from '@components/public-navbar/public-navbar';
 import { PublicFooter } from '@components/public-footer/public-footer';
@@ -18,7 +19,7 @@ import { PublicContentService } from 'src/app/shared/services/public-content/pub
 @Component({
   selector: 'app-como-ajudar',
   standalone: true,
-  imports: [PublicNavbar, PublicFooter],
+  imports: [PublicNavbar, PublicFooter, RouterLink],
   templateUrl: './como-ajudar.html',
   styleUrl: './como-ajudar.css',
 })

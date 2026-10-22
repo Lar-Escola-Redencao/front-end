@@ -1,83 +1,170 @@
 <app-public-navbar></app-public-navbar>
 
 <main class="como-ajudar">
-  <header class="page-header">
-    <h1>Como ajudar?</h1>
-    <p>Conheça as formas de contribuir com o Lar Escola Redenção.</p>
-  </header>
+  <header class="abertura container">
+    <div class="abertura-conteudo">
+      <p class="sobretitulo">Como ajudar?</p>
 
-  @if (carregando()) {
-  <div class="estado-carregamento" role="status" aria-live="polite">
-    <span class="indicador-carregamento" aria-hidden="true"></span>
-    <p>Carregando informações de doação...</p>
-  </div>
-  } @else if (erroCarregamento()) {
-  <div class="estado-erro" role="alert">
-    <p>Não foi possível carregar as informações de doação.</p>
-    <button type="button" class="botao-tentar-novamente" (click)="carregarPix()">
-      Tentar novamente
-    </button>
-  </div>
-  } @else if (pix(); as dadosPix) {
-  <section id="pix" class="secao-pix" aria-labelledby="titulo-pix">
-    <div class="pix-informacoes">
-      <div class="pix-marca">
-        <img src="/images/logo_pix.png" alt="Pix" />
-      </div>
+      <h1>
+        Sua ajuda faz parte
+        <span>dessa história.</span>
+      </h1>
 
-      <h2 id="titulo-pix">Faça sua doação via Pix</h2>
-
-      <p>
-        Você pode contribuir com qualquer valor para apoiar as atividades
-        da instituição.
+      <p class="abertura-descricao">
+        Junte-se ao Lar Escola Redenção e contribua para o cuidado
+        e as oportunidades na vida de nossas crianças.
+        Cada contribuição é uma forma de participar.
       </p>
 
-      <p>
-        Acesse o aplicativo do seu banco e escaneie o QR Code ou utilize
-        a chave Pix abaixo.
-      </p>
+      @if (pix()) {
+        <a class="btn-primary abertura-botao" routerLink="/como-ajudar" fragment="pix">
+          Como contribuir
+        </a>
 
-      <div class="chave-pix">
-        <span class="chave-pix-rotulo">Chave Pix</span>
-        <p class="chave-pix-valor">{{ dadosPix.conteudo }}</p>
-      </div>
-    </div>
-
-    <div class="pix-imagem">
-      @if (imagemPix() && !erroImagem()) {
-      <img [src]="imagemPix()" alt="QR Code para doação via Pix ao Lar Escola Redenção" width="240" height="240"
-        (error)="marcarErroImagem()" />
-      <p class="qr-code-legenda">Escaneie para doar</p>
-      } @else {
-      <p class="imagem-indisponivel" role="status">
-        QR Code indisponível. Utilize a chave Pix para contribuir.
-      </p>
+        <p class="abertura-convite">
+          Você escolhe o valor da sua doação.
+        </p>
       }
     </div>
-  </section>
-  }
 
-  <section id="imposto-de-renda" class="secao-doacao" aria-labelledby="titulo-imposto-de-renda">
-    <h2 id="titulo-imposto-de-renda">Imposto de Renda</h2>
-
-    <div class="secao-conteudo">
-      <p>
-        Em breve, disponibilizaremos as orientações para contribuir
-        por meio do Imposto de Renda.
-      </p>
+    <div class="abertura-ilustracao">
+      <img
+        src="/images/doacao-solidaria.png"
+        alt=""
+        width="2000"
+        height="2000"
+        fetchpriority="high"
+      />
     </div>
-  </section>
+  </header>
 
-  <section id="notas-fiscais" class="secao-doacao" aria-labelledby="titulo-notas-fiscais">
-    <h2 id="titulo-notas-fiscais">Doação de notas fiscais</h2>
+  <div class="formas-ajuda container">
+    @if (carregando()) {
+      <div class="estado-carregamento" role="status" aria-live="polite">
+        <span class="indicador-carregamento" aria-hidden="true"></span>
+        <p>Carregando informações de doação...</p>
+      </div>
+    } @else if (erroCarregamento()) {
+      <div class="estado-erro" role="alert">
+        <p>Não foi possível carregar as informações de doação.</p>
 
-    <div class="secao-conteudo">
-      <p>
-        Em breve, disponibilizaremos as informações para apoiar
-        a instituição com a doação de notas fiscais.
-      </p>
-    </div>
-  </section>
+        <button
+          type="button"
+          class="btn-primary botao-tentar-novamente"
+          (click)="carregarPix()"
+        >
+          Tentar novamente
+        </button>
+      </div>
+    } @else if (pix(); as dadosPix) {
+      <section
+        id="pix"
+        class="secao-pix"
+        aria-labelledby="titulo-pix"
+      >
+        <div class="pix-informacoes">
+          <div class="pix-marca">
+            <img src="/images/logo_pix.png" alt="Pix" />
+          </div>
+
+          <h2 id="titulo-pix">
+            Um gesto seu.<br />
+            Mais apoio para continuar.
+          </h2>
+
+          <p class="pix-descricao">
+            Doe via Pix e apoie as atividades do Lar Escola Redenção.
+            Qualquer valor é bem-vindo.
+          </p>
+
+          <ol class="pix-passos">
+            <li>Abra o aplicativo do seu banco e escolha a opção Pix.</li>
+            <li>Escaneie o QR Code ou utilize a chave abaixo.</li>
+            <li>Escolha o valor e confira os dados antes de confirmar.</li>
+          </ol>
+
+          @if (dadosPix.conteudo) {
+            <div class="chave-pix">
+              <span class="chave-pix-rotulo">Chave Pix</span>
+              <p class="chave-pix-valor">{{ dadosPix.conteudo }}</p>
+            </div>
+          }
+        </div>
+
+        <div class="pix-imagem">
+          @if (imagemPix() && !erroImagem()) {
+            <p class="qr-code-titulo">Aponte a câmera do seu banco</p>
+
+            <img
+              [src]="imagemPix()"
+              alt="QR Code para doação via Pix ao Lar Escola Redenção"
+              width="240"
+              height="240"
+              (error)="marcarErroImagem()"
+            />
+          } @else {
+            <p class="imagem-indisponivel" role="status">
+              @if (dadosPix.conteudo) {
+                QR Code indisponível. Utilize a chave Pix para contribuir.
+              } @else {
+                As informações para Como contribuir estão indisponíveis
+                no momento.
+              }
+            </p>
+          }
+        </div>
+      </section>
+    }
+
+    <section
+      class="outras-formas"
+      aria-labelledby="titulo-outras-formas"
+    >
+      <header class="outras-formas-cabecalho">
+        <h2 id="titulo-outras-formas">Outras formas de fazer parte</h2>
+
+        <p>
+          Estamos preparando as orientações sobre estas formas
+          de apoiar o Lar Escola Redenção.
+        </p>
+      </header>
+
+      <section
+        id="imposto-de-renda"
+        class="secao-doacao"
+        aria-labelledby="titulo-imposto-de-renda"
+      >
+        <h3 id="titulo-imposto-de-renda">Imposto de Renda</h3>
+
+        <div class="secao-conteudo">
+          <p>
+            As orientações para contribuir por meio do Imposto de Renda
+            serão disponibilizadas aqui.
+          </p>
+        </div>
+      </section>
+
+      <section
+        id="notas-fiscais"
+        class="secao-doacao"
+        aria-labelledby="titulo-notas-fiscais"
+      >
+        <h3 id="titulo-notas-fiscais">Doação de notas fiscais</h3>
+
+        <div class="secao-conteudo">
+          <p>
+            Este espaço reunirá as informações para apoiar a instituição
+            com a doação de notas fiscais.
+          </p>
+        </div>
+      </section>
+    </section>
+
+    <p class="mensagem-final">
+      Cada gesto importa.
+      <span>Obrigado por fazer parte dessa história.</span>
+    </p>
+  </div>
 </main>
 
 <app-public-footer></app-public-footer>

@@ -5,6 +5,7 @@ import {
 } from '@angular/common/http/testing';
 import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 
 import { PublicNavbar } from '@components/public-navbar/public-navbar';
 import { PublicFooter } from '@components/public-footer/public-footer';
@@ -46,7 +47,7 @@ describe('ComoAjudar', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [ComoAjudar],
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
     })
       .overrideComponent(ComoAjudar, {
         remove: {
@@ -96,6 +97,15 @@ describe('ComoAjudar', () => {
     ).toBe(`${environment.apiUrl}${pix.imagem}`);
   });
 
+  it('direciona a chamada de doação para o Pix na página Como ajudar', () => {
+    responder([pix]);
+
+    const link = elemento.querySelector<HTMLAnchorElement>('.abertura-botao');
+
+    expect(link?.getAttribute('href')).toBe('/como-ajudar#pix');
+    expect(link?.textContent).toContain('Como contribuir');
+  });
+
   it('preserva o endereço absoluto da imagem', () => {
     const imagem = 'https://exemplo.org/qrcode.png';
 
@@ -112,6 +122,7 @@ describe('ComoAjudar', () => {
     expect(elemento.querySelector('#pix')).toBeNull();
     expect(elemento.querySelector('.chave-pix')).toBeNull();
     expect(elemento.querySelector('.pix-imagem')).toBeNull();
+    expect(elemento.querySelector('.abertura-botao')).toBeNull();
     expect(elemento.textContent).not.toContain(pix.conteudo);
     expect(elemento.querySelector('#imposto-de-renda')).not.toBeNull();
     expect(elemento.querySelector('#notas-fiscais')).not.toBeNull();
