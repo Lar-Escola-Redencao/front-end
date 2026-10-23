@@ -1,8 +1,9 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable, Subject } from 'rxjs';
+import { EMPTY, Observable, Subject, catchError, map, merge, of, shareReplay, switchMap, tap } from 'rxjs';
 
 import { environment } from 'src/environments/environment';
+import { HistoricoAtualizacoesService } from './historico-atualizacoes.service';
 import {
   FiltrosHistorico,
   AtividadeHistorico,
@@ -18,17 +19,32 @@ import { PaginaResposta } from '../../models/pagina.model';
 export class HistoricoService {
   private readonly http = inject(HttpClient);
   private readonly apiUrl = `${environment.apiUrl}/historico-alteracoes`;
+  private readonly avisos = inject(HistoricoAtualizacoesService);
   readonly leituraAlterada = new Subject<void>();
+  readonly atualizacoes = merge(
+    of(undefined),
+    this.avisos.sucesso,
+    this.leituraAlterada
+  );
+  readonly novidadesGerais = this.atualizacoes.pipe(
+    switchMap(() => this.consultarLeitura(null, { periodo: 'TODOS' }).pipe(
+      map(leitura => leitura.temNovidades),
+      catchError(() => EMPTY)
+    )),
+    shareReplay({ bufferSize: 1, refCount: true })
+  );
 
   atividades(
     tipoRegistro: TipoRegistroHistorico | null,
     pagina: number,
     tamanho: number,
     busca: string,
-    filtros: FiltrosHistorico
+    filtros: FiltrosHistorico,
+    sort?: string
   ): Observable<PaginaResposta<AtividadeHistorico>> {
-    const params = this.parametros(tipoRegistro, filtros)
+    let params = this.parametros(tipoRegistro, filtros)
       .set('page', pagina).set('size', tamanho).set('search', busca.trim());
+    if (sort) params = params.set('sort', sort);
     return this.http.get<PaginaResposta<AtividadeHistorico>>(`${this.apiUrl}/atividades`, { params });
   }
 
@@ -45,7 +61,7 @@ export class HistoricoService {
   marcarLido(tipo: TipoRegistroHistorico | null, filtros: FiltrosHistorico, ultimoEvento: number): Observable<void> {
     return this.http.put<void>(`${this.apiUrl}/atividades/leitura`, { ultimoEvento }, {
       params: this.parametros(tipo, filtros)
-    });
+    }).pipe(tap(() => this.leituraAlterada.next()));
   }
 
   private parametros(tipo: TipoRegistroHistorico | null, filtros: FiltrosHistorico): HttpParams {

@@ -74,17 +74,23 @@
           </a>
         }
 
-        @if (podeAcessar('historico-alteracoes')) {
-          <a class="card-opcao" routerLink="/dashboard/historico-alteracoes" routerLinkActive="ativo" (click)="fecharMenu()">
-            <span class="material-symbols-outlined">history</span>
-            <span class="texto-link">Histórico de Alterações</span>
-          </a>
-        }
-
         @if (podeAcessar('conteudo-publico')) {
           <a class="card-opcao" routerLink="/dashboard/conteudo-publico" routerLinkActive="ativo" (click)="fecharMenu()">
             <span class="material-symbols-outlined">captive_portal</span>
             <span class="texto-link">Conteúdo público</span>
+          </a>
+        }
+
+        @if (podeAcessar('historico-alteracoes')) {
+          <a class="card-opcao" routerLink="/dashboard/historico-alteracoes" routerLinkActive="ativo" (click)="fecharMenu()">
+            <span class="material-symbols-outlined icone-historico"
+              [attr.title]="(temNovidadesHistorico | async) ? 'Histórico de alterações: novo' : 'Histórico de alterações'">
+              history
+              @if (temNovidadesHistorico | async) {
+                <span class="novidade-historico" role="img" aria-label="Novas alterações"></span>
+              }
+            </span>
+            <span class="texto-link">Histórico de Alterações</span>
           </a>
         }
       </div>

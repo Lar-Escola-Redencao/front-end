@@ -1,11 +1,14 @@
 import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { AbasResponsivas } from 'src/app/shared/directives/abas-responsivas';
+import { A11yModule } from '@angular/cdk/a11y';
+import { OverlayModule } from '@angular/cdk/overlay';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { FormsModule, NgForm } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
-import { Subscription } from 'rxjs';
+import { Subject, Subscription, debounceTime } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HistoricoDetalheComponent } from '@components/historico-detalhe/historico-detalhe';
 
@@ -22,7 +25,7 @@ import {
   TipoRegistroHistorico
 } from 'src/app/shared/models/historico.model';
 import { HistoricoService } from 'src/app/shared/services/historico/historico.service';
-import { TAMANHOS_PAGINA_PERMITIDOS } from 'src/app/shared/utils/paginacao-url';
+import { CampoOrdenacao, alternarOrdenacao, analisarOrdenacao, TAMANHOS_PAGINA_PERMITIDOS } from 'src/app/shared/utils/paginacao-url';
 
 @Component({
   selector: 'app-historico',
@@ -30,6 +33,9 @@ import { TAMANHOS_PAGINA_PERMITIDOS } from 'src/app/shared/utils/paginacao-url';
   imports: [
     AbasResponsivas,
     FormsModule,
+    OverlayModule,
+    A11yModule,
+    MatAutocompleteModule,
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
@@ -47,12 +53,20 @@ export class Historico implements OnInit, OnDestroy {
   private readonly historicoService = inject(HistoricoService);
   private readonly changeDetector = inject(ChangeDetectorRef);
   private listaSub?: Subscription;
+  private leituraSub?: Subscription;
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private rotaSub?: Subscription;
   private responsaveisSub?: Subscription;
   responsaveis: ResponsavelHistorico[] = [];
   erroResponsaveis = false;
+  responsavelBusca: ResponsavelHistorico | string | null = null;
+  responsaveisFiltrados: ResponsavelHistorico[] = [];
+  private readonly buscaResponsavel = new Subject<string>();
+  private buscaResponsavelSub?: Subscription;
+  areaAberta = false;
+  sort: string | undefined;
+  ordenacao: CampoOrdenacao | null = { campo: 'dataHora', direcao: 'desc' };
   periodo: 'RECENTES' | 'ARQUIVADOS' | 'TODOS' = 'RECENTES';
   contexto: FiltrosHistorico = {};
   atividades: AtividadeHistorico[] = [];
@@ -90,21 +104,24 @@ export class Historico implements OnInit, OnDestroy {
   };
 
   readonly colunas: TabelaColuna<HistoricoEvento>[] = [
-    { chave: 'dataHora', titulo: 'Data e hora', formatar: valor => this.formatarDataHora(valor) },
+    { chave: 'dataHora', titulo: 'Data e hora', ordenavel: true, formatar: valor => this.formatarDataHora(valor) },
     {
       chave: 'identificacaoRegistro',
       titulo: 'Registro',
+      ordenavel: true,
       principalMobile: true,
       formatar: (_, evento) => evento.identificacaoRegistro,
       etiqueta: evento => evento.registroExcluido ? 'Excluído' : null
     },
     {
       chave: 'nomeResponsavel',
-      titulo: 'Responsável'
+      titulo: 'Responsável',
+      ordenavel: true
     },
     {
       chave: 'tipoAlteracao',
       titulo: 'Ação',
+      ordenavel: true,
       formatar: (_, evento) => this.formatarAcao(evento)
     }
   ];
@@ -138,7 +155,7 @@ export class Historico implements OnInit, OnDestroy {
   formatarAcao(evento: HistoricoEvento): string {
     const atividade = this.atividades.find(item => item.evento.id === evento.id);
     const acoes = new Set((atividade?.registros ?? [evento]).map(registro => registro.tipoAlteracao));
-    return Array.from(acoes).map(acao => this.nomesAlteracao[acao]).join(' / ');
+    return Array.from(acoes).map(acao => this.nomesAlteracao[acao]).sort((a, b) => a.localeCompare(b, 'pt-BR')).join(' / ');
   }
 
   get orientacaoBusca(): string {
@@ -151,6 +168,12 @@ export class Historico implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    this.buscaResponsavelSub = this.buscaResponsavel.pipe(
+      debounceTime(400)
+    ).subscribe(termo => {
+      this.filtrarResponsaveis(termo);
+      this.changeDetector.markForCheck();
+    });
     this.carregarResponsaveis();
     this.rotaSub = this.route.queryParamMap.subscribe(parametros => {
       const area = parametros.get('tipoRegistro');
@@ -177,6 +200,11 @@ export class Historico implements OnInit, OnDestroy {
       if (TAMANHOS_PAGINA_PERMITIDOS.includes(tamanho)) {
         this.tamanho = tamanho;
       }
+      const sort = parametros.get('sort') ?? undefined;
+      const ordenacao = analisarOrdenacao(sort);
+      this.sort = ordenacao && this.colunas.some(coluna => coluna.chave === ordenacao.campo)
+        ? `${ordenacao.campo},${ordenacao.direcao}` : undefined;
+      this.ordenacao = analisarOrdenacao(this.sort) ?? { campo: 'dataHora', direcao: 'desc' };
       this.carregarEventos();
     });
   }
@@ -187,6 +215,10 @@ export class Historico implements OnInit, OnDestroy {
     this.responsaveisSub = this.historicoService.responsaveis().subscribe({
       next: responsaveis => {
         this.responsaveis = responsaveis;
+        if (this.filtrosAberto) {
+          this.restaurarResponsavel();
+          this.filtrarResponsaveis(typeof this.responsavelBusca === 'string' ? this.responsavelBusca : '');
+        }
         this.changeDetector.markForCheck();
       },
       error: () => {
@@ -199,7 +231,7 @@ export class Historico implements OnInit, OnDestroy {
   private atualizarConsulta(): void {
     void this.router.navigate([], { relativeTo: this.route, queryParams: {
       ...this.contexto, ...this.filtros, tipoRegistro: this.todasAreas ? 'TODOS' : this.tipoRegistro,
-      periodo: this.periodo, search: this.busca || null, page: this.pagina || null, size: this.tamanho
+      periodo: this.periodo, search: this.busca || null, page: this.pagina || null, size: this.tamanho, sort: this.sort ?? null
     }});
   }
 
@@ -224,6 +256,8 @@ export class Historico implements OnInit, OnDestroy {
     this.listaSub?.unsubscribe();
     this.rotaSub?.unsubscribe();
     this.responsaveisSub?.unsubscribe();
+    this.buscaResponsavelSub?.unsubscribe();
+    this.leituraSub?.unsubscribe();
   }
 
   carregarEventos(): void {
@@ -233,7 +267,7 @@ export class Historico implements OnInit, OnDestroy {
 
     this.listaSub = this.historicoService.atividades(
       this.todasAreas ? null : this.tipoRegistro, this.pagina, this.tamanho, this.busca,
-      { ...this.contexto, ...this.filtros, periodo: this.periodo }
+      { ...this.contexto, ...this.filtros, periodo: this.periodo }, this.sort
     ).subscribe({
       next: resposta => {
         this.erroLista = false;
@@ -242,6 +276,7 @@ export class Historico implements OnInit, OnDestroy {
         this.totalPaginas = resposta.page.totalPages;
         this.totalElementos = resposta.page.totalElements;
         this.carregandoLista = false;
+        this.registrarLeitura();
         this.changeDetector.markForCheck();
       },
       error: () => {
@@ -252,7 +287,25 @@ export class Historico implements OnInit, OnDestroy {
     });
   }
 
+  private registrarLeitura(): void {
+    // Uma busca ou filtro parcial não significa que o restante do histórico foi visto.
+    if (this.busca.trim() || this.filtros.idResponsavel || this.filtros.dataInicial
+        || this.filtros.dataFinal || this.filtros.tipoAlteracao || !this.atividades.length) return;
+    const ultimoEvento = Math.max(...this.atividades.flatMap(atividade =>
+      atividade.registros.map(evento => evento.id)));
+    if (!Number.isSafeInteger(ultimoEvento) || ultimoEvento <= 0) return;
+    const filtros: FiltrosHistorico = {
+      ...this.contexto, dataAula: this.filtros.dataAula,
+      periodo: this.periodo === 'ARQUIVADOS' ? 'ARQUIVADOS' : 'TODOS'
+    };
+    this.leituraSub?.unsubscribe();
+    this.leituraSub = this.historicoService.marcarLido(
+      this.todasAreas ? null : this.tipoRegistro, filtros, ultimoEvento
+    ).subscribe({ error: () => {} });
+  }
+
   trocarTipo(tipo: TipoRegistroHistorico | 'TODOS'): void {
+    this.areaAberta = false;
     this.todasAreas = tipo === 'TODOS';
     if (tipo !== 'TODOS') this.tipoRegistro = tipo;
     if (tipo !== 'PRESENCAS' && tipo !== 'TODOS') this.filtros.dataAula = '';
@@ -280,8 +333,48 @@ export class Historico implements OnInit, OnDestroy {
     this.atualizarConsulta();
   }
 
+  get nomeAreaSelecionada(): string {
+    return this.todasAreas ? 'Todas as áreas' : this.tiposRegistro.find(tipo => tipo.valor === this.tipoRegistro)!.nome;
+  }
+
+  ordenarPor(campo: string): void {
+    if (!this.colunas.some(coluna => coluna.chave === campo)) return;
+    this.sort = alternarOrdenacao(this.ordenacao, campo);
+    this.ordenacao = analisarOrdenacao(this.sort);
+    this.pagina = 0;
+    this.atualizarConsulta();
+  }
+
+  exibirResponsavel(valor: ResponsavelHistorico | string | null): string {
+    return typeof valor === 'string' ? valor : valor?.nome ?? '';
+  }
+
+  alterarBuscaResponsavel(valor: ResponsavelHistorico | string | null): void {
+    this.responsavelBusca = valor;
+    this.filtrosModal.idResponsavel = valor && typeof valor !== 'string' ? valor.id : null;
+    this.responsaveisFiltrados = [];
+    this.erroFiltros = '';
+    this.buscaResponsavel.next(typeof valor === 'string' ? valor : '');
+  }
+
+  private restaurarResponsavel(): void {
+    if (this.filtrosModal.idResponsavel) {
+      this.responsavelBusca = this.responsaveis.find(item => item.id === this.filtrosModal.idResponsavel) ?? null;
+    }
+  }
+
+  private filtrarResponsaveis(termo: string): void {
+    const texto = termo.trim().toLocaleLowerCase('pt-BR');
+    this.responsaveisFiltrados = texto.length >= 2
+      ? this.responsaveis.filter(item => item.nome.toLocaleLowerCase('pt-BR').includes(texto)) : [];
+  }
+
   abrirFiltros(): void {
     this.filtrosModal = { ...this.filtros };
+    this.responsavelBusca = null;
+    this.restaurarResponsavel();
+    this.responsaveisFiltrados = [];
+    this.buscaResponsavel.next('');
     this.erroFiltros = '';
     this.filtrosAberto = true;
   }
@@ -292,6 +385,10 @@ export class Historico implements OnInit, OnDestroy {
       return;
     }
 
+    if (typeof this.responsavelBusca === 'string' && this.responsavelBusca.trim()) {
+      this.erroFiltros = 'Selecione um responsável na lista ou limpe o campo para consultar todos.';
+      return;
+    }
     const { dataInicial, dataFinal } = this.filtrosModal;
     if (dataInicial && dataFinal && dataInicial > dataFinal) {
       this.erroFiltros = 'A data final não pode ser anterior à data inicial.';

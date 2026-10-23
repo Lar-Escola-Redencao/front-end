@@ -1,5 +1,5 @@
 @if (auth.podeAcessar('historico-alteracoes')) {
-  <button type="button" class="botao-acao botao-historico" (click)="abrir()" [matTooltip]="titulo"
+  <button type="button" class="botao-acao botao-historico" (click)="abrir()" [attr.title]="titulo + (temNovidades ? ': novo' : '')"
     [attr.aria-label]="titulo + (temNovidades ? ': há alterações novas' : '')">
     <mat-icon aria-hidden="true">history</mat-icon>
     @if (temNovidades) {
@@ -13,9 +13,13 @@
     @if (diario) {
       <div class="abas-container" role="group" aria-label="Histórico do diário">
         <button type="button" class="aba-btn" [class.ativa]="abaDiario === 'PRESENCAS'"
-          [attr.aria-pressed]="abaDiario === 'PRESENCAS'" (click)="selecionarAba('PRESENCAS')">Presenças</button>
+          [attr.aria-pressed]="abaDiario === 'PRESENCAS'" (click)="selecionarAba('PRESENCAS')">Presenças
+          @if (novidadesPresencas) { <span class="novidade-aba" title="Novo" aria-label="Novas alterações"></span> }
+        </button>
         <button type="button" class="aba-btn" [class.ativa]="abaDiario === 'OCORRENCIAS'"
-          [attr.aria-pressed]="abaDiario === 'OCORRENCIAS'" (click)="selecionarAba('OCORRENCIAS')">Ocorrências</button>
+          [attr.aria-pressed]="abaDiario === 'OCORRENCIAS'" (click)="selecionarAba('OCORRENCIAS')">Ocorrências
+          @if (novidadesOcorrencias) { <span class="novidade-aba" title="Novo" aria-label="Novas alterações"></span> }
+        </button>
       </div>
     }
     @if (erroLeitura) {
@@ -44,7 +48,7 @@
               </p>
               <time>{{ atividade.evento.dataHora | date:'dd/MM/yyyy, HH:mm':'-0300' }}</time>
             </div>
-            <button type="button" class="botao-acao" matTooltip="Ver detalhes" aria-label="Ver detalhes da alteração"
+            <button type="button" class="botao-acao" title="Ver detalhes" aria-label="Ver detalhes da alteração"
               (click)="atividadeSelecionada = atividade">
               <mat-icon aria-hidden="true">visibility</mat-icon>
             </button>

@@ -19,19 +19,34 @@
         [valor]="busca"
         (buscar)="buscar($event)" />
 
-      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="seletor-tipo">
-        <mat-label>Área do sistema</mat-label>
-        <mat-select [ngModel]="todasAreas ? 'TODOS' : tipoRegistro" (ngModelChange)="trocarTipo($event)">
-          <mat-option value="TODOS">Todas as áreas</mat-option>
-          @for (grupo of gruposAreas; track grupo.nome) {
-            <mat-optgroup [label]="grupo.nome">
-              @for (tipo of grupo.tipos; track tipo.valor) {
-                <mat-option [value]="tipo.valor">{{ tipo.nome }}</mat-option>
-              }
-            </mat-optgroup>
-          }
-        </mat-select>
-      </mat-form-field>
+      <div class="seletor-tipo">
+        <button type="button" class="seletor-area" cdkOverlayOrigin #origemArea="cdkOverlayOrigin"
+          aria-haspopup="dialog" [attr.aria-expanded]="areaAberta" (click)="areaAberta = !areaAberta">
+          <span class="rotulo-area">Área do sistema</span>
+          <span>{{ nomeAreaSelecionada }}</span>
+          <mat-icon aria-hidden="true">arrow_drop_down</mat-icon>
+        </button>
+        <ng-template cdkConnectedOverlay [cdkConnectedOverlayOrigin]="origemArea"
+          [cdkConnectedOverlayOpen]="areaAberta" [cdkConnectedOverlayHasBackdrop]="true"
+          cdkConnectedOverlayBackdropClass="cdk-overlay-transparent-backdrop"
+          (backdropClick)="areaAberta = false"
+          (overlayKeydown)="$event.key === 'Escape' && (areaAberta = false)">
+          <div class="arvore-areas" role="dialog" aria-label="Área do sistema" cdkTrapFocus [cdkTrapFocusAutoCapture]="true">
+            <button type="button" class="opcao-area" [attr.aria-pressed]="todasAreas" (click)="trocarTipo('TODOS')">Todas as áreas</button>
+            @for (grupo of gruposAreas; track grupo.nome) {
+              <details class="grupo-area">
+                <summary><mat-icon aria-hidden="true">arrow_right</mat-icon>{{ grupo.nome }}</summary>
+                <div class="itens-area">
+                  @for (tipo of grupo.tipos; track tipo.valor) {
+                    <button type="button" class="opcao-area" [attr.aria-pressed]="!todasAreas && tipoRegistro === tipo.valor"
+                      (click)="trocarTipo(tipo.valor)">{{ tipo.nome }}</button>
+                  }
+                </div>
+              </details>
+            }
+          </div>
+        </ng-template>
+      </div>
 
       <button type="button" class="btn-filtros" (click)="abrirFiltros()">
         Filtros
@@ -54,6 +69,8 @@
       [colunas]="colunas"
       [dados]="eventos"
       [acoes]="acoes"
+      [ordenacao]="ordenacao"
+      (ordenar)="ordenarPor($event)"
       [carregando]="carregandoLista"
       [erro]="erroLista"
       mensagemVazia="Nenhuma alteração encontrada para esta consulta."
@@ -76,12 +93,18 @@
     <form #formFiltros="ngForm" class="form-filtros" (ngSubmit)="aplicarFiltros(formFiltros)">
       <mat-form-field appearance="outline">
         <mat-label>Quem fez a alteração</mat-label>
-        <mat-select name="idResponsavel" [(ngModel)]="filtrosModal.idResponsavel">
-          <mat-option [value]="null">Todos os responsáveis</mat-option>
-          @for (responsavel of responsaveis; track responsavel.id) {
-            <mat-option [value]="responsavel.id">{{ responsavel.nome }}</mat-option>
+        <input matInput name="responsavelBusca" [ngModel]="responsavelBusca"
+          (ngModelChange)="alterarBuscaResponsavel($event)" [matAutocomplete]="autoResponsavel"
+          placeholder="Digite ao menos 2 caracteres" />
+        <mat-autocomplete #autoResponsavel="matAutocomplete" [displayWith]="exibirResponsavel">
+          @for (responsavel of responsaveisFiltrados; track responsavel.id) {
+            <mat-option [value]="responsavel">{{ responsavel.nome }}</mat-option>
           }
-        </mat-select>
+          @if (responsaveisFiltrados.length === 0 && !erroResponsaveis) {
+            <mat-option disabled>{{ exibirResponsavel(responsavelBusca).trim().length < 2 ? 'Digite ao menos 2 caracteres' : 'Nenhum responsável encontrado' }}</mat-option>
+          }
+        </mat-autocomplete>
+        <mat-hint>Deixe vazio para consultar todos os responsáveis.</mat-hint>
       </mat-form-field>
       @if (erroResponsaveis) {
         <p role="alert">Não foi possível carregar os responsáveis.</p>

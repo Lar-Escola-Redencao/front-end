@@ -177,3 +177,13 @@ time,
   text-transform: uppercase;
   vertical-align: middle;
 }
+
+.novidade-aba {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-left: 5px;
+  border-radius: 50%;
+  background: var(--primary-color);
+  vertical-align: middle;
+}

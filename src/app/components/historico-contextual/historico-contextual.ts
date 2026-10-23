@@ -1,9 +1,8 @@
 import { ChangeDetectorRef, Component, Input, OnChanges, OnDestroy, OnInit, inject } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
-import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterLink } from '@angular/router';
-import { Subscription, catchError, forkJoin, map, merge, of, switchMap } from 'rxjs';
+import { Subscription, catchError, forkJoin, map, of, switchMap } from 'rxjs';
 import { ModalLayout } from '../modal-layout/modal-layout';
 import { HistoricoDetalheComponent } from '../historico-detalhe/historico-detalhe';
 import { AtividadeHistorico, FiltrosHistorico, TipoRegistroHistorico } from '../../shared/models/historico.model';
@@ -13,7 +12,7 @@ import { Auth } from '../../shared/services/auth/auth';
 @Component({
   selector: 'app-historico-contextual',
   standalone: true,
-  imports: [DatePipe, MatIconModule, MatTooltipModule, RouterLink, ModalLayout, HistoricoDetalheComponent],
+  imports: [DatePipe, MatIconModule, RouterLink, ModalLayout, HistoricoDetalheComponent],
   templateUrl: './historico-contextual.html',
   styleUrl: './historico-contextual.css'
 })
@@ -40,6 +39,8 @@ export class HistoricoContextual implements OnInit, OnChanges, OnDestroy {
   erro = false;
   erroLeitura = false;
   temNovidades = false;
+  novidadesPresencas = false;
+  novidadesOcorrencias = false;
   atividadesNovas = new Set<number>();
   atividades: AtividadeHistorico[] = [];
   atividadeSelecionada: AtividadeHistorico | null = null;
@@ -70,6 +71,8 @@ export class HistoricoContextual implements OnInit, OnChanges, OnDestroy {
       this.consulta?.unsubscribe();
       this.leitura?.unsubscribe();
       this.temNovidades = false;
+      this.novidadesPresencas = false;
+      this.novidadesOcorrencias = false;
       this.monitorar();
     }
   }
@@ -83,20 +86,26 @@ export class HistoricoContextual implements OnInit, OnChanges, OnDestroy {
   private monitorar(): void {
     this.monitoramento?.unsubscribe();
     if (!this.auth.podeAcessar('historico-alteracoes')) return;
-    this.monitoramento = merge(of(undefined), this.service.leituraAlterada).pipe(
+    this.monitoramento = this.service.atualizacoes.pipe(
       switchMap(() => {
         const consultas = this.diario
           ? [this.service.consultarLeitura('PRESENCAS', { ...this.filtros, dataAula: this.dataAula }),
              this.service.consultarLeitura('OCORRENCIAS', { ...this.filtros, dataAula: '' })]
           : [this.service.consultarLeitura(this.tipo, this.filtros)];
         return forkJoin(consultas).pipe(
-          map(estados => ({ temNovidades: estados.some(estado => estado.temNovidades) })),
+          map(estados => ({
+            temNovidades: estados.some(estado => estado.temNovidades),
+            presencas: this.diario && estados[0].temNovidades,
+            ocorrencias: this.diario && estados[1].temNovidades
+          })),
           catchError(() => of(null)));
       })
     ).subscribe({
       next: estado => {
         if (!estado) return;
         this.temNovidades = estado.temNovidades;
+        this.novidadesPresencas = estado.presencas;
+        this.novidadesOcorrencias = estado.ocorrencias;
         this.cdr.markForCheck();
       }
     });
@@ -129,8 +138,6 @@ export class HistoricoContextual implements OnInit, OnChanges, OnDestroy {
           this.leitura?.unsubscribe();
           this.leitura = this.service.marcarLido(tipo, filtros, Math.max(...ids)).subscribe({
             next: () => {
-              if (!this.diario) this.temNovidades = false;
-              this.service.leituraAlterada.next();
               this.cdr.markForCheck();
             },
             error: () => {
