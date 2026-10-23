@@ -1,10 +1,11 @@
-import { Component, OnDestroy, OnInit, computed, inject, input, output, signal } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, ViewChild, computed, inject, input, output, signal } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subscription } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
 
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { ModalLayout } from '@components/modal-layout/modal-layout';
@@ -39,7 +40,7 @@ export function mesDaData(data: string): { dataInicio: string; dataFim: string }
 @Component({
   selector: 'app-exportar-relatorio',
   standalone: true,
-  imports: [ReactiveFormsModule, ModalLayout, MatFormFieldModule, MatInputModule, MatSelectModule],
+  imports: [ReactiveFormsModule, ModalLayout, MatFormFieldModule, MatIconModule, MatInputModule, MatSelectModule],
   templateUrl: './exportar-relatorio.html',
   styleUrl: './exportar-relatorio.css'
 })
@@ -56,6 +57,16 @@ export class ExportarRelatorio implements OnInit, OnDestroy {
   private toastr = inject(ToastrService);
   private subs = new Subscription();
   private geracao?: Subscription;
+
+  @ViewChild('ajudaTipos') private ajudaTipos?: ElementRef<HTMLDetailsElement>;
+
+  // Captura: o modal-card interrompe a propagação do clique, então um listener comum não o veria.
+  private readonly fecharAjudaAoClicarFora = (event: MouseEvent): void => {
+    const painel = this.ajudaTipos?.nativeElement;
+    if (painel?.open && !painel.contains(event.target as Node)) {
+      painel.open = false;
+    }
+  };
 
   readonly tipo = signal<TipoRelatorio>('PRESENCAS');
   readonly gerando = signal(false);
@@ -89,6 +100,7 @@ export class ExportarRelatorio implements OnInit, OnDestroy {
   }, { validators: periodoValido });
 
   ngOnInit(): void {
+    document.addEventListener('click', this.fecharAjudaAoClicarFora, true);
     const periodo = mesDaData(this.data());
     this.formPresencas.patchValue({ idUnidade: this.idUnidade(), idTurma: this.idTurma(), ...periodo });
     this.formResumo.patchValue({ idsTurmas: this.idTurma() ? [this.idTurma()!] : [], ...periodo });
@@ -115,6 +127,7 @@ export class ExportarRelatorio implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    document.removeEventListener('click', this.fecharAjudaAoClicarFora, true);
     this.subs.unsubscribe();
     this.geracao?.unsubscribe();
   }

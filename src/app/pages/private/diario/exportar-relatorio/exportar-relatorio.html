@@ -1,16 +1,30 @@
 <app-modal-layout titulo="Exportar relatório" (closed)="cancelar()">
-  <div class="tipos-relatorio" role="radiogroup" aria-label="Tipo de relatório">
+  <details modal-title-extra class="ajuda-tipos" #ajudaTipos (keydown.escape)="ajudaTipos.open = false">
+    <summary aria-label="Entenda os tipos de relatório">
+      <mat-icon aria-hidden="true">help_outline</mat-icon>
+    </summary>
+    <div class="ajuda-tipos-painel">
+      <strong>Tipos de relatório</strong>
+      <dl>
+        <div><dt>Presenças detalhadas:</dt><dd>presença e falta de cada aluno de uma turma, data a data.</dd></div>
+        <div><dt>Resumo de frequência:</dt><dd>totais e percentual de presença por aluno, em uma ou mais turmas.</dd></div>
+      </dl>
+    </div>
+  </details>
+
+  <p id="instrucao-tipo" class="instrucao-tipo">Escolha o tipo de relatório que deseja exportar:</p>
+  <div class="tipos-relatorio" role="radiogroup" aria-labelledby="instrucao-tipo">
     <label class="tipo-card" [class.ativo]="tipo() === 'PRESENCAS'">
       <input type="radio" name="tipoRelatorio" [checked]="tipo() === 'PRESENCAS'" [disabled]="gerando()"
         (change)="selecionarTipo('PRESENCAS')">
+      <mat-icon class="tipo-icone" aria-hidden="true">calendar_month</mat-icon>
       <span class="tipo-titulo">Presenças detalhadas por período</span>
-      <span class="tipo-descricao">Presença e falta de cada aluno de uma turma, data a data.</span>
     </label>
     <label class="tipo-card" [class.ativo]="tipo() === 'RESUMO'">
       <input type="radio" name="tipoRelatorio" [checked]="tipo() === 'RESUMO'" [disabled]="gerando()"
         (change)="selecionarTipo('RESUMO')">
+      <mat-icon class="tipo-icone tipo-icone-deitado" aria-hidden="true">bar_chart</mat-icon>
       <span class="tipo-titulo">Resumo de frequência por período</span>
-      <span class="tipo-descricao">Totais e percentual de presença por aluno, em uma ou mais turmas.</span>
     </label>
   </div>
 
@@ -63,14 +77,22 @@
       <div class="campo">
         <mat-form-field appearance="outline">
           <mat-label>Data inicial</mat-label>
-          <input matInput type="date" formControlName="dataInicio">
+          <input matInput type="date" formControlName="dataInicio" #inputInicio>
+          <button matSuffix type="button" class="btn-calendario" aria-label="Abrir calendário da data inicial"
+            (click)="inputInicio.showPicker()">
+            <mat-icon aria-hidden="true">calendar_month</mat-icon>
+          </button>
         </mat-form-field>
         @if (erroCampo('dataInicio'); as mensagem) { <span class="error-text">{{ mensagem }}</span> }
       </div>
       <div class="campo">
         <mat-form-field appearance="outline">
           <mat-label>Data final</mat-label>
-          <input matInput type="date" formControlName="dataFim" [min]="formAtual.get('dataInicio')?.value">
+          <input matInput type="date" formControlName="dataFim" [min]="formAtual.get('dataInicio')?.value" #inputFim>
+          <button matSuffix type="button" class="btn-calendario" aria-label="Abrir calendário da data final"
+            (click)="inputFim.showPicker()">
+            <mat-icon aria-hidden="true">calendar_month</mat-icon>
+          </button>
         </mat-form-field>
         @if (erroCampo('dataFim'); as mensagem) {
           <span class="error-text">{{ mensagem }}</span>
@@ -79,6 +101,15 @@
         }
       </div>
     </div>
+
+    @if (tipo() === 'PRESENCAS') {
+      <label class="checkbox-ocorrencias">
+        <input type="checkbox" formControlName="incluirOcorrencias">
+        <span>Incluir ocorrências</span>
+      </label>
+    } @else {
+      <p class="nota">O percentual considera somente os dias com frequência registrada. Ocorrências não fazem parte deste relatório.</p>
+    }
 
     <fieldset class="formato">
       <legend>Formato</legend>
@@ -91,15 +122,6 @@
         <span>XLSX (planilha)</span>
       </label>
     </fieldset>
-
-    @if (tipo() === 'PRESENCAS') {
-      <label class="checkbox-ocorrencias">
-        <input type="checkbox" formControlName="incluirOcorrencias">
-        <span>Incluir ocorrências</span>
-      </label>
-    } @else {
-      <p class="nota">O percentual considera somente os dias com frequência registrada. Ocorrências não fazem parte deste relatório.</p>
-    }
 
     @if (erro()) {
       <div class="erro-geracao" role="alert">

@@ -1,21 +1,104 @@
+.ajuda-tipos {
+  position: relative;
+}
+
+.ajuda-tipos > summary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  color: var(--input-color);
+  cursor: pointer;
+  list-style: none;
+  border-radius: 50%;
+}
+
+.ajuda-tipos > summary::-webkit-details-marker {
+  display: none;
+}
+
+.ajuda-tipos > summary:hover,
+.ajuda-tipos[open] > summary {
+  color: var(--primary-color);
+  background: #f5f5f5;
+}
+
+.ajuda-tipos > summary:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+.ajuda-tipos-painel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 30;
+  width: min(300px, calc(100vw - 64px));
+  padding: 16px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: var(--branco);
+  box-shadow: var(--sombra-padrao);
+  font-family: var(--fonte-texto);
+  font-size: 14px;
+  line-height: 1.5;
+  text-align: left;
+}
+
+.ajuda-tipos-painel > strong {
+  display: block;
+  color: var(--preto);
+  text-align: center;
+}
+
+.ajuda-tipos-painel dl {
+  display: grid;
+  gap: 12px;
+  margin: 12px 0 0;
+}
+
+.ajuda-tipos-painel dt {
+  display: inline;
+  color: var(--preto);
+}
+
+.ajuda-tipos-painel dd {
+  display: inline;
+  margin: 0;
+  color: #737373;
+}
+
+.ajuda-tipos-painel dd::before {
+  content: ' ';
+}
+
+.instrucao-tipo {
+  margin: 0 0 12px;
+  color: var(--input-color);
+  font-family: var(--fonte-texto);
+  font-size: 0.95rem;
+}
+
 .tipos-relatorio {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  grid-template-columns: 1fr;
+  gap: 8px;
   margin-bottom: 20px;
 }
 
 .tipo-card {
   position: relative;
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  align-items: center;
+  gap: 10px;
   padding: 14px 16px;
   border: 1px solid #ddd;
   border-radius: 8px;
   cursor: pointer;
   font-family: var(--fonte-texto);
   transition: border-color 0.2s ease, background-color 0.2s ease;
+  background-color: #f7f7f7;
 }
 
 .tipo-card input {
@@ -35,16 +118,24 @@
   background: #f3f8fe;
 }
 
+.tipo-icone {
+  flex-shrink: 0;
+  color: var(--input-color);
+}
+
+/* Barras crescendo para a direita, como um gráfico de barras horizontal. */
+.tipo-icone-deitado {
+  transform: rotate(90deg);
+}
+
+.tipo-card.ativo .tipo-icone {
+  color: var(--primary-color);
+}
+
 .tipo-titulo {
   color: var(--preto);
   font-weight: 600;
   font-size: 0.95rem;
-}
-
-.tipo-descricao {
-  color: #666;
-  font-size: 0.85rem;
-  line-height: 1.35;
 }
 
 .form-exportar {
@@ -56,7 +147,7 @@
 .campos-2 {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  gap: 8px;
 }
 
 .campo {
@@ -74,10 +165,41 @@
   font-size: 0.8rem;
 }
 
+.btn-calendario {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  margin-right: 4px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--input-color);
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.btn-calendario:hover,
+.btn-calendario:focus-visible {
+  background-color: #f0f0f0;
+  color: var(--primary-color);
+}
+
+.btn-calendario:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+/* O ícone do navegador é substituído pelo botão acima. */
+.campo input[type='date']::-webkit-calendar-picker-indicator {
+  display: none;
+}
+
 .formato {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px 24px;
+  gap: 8px 16px;
   margin: 0;
   padding: 0;
   border: 0;
@@ -86,7 +208,7 @@
 
 .formato legend {
   width: 100%;
-  margin-bottom: 6px;
+  margin-top: 16px;
   color: var(--input-color);
   font-size: 0.9rem;
 }
@@ -136,7 +258,6 @@
 }
 
 @media (max-width: 600px) {
-  .tipos-relatorio,
   .campos-2 {
     grid-template-columns: 1fr;
     gap: 8px;

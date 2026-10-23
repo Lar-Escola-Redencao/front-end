@@ -919,12 +919,12 @@
 
   .filtros-turma .btn-exportar {
     grid-column: 1 / -1;
-    justify-self: center;
-    margin-top: 12px;
-    height: 36px;
-    min-height: 36px;
+    width: 100%;
+    margin-top: 8px;
+    height: 44px;
+    min-height: 44px;
     padding: 0 12px;
-    font-size: 0.85rem;
+    font-size: 0.9rem;
   }
 
   .filtros-turma .btn-exportar mat-icon {
