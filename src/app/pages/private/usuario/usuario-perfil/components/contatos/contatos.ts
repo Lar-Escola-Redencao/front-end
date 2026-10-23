@@ -1,4 +1,5 @@
 import { EstadoVazio } from 'src/app/components/estado-vazio/estado-vazio';
+import { FecharAutocompleteFora } from 'src/app/shared/directives/fechar-autocomplete-fora';
 import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, EventEmitter, HostListener, Input, NgZone, OnDestroy, Output, inject } from '@angular/core';
 import { AbstractControl, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -10,7 +11,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { TabelaAcao, TabelaColuna, TabelaLayout } from '@components/tabela-layout/tabela-layout';
 import { ModalLayout } from '@components/modal-layout/modal-layout';
 import { ToastrService } from 'ngx-toastr';
-import { Subscription, catchError, debounceTime, distinctUntilChanged, of, switchMap, tap } from 'rxjs';
+import { Subscription, catchError, of, switchMap, map, timer } from 'rxjs';
 import { AtualizarContatoDTO, ContatoDetalheDTO, ContatoListagemDTO, ContatoResponseDTO, UsuarioVinculadoDTO } from 'src/app/shared/models/contato.model';
 import { UsuarioResponseDTO } from 'src/app/shared/models/usuario.model';
 import { ContatoService } from 'src/app/shared/services/usuario/contato.service';
@@ -26,6 +27,7 @@ type ModoModalContato = 'novo' | 'editar' | 'visualizar';
   selector: 'app-usuario-perfil-contatos',
   standalone: true,
   imports: [EstadoVazio,
+    FecharAutocompleteFora,
     CommonModule,
     ReactiveFormsModule,
     MatAutocompleteModule,
@@ -59,6 +61,7 @@ export class UsuarioPerfilContatos implements OnDestroy {
   contatoSelecionado: (ContatoResponseDTO & Partial<ContatoDetalheDTO>) | null = null;
   carregandoVisualizacao = false;
   modalVinculosAberto = false;
+  mensagemBuscaContato = '';
   opcoesAutocomplete: ContatoListagemDTO[] = [];
   private valoresOriginaisFormulario: string | null = null;
 
@@ -182,6 +185,7 @@ export class UsuarioPerfilContatos implements OnDestroy {
     this.modoModal = modo;
     this.contatoSelecionado = contato ?? null;
     this.opcoesAutocomplete = [];
+    this.mensagemBuscaContato = '';
     this.form.reset({
       id: contato?.id ?? null,
       nomeCompleto: contato?.nomeCompleto ?? '',
@@ -221,6 +225,7 @@ export class UsuarioPerfilContatos implements OnDestroy {
     this.modalAberto = false;
     this.contatoSelecionado = null;
     this.opcoesAutocomplete = [];
+    this.mensagemBuscaContato = '';
     this.valoresOriginaisFormulario = null;
     this.buscaSub?.unsubscribe();
     this.form.reset();
@@ -250,7 +255,9 @@ export class UsuarioPerfilContatos implements OnDestroy {
         this.form.get('id')?.setValue(null, { emitEvent: false });
       }
       this.habilitarCamposContato();
+      this.form.get('busca')?.setValue('');
       this.opcoesAutocomplete = [];
+      this.mensagemBuscaContato = '';
       return;
     }
 
@@ -266,6 +273,7 @@ export class UsuarioPerfilContatos implements OnDestroy {
       localTrabalho: ''
     }, { emitEvent: false });
     this.desabilitarCamposContato();
+    this.form.get('busca')?.setValue('');
     this.form.markAsPristine();
     this.form.markAsUntouched();
   }
@@ -304,6 +312,7 @@ export class UsuarioPerfilContatos implements OnDestroy {
       localTrabalho: contato.localTrabalho ?? ''
     }, { emitEvent: false });
     this.opcoesAutocomplete = [];
+    this.mensagemBuscaContato = '';
     this.form.markAsDirty();
   }
 
@@ -510,25 +519,32 @@ export class UsuarioPerfilContatos implements OnDestroy {
         localTrabalho: ''
       }, { emitEvent: false });
       this.opcoesAutocomplete = [];
+      this.mensagemBuscaContato = '';
+      this.form.get('busca')?.setValue('');
       if (this.form.get('buscarExistente')?.value) this.desabilitarCamposContato();
     }));
 
     this.buscaSub.add(this.form.get('busca')!.valueChanges.pipe(
-      tap(() => this.opcoesAutocomplete = []),
-      debounceTime(400),
-      distinctUntilChanged(),
-      switchMap(termo => this.form.get('buscarExistente')?.value && typeof termo === 'string' && termo.trim().length >= 2
-        ? this.contatoService.buscarAutocomplete(termo.trim()).pipe(catchError(() => of([])))
-        : of([])
-      )
-    ).subscribe(contatos => {
+      switchMap(termo => {
+        this.opcoesAutocomplete = [];
+        const consultar = this.form.get('buscarExistente')?.value
+          && typeof termo === 'string' && termo.trim().length >= 2;
+        this.mensagemBuscaContato = consultar ? 'Carregando...' : '';
+        return consultar
+          ? timer(400).pipe(switchMap(() => this.contatoService.buscarAutocomplete(termo.trim())),
+              map(resultados => ({ termo, resultados, erro: false })),
+              catchError(() => of({ termo, resultados: [] as ContatoListagemDTO[], erro: true })))
+          : of({ termo, resultados: [] as ContatoListagemDTO[], erro: false });
+      })
+    ).subscribe(({ termo, resultados, erro }) => {
       this.ngZone.run(() => {
-        const termo = this.form.get('busca')?.value || '';
-        const tipoBusca = this.form.get('tipoBusca')?.value;
+        if (!this.form.get('buscarExistente')?.value || this.form.get('id')?.value
+          || this.form.get('busca')?.value !== termo || typeof termo !== 'string' || termo.trim().length < 2) return;
+        const correspondentes = resultados.filter(contato => this.contatoCorrespondeTipoBusca(contato, this.form.get('tipoBusca')?.value, termo));
         const idsVinculados = new Set(this.contatosOrdenados.map(contato => contato.id));
-        this.opcoesAutocomplete = contatos
-          .filter(contato => !idsVinculados.has(contato.id))
-          .filter(contato => this.contatoCorrespondeTipoBusca(contato, tipoBusca, termo));
+        this.opcoesAutocomplete = correspondentes.filter(contato => !idsVinculados.has(contato.id));
+        this.mensagemBuscaContato = erro ? 'Não foi possível consultar os contatos'
+          : this.opcoesAutocomplete.length ? '' : correspondentes.length ? 'Contato já vinculado' : 'Contato não encontrado';
         this.atualizarTela();
       });
     }));

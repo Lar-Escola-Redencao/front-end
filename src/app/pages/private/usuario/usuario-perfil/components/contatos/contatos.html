@@ -72,7 +72,7 @@
             <input type="checkbox" formControlName="buscarExistente" (change)="alternarBuscaContato($any($event.target).checked)">
             <span>Buscar por contato existente</span>
           </label>
-          <span class="error-text busca-contato-error" *ngIf="form.touched && !form.get('id')?.value">
+          <span class="error-text busca-contato-error" *ngIf="form.touched && form.get('buscarExistente')?.value && !form.get('id')?.value">
             Selecione um contato existente.
           </span>
 
@@ -87,8 +87,9 @@
 
               <mat-form-field appearance="outline">
                 <mat-label>{{ form.get('tipoBusca')?.value }}*</mat-label>
-                <input matInput formControlName="busca" [matAutocomplete]="autoContato" (input)="onBuscaContatoAlterada($any($event.target).value)">
+                <input matInput appFecharAutocompleteFora formControlName="busca" [matAutocomplete]="autoContato" (input)="onBuscaContatoAlterada($any($event.target).value)">
                 <mat-autocomplete #autoContato="matAutocomplete" [displayWith]="exibirNomeContatoBusca" (optionSelected)="selecionarContatoExistente($event.option.value)">
+                  <mat-option *ngIf="mensagemBuscaContato" disabled>{{ mensagemBuscaContato }}</mat-option>
                   <mat-option *ngFor="let op of opcoesAutocomplete" [value]="op">{{ op.nomeCompleto }} - {{ formatarTelefoneContato(op.telefone) }}</mat-option>
                 </mat-autocomplete>
               </mat-form-field>

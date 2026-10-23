@@ -86,7 +86,7 @@ export class PrivateNavbar implements OnInit {
         showCancelButton: true,
         confirmButtonText: 'Sim, sair',
         cancelButtonText: 'Cancelar',
-        confirmButtonColor: '#3682dc',
+        confirmButtonColor: '#e04b3a',
         reverseButtons: false
       });
       if (!resultado.isConfirmed) return;

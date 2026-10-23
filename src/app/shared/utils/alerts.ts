@@ -36,7 +36,7 @@ export const Alertas = {
       confirmButtonText: 'Voltar aos filtros',
       denyButtonText: 'Descartar alterações',
       customClass: { confirmButton: 'swal2-retornar' },
-      denyButtonColor: '#757575',
+      denyButtonColor: '#e04b3a',
       // Neste alerta, confirm volta aos filtros e deny efetiva o descarte.
       reverseButtons: true,
       allowOutsideClick: false,
