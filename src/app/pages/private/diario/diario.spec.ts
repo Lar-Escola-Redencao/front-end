@@ -74,6 +74,66 @@ describe('Diário de turma', () => {
 
   afterEach(() => { fixture.destroy(); vi.useRealTimers(); vi.restoreAllMocks(); });
 
+  it.each(['MONITOR', 'ADMINISTRADOR', 'COORDENADOR'])('aplica início e futuro antes das exceções de %s', perfil => {
+    papel = perfil;
+    for (const [hora, permitido] of [['07:59:59', false], ['08:00:00', true], ['13:00:00', true]] as const) {
+      vi.setSystemTime(new Date(`2026-10-06T${hora}-03:00`));
+      component.estadoTela = 'INICIAL';
+      expect(component.podeIniciarChamada).toBe(permitido);
+      expect(component.podeAdicionarOcorrencia).toBe(true);
+      component.usuarios = [{ ...aluno(), chamadaRegistrada: true, idFrequencia: 1, dataCriacaoChamada: '2026-10-06T07:00:00' }];
+      expect(component.podeEditarFrequencia).toBe(permitido);
+      component.estadoTela = 'PREENCHENDO';
+      expect(component.podePreencherFrequencia).toBe(permitido);
+    }
+    component.filtroForm.get('data')!.setValue('2026-10-07', { emitEvent: false });
+    component.estadoTela = 'INICIAL';
+    expect(component.podeIniciarChamada).toBe(false);
+    expect(component.podeAdicionarOcorrencia).toBe(false);
+    expect(component.podeEditarFrequencia).toBe(false);
+    component.estadoTela = 'PREENCHENDO';
+    expect(component.podePreencherFrequencia).toBe(false);
+  });
+
+  it.each(['MONITOR', 'ADMINISTRADOR', 'COORDENADOR'])('permite chegada antes da aula e rejeita hora futura para %s', perfil => {
+    papel = perfil;
+    vi.setSystemTime(new Date('2026-10-06T07:30:00-03:00'));
+    component.usuarioSelecionado = aluno();
+    component.abrirFormOcorrencia(null, 'NOVO');
+    component.formOcorrencia.setValue({ horaStr: '07:00', descricao: 'Chegada', tipoOcorrencia: 'SAUDE' });
+    component.salvarOcorrencia();
+    expect(api.criarOcorrencia).toHaveBeenCalledOnce();
+    api.criarOcorrencia.mockClear();
+    component.usuarioSelecionado = aluno();
+    component.abrirFormOcorrencia(null, 'NOVO');
+    component.formOcorrencia.setValue({ horaStr: '07:31', descricao: 'Futuro', tipoOcorrencia: 'SAUDE' });
+    component.salvarOcorrencia();
+    expect(component.errosOcorrencia['horaStr']).toContain('futuro');
+    expect(api.criarOcorrencia).not.toHaveBeenCalled();
+  });
+
+  it('usa o dia de São Paulo ao bloquear amanhã antes da meia-noite local', () => {
+    papel = 'ADMINISTRADOR';
+    vi.setSystemTime(new Date('2026-10-07T01:00:00Z'));
+    component.filtroForm.get('data')!.setValue('2026-10-07');
+    expect(component.podeAdicionarOcorrencia).toBe(false);
+  });
+
+  it('mantém a correção antiga sem limite para administradores e coordenadores', () => {
+    component.filtroForm.get('data')!.setValue('2020-01-01', { emitEvent: false });
+    component.usuarios = [{ ...aluno(), idFrequencia: 1, chamadaRegistrada: true, dataCriacaoChamada: null }];
+    for (const perfil of ['ADMINISTRADOR', 'COORDENADOR']) {
+      papel = perfil;
+      expect(component.podeEditarFrequencia).toBe(true);
+      component.estadoTela = 'PREENCHENDO';
+      expect(component.podePreencherFrequencia).toBe(true);
+      expect(component.podeAdicionarOcorrencia).toBe(true);
+    }
+    papel = 'MONITOR';
+    expect(component.podeEditarFrequencia).toBe(false);
+    expect(component.podeAdicionarOcorrencia).toBe(false);
+  });
+
   it('não oferece edição ou exclusão de ocorrência de outro autor', async () => {
     const registro = { ...ocorrencia('2026-10-06T11:00:00'), idMembro: 8 };
     expect(component.podeEditarExcluirOcorrencia(registro)).toBe(false);
@@ -115,9 +175,9 @@ describe('Diário de turma', () => {
     expect(component.podePreencherFrequencia).toBe(false);
   });
 
-  it('bloqueia ocorrência antes do início da aula e horário do fato futuro', () => {
+  it('permite ocorrência antes do início da aula e bloqueia horário do fato futuro', () => {
     vi.setSystemTime(new Date('2026-10-06T07:59:59-03:00'));
-    expect(component.podeAdicionarOcorrencia).toBe(false);
+    expect(component.podeAdicionarOcorrencia).toBe(true);
     vi.setSystemTime(new Date('2026-10-06T08:00:00-03:00'));
     expect(component.podeAdicionarOcorrencia).toBe(true);
     component.usuarioSelecionado = aluno();
@@ -311,15 +371,14 @@ describe('Diário de turma', () => {
     });
   });
 
-  it('bloqueia ocorrência fora do horário da turma da matrícula', () => {
+  it('permite ocorrência depois do turno quando o fato já aconteceu', () => {
+    vi.setSystemTime(new Date('2026-10-06T13:00:00-03:00'));
     component.abrirGerenciadorOcorrencias(component.usuarios[0]);
     component.formOcorrencia.setValue({ horaStr: '12:01', descricao: 'Descrição', tipoOcorrencia: 'SAUDE' });
 
     component.salvarOcorrencia();
 
-    expect(api.criarOcorrencia).not.toHaveBeenCalled();
-    expect(component.errosOcorrencia['horaStr']).toContain('08:00');
-    expect(component.errosOcorrencia['horaStr']).toContain('12:00');
+    expect(api.criarOcorrencia).toHaveBeenCalled();
   });
 
   it('mantém salvar habilitado para exibir erros dos campos obrigatórios', () => {

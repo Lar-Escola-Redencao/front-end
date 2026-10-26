@@ -151,10 +151,12 @@
         <div class="rodape-diario rodape-status rodape-inicial">
           <div class="info-status" [class.info-status--aviso]="!podeIniciarChamada" role="status">
             <mat-icon aria-hidden="true">{{ podeIniciarChamada ? 'info' : 'warning_amber' }}</mat-icon>
-            @if (dataForaDoPeriodoPermitido) {
+            @if (dataFutura) {
+              <span>Aguarde o horário de início das atividades para registrar a frequência.</span>
+            } @else if (dataForaDoPeriodoPermitido) {
               <span>Monitores só podem registrar chamadas a partir do primeiro dia do mês passado.</span>
             } @else if (!podeIniciarChamada) {
-              <span>O registro de frequências ficará disponível após o horário de início da aula.</span>
+              <span>Aguarde o horário de início das atividades para registrar a frequência.</span>
             } @else {
               <span>As presenças deste dia ainda não foram registradas.</span>
             }
