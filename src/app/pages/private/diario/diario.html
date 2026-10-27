@@ -86,7 +86,7 @@
           <thead>
             <tr>
               <th class="col-usuario">Usuário</th>
-              <th class="col-presenca">Frequência</th>
+              <th class="col-presenca">Presença</th>
               <th class="col-ocorrencia">Ocorrência</th>
             </tr>
           </thead>
@@ -112,7 +112,7 @@
                 
                 <td class="col-presenca">
                   @if (estadoTela === 'INICIAL') {
-                    <div class="toggle-fp disabled" title="Inicie o registro de frequências para preencher">
+                    <div class="toggle-fp disabled" title="Inicie a chamada para preencher">
                       <span class="btn-falta">F</span>
                       <span class="btn-presenca">P</span>
                     </div>
@@ -122,7 +122,7 @@
                       class="toggle-fp" 
                       [disabled]="!podePreencherFrequencia"
                       [class.disabled]="!podePreencherFrequencia"
-                      [attr.aria-label]="'Frequência de ' + usuario.nomeUsuario"
+                      [attr.aria-label]="'Presença de ' + usuario.nomeUsuario"
                       (click)="marcarFrequencia(usuario, !usuario.presente)">
                       <span 
                         class="btn-falta" 
@@ -162,11 +162,11 @@
           <div class="info-status" [class.info-status--aviso]="!podeIniciarChamada" role="status">
             <mat-icon aria-hidden="true">{{ podeIniciarChamada ? 'info' : 'warning_amber' }}</mat-icon>
             @if (dataForaDoPeriodoPermitido) {
-              <span>Monitores só podem registrar frequências a partir do primeiro dia do mês passado.</span>
+              <span>Monitores só podem registrar chamadas a partir do primeiro dia do mês passado.</span>
             } @else if (!podeIniciarChamada) {
               <span>O registro de frequências ficará disponível após o horário de início da aula.</span>
             } @else {
-              <span>As frequências deste dia ainda não foram registradas.</span>
+              <span>As presenças deste dia ainda não foram registradas.</span>
             }
           </div>
           
@@ -187,7 +187,7 @@
               <input type="checkbox" [(ngModel)]="declaracaoAceita" [disabled]="salvando"
                 aria-required="true" [attr.aria-invalid]="tentouSalvarDiario && !declaracaoAceita ? 'true' : null"
                 [attr.aria-describedby]="tentouSalvarDiario && !declaracaoAceita ? 'erro-declaracao' : null">
-              <span>Declaro que as frequências foram preenchidas corretamente.</span>
+              <span>Declaro que a chamada foi preenchida corretamente.</span>
             </label>
             @if (tentouSalvarDiario && !declaracaoAceita) {
               <span id="erro-declaracao" class="error-text" role="alert">Marque a caixa para confirmar o preenchimento.</span>
@@ -209,7 +209,7 @@
           <div class="rodape-diario rodape-status rodape-salvo">
             <div class="info-status info-status--sucesso" role="status">
               <mat-icon aria-hidden="true">check_circle</mat-icon>
-              <span>Frequências registradas. Você pode editá-las.</span>
+              <span>Chamada registrada. Você pode editar as presenças.</span>
             </div>
             <div class="acoes form-acoes">
               <ng-container *ngTemplateOutlet="historicoDiario" />

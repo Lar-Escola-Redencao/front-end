@@ -116,7 +116,7 @@ export class HistoricoDetalheComponent implements OnChanges, OnDestroy {
     const detalhe = this.detalhes[0];
     const turma = detalhe.contextoNovo?.['turma'];
     const data = detalhe.campos.find(campo => campo.campo === 'dataRegistro')?.valorNovo;
-    let nomeTurma = 'Chamada';
+    let nomeTurma = 'Presença';
     if (turma && typeof turma === 'object' && !Array.isArray(turma)) {
       const periodo = String(turma['periodo'] ?? '');
       const periodos: Record<string, string> = { MANHA: 'Manhã', TARDE: 'Tarde', NOITE: 'Noite', INTEGRAL: 'Integral' };

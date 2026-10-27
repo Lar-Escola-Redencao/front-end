@@ -54,6 +54,10 @@
   height: 44px;
 }
 
+:host-context(.modal-title-area) .botao-historico {
+  margin-top: -10px;
+}
+
 .botao-historico mat-icon {
   font-family: 'Material Icons';
   font-size: 24px;

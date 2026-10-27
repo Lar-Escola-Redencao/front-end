@@ -184,7 +184,7 @@ describe('Diário de turma', () => {
 
   it('exibe regras específicas para cada perfil', () => {
     expect(component.perfilDoDiario).toBe('Monitor');
-    expect(component.regrasDoDiario.find(item => item.acao === 'Editar frequências lançadas')?.regra).toContain('48 horas');
+    expect(component.regrasDoDiario.find(item => item.acao === 'Editar presenças lançadas')?.regra).toContain('48 horas');
     for (const perfil of ['COORDENADOR', 'ADMINISTRADOR']) {
       papel = perfil;
       expect(component.perfilDoDiario).toBe(perfil === 'COORDENADOR' ? 'Coordenador' : 'Administrador');

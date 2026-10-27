@@ -387,12 +387,12 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
 
   get mensagemBloqueioEdicaoChamada(): string {
     if (Date.now() < this.inicioDaTurma) {
-      return 'A edição das frequências ficará disponível após o início da aula.';
+      return 'A edição das presenças ficará disponível após o início da aula.';
     }
     if (!this.usuarios.some(u => u.dataCriacaoChamada)) {
-      return 'Este registro de frequências não possui data de cadastro conhecida. Para corrigir frequências, procure a coordenação.';
+      return 'Esta chamada não possui data de cadastro conhecida. Para corrigir presenças, procure a coordenação.';
     }
-    return 'O prazo de 48 horas após o primeiro registro das frequências foi encerrado. Para corrigir frequências, procure a coordenação.';
+    return 'O prazo de 48 horas após o primeiro registro desta chamada foi encerrado. Para corrigir presenças, procure a coordenação.';
   }
 
   get podePreencherFrequencia(): boolean {
@@ -426,20 +426,20 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
   get regrasDoDiario(): { acao: string; regra: string }[] {
     if (this.isMonitor) {
       return [
-        { acao: 'Registrar frequências', regra: 'Desde o primeiro dia do mês anterior, após o horário de início da turma.' },
-        { acao: 'Editar frequências lançadas', regra: 'Qualquer monitor com acesso à turma, até 48 horas após o primeiro registro das frequências. A virada do mês não encerra esse prazo.' },
+        { acao: 'Registrar nova chamada', regra: 'Desde o primeiro dia do mês anterior, após o horário de início da turma.' },
+        { acao: 'Editar presenças lançadas', regra: 'Qualquer monitor com acesso à turma, até 48 horas após o primeiro registro da chamada. A virada do mês não encerra esse prazo.' },
         { acao: 'Registrar ocorrências', regra: 'Desde o primeiro dia do mês anterior, após o início da turma. O horário do fato deve estar dentro da aula e não pode ser futuro.' },
         { acao: 'Editar ou excluir ocorrência lançada', regra: 'Somente as de sua autoria, até 24 horas após o cadastro. Alterações e virada do mês não renovam nem encerram esse prazo.' }
       ];
     }
     return [
-      { acao: 'Registrar frequências', regra: 'Sem limite de retroatividade.' },
-      { acao: 'Editar frequências lançadas', regra: 'Sem limite de tempo.' },
+      { acao: 'Registrar nova chamada', regra: 'Sem limite de retroatividade.' },
+      { acao: 'Editar presenças lançadas', regra: 'Sem limite de tempo.' },
       { acao: 'Registrar ocorrências', regra: 'Sem limite de retroatividade. O horário deve estar dentro do turno da turma.' },
       { acao: 'Editar ou excluir ocorrência lançada', regra: 'Sem limite de tempo.' },
       ...(this.sessao.isAdministrador() ? [{
         acao: 'Consultar histórico de alterações',
-        regra: 'Sem limite de tempo. Permite ver quem alterou as frequências e ocorrências da turma.'
+        regra: 'Sem limite de tempo. Permite ver quem alterou as presenças e ocorrências da turma.'
       }] : [])
     ];
   }

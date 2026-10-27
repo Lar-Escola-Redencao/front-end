@@ -24,9 +24,15 @@
 
 .titulo-linha h1 {
   font-family: var(--fonte-titulo);
-  font-size: 2.2rem;
+  font-size: 2rem;
   color: var(--preto);
   margin: 0;
+}
+
+@media (max-width: 640px) {
+  .titulo-linha h1 {
+    font-size: 1.75rem;
+  }
 }
 
 .data-nav {

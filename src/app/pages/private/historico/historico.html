@@ -69,7 +69,7 @@
 
 
       <button type="button" class="btn-filtros" (click)="abrirFiltros()">
-        Mais filtros
+        Filtros
         @if (quantidadeFiltros > 0) {
           <span class="filtros-contador">{{ quantidadeFiltros }}</span>
         }
@@ -106,14 +106,10 @@
 
       <mat-form-field appearance="outline" floatLabel="always">
         <mat-label>Responsável</mat-label>
-        <input matInput name="responsavelBusca" placeholder="Qualquer responsável" [ngModel]="responsavelBusca"
+        <input matInput name="responsavelBusca"
+          [placeholder]="erroResponsaveis ? 'Não foi possível carregar os responsáveis.' : 'Qualquer responsável'" [ngModel]="responsavelBusca"
           (ngModelChange)="alterarBuscaResponsavel($event)" [matAutocomplete]="autoResponsavel"
-          #gatilhoResponsavel="matAutocompleteTrigger"
           (focus)="mostrarResponsaveis()" />
-        <button type="button" matSuffix class="seta-area" aria-label="Selecionar responsável"
-          (click)="mostrarResponsaveis(); gatilhoResponsavel.openPanel()">
-          <mat-icon aria-hidden="true">arrow_drop_down</mat-icon>
-        </button>
         <mat-autocomplete #autoResponsavel="matAutocomplete" [displayWith]="exibirResponsavel">
           <mat-option [value]="null">Qualquer responsável</mat-option>
           @for (responsavel of responsaveisFiltrados; track responsavel.id) {
@@ -121,10 +117,16 @@
           }
           @if (buscandoResponsavel) {
             <mat-option disabled>Buscando responsáveis...</mat-option>
-          } @else if (responsaveisFiltrados.length === 0 && !erroResponsaveis && exibirResponsavel(responsavelBusca).trim().length > 0) {
+          } @else if (erroResponsaveis) {
+            <mat-option disabled>Não foi possível carregar os responsáveis.</mat-option>
+            <div class="mais-responsaveis">
+              <button type="button" class="btn-cancelar" (mousedown)="$event.preventDefault()"
+                (click)="carregarResponsaveis()">Tentar novamente</button>
+            </div>
+          } @else if (responsaveisFiltrados.length === 0) {
             <mat-option disabled>Nenhum responsável encontrado</mat-option>
           }
-          @if (temMaisResponsaveis && !buscandoResponsavel) {
+          @if (temMaisResponsaveis && !buscandoResponsavel && !erroResponsaveis) {
             <div class="mais-responsaveis">
               <button type="button" class="btn-cancelar" (mousedown)="$event.preventDefault()"
                 (click)="carregarMaisResponsaveis()">Ver mais responsáveis</button>
@@ -132,10 +134,6 @@
           }
         </mat-autocomplete>
       </mat-form-field>
-      @if (erroResponsaveis) {
-        <p role="alert">Não foi possível carregar os responsáveis.</p>
-        <button type="button" class="btn-cancelar" (click)="carregarResponsaveis()">Tentar novamente</button>
-      }
       <div class="form-row">
         <mat-form-field appearance="outline">
           <mat-label>Alterações a partir de</mat-label>

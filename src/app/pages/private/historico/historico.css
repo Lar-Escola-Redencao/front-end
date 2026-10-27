@@ -147,6 +147,23 @@ button:disabled {
   padding: 8px 16px;
 }
 
+@media (max-width: 900px) {
+  .acoes-historico {
+    display: grid;
+    grid-template-columns: minmax(180px, 1fr) max-content;
+  }
+
+  app-barra-busca {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 400px) {
+  .acoes-historico {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 @media (max-width: 640px) {
   .historico-admin {
     padding: 24px 16px 32px;

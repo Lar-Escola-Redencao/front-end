@@ -1,4 +1,4 @@
-import { TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NgForm } from '@angular/forms';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { BehaviorSubject, Subject, of, throwError } from 'rxjs';
@@ -17,6 +17,7 @@ const atividade: AtividadeHistorico = { evento, resumo: 'Ana alterou telefone.',
 const resposta = { content: [atividade], page: { number: 0, size: 10, totalElements: 1, totalPages: 1 } };
 
 describe('Histórico de atividades', () => {
+  let fixture: ComponentFixture<Historico>;
   let componente: Historico;
   let parametros: BehaviorSubject<ReturnType<typeof convertToParamMap>>;
   let servico: { atividades: ReturnType<typeof vi.fn>; buscarResponsaveis: ReturnType<typeof vi.fn>; marcarLido: ReturnType<typeof vi.fn> };
@@ -34,12 +35,30 @@ describe('Histórico de atividades', () => {
         { provide: Router, useValue: { navigate: navegar } }
       ]
     }).compileComponents();
-    componente = TestBed.createComponent(Historico).componentInstance;
+    fixture = TestBed.createComponent(Historico);
+    componente = fixture.componentInstance;
   });
 
   afterEach(() => {
     componente.ngOnDestroy();
     vi.restoreAllMocks();
+  });
+
+  it('mostra a falha dentro do campo e do dropdown, sem alerta externo ao campo', async () => {
+    servico.buscarResponsaveis.mockReturnValue(throwError(() => new Error('Falha da API')));
+    fixture.detectChanges();
+    componente.abrirFiltros();
+    fixture.changeDetectorRef.markForCheck();
+    fixture.detectChanges();
+    const input = fixture.nativeElement.querySelector('input[name="responsavelBusca"]') as HTMLInputElement;
+    expect(input.placeholder).toBe('Não foi possível carregar os responsáveis.');
+    expect(fixture.nativeElement.querySelector('.form-filtros > p[role="alert"]')).toBeNull();
+    input.focus();
+    const abrir = fixture.nativeElement.querySelector('button[aria-label="Selecionar responsável"]') as HTMLButtonElement;
+    abrir.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(document.querySelector('[role="listbox"]')?.textContent).toContain('Não foi possível carregar os responsáveis.');
   });
 
   it('carrega sugestões recentes ao abrir sem exigir um nome digitado', () => {

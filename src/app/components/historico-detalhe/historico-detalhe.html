@@ -10,7 +10,7 @@
     <div><dt>Data e hora</dt><dd class="data-hora">{{ registros[0].dataHora | date:'dd/MM/yyyy, HH:mm':'-0300' }}</dd></div>
   </dl>
   @if (chamadaRegistrada) {
-    <div class="cabecalho-chamada"><h3>Chamada</h3><span class="acao">Cadastro</span></div>
+    <div class="cabecalho-chamada"><h3>Presença</h3><span class="acao">Cadastro</span></div>
     <div class="grupos-presenca">
       @for (presente of [true, false]; track presente) {
         <section class="grupo-presenca" [class.ausentes]="!presente">

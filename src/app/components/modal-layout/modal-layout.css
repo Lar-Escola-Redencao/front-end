@@ -29,6 +29,7 @@
   justify-content: space-between;
   gap: 16px;
   text-align: start;
+  margin-bottom: 8px;
 }
 
 .modal-title-area {

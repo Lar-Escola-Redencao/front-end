@@ -174,7 +174,7 @@ export class Historico implements OnInit, OnDestroy {
   }
 
   get orientacaoBusca(): string {
-    if (this.todasAreas) return 'Buscar por pessoa, turma ou informação alterada...';
+    if (this.todasAreas) return 'Buscar por responsável pela alteração, informação alterada...';
     return this.tiposRegistro.find(tipo => tipo.valor === this.tipoRegistro)?.busca ?? 'Buscar...';
   }
 
