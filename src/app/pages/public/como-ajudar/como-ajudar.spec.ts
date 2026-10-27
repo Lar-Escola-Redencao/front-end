@@ -8,6 +8,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { vi } from 'vitest';
 import { Clipboard } from '@angular/cdk/clipboard';
+import { Location } from '@angular/common';
 
 import { PublicNavbar } from '@components/public-navbar/public-navbar';
 import { PublicFooter } from '@components/public-footer/public-footer';
@@ -139,10 +140,15 @@ describe('ComoAjudar', () => {
     const secao = elemento.querySelector<HTMLElement>('#pix')!;
     vi.spyOn(navbar, 'getBoundingClientRect').mockReturnValue({ bottom: altura } as DOMRect);
     vi.spyOn(secao, 'getBoundingClientRect').mockReturnValue({ top: 500 } as DOMRect);
+    const location = TestBed.inject(Location);
+    const estado = { navigationId: 7 };
+    vi.spyOn(location, 'getState').mockReturnValue(estado);
+    const navegar = vi.spyOn(location, 'go').mockImplementation(() => {});
     const rolar = vi.spyOn(window, 'scrollTo').mockImplementation(() => {});
     const evento = new MouseEvent('click', { bubbles: true, cancelable: true });
     elemento.querySelector('.abertura-botao')!.dispatchEvent(evento);
     expect(evento.defaultPrevented).toBe(true);
+    expect(navegar).toHaveBeenCalledWith('/como-ajudar#pix', '', estado);
     expect(rolar).toHaveBeenCalledWith({ top: 500 + window.scrollY - altura - 8, behavior: 'smooth' });
   });
 
@@ -172,6 +178,7 @@ describe('ComoAjudar', () => {
     responder([]);
 
     expect(elemento.querySelector('#pix')).toBeNull();
+    expect(elemento.querySelector('.abertura-botao')).toBeNull();
     expect(elemento.querySelector('#imposto-de-renda')).not.toBeNull();
     expect(elemento.querySelector('#notas-fiscais')).not.toBeNull();
   });

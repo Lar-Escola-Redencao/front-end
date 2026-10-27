@@ -2,6 +2,7 @@ import { Component, ElementRef, computed, inject, OnInit, signal } from '@angula
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DestroyRef } from '@angular/core';
 import { Clipboard } from '@angular/cdk/clipboard';
+import { Location } from '@angular/common';
 
 import { PublicNavbar } from '@components/public-navbar/public-navbar';
 import { PublicFooter } from '@components/public-footer/public-footer';
@@ -29,6 +30,7 @@ export class ComoAjudar implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly elemento = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly clipboard = inject(Clipboard);
+  private readonly location = inject(Location);
   private copiaTimer?: ReturnType<typeof setTimeout>;
 
   protected readonly pix = signal<SecaoGrupo | null>(null);
@@ -99,8 +101,9 @@ export class ComoAjudar implements OnInit {
     const janela = secao?.ownerDocument.defaultView;
     if (!secao || !janela) return;
 
-    // Evita que a navegação por fragmento substitua a posição calculada.
+    // Atualiza o fragmento sem substituir a posição calculada pela navegação nativa.
     evento.preventDefault();
+    this.location.go('/como-ajudar#pix', '', this.location.getState());
     const navbar = this.elemento.nativeElement.querySelector<HTMLElement>('app-public-navbar .navbar');
     const alturaNav = navbar?.getBoundingClientRect().bottom ?? 82;
     const topo = secao.getBoundingClientRect().top + janela.scrollY - alturaNav - 8;
