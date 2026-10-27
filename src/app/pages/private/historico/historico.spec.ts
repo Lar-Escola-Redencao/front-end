@@ -19,12 +19,12 @@ const resposta = { content: [atividade], page: { number: 0, size: 10, totalEleme
 describe('Histórico de atividades', () => {
   let componente: Historico;
   let parametros: BehaviorSubject<ReturnType<typeof convertToParamMap>>;
-  let servico: { atividades: ReturnType<typeof vi.fn>; responsaveis: ReturnType<typeof vi.fn>; marcarLido: ReturnType<typeof vi.fn> };
+  let servico: { atividades: ReturnType<typeof vi.fn>; buscarResponsaveis: ReturnType<typeof vi.fn>; marcarLido: ReturnType<typeof vi.fn> };
   let navegar: ReturnType<typeof vi.fn>;
 
   beforeEach(async () => {
     parametros = new BehaviorSubject(convertToParamMap({}));
-    servico = { atividades: vi.fn().mockReturnValue(of(resposta)), responsaveis: vi.fn().mockReturnValue(of([])), marcarLido: vi.fn().mockReturnValue(of(undefined)) };
+    servico = { atividades: vi.fn().mockReturnValue(of(resposta)), buscarResponsaveis: vi.fn().mockReturnValue(of({ content: [], page: { number: 0, size: 5, totalElements: 0, totalPages: 0 } })), marcarLido: vi.fn().mockReturnValue(of(undefined)) };
     navegar = vi.fn().mockResolvedValue(true);
     await TestBed.configureTestingModule({
       imports: [Historico],
@@ -42,19 +42,27 @@ describe('Histórico de atividades', () => {
     vi.restoreAllMocks();
   });
 
-  it('valida o mínimo do responsável somente ao sair do campo', () => {
+  it('carrega sugestões recentes ao abrir sem exigir um nome digitado', () => {
+    const recentes = [{ id: 3, nome: 'Ana' }, { id: 4, nome: 'Pedro' }];
+    servico.buscarResponsaveis.mockReturnValue(of({ content: recentes,
+      page: { number: 0, size: 5, totalElements: 7, totalPages: 2 } }));
     componente.abrirFiltros();
-    componente.alterarBuscaResponsavel('A');
-    expect(componente.erroResponsavel).toBe('');
-    componente.validarBuscaResponsavel();
-    expect(componente.erroResponsavel).toContain('2 caracteres');
-    componente.alterarBuscaResponsavel('An');
-    expect(componente.erroResponsavel).toBe('');
-    componente.validarBuscaResponsavel();
-    expect(componente.erroResponsavel).toBe('');
-    componente.alterarBuscaResponsavel('');
-    componente.validarBuscaResponsavel();
-    expect(componente.erroResponsavel).toBe('');
+    expect(servico.buscarResponsaveis).toHaveBeenCalledWith('', 0);
+    expect(componente.responsaveisFiltrados).toEqual(recentes);
+    expect(componente.temMaisResponsaveis).toBe(true);
+  });
+
+  it('acrescenta outra página sem perder as sugestões anteriores', () => {
+    servico.buscarResponsaveis
+      .mockReturnValueOnce(of({ content: [{ id: 3, nome: 'Ana' }],
+        page: { number: 0, size: 5, totalElements: 6, totalPages: 2 } }))
+      .mockReturnValueOnce(of({ content: [{ id: 4, nome: 'Pedro removido' }],
+        page: { number: 1, size: 5, totalElements: 6, totalPages: 2 } }));
+    componente.abrirFiltros();
+    componente.carregarMaisResponsaveis();
+    expect(servico.buscarResponsaveis).toHaveBeenLastCalledWith('', 1);
+    expect(componente.responsaveisFiltrados.map(item => item.id)).toEqual([3, 4]);
+    expect(componente.temMaisResponsaveis).toBe(false);
   });
 
   it('fecha filtros sem confirmação quando não há alterações', async () => {
@@ -67,7 +75,6 @@ describe('Histórico de atividades', () => {
   });
 
   for (const mudar of [
-    (c: Historico) => c.trocarTipo('TURMAS'),
     (c: Historico) => { c.filtrosModal.dataInicial = '2026-10-01'; },
     (c: Historico) => c.alterarBuscaResponsavel('A')
   ]) {
@@ -132,65 +139,43 @@ describe('Histórico de atividades', () => {
     }) }));
   });
 
-  for (const cenario of [
-    { nome: 'categoria', selecionar: (c: Historico) => c.trocarTipo('CONTATOS') },
-    { nome: 'todas as áreas', selecionar: (c: Historico) => c.trocarTipo('TODOS') },
-    { nome: 'grupo de áreas', selecionar: (c: Historico) => c.trocarGrupo('CONTEUDO_PUBLICO') }
-  ]) {
-    it(`aplica ${cenario.nome} junto com os demais filtros, sem navegar durante a seleção`, () => {
-      componente.busca = 'Maria';
-      componente.contexto = { idRegistro: 4, idUsuario: 12, idTurma: 2, idContato: 5 };
-      componente.filtros = { idResponsavel: 3, dataInicial: '2026-10-01',
-        dataFinal: '2026-10-20', dataAula: '2026-10-20', tipoAlteracao: 'EDICAO' };
-      componente.abrirFiltros();
-      componente.filtrosModal = { ...componente.filtros, idResponsavel: 9 };
-      componente.responsavelBusca = { id: 9, nome: 'Ana' };
-      componente.responsaveisFiltrados = [{ id: 9, nome: 'Ana' }];
-      componente.buscandoResponsavel = true;
-      componente.erroFiltros = 'Erro anterior';
-      componente.pagina = 3;
+  it('aplica a área diretamente mantendo a busca e os filtros adicionais', () => {
+    componente.busca = 'Maria';
+    componente.contexto = { idUsuario: 12 };
+    componente.filtros = { idResponsavel: 3, dataAula: '2026-10-20' };
+    componente.trocarGrupo('CONTEUDO_PUBLICO');
+    expect(componente.contexto).toEqual({});
+    expect(navegar).toHaveBeenLastCalledWith([], expect.objectContaining({ queryParams: expect.objectContaining({
+      areaSistema: 'CONTEUDO_PUBLICO', search: 'Maria', idResponsavel: 3, dataAula: '', page: null
+    }) }));
+    navegar.mockClear();
+    componente.trocarGrupo('CONTEUDO_PUBLICO');
+    expect(navegar).not.toHaveBeenCalled();
+  });
 
-      cenario.selecionar(componente);
-
-      expect(navegar).not.toHaveBeenCalled();
-      expect(componente.filtros.idResponsavel).toBe(3);
-      expect(componente.contexto.idRegistro).toBe(4);
-      componente.aplicarFiltros({ invalid: false } as NgForm);
-      expect(componente.filtros.idResponsavel).toBe(9);
-      expect(componente.busca).toBe('Maria');
-      expect(componente.pagina).toBe(0);
-      const consulta = navegar.mock.lastCall![1].queryParams;
-      expect(consulta.search).toBe('Maria');
-      expect(consulta.page).toBeNull();
-      expect(consulta.idResponsavel).toBe(9);
-      expect(consulta.tipoAlteracao).toBe('EDICAO');
-      expect(consulta.dataInicial).toBe('2026-10-01');
-      expect(consulta.tipoRegistro).toBe(cenario.nome === 'categoria' ? 'CONTATOS' : 'TODOS');
-      expect(consulta.areaSistema).toBe(cenario.nome === 'grupo de áreas' ? 'CONTEUDO_PUBLICO' : null);
-    });
-  }
-
-  it('descarta a área não aplicada ao reabrir os filtros', () => {
+  it('mantém a área selecionada ao reabrir os filtros', () => {
     componente.abrirFiltros();
     componente.trocarTipo('TURMAS');
     componente.filtrosAberto = false;
     componente.abrirFiltros();
-    expect(componente.nomeAreaSelecionada).toBe('Todas as áreas');
-    expect(navegar).not.toHaveBeenCalled();
+    expect(componente.nomeAreaSelecionada).toBe('Turmas');
+    expect(navegar).toHaveBeenCalledTimes(1);
   });
 
-  it('limpa área, filtros e contexto pelo único botão de limpeza', () => {
+  it('limpa filtros adicionais e contexto preservando a área', () => {
     componente.todasAreas = false;
     componente.tipoRegistro = 'CONTATOS';
     componente.contexto = { idContato: 8 };
     componente.filtros = { idResponsavel: 3 };
-    expect(componente.quantidadeFiltros).toBe(3);
+    expect(componente.quantidadeFiltros).toBe(2);
     componente.abrirFiltros();
     componente.limparFiltros();
     expect(componente.quantidadeFiltros).toBe(0);
+    expect(componente.tipoRegistro).toBe('CONTATOS');
+    expect(componente.todasAreas).toBe(false);
     expect(componente.contexto).toEqual({});
     expect(navegar).toHaveBeenLastCalledWith([], expect.objectContaining({ queryParams: expect.objectContaining({
-      tipoRegistro: 'TODOS', areaSistema: null
+      tipoRegistro: 'CONTATOS', areaSistema: null
     }) }));
   });
 
@@ -246,19 +231,19 @@ describe('Histórico de atividades', () => {
     expect(navegar).not.toHaveBeenCalled();
   });
 
-  it('oferece sugestões por nome com dois caracteres após 400 ms', () => {
+  it('pesquisa responsáveis no servidor após 400 ms', () => {
     vi.useFakeTimers();
     try {
-      servico.responsaveis.mockReturnValue(of([{ id: 3, nome: 'Ana' }, { id: 4, nome: 'Pedro' }]));
+      const encontrados = [{ id: 3, nome: 'Ana' }];
+      servico.buscarResponsaveis.mockReturnValue(of({ content: encontrados,
+        page: { number: 0, size: 5, totalElements: 1, totalPages: 1 } }));
       componente.ngOnInit();
-      componente.alterarBuscaResponsavel('A');
-      vi.advanceTimersByTime(400);
-      expect(componente.responsaveisFiltrados).toEqual([]);
       componente.alterarBuscaResponsavel('AN');
       vi.advanceTimersByTime(399);
-      expect(componente.responsaveisFiltrados).toEqual([]);
+      expect(servico.buscarResponsaveis).not.toHaveBeenCalled();
       vi.advanceTimersByTime(1);
-      expect(componente.responsaveisFiltrados).toEqual([{ id: 3, nome: 'Ana' }]);
+      expect(servico.buscarResponsaveis).toHaveBeenCalledWith('AN', 0);
+      expect(componente.responsaveisFiltrados).toEqual(encontrados);
     } finally {
       vi.useRealTimers();
     }
@@ -287,6 +272,8 @@ describe('Histórico de atividades', () => {
       componente.alterarBuscaResponsavel('Ad');
       expect(componente.buscandoResponsavel).toBe(true);
       componente.alterarBuscaResponsavel('');
+      expect(componente.buscandoResponsavel).toBe(true);
+      vi.advanceTimersByTime(400);
       expect(componente.buscandoResponsavel).toBe(false);
     } finally {
       vi.useRealTimers();

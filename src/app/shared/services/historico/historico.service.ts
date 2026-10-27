@@ -52,6 +52,12 @@ export class HistoricoService {
     return this.http.get<ResponsavelHistorico[]>(`${this.apiUrl}/atividades/responsaveis`);
   }
 
+  buscarResponsaveis(busca = '', pagina = 0, id?: number): Observable<PaginaResposta<ResponsavelHistorico>> {
+    let params = new HttpParams().set('search', busca.trim()).set('page', pagina).set('size', 5);
+    if (id != null) params = params.set('id', id);
+    return this.http.get<PaginaResposta<ResponsavelHistorico>>(`${this.apiUrl}/atividades/responsaveis/sugestoes`, { params });
+  }
+
   consultarLeitura(tipo: TipoRegistroHistorico | null, filtros: FiltrosHistorico): Observable<LeituraHistorico> {
     return this.http.get<LeituraHistorico>(`${this.apiUrl}/atividades/leitura`, {
       params: this.parametros(tipo, filtros)

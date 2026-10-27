@@ -25,8 +25,50 @@
         [valor]="busca"
         (buscar)="buscar($event)" />
 
+      <div class="seletor-tipo">
+        <mat-form-field appearance="outline" subscriptSizing="dynamic" floatLabel="always"
+          cdkOverlayOrigin #origemArea="cdkOverlayOrigin" (click)="areaAberta = !areaAberta">
+          <mat-label>Área do sistema</mat-label>
+          <input matInput readonly class="seletor-area" role="combobox" [value]="nomeAreaSelecionada"
+            aria-haspopup="dialog" [attr.aria-expanded]="areaAberta"
+            (keydown.enter)="$event.preventDefault(); areaAberta = !areaAberta"
+            (keydown.space)="$event.preventDefault(); areaAberta = !areaAberta">
+          <button type="button" matSuffix class="seta-area" aria-label="Selecionar área do sistema"
+            aria-haspopup="dialog" [attr.aria-expanded]="areaAberta">
+            <mat-icon aria-hidden="true">arrow_drop_down</mat-icon>
+          </button>
+        </mat-form-field>
+        <ng-template cdkConnectedOverlay [cdkConnectedOverlayOrigin]="origemArea"
+          [cdkConnectedOverlayOpen]="areaAberta" [cdkConnectedOverlayHasBackdrop]="true"
+          [cdkConnectedOverlayWidth]="origemArea.elementRef.nativeElement.getBoundingClientRect().width"
+          cdkConnectedOverlayBackdropClass="cdk-overlay-transparent-backdrop"
+          (backdropClick)="areaAberta = false"
+          (overlayKeydown)="$event.key === 'Escape' && (areaAberta = false)">
+          <div class="arvore-areas" role="dialog" aria-label="Área do sistema" cdkTrapFocus [cdkTrapFocusAutoCapture]="true">
+            <button type="button" class="opcao-area" [attr.aria-pressed]="areaAtual === 'TODOS'" (click)="trocarTipo('TODOS')">Todas as áreas</button>
+            @for (grupo of gruposAreas; track grupo.nome) {
+              <details class="grupo-area">
+                <summary [attr.aria-label]="'Expandir ou recolher ' + grupo.nome">
+                  <mat-icon aria-hidden="true">arrow_right</mat-icon>
+                  <button type="button" class="opcao-area opcao-grupo"
+                    [attr.aria-pressed]="areaAtual === grupo.valor"
+                    (click)="$event.preventDefault(); $event.stopPropagation(); trocarGrupo(grupo.valor)">{{ grupo.nome }}</button>
+                </summary>
+                <div class="itens-area">
+                  @for (tipo of grupo.tipos; track tipo.valor) {
+                    <button type="button" class="opcao-area" [attr.aria-pressed]="areaAtual === tipo.valor"
+                      (click)="trocarTipo(tipo.valor)">{{ tipo.nome }}</button>
+                  }
+                </div>
+              </details>
+            }
+          </div>
+        </ng-template>
+      </div>
+
+
       <button type="button" class="btn-filtros" (click)="abrirFiltros()">
-        Filtros
+        Mais filtros
         @if (quantidadeFiltros > 0) {
           <span class="filtros-contador">{{ quantidadeFiltros }}</span>
         }
@@ -60,69 +102,35 @@
 @if (filtrosAberto) {
   <app-modal-layout titulo="Filtrar alterações" (closed)="fecharFiltros()">
     <form #formFiltros="ngForm" class="form-filtros" (ngSubmit)="aplicarFiltros(formFiltros)">
-      <div class="seletor-tipo">
-        <mat-form-field appearance="outline" floatLabel="always" cdkOverlayOrigin #origemArea="cdkOverlayOrigin">
-          <mat-label>Área do sistema</mat-label>
-          <input matInput readonly class="seletor-area" role="combobox" [value]="nomeAreaSelecionada"
-            aria-haspopup="dialog" [attr.aria-expanded]="areaAberta"
-            (click)="areaAberta = !areaAberta"
-            (keydown.enter)="$event.preventDefault(); areaAberta = !areaAberta"
-            (keydown.space)="$event.preventDefault(); areaAberta = !areaAberta">
-          <button type="button" matSuffix class="seta-area" aria-label="Selecionar área do sistema"
-            aria-haspopup="dialog" [attr.aria-expanded]="areaAberta" (click)="areaAberta = !areaAberta">
-            <mat-icon aria-hidden="true">arrow_drop_down</mat-icon>
-          </button>
-        </mat-form-field>
-        <ng-template cdkConnectedOverlay [cdkConnectedOverlayOrigin]="origemArea"
-          [cdkConnectedOverlayOpen]="areaAberta" [cdkConnectedOverlayHasBackdrop]="true"
-          [cdkConnectedOverlayWidth]="origemArea.elementRef.nativeElement.getBoundingClientRect().width"
-          cdkConnectedOverlayBackdropClass="cdk-overlay-transparent-backdrop"
-          (backdropClick)="areaAberta = false"
-          (overlayKeydown)="$event.key === 'Escape' && (areaAberta = false)">
-          <div class="arvore-areas" role="dialog" aria-label="Área do sistema" cdkTrapFocus [cdkTrapFocusAutoCapture]="true">
-            <button type="button" class="opcao-area" [attr.aria-pressed]="areaModal === 'TODOS'" (click)="trocarTipo('TODOS')">Todas as áreas</button>
-            @for (grupo of gruposAreas; track grupo.nome) {
-              <details class="grupo-area">
-                <summary [attr.aria-label]="'Expandir ou recolher ' + grupo.nome">
-                  <mat-icon aria-hidden="true">arrow_right</mat-icon>
-                  <button type="button" class="opcao-area opcao-grupo"
-                    [attr.aria-pressed]="areaModal === grupo.valor"
-                    (click)="$event.preventDefault(); $event.stopPropagation(); trocarGrupo(grupo.valor)">{{ grupo.nome }}</button>
-                </summary>
-                <div class="itens-area">
-                  @for (tipo of grupo.tipos; track tipo.valor) {
-                    <button type="button" class="opcao-area" [attr.aria-pressed]="areaModal === tipo.valor"
-                      (click)="trocarTipo(tipo.valor)">{{ tipo.nome }}</button>
-                  }
-                </div>
-              </details>
-            }
-          </div>
-        </ng-template>
-      </div>
 
-      <mat-form-field appearance="outline" floatLabel="auto">
-        <mat-label>Quem fez a alteração</mat-label>
-        <input matInput name="responsavelBusca" [ngModel]="responsavelBusca"
+      <mat-form-field appearance="outline" floatLabel="always">
+        <mat-label>Responsável</mat-label>
+        <input matInput name="responsavelBusca" placeholder="Qualquer responsável" [ngModel]="responsavelBusca"
           (ngModelChange)="alterarBuscaResponsavel($event)" [matAutocomplete]="autoResponsavel"
-          (blur)="validarBuscaResponsavel()"
-          [attr.aria-invalid]="erroResponsavel ? 'true' : null"
-          [attr.aria-describedby]="erroResponsavel ? 'erro-responsavel' : null" />
+          #gatilhoResponsavel="matAutocompleteTrigger"
+          (focus)="mostrarResponsaveis()" />
+        <button type="button" matSuffix class="seta-area" aria-label="Selecionar responsável"
+          (click)="mostrarResponsaveis(); gatilhoResponsavel.openPanel()">
+          <mat-icon aria-hidden="true">arrow_drop_down</mat-icon>
+        </button>
         <mat-autocomplete #autoResponsavel="matAutocomplete" [displayWith]="exibirResponsavel">
+          <mat-option [value]="null">Qualquer responsável</mat-option>
           @for (responsavel of responsaveisFiltrados; track responsavel.id) {
             <mat-option [value]="responsavel">{{ responsavel.nome }}</mat-option>
           }
           @if (buscandoResponsavel) {
             <mat-option disabled>Buscando responsáveis...</mat-option>
-          } @else if (responsaveisFiltrados.length === 0 && !erroResponsaveis && exibirResponsavel(responsavelBusca).trim().length >= 2) {
+          } @else if (responsaveisFiltrados.length === 0 && !erroResponsaveis && exibirResponsavel(responsavelBusca).trim().length > 0) {
             <mat-option disabled>Nenhum responsável encontrado</mat-option>
           }
+          @if (temMaisResponsaveis && !buscandoResponsavel) {
+            <div class="mais-responsaveis">
+              <button type="button" class="btn-cancelar" (mousedown)="$event.preventDefault()"
+                (click)="carregarMaisResponsaveis()">Ver mais responsáveis</button>
+            </div>
+          }
         </mat-autocomplete>
-        <mat-hint>Deixe vazio para consultar todos os responsáveis.</mat-hint>
       </mat-form-field>
-      @if (erroResponsavel) {
-        <span id="erro-responsavel" class="error-text" role="alert">{{ erroResponsavel }}</span>
-      }
       @if (erroResponsaveis) {
         <p role="alert">Não foi possível carregar os responsáveis.</p>
         <button type="button" class="btn-cancelar" (click)="carregarResponsaveis()">Tentar novamente</button>
@@ -148,7 +156,7 @@
       <mat-form-field appearance="outline">
         <mat-label>Ação realizada</mat-label>
         <mat-select name="tipoAlteracao" [(ngModel)]="filtrosModal.tipoAlteracao">
-          <mat-option value="">Todos os tipos</mat-option>
+          <mat-option value="">Todas as ações</mat-option>
           <mat-option value="CADASTRO">Cadastro</mat-option>
           <mat-option value="EDICAO">Edição</mat-option>
           <mat-option value="EXCLUSAO">Exclusão</mat-option>

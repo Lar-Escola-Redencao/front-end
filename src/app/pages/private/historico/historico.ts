@@ -62,17 +62,19 @@ export class Historico implements OnInit, OnDestroy {
   private readonly router = inject(Router);
   private rotaSub?: Subscription;
   private responsaveisSub?: Subscription;
+  private responsavelSelecionadoSub?: Subscription;
+  private paginaResponsaveis = 0;
+  private termoResponsaveis = '';
+  temMaisResponsaveis = false;
   responsaveis: ResponsavelHistorico[] = [];
   erroResponsaveis = false;
   responsavelBusca: ResponsavelHistorico | string | null = null;
   responsaveisFiltrados: ResponsavelHistorico[] = [];
   buscandoResponsavel = false;
-  erroResponsavel = '';
   private confirmandoSaidaFiltros = false;
   private readonly buscaResponsavel = new Subject<string>();
   private buscaResponsavelSub?: Subscription;
   areaAberta = false;
-  areaModal: TipoRegistroHistorico | AreaSistemaHistorico | 'TODOS' = 'TODOS';
   sort: string | undefined;
   ordenacao: CampoOrdenacao | null = { campo: 'dataHora', direcao: 'desc' };
   periodo: 'RECENTES' | 'ARQUIVADOS' | 'TODOS' = 'RECENTES';
@@ -174,25 +176,24 @@ export class Historico implements OnInit, OnDestroy {
 
   get quantidadeFiltros(): number {
     return Object.values(this.filtros).filter(valor => valor != null && valor !== '').length
-      + (this.areaAtual !== 'TODOS' ? 1 : 0) + (this.temContexto ? 1 : 0);
+      + (this.temContexto ? 1 : 0);
   }
 
-  private get areaAtual(): TipoRegistroHistorico | AreaSistemaHistorico | 'TODOS' {
+  get areaAtual(): TipoRegistroHistorico | AreaSistemaHistorico | 'TODOS' {
     return this.grupoSelecionado ?? (this.todasAreas ? 'TODOS' : this.tipoRegistro);
   }
 
   get mostrarDataAula(): boolean {
-    return this.areaModal === 'TODOS' || this.areaModal === 'GESTAO_INTERNA' || this.areaModal === 'PRESENCAS';
+    return this.areaAtual === 'TODOS' || this.areaAtual === 'GESTAO_INTERNA' || this.areaAtual === 'PRESENCAS';
   }
 
   ngOnInit(): void {
     this.buscaResponsavelSub = this.buscaResponsavel.pipe(
       debounceTime(400)
     ).subscribe(termo => {
-      this.filtrarResponsaveis(termo);
+      this.carregarResponsaveis(termo);
       this.changeDetector.markForCheck();
     });
-    this.carregarResponsaveis();
     this.rotaSub = this.route.queryParamMap.subscribe(parametros => {
       const area = parametros.get('tipoRegistro');
       this.todasAreas = !this.tiposRegistro.some(tipo => tipo.valor === area);
@@ -230,20 +231,23 @@ export class Historico implements OnInit, OnDestroy {
     });
   }
 
-  carregarResponsaveis(): void {
+  carregarResponsaveis(termo = this.termoResponsaveis, pagina = 0): void {
     this.erroResponsaveis = false;
+    this.buscandoResponsavel = true;
+    this.termoResponsaveis = termo;
     this.responsaveisSub?.unsubscribe();
-    this.responsaveisSub = this.historicoService.responsaveis().subscribe({
-      next: responsaveis => {
-        this.responsaveis = responsaveis;
-        if (this.filtrosAberto) {
-          this.restaurarResponsavel();
-          this.filtrarResponsaveis(typeof this.responsavelBusca === 'string' ? this.responsavelBusca : '');
-        }
+    this.responsaveisSub = this.historicoService.buscarResponsaveis(termo, pagina).subscribe({
+      next: resposta => {
+        this.responsaveisFiltrados = pagina === 0 ? resposta.content : [...this.responsaveisFiltrados, ...resposta.content];
+        this.responsaveis = this.responsaveisFiltrados;
+        this.paginaResponsaveis = resposta.page.number;
+        this.temMaisResponsaveis = resposta.page.number + 1 < resposta.page.totalPages;
+        this.buscandoResponsavel = false;
         this.changeDetector.markForCheck();
       },
       error: () => {
         this.erroResponsaveis = true;
+        this.buscandoResponsavel = false;
         this.changeDetector.markForCheck();
       }
     });
@@ -271,6 +275,7 @@ export class Historico implements OnInit, OnDestroy {
     this.listaSub?.unsubscribe();
     this.rotaSub?.unsubscribe();
     this.responsaveisSub?.unsubscribe();
+    this.responsavelSelecionadoSub?.unsubscribe();
     this.buscaResponsavelSub?.unsubscribe();
     this.leituraSub?.unsubscribe();
   }
@@ -320,15 +325,24 @@ export class Historico implements OnInit, OnDestroy {
   }
 
   trocarTipo(tipo: TipoRegistroHistorico | 'TODOS'): void {
-    this.areaModal = tipo;
-    this.areaAberta = false;
-    if (!this.mostrarDataAula) this.filtrosModal.dataAula = '';
+    this.selecionarArea(tipo);
   }
 
   trocarGrupo(grupo: AreaSistemaHistorico): void {
-    this.areaModal = grupo;
+    this.selecionarArea(grupo);
+  }
+
+  private selecionarArea(area: TipoRegistroHistorico | AreaSistemaHistorico | 'TODOS'): void {
     this.areaAberta = false;
-    if (!this.mostrarDataAula) this.filtrosModal.dataAula = '';
+    if (area === this.areaAtual) return;
+
+    this.grupoSelecionado = this.gruposAreas.find(grupo => grupo.valor === area)?.valor ?? null;
+    this.todasAreas = area === 'TODOS' || this.grupoSelecionado !== null;
+    if (!this.todasAreas) this.tipoRegistro = area as TipoRegistroHistorico;
+    this.contexto = {};
+    if (!this.mostrarDataAula) this.filtros.dataAula = '';
+    this.pagina = 0;
+    this.atualizarConsulta();
   }
 
   buscar(termo: string): void {
@@ -349,8 +363,8 @@ export class Historico implements OnInit, OnDestroy {
   }
 
   get nomeAreaSelecionada(): string {
-    return this.gruposAreas.find(grupo => grupo.valor === this.areaModal)?.nome
-      ?? this.tiposRegistro.find(tipo => tipo.valor === this.areaModal)?.nome
+    return this.gruposAreas.find(grupo => grupo.valor === this.areaAtual)?.nome
+      ?? this.tiposRegistro.find(tipo => tipo.valor === this.areaAtual)?.nome
       ?? 'Todas as áreas';
   }
 
@@ -367,26 +381,30 @@ export class Historico implements OnInit, OnDestroy {
   }
 
   alterarBuscaResponsavel(valor: ResponsavelHistorico | string | null): void {
+    this.responsaveisSub?.unsubscribe();
     this.responsavelBusca = valor;
-    this.erroResponsavel = '';
     this.filtrosModal.idResponsavel = valor && typeof valor !== 'string' ? valor.id : null;
     this.responsaveisFiltrados = [];
     this.erroFiltros = '';
-    this.buscandoResponsavel = typeof valor === 'string' && valor.trim().length >= 2;
+    this.temMaisResponsaveis = false;
+    this.buscandoResponsavel = true;
     this.buscaResponsavel.next(typeof valor === 'string' ? valor : '');
   }
 
-  validarBuscaResponsavel(): void {
-    const texto = typeof this.responsavelBusca === 'string' ? this.responsavelBusca.trim() : '';
-    this.erroResponsavel = texto.length > 0 && texto.length < 2 ? 'Mínimo de 2 caracteres.' : '';
+  mostrarResponsaveis(): void {
+    this.carregarResponsaveis(typeof this.responsavelBusca === 'string' ? this.responsavelBusca : '');
+  }
+
+  carregarMaisResponsaveis(): void {
+    if (this.buscandoResponsavel || !this.temMaisResponsaveis) return;
+    this.carregarResponsaveis(this.termoResponsaveis, this.paginaResponsaveis + 1);
   }
 
   private get filtrosModalAlterados(): boolean {
     const campos: (keyof FiltrosHistorico)[] = [
       'idResponsavel', 'dataInicial', 'dataFinal', 'dataAula', 'tipoAlteracao'
     ];
-    return this.areaModal !== this.areaAtual
-      || (typeof this.responsavelBusca === 'string' && this.responsavelBusca.trim() !== '')
+    return (typeof this.responsavelBusca === 'string' && this.responsavelBusca.trim() !== '')
       || campos.some(campo => (this.filtrosModal[campo] ?? '') !== (this.filtros[campo] ?? ''));
   }
 
@@ -406,25 +424,31 @@ export class Historico implements OnInit, OnDestroy {
   private restaurarResponsavel(): void {
     if (this.filtrosModal.idResponsavel) {
       this.responsavelBusca = this.responsaveis.find(item => item.id === this.filtrosModal.idResponsavel) ?? null;
+      if (!this.responsavelBusca) {
+        const id = this.filtrosModal.idResponsavel;
+        this.responsavelSelecionadoSub?.unsubscribe();
+        this.responsavelSelecionadoSub = this.historicoService.buscarResponsaveis('', 0, id).subscribe({
+          next: resposta => {
+            if (this.filtrosModal.idResponsavel !== id || this.responsavelBusca) return;
+            this.responsavelBusca = resposta.content[0] ?? null;
+            this.changeDetector.markForCheck();
+          },
+          error: () => {
+            this.erroResponsaveis = true;
+            this.changeDetector.markForCheck();
+          }
+        });
+      }
     }
   }
 
-  private filtrarResponsaveis(termo: string): void {
-    this.buscandoResponsavel = false;
-    const texto = termo.trim().toLocaleLowerCase('pt-BR');
-    this.responsaveisFiltrados = texto.length >= 2
-      ? this.responsaveis.filter(item => item.nome.toLocaleLowerCase('pt-BR').includes(texto)) : [];
-  }
-
   abrirFiltros(): void {
-    this.erroResponsavel = '';
-    this.areaModal = this.areaAtual;
     this.areaAberta = false;
     this.filtrosModal = { ...this.filtros };
     this.responsavelBusca = null;
     this.buscandoResponsavel = false;
     this.restaurarResponsavel();
-    this.responsaveisFiltrados = [];
+    this.carregarResponsaveis('');
     this.buscaResponsavel.next('');
     this.erroFiltros = '';
     this.filtrosAberto = true;
@@ -435,9 +459,6 @@ export class Historico implements OnInit, OnDestroy {
       formulario.control.markAllAsTouched();
       return;
     }
-
-    this.validarBuscaResponsavel();
-    if (this.erroResponsavel) return;
 
     if (typeof this.responsavelBusca === 'string' && this.responsavelBusca.trim()) {
       this.erroFiltros = 'Selecione um responsável na lista ou limpe o campo para consultar todos.';
@@ -450,10 +471,6 @@ export class Historico implements OnInit, OnDestroy {
     }
 
     this.filtros = { ...this.filtrosModal };
-    if (this.areaModal !== this.areaAtual) this.contexto = {};
-    this.grupoSelecionado = this.gruposAreas.find(grupo => grupo.valor === this.areaModal)?.valor ?? null;
-    this.todasAreas = this.areaModal === 'TODOS' || this.grupoSelecionado !== null;
-    if (!this.todasAreas) this.tipoRegistro = this.areaModal as TipoRegistroHistorico;
     if (!this.mostrarDataAula) this.filtros.dataAula = '';
     this.areaAberta = false;
     this.filtrosAberto = false;
@@ -462,10 +479,6 @@ export class Historico implements OnInit, OnDestroy {
   }
 
   limparFiltros(): void {
-    this.erroResponsavel = '';
-    this.todasAreas = true;
-    this.grupoSelecionado = null;
-    this.areaModal = 'TODOS';
     this.areaAberta = false;
     this.contexto = {};
     this.responsavelBusca = null;
