@@ -21,51 +21,59 @@
     </div>
   } @else {
     @if (produtos().length > 0) {
-      <section class="carrossel-section" aria-label="Produtos gráficos">
+      <section class="carrossel-section" aria-label="Produtos gráficos"
+        [class.com-navegacao]="navegacaoAtiva()" [style.--itens]="itensPorPagina()"
+        (mouseenter)="mouseSobre.set(true)" (mouseleave)="mouseSobre.set(false)"
+        (focusin)="focoDentro.set(true)" (focusout)="aoSairFoco($event)">
+        @if (navegacaoAtiva()) {
         <button
           type="button"
           class="nav-btn prev-btn"
           (click)="scrollCarrossel(-1)"
-          [class.hidden]="produtos().length <= 1"
           aria-label="Produto anterior"
         >
           <span class="material-symbols-outlined">chevron_left</span>
         </button>
+        }
 
-        <div class="carrossel-track" #track>
-          @for (produto of produtos(); track produto.id) {
-            <article class="produto-card">
-              <div class="produto-imagem-wrapper">
-                @if (obterUrlImagem(produto.imagem)) {
+        <div class="carrossel-viewport" (pointerdown)="iniciarToque($event)" (pointerup)="terminarToque($event)">
+        <div class="carrossel-track" [class.com-transicao]="comTransicao()" [style.transform]="transformacao()">
+          @for (produto of produtosCarrossel(); track $index; let i = $index) {
+            <article class="produto-card" [attr.aria-hidden]="itemVisivel(i) ? null : 'true'" [attr.inert]="itemVisivel(i) ? null : ''">
+              <button type="button" class="produto-imagem-wrapper" (click)="abrirImagem(produto)"
+                [disabled]="!podeAmpliar(produto)" [attr.aria-label]="'Ampliar imagem de ' + produto.titulo">
+                @if (podeAmpliar(produto)) {
                   <img
                     [src]="obterUrlImagem(produto.imagem)"
-                    (error)="onImageError($event)"
+                    (error)="onImageError(produto)"
                     [alt]="produto.titulo"
                     loading="lazy"
                   />
                 }
                 <span
                   class="material-icons imagem-fallback"
-                  [class.imagem-fallback-hidden]="obterUrlImagem(produto.imagem)"
+                  [class.imagem-fallback-hidden]="podeAmpliar(produto)"
                   aria-hidden="true"
                 >
                   image
                 </span>
-              </div>
+              </button>
               <h2 class="produto-titulo">{{ produto.titulo }}</h2>
             </article>
           }
         </div>
+        </div>
 
+        @if (navegacaoAtiva()) {
         <button
           type="button"
           class="nav-btn next-btn"
           (click)="scrollCarrossel(1)"
-          [class.hidden]="produtos().length <= 1"
           aria-label="Próximo produto"
         >
           <span class="material-symbols-outlined">chevron_right</span>
         </button>
+        }
       </section>
     } @else {
       <div class="container">
@@ -77,19 +85,15 @@
       <div class="container">
         <section class="contato-section" aria-label="Contato para orçamento">
           @if (linkWhatsapp(); as link) {
-            <a class="btn-whatsapp" [href]="link" target="_blank" rel="noopener noreferrer">
+            <a class="btn-primary btn-whatsapp" [href]="link" target="_blank" rel="noopener noreferrer">
               <span>Solicite um orçamento via WhatsApp</span>
-              <span class="whatsapp-icon-circle">
-                <svg class="whatsapp-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                  <path
-                    d="M12.04 2c-5.52 0-10 4.48-10 10 0 1.77.46 3.45 1.26 4.9L2 22l5.24-1.26A9.96 9.96 0 0 0 12.04 22c5.52 0 10-4.48 10-10s-4.48-10-10-10Zm0 18.2c-1.6 0-3.1-.43-4.4-1.2l-.32-.19-3.1.75.75-3.02-.2-.32A8.18 8.18 0 0 1 3.8 12c0-4.55 3.7-8.24 8.24-8.24 4.55 0 8.24 3.7 8.24 8.24 0 4.55-3.69 8.2-8.24 8.2Zm4.5-6.14c-.25-.12-1.46-.72-1.68-.8-.23-.08-.39-.12-.56.12-.17.25-.63.8-.78.96-.14.17-.29.19-.53.06-.25-.12-1.05-.39-2-1.23-.74-.66-1.24-1.48-1.39-1.73-.14-.25-.02-.38.11-.5.11-.11.25-.29.37-.43.12-.14.17-.25.25-.41.08-.17.04-.31-.02-.43-.06-.12-.56-1.35-.77-1.85-.2-.48-.41-.42-.56-.43h-.48c-.17 0-.43.06-.66.31-.23.25-.86.84-.86 2.05 0 1.2.88 2.37 1 2.53.12.17 1.74 2.66 4.22 3.73.59.25 1.05.4 1.41.51.59.19 1.13.16 1.56.1.48-.07 1.46-.6 1.66-1.17.2-.58.2-1.08.14-1.18-.06-.1-.23-.16-.48-.28Z"
-                  />
-                </svg>
-              </span>
+              <img class="whatsapp-icon" src="/images/redes-sociais/whatsapp.svg" alt="" aria-hidden="true">
             </a>
           }
-          @if (contatoAlternativo(); as textoAlternativo) {
-            <p class="contato-alternativo">{{ textoAlternativo }}</p>
+          @if (contatoAlternativo(); as alternativo) {
+            <p class="contato-alternativo">
+              {{ alternativo.rotulo }} <a [href]="alternativo.href">{{ alternativo.valor }}</a>
+            </p>
           }
         </section>
       </div>
@@ -98,3 +102,15 @@
 </main>
 
 <app-public-footer></app-public-footer>
+
+<dialog #lightbox class="lightbox" [attr.aria-label]="imagemAmpliada()?.titulo || 'Imagem ampliada'"
+  (click)="fecharAoClicarFora($event)" (close)="imagemAmpliada.set(null)">
+  @if (imagemAmpliada(); as produto) {
+    <div appBloquearScroll class="lightbox-conteudo">
+      <button type="button" class="lightbox-fechar" (click)="fecharImagem()" aria-label="Fechar imagem ampliada" autofocus>
+        <span class="material-symbols-outlined">close</span>
+      </button>
+      <img class="lightbox-imagem" [src]="obterUrlImagem(produto.imagem)" [alt]="produto.titulo">
+    </div>
+  }
+</dialog>
