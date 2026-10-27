@@ -335,4 +335,10 @@ export class UsuarioPerfilDadosPessoais implements OnChanges {
     };
     imagem.src = url;
   }
+
+  abrirCalendario(campo: HTMLInputElement): void {
+    campo.focus();
+    if (typeof campo.showPicker === 'function') campo.showPicker();
+  }
+
 }

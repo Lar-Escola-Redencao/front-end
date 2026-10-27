@@ -695,4 +695,10 @@ export class UsuarioPerfil implements OnInit, OnDestroy, ComponentComAlteracoesN
     this.cdr.markForCheck();
     this.cdr.detectChanges();
   }
+
+  abrirCalendario(campo: HTMLInputElement): void {
+    campo.focus();
+    if (typeof campo.showPicker === 'function') campo.showPicker();
+  }
+
 }

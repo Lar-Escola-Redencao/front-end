@@ -817,3 +817,36 @@ div.mat-mdc-autocomplete-panel .mat-mdc-option.mat-mdc-option-active:not(.mdc-li
   border-radius: 50%;
   background: var(--primary-color);
 }
+
+/* O calendário dos campos Material usa o ícone do projeto. */
+input[matInput][type="date"]::-webkit-calendar-picker-indicator,
+input[matInput][type="datetime-local"]::-webkit-calendar-picker-indicator {
+  display: none;
+}
+
+.btn-calendario-data {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  margin-right: 2px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--input-color);
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.btn-calendario-data:hover,
+.btn-calendario-data:focus-visible {
+  background-color: #f0f0f0;
+  color: var(--primary-color);
+}
+
+.btn-calendario-data:disabled {
+  opacity: 0.5;
+  cursor: default;
+}

@@ -427,4 +427,10 @@ export class Historico implements OnInit, OnDestroy {
     }).format(new Date(valor)).replace(', ', ' às ');
   }
 
+
+  abrirCalendario(campo: HTMLInputElement): void {
+    campo.focus();
+    if (typeof campo.showPicker === 'function') campo.showPicker();
+  }
+
 }

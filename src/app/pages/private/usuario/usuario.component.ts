@@ -263,8 +263,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
   readonly limiteArquivo = TAMANHO_MAXIMO_ARQUIVO_BYTES;
   readonly etapas = ['Dados pessoais', 'Contatos', 'Dados socioeconômicos', 'Dados complementares', 'Matrícula'];
   readonly periodosEscolares = [
-    { value: 'MANHA', label: 'Manhã' }, { value: 'TARDE', label: 'Tarde' },
-    { value: 'INTEGRAL', label: 'Integral' }, { value: 'OUTRO', label: 'Outro' }
+    { value: 'MANHA', label: 'Manhã' }, { value: 'TARDE', label: 'Tarde' }
   ];
   readonly seriesEscolares = [
     { value: 'PRE_ESCOLA', label: 'Pré-escola' },

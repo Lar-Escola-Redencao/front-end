@@ -1335,27 +1335,6 @@ h1 {
   text-decoration: underline;
 }
 
-.cadastro-form .btn-calendario-data {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  margin-right: 2px;
-  padding: 0;
-  border: 0;
-  border-radius: 50%;
-  background: transparent;
-  color: var(--input-color);
-  cursor: pointer;
-  transition: background-color 0.2s ease, color 0.2s ease;
-}
-
-.cadastro-form .btn-calendario-data:hover,
-.cadastro-form .btn-calendario-data:focus-visible {
-  background-color: #f0f0f0;
-  color: var(--primary-color);
-}
 
 .busca-contato-error {
   display: block;

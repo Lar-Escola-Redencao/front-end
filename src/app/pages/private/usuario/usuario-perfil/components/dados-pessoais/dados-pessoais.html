@@ -27,7 +27,10 @@
 
       <mat-form-field appearance="outline">
         <mat-label>Data nascimento*</mat-label>
-        <input matInput type="date" formControlName="dataNascimento">
+        <input #dataNascimento matInput type="date" formControlName="dataNascimento">
+        <button type="button" matSuffix class="btn-calendario-data"
+          aria-label="Abrir calendário da data de nascimento" [disabled]="dataNascimento.disabled"
+          (click)="abrirCalendario(dataNascimento)"><mat-icon>calendar_month</mat-icon></button>
         <mat-error>{{ mensagemErro('dataNascimento') }}</mat-error>
       </mat-form-field>
 

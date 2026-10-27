@@ -129,7 +129,10 @@
         <form class="perfil-modal-form" [formGroup]="formDesligamento" (ngSubmit)="confirmarDesligamento()">
           <mat-form-field appearance="outline" class="campo-cheio">
             <mat-label>Data desligamento*</mat-label>
-            <input matInput type="date" formControlName="dataDesligamento" [attr.min]="dataMinimaTransferencia">
+            <input #dataDesligamento matInput type="date" formControlName="dataDesligamento" [attr.min]="dataMinimaTransferencia">
+            <button type="button" matSuffix class="btn-calendario-data"
+              aria-label="Abrir calendário da data de desligamento" [disabled]="dataDesligamento.disabled"
+              (click)="abrirCalendario(dataDesligamento)"><mat-icon>calendar_month</mat-icon></button>
           </mat-form-field>
           @if (formDesligamento.get('dataDesligamento')?.invalid && formDesligamento.get('dataDesligamento')?.touched) {
             <span class="error-text">
@@ -189,7 +192,10 @@
           @if (modoSelecaoTurma === 'transferencia') {
             <mat-form-field appearance="outline" class="campo-cheio">
               <mat-label>Data transferência*</mat-label>
-              <input matInput type="date" formControlName="dataTransferencia" [attr.min]="dataMinimaTransferencia">
+              <input #dataTransferencia matInput type="date" formControlName="dataTransferencia" [attr.min]="dataMinimaTransferencia">
+              <button type="button" matSuffix class="btn-calendario-data"
+                aria-label="Abrir calendário da data de transferência" [disabled]="dataTransferencia.disabled"
+                (click)="abrirCalendario(dataTransferencia)"><mat-icon>calendar_month</mat-icon></button>
             </mat-form-field>
 
             @if (formTransferencia.get('dataTransferencia')?.invalid && formTransferencia.get('dataTransferencia')?.touched) {

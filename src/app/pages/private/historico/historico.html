@@ -113,12 +113,18 @@
       <div class="form-row">
         <mat-form-field appearance="outline">
           <mat-label>Alterações a partir de</mat-label>
-          <input matInput type="date" name="dataInicial" [(ngModel)]="filtrosModal.dataInicial" />
+          <input #dataInicial matInput type="date" name="dataInicial" [(ngModel)]="filtrosModal.dataInicial" />
+          <button type="button" matSuffix class="btn-calendario-data"
+            aria-label="Abrir calendário da data inicial" [disabled]="dataInicial.disabled"
+            (click)="abrirCalendario(dataInicial)"><mat-icon>calendar_month</mat-icon></button>
         </mat-form-field>
 
         <mat-form-field appearance="outline">
           <mat-label>Alterações até</mat-label>
-          <input matInput type="date" name="dataFinal" [(ngModel)]="filtrosModal.dataFinal" />
+          <input #dataFinal matInput type="date" name="dataFinal" [(ngModel)]="filtrosModal.dataFinal" />
+          <button type="button" matSuffix class="btn-calendario-data"
+            aria-label="Abrir calendário da data final" [disabled]="dataFinal.disabled"
+            (click)="abrirCalendario(dataFinal)"><mat-icon>calendar_month</mat-icon></button>
         </mat-form-field>
       </div>
 
@@ -135,7 +141,10 @@
       @if (todasAreas || tipoRegistro === 'PRESENCAS') {
         <mat-form-field appearance="outline">
           <mat-label>Data da aula</mat-label>
-          <input matInput type="date" name="dataAula" [(ngModel)]="filtrosModal.dataAula" />
+          <input #dataAula matInput type="date" name="dataAula" [(ngModel)]="filtrosModal.dataAula" />
+          <button type="button" matSuffix class="btn-calendario-data"
+            aria-label="Abrir calendário da data da aula" [disabled]="dataAula.disabled"
+            (click)="abrirCalendario(dataAula)"><mat-icon>calendar_month</mat-icon></button>
         </mat-form-field>
       }
 
