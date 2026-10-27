@@ -6,19 +6,19 @@
       <p class="sobretitulo">Como ajudar?</p>
 
       <h1>
-        Sua ajuda faz parte
-        <span>dessa história.</span>
+        Grandes caminhos
+        <span>se constroem juntos.</span>
       </h1>
 
       <p class="abertura-descricao">
-        Junte-se ao Lar Escola Redenção e contribua para o cuidado
-        e as oportunidades na vida de nossas crianças.
-        Cada contribuição é uma forma de participar.
+        Cada pessoa que apoia o Lar Escola Redenção ajuda a dar continuidade a um trabalho
+        construído por muitas mãos. Sua doação contribui para o cuidado, acolhimento e
+        oportunidades para o crescimento de nossos meninos. Faça parte dessa caminhada com a gente.
       </p>
 
       @if (pix()) {
-        <a class="btn-primary abertura-botao" routerLink="/como-ajudar" fragment="pix">
-          Como contribuir
+        <a class="btn-primary abertura-botao" href="/como-ajudar#pix" (click)="irParaPix($event)">
+          Quero contribuir
         </a>
       }
     </div>
@@ -64,18 +64,17 @@
           </div>
 
           <h2 id="titulo-pix">
-            Um gesto seu.<br />
-            Mais apoio para continuar.
+            Um jeito simples de apoiar
           </h2>
 
           <p class="pix-descricao">
-            Doe via Pix e apoie as atividades do Lar Escola Redenção.
-            Qualquer valor é bem-vindo.
+            Faça sua doação usando a chave Pix ou o QR Code. Escolha o valor que fizer sentido
+            para você. Toda contribuição é bem-vinda.
           </p>
 
           <ol class="pix-passos">
             <li>Abra o aplicativo do seu banco e escolha a opção Pix.</li>
-            <li>Utilize a chave Pix ou escaneie o QR Code.</li>
+            <li>Copie a chave Pix ou escaneie o QR Code.</li>
             <li>Escolha o valor e confira os dados antes de confirmar.</li>
           </ol>
         </div>
@@ -84,7 +83,13 @@
           @if (dadosPix.conteudo) {
             <div class="chave-pix">
               <span class="chave-pix-rotulo">Chave Pix</span>
-              <p class="chave-pix-valor">{{ dadosPix.conteudo }}</p>
+              <button type="button" class="chave-pix-copiar" (click)="copiarChavePix()"
+                [attr.aria-label]="chaveCopiada() ? 'Chave Pix copiada' : 'Copiar chave Pix: ' + dadosPix.conteudo"
+                title="Copiar chave Pix">
+                <span class="chave-pix-valor">{{ dadosPix.conteudo }}</span>
+                <span class="material-symbols-outlined" aria-hidden="true">{{ chaveCopiada() ? 'check' : 'content_copy' }}</span>
+              </button>
+              <span class="chave-pix-feedback" role="status" aria-live="polite" aria-atomic="true">{{ feedbackCopia() }}</span>
             </div>
           }
 
@@ -162,7 +167,7 @@
 
     <p class="mensagem-final">
       Cada gesto importa.
-      <span>Obrigado por fazer parte dessa história.</span>
+      <span>Agradecemos por fazer parte dessa história.</span>
     </p>
   </div>
 </main>

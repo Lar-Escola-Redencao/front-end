@@ -6,6 +6,8 @@ import {
 import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { vi } from 'vitest';
+import { Clipboard } from '@angular/cdk/clipboard';
 
 import { PublicNavbar } from '@components/public-navbar/public-navbar';
 import { PublicFooter } from '@components/public-footer/public-footer';
@@ -17,7 +19,7 @@ import { ComoAjudar } from './como-ajudar';
 @Component({
   selector: 'app-public-navbar',
   standalone: true,
-  template: '',
+  template: '<nav class="navbar"></nav>',
 })
 class PublicNavbarStub {}
 
@@ -67,6 +69,8 @@ describe('ComoAjudar', () => {
 
   afterEach(() => {
     httpMock.verify();
+    vi.restoreAllMocks();
+    vi.useRealTimers();
   });
 
   function responder(secoes: SecaoGrupo[]): void {
@@ -103,7 +107,43 @@ describe('ComoAjudar', () => {
     const link = elemento.querySelector<HTMLAnchorElement>('.abertura-botao');
 
     expect(link?.getAttribute('href')).toBe('/como-ajudar#pix');
-    expect(link?.textContent).toContain('Como contribuir');
+    expect(link?.textContent).toContain('Quero contribuir');
+  });
+
+  it('copia a chave inteira pelo botão e mostra uma confirmação temporária', () => {
+    vi.useFakeTimers();
+    responder([pix]);
+    const copiar = vi.spyOn(TestBed.inject(Clipboard), 'copy').mockReturnValue(true);
+    elemento.querySelector<HTMLButtonElement>('.chave-pix-copiar')!.click();
+    fixture.detectChanges();
+    expect(copiar).toHaveBeenCalledWith(pix.conteudo);
+    expect(elemento.querySelector('.chave-pix-feedback')?.textContent).toContain('Chave Pix copiada!');
+    expect(elemento.querySelector('.chave-pix-copiar .material-symbols-outlined')?.textContent?.trim()).toBe('check');
+    vi.advanceTimersByTime(2500);
+    fixture.detectChanges();
+    expect(elemento.querySelector('.chave-pix-feedback')?.textContent?.trim()).toBe('');
+  });
+
+  it('informa quando não consegue copiar e mantém a chave disponível', () => {
+    responder([pix]);
+    vi.spyOn(TestBed.inject(Clipboard), 'copy').mockReturnValue(false);
+    elemento.querySelector<HTMLButtonElement>('.chave-pix-copiar')!.click();
+    fixture.detectChanges();
+    expect(elemento.querySelector('.chave-pix-feedback')?.textContent).toContain('Não foi possível copiar');
+    expect(elemento.querySelector('.chave-pix-valor')?.textContent).toContain(pix.conteudo);
+  });
+
+  it.each([82, 106])('posiciona o card abaixo da navegação de %i px sem executar o salto nativo', altura => {
+    responder([pix]);
+    const navbar = elemento.querySelector<HTMLElement>('app-public-navbar .navbar')!;
+    const secao = elemento.querySelector<HTMLElement>('#pix')!;
+    vi.spyOn(navbar, 'getBoundingClientRect').mockReturnValue({ bottom: altura } as DOMRect);
+    vi.spyOn(secao, 'getBoundingClientRect').mockReturnValue({ top: 500 } as DOMRect);
+    const rolar = vi.spyOn(window, 'scrollTo').mockImplementation(() => {});
+    const evento = new MouseEvent('click', { bubbles: true, cancelable: true });
+    elemento.querySelector('.abertura-botao')!.dispatchEvent(evento);
+    expect(evento.defaultPrevented).toBe(true);
+    expect(rolar).toHaveBeenCalledWith({ top: 500 + window.scrollY - altura - 8, behavior: 'smooth' });
   });
 
   it('preserva o endereço absoluto da imagem', () => {

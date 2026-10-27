@@ -60,6 +60,7 @@ p {
 
 .abertura h1 span {
   display: block;
+  font-size: 0.85em;
   color: var(--primary-hover-color);
 }
 
@@ -164,7 +165,7 @@ p {
 .pix-passos li {
   display: grid;
   grid-template-columns: 28px minmax(0, 1fr);
-  align-items: start;
+  align-items: center;
   gap: 12px;
   color: #3e526b;
   font-size: 0.875rem;
@@ -182,6 +183,7 @@ p {
   background-color: var(--branco);
   color: var(--primary-hover-color);
   font-weight: 600;
+  line-height: 1;
   content: counter(passo);
 }
 
@@ -215,11 +217,49 @@ p {
 }
 
 .chave-pix-valor {
-  color: var(--preto);
+  min-width: 0;
   font-size: 1rem;
   font-weight: 600;
   overflow-wrap: anywhere;
   user-select: all;
+}
+
+.chave-pix-copiar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 44px;
+  padding: 6px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--primary-color);
+  font: inherit;
+  cursor: pointer;
+}
+
+.chave-pix-copiar:hover {
+  color: var(--primary-hover-color);
+}
+
+.chave-pix-copiar:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+.chave-pix-copiar .material-symbols-outlined {
+  flex-shrink: 0;
+  font-size: 20px;
+}
+
+.chave-pix-feedback {
+  display: block;
+  min-height: 1.5em;
+  color: var(--primary-hover-color);
+  font-size: 0.75rem;
+  line-height: 1.5;
 }
 
 .chave-pix-ajuda {
@@ -386,6 +426,10 @@ p {
 }
 
 @media (max-width: 680px) {
+  .como-ajudar {
+    text-align: center;
+  }
+
   .container {
     padding-inline: 20px;
   }
@@ -398,6 +442,7 @@ p {
 
   .abertura h1 {
     max-width: 480px;
+    margin-inline: auto;
     font-size: clamp(2.25rem, 8vw, 3rem);
   }
 
@@ -420,6 +465,22 @@ p {
 
   .pix-informacoes h2 {
     font-size: 1.75rem;
+  }
+
+  .pix-marca {
+    margin-inline: auto;
+  }
+
+  .pix-passos {
+    text-align: left;
+  }
+
+  .pix-passos li {
+    align-items: start;
+  }
+
+  .pix-passos li::before {
+    margin-top: -3px;
   }
 
   .pix-imagem {

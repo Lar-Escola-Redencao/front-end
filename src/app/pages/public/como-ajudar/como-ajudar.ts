@@ -1,7 +1,7 @@
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { Component, ElementRef, computed, inject, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DestroyRef } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Clipboard } from '@angular/cdk/clipboard';
 
 import { PublicNavbar } from '@components/public-navbar/public-navbar';
 import { PublicFooter } from '@components/public-footer/public-footer';
@@ -19,7 +19,7 @@ import { PublicContentService } from 'src/app/shared/services/public-content/pub
 @Component({
   selector: 'app-como-ajudar',
   standalone: true,
-  imports: [PublicNavbar, PublicFooter, RouterLink],
+  imports: [PublicNavbar, PublicFooter],
   templateUrl: './como-ajudar.html',
   styleUrl: './como-ajudar.css',
 })
@@ -27,21 +27,33 @@ export class ComoAjudar implements OnInit {
   private readonly secoesGrupoService = inject(SecoesGrupoService);
   private readonly publicContentService = inject(PublicContentService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly elemento = inject<ElementRef<HTMLElement>>(ElementRef);
+  private readonly clipboard = inject(Clipboard);
+  private copiaTimer?: ReturnType<typeof setTimeout>;
 
   protected readonly pix = signal<SecaoGrupo | null>(null);
   protected readonly carregando = signal(true);
   protected readonly erroCarregamento = signal(false);
   protected readonly erroImagem = signal(false);
+  protected readonly chaveCopiada = signal(false);
+  protected readonly feedbackCopia = signal('');
 
   protected readonly imagemPix = computed(() =>
     this.publicContentService.tratarUrlImagem(this.pix()?.imagem),
   );
+
+  constructor() {
+    this.destroyRef.onDestroy(() => clearTimeout(this.copiaTimer));
+  }
 
   ngOnInit(): void {
     this.carregarPix();
   }
 
   protected carregarPix(): void {
+    clearTimeout(this.copiaTimer);
+    this.chaveCopiada.set(false);
+    this.feedbackCopia.set('');
     this.carregando.set(true);
     this.erroCarregamento.set(false);
     this.erroImagem.set(false);
@@ -64,5 +76,34 @@ export class ComoAjudar implements OnInit {
 
   protected marcarErroImagem(): void {
     this.erroImagem.set(true);
+  }
+
+  protected copiarChavePix(): void {
+    const chave = this.pix()?.conteudo?.trim();
+    if (!chave) return;
+    clearTimeout(this.copiaTimer);
+    const copiou = this.clipboard.copy(chave);
+    this.chaveCopiada.set(copiou);
+    this.feedbackCopia.set(copiou ? 'Chave Pix copiada!' : 'Não foi possível copiar. Selecione a chave para copiar.');
+    if (copiou) {
+      this.copiaTimer = setTimeout(() => {
+        this.chaveCopiada.set(false);
+        this.feedbackCopia.set('');
+      }, 2500);
+    }
+  }
+
+  protected irParaPix(evento: MouseEvent): void {
+    if (evento.ctrlKey || evento.metaKey || evento.shiftKey || evento.altKey || evento.button !== 0) return;
+    const secao = this.elemento.nativeElement.querySelector<HTMLElement>('#pix');
+    const janela = secao?.ownerDocument.defaultView;
+    if (!secao || !janela) return;
+
+    // Evita que a navegação por fragmento substitua a posição calculada.
+    evento.preventDefault();
+    const navbar = this.elemento.nativeElement.querySelector<HTMLElement>('app-public-navbar .navbar');
+    const alturaNav = navbar?.getBoundingClientRect().bottom ?? 82;
+    const topo = secao.getBoundingClientRect().top + janela.scrollY - alturaNav - 8;
+    janela.scrollTo({ top: Math.max(0, topo), behavior: 'smooth' });
   }
 }
