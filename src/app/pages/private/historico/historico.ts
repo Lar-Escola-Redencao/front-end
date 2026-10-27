@@ -87,7 +87,7 @@ export class Historico implements OnInit, OnDestroy {
     { valor: 'USUARIOS', nome: 'Usuários', busca: 'Buscar por nome, CPF, endereço...' },
     { valor: 'CONTATOS', nome: 'Contatos', busca: 'Buscar por contato ou usuário vinculado...' },
     { valor: 'VINCULOS_CONTATOS', nome: 'Vínculos de contatos', busca: 'Buscar por contato ou usuário vinculado...' },
-    { valor: 'PRESENCAS', nome: 'Frequências', busca: 'Buscar por usuário ou turma...' },
+    { valor: 'PRESENCAS', nome: 'Presenças', busca: 'Buscar por usuário ou turma...' },
     { valor: 'OCORRENCIAS', nome: 'Ocorrências', busca: 'Buscar por usuário, tipo ou descrição...' },
     { valor: 'UNIDADES', nome: 'Unidades', busca: 'Buscar por unidade...' },
     { valor: 'TURMAS', nome: 'Turmas', busca: 'Buscar por período ou unidade...' },

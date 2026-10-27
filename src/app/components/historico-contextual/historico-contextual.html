@@ -28,7 +28,7 @@
     @if (diario) {
       <div class="abas-container" role="group" aria-label="Histórico do diário">
         <button type="button" class="aba-btn" [class.ativa]="abaDiario === 'PRESENCAS'"
-          [attr.aria-pressed]="abaDiario === 'PRESENCAS'" (click)="selecionarAba('PRESENCAS')">Frequências
+          [attr.aria-pressed]="abaDiario === 'PRESENCAS'" (click)="selecionarAba('PRESENCAS')">Presenças
           @if (novidadesPresencas) { <span class="novidade-aba" title="Novo" aria-label="Novas alterações"></span> }
         </button>
         <button type="button" class="aba-btn" [class.ativa]="abaDiario === 'OCORRENCIAS'"
