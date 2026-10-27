@@ -1,3 +1,4 @@
+import { AnexoDrop } from 'src/app/shared/directives/anexo-drop';
 import { EstadoVazio } from 'src/app/components/estado-vazio/estado-vazio';
 import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, EventEmitter, Input, NgZone, OnChanges, Output, SimpleChanges, inject } from '@angular/core';
@@ -27,7 +28,7 @@ import {
 @Component({
   selector: 'app-usuario-perfil-saude',
   standalone: true,
-  imports: [EstadoVazio,
+  imports: [AnexoDrop, EstadoVazio,
     CommonModule,
     ReactiveFormsModule,
     MatFormFieldModule,

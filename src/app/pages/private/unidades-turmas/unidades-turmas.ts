@@ -1,3 +1,4 @@
+import { AnexoDrop } from 'src/app/shared/directives/anexo-drop';
 import { HistoricoContextual } from '@components/historico-contextual/historico-contextual';
 import { UnidadeCard } from '@components/unidade-card/unidade-card';
 import { AbasResponsivas } from 'src/app/shared/directives/abas-responsivas';
@@ -48,6 +49,7 @@ type OpcaoPeriodo = { valor: Periodo; label: string };
   selector: 'app-unidades-turmas',
   standalone: true,
   imports: [
+    AnexoDrop,
     AbasResponsivas,
     CommonModule,
     FormsModule,

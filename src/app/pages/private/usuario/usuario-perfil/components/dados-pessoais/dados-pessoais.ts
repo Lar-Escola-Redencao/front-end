@@ -1,3 +1,4 @@
+import { AnexoDrop } from 'src/app/shared/directives/anexo-drop';
 import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -21,6 +22,7 @@ import { montarBaseAtualizacaoUsuario } from '../../utils/usuario-atualizacao-dt
   selector: 'app-usuario-perfil-dados-pessoais',
   standalone: true,
   imports: [
+    AnexoDrop,
     CommonModule,
     ReactiveFormsModule,
     MatFormFieldModule,

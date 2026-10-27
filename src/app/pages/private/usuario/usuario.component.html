@@ -200,7 +200,7 @@
         <mat-form-field appearance="outline"><mat-label>RA (Registro do Aluno)</mat-label><input matInput
             formControlName="raEscolar"></mat-form-field>
       </div>
-      <div class="upload-foto" [class.upload-foto-selecionada]="!!fotoSelecionada" (click)="inputFoto.click()">
+      <div [appAnexoDrop]="inputFoto" class="upload-foto" [class.upload-foto-selecionada]="!!fotoSelecionada" (click)="inputFoto.click()">
         <span class="upload-foto-icone" aria-hidden="true"><mat-icon>upload_file</mat-icon></span>
         <div class="upload-foto-textos">
           <span class="upload-foto-titulo" [attr.title]="fotoSelecionada?.name || null">{{ fotoSelecionada?.name ||
@@ -411,7 +411,7 @@
             saude.descricao)) }}</mat-error></mat-form-field>
       </div>
       <h3>Laudos, exames e receitas</h3>
-      <div class="upload-foto" (click)="inputSaude.click()">
+      <div [appAnexoDrop]="inputSaude" class="upload-foto" (click)="inputSaude.click()">
         <span class="upload-foto-icone" aria-hidden="true"><mat-icon>upload_file</mat-icon></span>
         <div class="upload-foto-textos">
           <span class="upload-foto-titulo">{{ arquivosSaude.length ? (arquivosSaude.length === 1 ? '1 arquivo

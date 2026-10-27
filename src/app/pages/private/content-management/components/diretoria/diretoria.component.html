@@ -92,7 +92,7 @@
         (change)="selecionarFoto($event)"
       >
 
-      <div
+      <div [appAnexoDrop]="inputFoto"
         class="upload-arquivo"
         [class.upload-arquivo-erro]="erros['foto']"
         (click)="inputFoto.click()"

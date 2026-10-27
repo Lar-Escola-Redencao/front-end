@@ -100,7 +100,7 @@
               (change)="onArquivoSlotSelecionado($event, $index)"
             />
 
-            <div
+            <div [appAnexoDrop]="inputSlot" [anexoDropDesabilitado]="carregandoSlot[$index]"
               class="upload-arquivo upload-arquivo-slot"
               [class.upload-arquivo-erro]="erroSlot[$index]"
               (click)="inputSlot.click()"
@@ -224,7 +224,7 @@
           (change)="onImagemHistoriaSelecionada($event)"
         />
 
-        <div
+        <div [appAnexoDrop]="inputImagemHistoria"
           class="upload-arquivo"
           [class.upload-arquivo-erro]="errosHistoria['imagem']"
           (click)="inputImagemHistoria.click()"

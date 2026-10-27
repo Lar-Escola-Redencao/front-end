@@ -260,7 +260,7 @@
           (change)="onImagemSelecionada($event)"
         />
 
-        <div
+        <div [appAnexoDrop]="inputImagem"
           class="upload-arquivo"
           [class.upload-arquivo-erro]="erros['imagem']"
           (click)="inputImagem.click()"

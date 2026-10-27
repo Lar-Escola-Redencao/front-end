@@ -134,7 +134,7 @@
         accept=".jpg,.jpeg,.png,.webp"
         (change)="onImagemSelecionada($event)" />
 
-      <div class="upload-arquivo" [class.upload-arquivo-erro]="erros['imagem']" (click)="inputImagem.click()">
+      <div [appAnexoDrop]="inputImagem" class="upload-arquivo" [class.upload-arquivo-erro]="erros['imagem']" (click)="inputImagem.click()">
         <span class="material-symbols-outlined upload-arquivo-icone">
           upload_file
         </span>

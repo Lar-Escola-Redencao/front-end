@@ -1,3 +1,4 @@
+import { AnexoDrop } from 'src/app/shared/directives/anexo-drop';
 import { HistoricoContextual } from '@components/historico-contextual/historico-contextual';
 import { EstadoVazio } from 'src/app/components/estado-vazio/estado-vazio';
 import { AbasResponsivas } from 'src/app/shared/directives/abas-responsivas';
@@ -80,6 +81,7 @@ import { environment } from 'src/environments/environment';
   selector: 'app-usuario',
   standalone: true,
   imports: [
+    AnexoDrop,
     HistoricoContextual,
     EstadoVazio,
     AbasResponsivas,

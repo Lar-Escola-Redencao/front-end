@@ -1,3 +1,4 @@
+import { AnexoDrop } from 'src/app/shared/directives/anexo-drop';
 import { HistoricoContextual } from '@components/historico-contextual/historico-contextual';
 import { Component, ChangeDetectorRef, HostListener, NgZone, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -28,6 +29,7 @@ import {
   selector: 'app-diretoria',
   standalone: true,
   imports: [
+    AnexoDrop,
     HistoricoContextual,
     CommonModule,
     ReactiveFormsModule,

@@ -850,3 +850,9 @@ input[matInput][type="datetime-local"]::-webkit-calendar-picker-indicator {
   opacity: 0.5;
   cursor: default;
 }
+
+[appAnexoDrop].anexo-arrastando {
+  outline: 2px dashed var(--primary-color);
+  outline-offset: -2px;
+  background-color: #3682dc14;
+}
