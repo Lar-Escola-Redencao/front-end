@@ -10,6 +10,8 @@ export type TipoRegistroHistorico =
   | 'EVENTOS' | 'DIRETORIA' | 'PARCEIROS' | 'REDES_SOCIAIS'
   | 'TRANSPARENCIA' | 'CONHECA_OSC' | 'GRAFICA' | 'PIX';
 
+export type AreaSistemaHistorico = 'GESTAO_INTERNA' | 'CONTEUDO_PUBLICO';
+
 export type TipoAlteracaoHistorico = 'CADASTRO' | 'EDICAO' | 'EXCLUSAO';
 
 export type ValorHistorico =
@@ -21,6 +23,7 @@ export type ValorHistorico =
   | { [campo: string]: ValorHistorico };
 
 export interface FiltrosHistorico {
+  areaSistema?: AreaSistemaHistorico | null;
   idRegistro?: number | null;
   idResponsavel?: number | null;
   dataInicial?: string;

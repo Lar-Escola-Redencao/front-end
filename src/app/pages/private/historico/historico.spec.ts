@@ -159,4 +159,22 @@ describe('Histórico de atividades', () => {
     expect(servico.marcarLido).not.toHaveBeenCalled();
   });
 
+  it('distingue o tempo da busca de um resultado realmente vazio', () => {
+    vi.useFakeTimers();
+    try {
+      componente.ngOnInit();
+      componente.alterarBuscaResponsavel('Inexistente');
+      expect(componente.buscandoResponsavel).toBe(true);
+      vi.advanceTimersByTime(400);
+      expect(componente.buscandoResponsavel).toBe(false);
+      expect(componente.responsaveisFiltrados).toEqual([]);
+      componente.alterarBuscaResponsavel('Ad');
+      expect(componente.buscandoResponsavel).toBe(true);
+      componente.alterarBuscaResponsavel('');
+      expect(componente.buscandoResponsavel).toBe(false);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
 });

@@ -856,3 +856,17 @@ input[matInput][type="datetime-local"]::-webkit-calendar-picker-indicator {
   outline-offset: -2px;
   background-color: #3682dc14;
 }
+
+.mat-mdc-tooltip.ajuda-arquivados .mdc-tooltip__surface {
+  max-width: min(340px, calc(100vw - 32px));
+  padding: 16px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: var(--branco);
+  box-shadow: var(--sombra-padrao);
+  color: var(--input-color);
+  font-family: var(--fonte-texto);
+  font-size: 16px;
+  line-height: 1.5;
+  text-align: left;
+}

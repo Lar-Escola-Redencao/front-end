@@ -91,6 +91,11 @@ export class HistoricoDetalheComponent implements OnChanges, OnDestroy {
     return contexto ? this.formatar(contexto) : detalhe.evento.identificacaoRegistro;
   }
 
+  nomeVinculo(detalhe: HistoricoDetalhe, campo: 'usuario' | 'contato'): string {
+    const contexto = detalhe.contextoNovo?.[campo] ?? detalhe.contextoAnterior?.[campo];
+    return contexto ? this.formatar(contexto) : 'Nome indisponível neste registro';
+  }
+
   get registroPrincipal(): string {
     if (!this.chamadaRegistrada) return this.registros[0].identificacaoRegistro;
     const detalhe = this.detalhes[0];
@@ -156,6 +161,15 @@ export class HistoricoDetalheComponent implements OnChanges, OnDestroy {
     }
     const valor = anterior ? campo.valorAnterior : campo.valorNovo;
     const contexto = anterior ? detalhe.contextoAnterior : detalhe.contextoNovo;
+    if (['parentesco', 'parentescoVinculo'].includes(campo.campo) && typeof valor === 'string') {
+      const parentescos: Record<string, string> = {
+        MAE: 'Mãe', PAI: 'Pai', AVO: 'Avô/Avó', IRMAO: 'Irmão/Irmã',
+        TIO: 'Tio/Tia', PRIMO: 'Primo/Prima', PADRASTO_MADRASTA: 'Padrasto/Madrasta',
+        VIZINHO: 'Vizinho', OUTRO: 'Outro'
+      };
+      const chave = valor.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
+      return parentescos[chave] ?? valor;
+    }
     if (campo.campo === 'periodo' && typeof valor === 'string') {
       const periodos: Record<string, string> = { MANHA: 'Manhã', TARDE: 'Tarde', NOITE: 'Noite', INTEGRAL: 'Integral' };
       return periodos[valor] ?? valor;

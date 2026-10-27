@@ -8,7 +8,13 @@
       <button type="button" class="aba-btn" [class.ativa]="periodo === 'RECENTES'"
         [attr.aria-pressed]="periodo === 'RECENTES'" (click)="trocarPeriodo('RECENTES')">Recentes</button>
       <button type="button" class="aba-btn" [class.ativa]="periodo === 'ARQUIVADOS'"
-        [attr.aria-pressed]="periodo === 'ARQUIVADOS'" (click)="trocarPeriodo('ARQUIVADOS')">Arquivados</button>
+        [attr.aria-pressed]="periodo === 'ARQUIVADOS'" (click)="trocarPeriodo('ARQUIVADOS')"
+        aria-description="Alterações anteriores aos últimos 6 meses ficam em Arquivados e continuam disponíveis para consulta.">
+        Arquivados
+        <mat-icon class="info-arquivados" aria-hidden="true"
+          matTooltip="Alterações anteriores aos últimos 6 meses ficam em Arquivados e continuam disponíveis para consulta."
+          matTooltipClass="ajuda-arquivados" matTooltipPosition="below">info_outline</mat-icon>
+      </button>
       <button type="button" class="aba-btn" [class.ativa]="periodo === 'TODOS'"
         [attr.aria-pressed]="periodo === 'TODOS'" (click)="trocarPeriodo('TODOS')">Todos</button>
     </div>
@@ -20,22 +26,34 @@
         (buscar)="buscar($event)" />
 
       <div class="seletor-tipo">
-        <button type="button" class="seletor-area" cdkOverlayOrigin #origemArea="cdkOverlayOrigin"
-          aria-haspopup="dialog" [attr.aria-expanded]="areaAberta" (click)="areaAberta = !areaAberta">
-          <span class="rotulo-area">Área do sistema</span>
-          <span>{{ nomeAreaSelecionada }}</span>
-          <mat-icon aria-hidden="true">arrow_drop_down</mat-icon>
-        </button>
+        <mat-form-field appearance="outline" floatLabel="always" cdkOverlayOrigin #origemArea="cdkOverlayOrigin">
+          <mat-label>Área do sistema</mat-label>
+          <input matInput readonly class="seletor-area" role="combobox" [value]="nomeAreaSelecionada"
+            aria-haspopup="dialog" [attr.aria-expanded]="areaAberta"
+            (click)="areaAberta = !areaAberta"
+            (keydown.enter)="$event.preventDefault(); areaAberta = !areaAberta"
+            (keydown.space)="$event.preventDefault(); areaAberta = !areaAberta">
+          <button type="button" matSuffix class="seta-area" aria-label="Selecionar área do sistema"
+            aria-haspopup="dialog" [attr.aria-expanded]="areaAberta" (click)="areaAberta = !areaAberta">
+            <mat-icon aria-hidden="true">arrow_drop_down</mat-icon>
+          </button>
+        </mat-form-field>
         <ng-template cdkConnectedOverlay [cdkConnectedOverlayOrigin]="origemArea"
           [cdkConnectedOverlayOpen]="areaAberta" [cdkConnectedOverlayHasBackdrop]="true"
+          [cdkConnectedOverlayWidth]="origemArea.elementRef.nativeElement.getBoundingClientRect().width"
           cdkConnectedOverlayBackdropClass="cdk-overlay-transparent-backdrop"
           (backdropClick)="areaAberta = false"
           (overlayKeydown)="$event.key === 'Escape' && (areaAberta = false)">
           <div class="arvore-areas" role="dialog" aria-label="Área do sistema" cdkTrapFocus [cdkTrapFocusAutoCapture]="true">
-            <button type="button" class="opcao-area" [attr.aria-pressed]="todasAreas" (click)="trocarTipo('TODOS')">Todas as áreas</button>
+            <button type="button" class="opcao-area" [attr.aria-pressed]="todasAreas && !grupoSelecionado" (click)="trocarTipo('TODOS')">Todas as áreas</button>
             @for (grupo of gruposAreas; track grupo.nome) {
               <details class="grupo-area">
-                <summary><mat-icon aria-hidden="true">arrow_right</mat-icon>{{ grupo.nome }}</summary>
+                <summary [attr.aria-label]="'Expandir ou recolher ' + grupo.nome">
+                  <mat-icon aria-hidden="true">arrow_right</mat-icon>
+                  <button type="button" class="opcao-area opcao-grupo"
+                    [attr.aria-pressed]="grupoSelecionado === grupo.valor"
+                    (click)="$event.preventDefault(); $event.stopPropagation(); trocarGrupo(grupo.valor)">{{ grupo.nome }}</button>
+                </summary>
                 <div class="itens-area">
                   @for (tipo of grupo.tipos; track tipo.valor) {
                     <button type="button" class="opcao-area" [attr.aria-pressed]="!todasAreas && tipoRegistro === tipo.valor"
@@ -91,7 +109,7 @@
 @if (filtrosAberto) {
   <app-modal-layout titulo="Filtrar alterações" (closed)="filtrosAberto = false">
     <form #formFiltros="ngForm" class="form-filtros" (ngSubmit)="aplicarFiltros(formFiltros)">
-      <mat-form-field appearance="outline">
+      <mat-form-field appearance="outline" floatLabel="always">
         <mat-label>Quem fez a alteração</mat-label>
         <input matInput name="responsavelBusca" [ngModel]="responsavelBusca"
           (ngModelChange)="alterarBuscaResponsavel($event)" [matAutocomplete]="autoResponsavel"
@@ -100,8 +118,10 @@
           @for (responsavel of responsaveisFiltrados; track responsavel.id) {
             <mat-option [value]="responsavel">{{ responsavel.nome }}</mat-option>
           }
-          @if (responsaveisFiltrados.length === 0 && !erroResponsaveis) {
-            <mat-option disabled>{{ exibirResponsavel(responsavelBusca).trim().length < 2 ? 'Digite ao menos 2 caracteres' : 'Nenhum responsável encontrado' }}</mat-option>
+          @if (buscandoResponsavel) {
+            <mat-option disabled>Buscando responsáveis...</mat-option>
+          } @else if (responsaveisFiltrados.length === 0 && !erroResponsaveis && exibirResponsavel(responsavelBusca).trim().length >= 2) {
+            <mat-option disabled>Nenhum responsável encontrado</mat-option>
           }
         </mat-autocomplete>
         <mat-hint>Deixe vazio para consultar todos os responsáveis.</mat-hint>
@@ -138,7 +158,7 @@
         </mat-select>
       </mat-form-field>
 
-      @if (todasAreas || tipoRegistro === 'PRESENCAS') {
+      @if ((todasAreas && grupoSelecionado !== 'CONTEUDO_PUBLICO') || (!todasAreas && tipoRegistro === 'PRESENCAS')) {
         <mat-form-field appearance="outline">
           <mat-label>Data da aula</mat-label>
           <input #dataAula matInput type="date" name="dataAula" [(ngModel)]="filtrosModal.dataAula" />

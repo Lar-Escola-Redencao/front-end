@@ -32,6 +32,12 @@
           <mat-icon class="icon-calendar">calendar_month</mat-icon>
           <input type="date" aria-label="Data do diário" formControlName="data" class="input-data-invisivel">
         </div>
+        @if (podeConsultarHistorico) {
+          <div class="historico-diario">
+            <app-historico-contextual [diario]="true" [idTurma]="filtroForm.get('idTurma')?.value"
+              [dataAula]="filtroForm.get('data')?.value ?? ''" titulo="Histórico do diário" />
+          </div>
+        }
       </div>
     </div>
 
@@ -146,10 +152,6 @@
         </table>
       </div>
 
-      <div class="historico-diario">
-        <app-historico-contextual [diario]="true" [idTurma]="filtroForm.get('idTurma')?.value"
-          [dataAula]="filtroForm.get('data')?.value ?? ''" titulo="Histórico do diário" />
-      </div>
 
       <!-- Rodapé: INICIAL -->
       @if (estadoTela === 'INICIAL') {

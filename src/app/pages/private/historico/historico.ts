@@ -8,6 +8,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { Subject, Subscription, debounceTime } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HistoricoDetalheComponent } from '@components/historico-detalhe/historico-detalhe';
@@ -17,6 +18,7 @@ import { ModalLayout } from '@components/modal-layout/modal-layout';
 import { Paginacao } from '@components/paginacao/paginacao';
 import { TabelaAcao, TabelaColuna, TabelaLayout } from '@components/tabela-layout/tabela-layout';
 import {
+  AreaSistemaHistorico,
   AtividadeHistorico,
   ResponsavelHistorico,
   FiltrosHistorico,
@@ -40,6 +42,7 @@ import { CampoOrdenacao, alternarOrdenacao, analisarOrdenacao, TAMANHOS_PAGINA_P
     MatIconModule,
     MatInputModule,
     MatSelectModule,
+    MatTooltipModule,
     BarraBusca,
     ModalLayout,
     Paginacao,
@@ -62,6 +65,7 @@ export class Historico implements OnInit, OnDestroy {
   erroResponsaveis = false;
   responsavelBusca: ResponsavelHistorico | string | null = null;
   responsaveisFiltrados: ResponsavelHistorico[] = [];
+  buscandoResponsavel = false;
   private readonly buscaResponsavel = new Subject<string>();
   private buscaResponsavelSub?: Subscription;
   areaAberta = false;
@@ -72,6 +76,7 @@ export class Historico implements OnInit, OnDestroy {
   atividades: AtividadeHistorico[] = [];
   registrosDetalhe: HistoricoEvento[] = [];
   todasAreas = true;
+  grupoSelecionado: AreaSistemaHistorico | null = null;
 
   readonly tiposRegistro: { valor: TipoRegistroHistorico; nome: string; busca: string }[] = [
     { valor: 'COLABORADORES', nome: 'Colaboradores', busca: 'Buscar por nome, CPF, e-mail...' },
@@ -92,9 +97,9 @@ export class Historico implements OnInit, OnDestroy {
     { valor: 'PIX', nome: 'Pix', busca: 'Buscar por informação da doação...' }
   ];
 
-  readonly gruposAreas = [
-    { nome: 'Gestão interna', tipos: this.tiposRegistro.slice(0, 8) },
-    { nome: 'Conteúdo público', tipos: this.tiposRegistro.slice(8) }
+  readonly gruposAreas: { valor: AreaSistemaHistorico; nome: string; tipos: Historico['tiposRegistro'] }[] = [
+    { valor: 'GESTAO_INTERNA', nome: 'Gestão interna', tipos: this.tiposRegistro.slice(0, 8) },
+    { valor: 'CONTEUDO_PUBLICO', nome: 'Conteúdo público', tipos: this.tiposRegistro.slice(8) }
   ];
 
   readonly nomesAlteracao: Record<TipoAlteracaoHistorico, string> = {
@@ -178,6 +183,9 @@ export class Historico implements OnInit, OnDestroy {
     this.rotaSub = this.route.queryParamMap.subscribe(parametros => {
       const area = parametros.get('tipoRegistro');
       this.todasAreas = !this.tiposRegistro.some(tipo => tipo.valor === area);
+      const grupo = parametros.get('areaSistema');
+      this.grupoSelecionado = this.todasAreas && this.gruposAreas.some(item => item.valor === grupo)
+        ? grupo as AreaSistemaHistorico : null;
       if (this.tiposRegistro.some(tipo => tipo.valor === area)) {
         this.tipoRegistro = area as TipoRegistroHistorico;
       }
@@ -231,6 +239,7 @@ export class Historico implements OnInit, OnDestroy {
   private atualizarConsulta(): void {
     void this.router.navigate([], { relativeTo: this.route, queryParams: {
       ...this.contexto, ...this.filtros, tipoRegistro: this.todasAreas ? 'TODOS' : this.tipoRegistro,
+      areaSistema: this.grupoSelecionado,
       periodo: this.periodo, search: this.busca || null, page: this.pagina || null, size: this.tamanho, sort: this.sort ?? null
     }});
   }
@@ -267,7 +276,7 @@ export class Historico implements OnInit, OnDestroy {
 
     this.listaSub = this.historicoService.atividades(
       this.todasAreas ? null : this.tipoRegistro, this.pagina, this.tamanho, this.busca,
-      { ...this.contexto, ...this.filtros, periodo: this.periodo }, this.sort
+      { ...this.contexto, ...this.filtros, areaSistema: this.grupoSelecionado, periodo: this.periodo }, this.sort
     ).subscribe({
       next: resposta => {
         this.erroLista = false;
@@ -295,7 +304,7 @@ export class Historico implements OnInit, OnDestroy {
       atividade.registros.map(evento => evento.id)));
     if (!Number.isSafeInteger(ultimoEvento) || ultimoEvento <= 0) return;
     const filtros: FiltrosHistorico = {
-      ...this.contexto, dataAula: this.filtros.dataAula,
+      ...this.contexto, dataAula: this.filtros.dataAula, areaSistema: this.grupoSelecionado,
       periodo: this.periodo === 'ARQUIVADOS' ? 'ARQUIVADOS' : 'TODOS'
     };
     this.leituraSub?.unsubscribe();
@@ -305,10 +314,23 @@ export class Historico implements OnInit, OnDestroy {
   }
 
   trocarTipo(tipo: TipoRegistroHistorico | 'TODOS'): void {
+    this.grupoSelecionado = null;
     this.areaAberta = false;
     this.todasAreas = tipo === 'TODOS';
     if (tipo !== 'TODOS') this.tipoRegistro = tipo;
     if (tipo !== 'PRESENCAS' && tipo !== 'TODOS') this.filtros.dataAula = '';
+    this.contexto.idRegistro = null;
+    this.filtrosModal = {};
+    this.pagina = 0;
+    this.eventos = [];
+    this.atualizarConsulta();
+  }
+
+  trocarGrupo(grupo: AreaSistemaHistorico): void {
+    this.areaAberta = false;
+    this.grupoSelecionado = grupo;
+    this.todasAreas = true;
+    if (grupo === 'CONTEUDO_PUBLICO') this.filtros.dataAula = '';
     this.contexto.idRegistro = null;
     this.filtrosModal = {};
     this.pagina = 0;
@@ -334,6 +356,7 @@ export class Historico implements OnInit, OnDestroy {
   }
 
   get nomeAreaSelecionada(): string {
+    if (this.grupoSelecionado) return this.gruposAreas.find(grupo => grupo.valor === this.grupoSelecionado)!.nome;
     return this.todasAreas ? 'Todas as áreas' : this.tiposRegistro.find(tipo => tipo.valor === this.tipoRegistro)!.nome;
   }
 
@@ -354,6 +377,7 @@ export class Historico implements OnInit, OnDestroy {
     this.filtrosModal.idResponsavel = valor && typeof valor !== 'string' ? valor.id : null;
     this.responsaveisFiltrados = [];
     this.erroFiltros = '';
+    this.buscandoResponsavel = typeof valor === 'string' && valor.trim().length >= 2;
     this.buscaResponsavel.next(typeof valor === 'string' ? valor : '');
   }
 
@@ -364,6 +388,7 @@ export class Historico implements OnInit, OnDestroy {
   }
 
   private filtrarResponsaveis(termo: string): void {
+    this.buscandoResponsavel = false;
     const texto = termo.trim().toLocaleLowerCase('pt-BR');
     this.responsaveisFiltrados = texto.length >= 2
       ? this.responsaveis.filter(item => item.nome.toLocaleLowerCase('pt-BR').includes(texto)) : [];
@@ -372,6 +397,7 @@ export class Historico implements OnInit, OnDestroy {
   abrirFiltros(): void {
     this.filtrosModal = { ...this.filtros };
     this.responsavelBusca = null;
+    this.buscandoResponsavel = false;
     this.restaurarResponsavel();
     this.responsaveisFiltrados = [];
     this.buscaResponsavel.next('');

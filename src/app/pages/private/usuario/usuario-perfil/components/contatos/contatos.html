@@ -18,7 +18,7 @@
   <app-modal-layout class="contato-modal" [titulo]="tituloModal" (closed)="fecharModal()">
     <span modal-title-extra>
       @if (contatoSelecionado) {
-        <app-historico-contextual [idContato]="contatoSelecionado.id" titulo="Histórico deste contato e seus vínculos" />
+        <app-historico-contextual tipo="CONTATOS" [idContato]="contatoSelecionado.id" titulo="Histórico deste contato" />
       }
     </span>
     @if (modoModal === 'visualizar' && contatoSelecionado?.principal) {

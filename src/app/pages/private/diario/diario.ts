@@ -412,6 +412,10 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
       && decorrido <= 24 * 60 * 60 * 1000);
   }
 
+  get podeConsultarHistorico(): boolean {
+    return this.sessao.isAdministrador() && this.filtroForm.valid;
+  }
+
   get perfilDoDiario(): string {
     if (this.isMonitor) return 'Monitor';
     return this.sessao.isAdministrador() ? 'Administrador' : 'Coordenador';
@@ -430,7 +434,11 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
       { acao: 'Registrar nova chamada', regra: 'Sem limite de retroatividade.' },
       { acao: 'Editar presenças lançadas', regra: 'Sem limite de tempo.' },
       { acao: 'Registrar ocorrências', regra: 'Sem limite de retroatividade. O horário deve estar dentro do turno da turma.' },
-      { acao: 'Editar ou excluir ocorrência lançada', regra: 'Sem limite de tempo.' }
+      { acao: 'Editar ou excluir ocorrência lançada', regra: 'Sem limite de tempo.' },
+      ...(this.sessao.isAdministrador() ? [{
+        acao: 'Consultar histórico de alterações',
+        regra: 'Sem limite de tempo. Permite ver quem alterou as presenças e ocorrências da turma.'
+      }] : [])
     ];
   }
 

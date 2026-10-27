@@ -1,3 +1,8 @@
+@if (mostrarBotao) {
+  <ng-container *ngTemplateOutlet="botao" />
+}
+
+<ng-template #botao>
 @if (auth.podeAcessar('historico-alteracoes')) {
   <button type="button" class="botao-acao botao-historico" (click)="abrir()" [attr.title]="titulo + (temNovidades ? ': novo' : '')"
     [attr.aria-label]="titulo + (temNovidades ? ': há alterações novas' : '')">
@@ -8,8 +13,17 @@
   </button>
 }
 
-@if (aberto && !atividadeSelecionada) {
-  <app-modal-layout [titulo]="titulo" (closed)="fechar()">
+</ng-template>
+
+@if (aberto) {
+  <app-modal-layout [titulo]="atividadeSelecionada ? 'Detalhes da alteração' : titulo"
+    (closed)="atividadeSelecionada ? atividadeSelecionada = null : fechar()">
+    @if (atividadeSelecionada; as atividade) {
+    <app-historico-detalhe [registros]="atividade.registros" />
+    <div class="rodape">
+      <button type="button" class="btn-cancelar" (click)="atividadeSelecionada = null">Voltar</button>
+    </div>
+    } @else {
     @if (diario) {
       <div class="abas-container" role="group" aria-label="Histórico do diário">
         <button type="button" class="aba-btn" [class.ativa]="abaDiario === 'PRESENCAS'"
@@ -58,20 +72,15 @@
         }
       </ul>
     }
-    <div class="rodape">
+    <div class="rodape" [class.rodape--com-voltar]="mostrarVoltar">
+      @if (mostrarVoltar) {
+        <button type="button" class="btn-cancelar" (click)="fechar()">Voltar</button>
+      }
       <a routerLink="/dashboard/historico-alteracoes" [queryParams]="parametrosPagina" (click)="fechar()">
         Ver histórico completo
         <mat-icon aria-hidden="true">arrow_forward</mat-icon>
       </a>
     </div>
-  </app-modal-layout>
-}
-
-@if (aberto && atividadeSelecionada; as atividade) {
-  <app-modal-layout titulo="Detalhes da alteração" (closed)="atividadeSelecionada = null">
-    <app-historico-detalhe [registros]="atividade.registros" />
-    <div class="rodape">
-      <button type="button" class="btn-cancelar" (click)="atividadeSelecionada = null">Voltar</button>
-    </div>
+    }
   </app-modal-layout>
 }

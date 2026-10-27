@@ -34,6 +34,12 @@
         @if (dados.observacao) {
           <p class="aviso">{{ dados.observacao }}</p>
         }
+        @if (dados.evento.tipoRegistro === 'VINCULOS_CONTATOS') {
+          <dl class="identificacao">
+            <div><dt>Usuário</dt><dd>{{ nomeVinculo(dados, 'usuario') }}</dd></div>
+            <div><dt>Contato</dt><dd>{{ nomeVinculo(dados, 'contato') }}</dd></div>
+          </dl>
+        }
         @if (somentePresenca(dados)) {
           <p class="mudanca-presenca"><span class="valor-anterior">{{ presenca(dados, true) }}</span><span aria-label="alterado para"> → </span><strong>{{ presenca(dados, false) }}</strong></p>
         } @else {

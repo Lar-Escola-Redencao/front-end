@@ -1,5 +1,5 @@
-import { ChangeDetectorRef, Component, Input, OnChanges, OnDestroy, OnInit, inject } from '@angular/core';
-import { DatePipe } from '@angular/common';
+import { ChangeDetectorRef, Component, Input, OnChanges, OnDestroy, OnInit, TemplateRef, ViewChild, inject } from '@angular/core';
+import { DatePipe, NgTemplateOutlet } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { RouterLink } from '@angular/router';
 import { Subscription, catchError, forkJoin, map, of, switchMap } from 'rxjs';
@@ -12,7 +12,7 @@ import { Auth } from '../../shared/services/auth/auth';
 @Component({
   selector: 'app-historico-contextual',
   standalone: true,
-  imports: [DatePipe, MatIconModule, RouterLink, ModalLayout, HistoricoDetalheComponent],
+  imports: [NgTemplateOutlet, DatePipe, MatIconModule, RouterLink, ModalLayout, HistoricoDetalheComponent],
   templateUrl: './historico-contextual.html',
   styleUrl: './historico-contextual.css'
 })
@@ -26,6 +26,9 @@ export class HistoricoContextual implements OnInit, OnChanges, OnDestroy {
   @Input() titulo = 'Histórico de alterações';
   @Input() diario = false;
   @Input() mostrarRegistro = false;
+  @Input() mostrarBotao = true;
+  @Input() mostrarVoltar = false;
+  @ViewChild('botao', { static: true }) botao!: TemplateRef<unknown>;
   abaDiario: TipoRegistroHistorico = 'PRESENCAS';
   readonly auth = inject(Auth);
   private readonly service = inject(HistoricoService);
