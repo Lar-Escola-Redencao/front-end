@@ -1,0 +1,116 @@
+<app-public-navbar></app-public-navbar>
+
+<main class="grafica-main">
+  <div class="container">
+    <h1 class="grafica-titulo">Gráfica Redenção</h1>
+  </div>
+
+  @if (isLoading()) {
+    <div class="container">
+      <div class="state-box" role="status" aria-live="polite">
+        <span class="spinner" aria-hidden="true"></span>
+        <p>Carregando produtos...</p>
+      </div>
+    </div>
+  } @else if (errorMessage()) {
+    <div class="container">
+      <div class="state-box state-error" role="alert">
+        <p>{{ errorMessage() }}</p>
+        <button type="button" class="btn-retry" (click)="carregar()">Tentar novamente</button>
+      </div>
+    </div>
+  } @else {
+    @if (produtos().length > 0) {
+      <section class="carrossel-section" aria-label="Produtos gráficos"
+        [class.com-navegacao]="navegacaoAtiva()" [style.--itens]="itensPorPagina()"
+        (mouseenter)="mouseSobre.set(true)" (mouseleave)="mouseSobre.set(false)"
+        (focusin)="focoDentro.set(true)" (focusout)="aoSairFoco($event)">
+        @if (navegacaoAtiva()) {
+        <button
+          type="button"
+          class="nav-btn prev-btn"
+          (click)="scrollCarrossel(-1)"
+          aria-label="Produto anterior"
+        >
+          <span class="material-symbols-outlined">chevron_left</span>
+        </button>
+        }
+
+        <div class="carrossel-viewport" (pointerdown)="iniciarToque($event)" (pointerup)="terminarToque($event)">
+        <div class="carrossel-track" [class.com-transicao]="comTransicao()" [style.transform]="transformacao()">
+          @for (produto of produtosCarrossel(); track $index; let i = $index) {
+            <article class="produto-card" [attr.aria-hidden]="itemVisivel(i) ? null : 'true'" [attr.inert]="itemVisivel(i) ? null : ''">
+              <button type="button" class="produto-imagem-wrapper" (click)="abrirImagem(produto)"
+                [disabled]="!podeAmpliar(produto)" [attr.aria-label]="'Ampliar imagem de ' + produto.titulo">
+                @if (podeAmpliar(produto)) {
+                  <img
+                    [src]="obterUrlImagem(produto.imagem)"
+                    (error)="onImageError(produto)"
+                    [alt]="produto.titulo"
+                    loading="lazy"
+                  />
+                }
+                <span
+                  class="material-icons imagem-fallback"
+                  [class.imagem-fallback-hidden]="podeAmpliar(produto)"
+                  aria-hidden="true"
+                >
+                  image
+                </span>
+              </button>
+              <h2 class="produto-titulo">{{ produto.titulo }}</h2>
+            </article>
+          }
+        </div>
+        </div>
+
+        @if (navegacaoAtiva()) {
+        <button
+          type="button"
+          class="nav-btn next-btn"
+          (click)="scrollCarrossel(1)"
+          aria-label="Próximo produto"
+        >
+          <span class="material-symbols-outlined">chevron_right</span>
+        </button>
+        }
+      </section>
+    } @else {
+      <div class="container">
+        <p class="mensagem-vazia">Nenhum produto cadastrado no momento.</p>
+      </div>
+    }
+
+    @if (contato()) {
+      <div class="container">
+        <section class="contato-section" aria-label="Contato para orçamento">
+          @if (linkWhatsapp(); as link) {
+            <a class="btn-primary btn-whatsapp" [href]="link" target="_blank" rel="noopener noreferrer">
+              <span>Solicite um orçamento via WhatsApp</span>
+              <img class="whatsapp-icon" src="/images/redes-sociais/whatsapp.svg" alt="" aria-hidden="true">
+            </a>
+          }
+          @if (contatoAlternativo(); as alternativo) {
+            <p class="contato-alternativo">
+              {{ alternativo.rotulo }} <a [href]="alternativo.href">{{ alternativo.valor }}</a>
+            </p>
+          }
+        </section>
+      </div>
+    }
+  }
+</main>
+
+<app-public-footer></app-public-footer>
+
+<dialog #lightbox class="lightbox" [attr.aria-label]="imagemAmpliada()?.titulo || 'Imagem ampliada'"
+  (click)="fecharAoClicarFora($event)" (close)="imagemAmpliada.set(null)">
+  @if (imagemAmpliada(); as produto) {
+    <div appBloquearScroll class="lightbox-conteudo">
+      <button type="button" class="lightbox-fechar" (click)="fecharImagem()" aria-label="Fechar imagem ampliada" autofocus>
+        <span class="material-symbols-outlined">close</span>
+      </button>
+      <img class="lightbox-imagem" [src]="obterUrlImagem(produto.imagem)" [alt]="produto.titulo">
+    </div>
+  }
+</dialog>
