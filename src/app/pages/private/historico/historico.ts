@@ -75,6 +75,10 @@ export class Historico implements OnInit, OnDestroy {
   private readonly buscaResponsavel = new Subject<string>();
   private buscaResponsavelSub?: Subscription;
   areaAberta = false;
+  readonly gruposExpandidos: Record<AreaSistemaHistorico, boolean> = {
+    GESTAO_INTERNA: false,
+    CONTEUDO_PUBLICO: false
+  };
   sort: string | undefined;
   ordenacao: CampoOrdenacao | null = { campo: 'dataHora', direcao: 'desc' };
   periodo: 'RECENTES' | 'ARQUIVADOS' | 'TODOS' = 'RECENTES';

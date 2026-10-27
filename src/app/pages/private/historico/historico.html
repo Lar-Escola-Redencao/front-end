@@ -47,7 +47,8 @@
           <div class="arvore-areas" role="dialog" aria-label="Área do sistema" cdkTrapFocus [cdkTrapFocusAutoCapture]="true">
             <button type="button" class="opcao-area" [attr.aria-pressed]="areaAtual === 'TODOS'" (click)="trocarTipo('TODOS')">Todas as áreas</button>
             @for (grupo of gruposAreas; track grupo.nome) {
-              <details class="grupo-area">
+              <details #grupoArea class="grupo-area" [open]="gruposExpandidos[grupo.valor]"
+                (toggle)="gruposExpandidos[grupo.valor] = grupoArea.open">
                 <summary [attr.aria-label]="'Expandir ou recolher ' + grupo.nome">
                   <mat-icon aria-hidden="true">arrow_right</mat-icon>
                   <button type="button" class="opcao-area opcao-grupo"
