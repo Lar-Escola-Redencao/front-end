@@ -28,6 +28,7 @@ import {
 } from 'src/app/shared/models/historico.model';
 import { HistoricoService } from 'src/app/shared/services/historico/historico.service';
 import { CampoOrdenacao, alternarOrdenacao, analisarOrdenacao, TAMANHOS_PAGINA_PERMITIDOS } from 'src/app/shared/utils/paginacao-url';
+import { Alertas } from 'src/app/shared/utils/alerts';
 
 @Component({
   selector: 'app-historico',
@@ -66,9 +67,12 @@ export class Historico implements OnInit, OnDestroy {
   responsavelBusca: ResponsavelHistorico | string | null = null;
   responsaveisFiltrados: ResponsavelHistorico[] = [];
   buscandoResponsavel = false;
+  erroResponsavel = '';
+  private confirmandoSaidaFiltros = false;
   private readonly buscaResponsavel = new Subject<string>();
   private buscaResponsavelSub?: Subscription;
   areaAberta = false;
+  areaModal: TipoRegistroHistorico | AreaSistemaHistorico | 'TODOS' = 'TODOS';
   sort: string | undefined;
   ordenacao: CampoOrdenacao | null = { campo: 'dataHora', direcao: 'desc' };
   periodo: 'RECENTES' | 'ARQUIVADOS' | 'TODOS' = 'RECENTES';
@@ -83,7 +87,7 @@ export class Historico implements OnInit, OnDestroy {
     { valor: 'USUARIOS', nome: 'Usuários', busca: 'Buscar por nome, CPF, endereço...' },
     { valor: 'CONTATOS', nome: 'Contatos', busca: 'Buscar por contato ou usuário vinculado...' },
     { valor: 'VINCULOS_CONTATOS', nome: 'Vínculos de contatos', busca: 'Buscar por contato ou usuário vinculado...' },
-    { valor: 'PRESENCAS', nome: 'Presenças', busca: 'Buscar por usuário ou turma...' },
+    { valor: 'PRESENCAS', nome: 'Frequências', busca: 'Buscar por usuário ou turma...' },
     { valor: 'OCORRENCIAS', nome: 'Ocorrências', busca: 'Buscar por usuário, tipo ou descrição...' },
     { valor: 'UNIDADES', nome: 'Unidades', busca: 'Buscar por unidade...' },
     { valor: 'TURMAS', nome: 'Turmas', busca: 'Buscar por período ou unidade...' },
@@ -110,13 +114,13 @@ export class Historico implements OnInit, OnDestroy {
 
   readonly colunas: TabelaColuna<HistoricoEvento>[] = [
     { chave: 'dataHora', titulo: 'Data e hora', ordenavel: true, formatar: valor => this.formatarDataHora(valor) },
+    { chave: 'informacaoAlterada', titulo: 'Tipo de registro' },
     {
       chave: 'identificacaoRegistro',
       titulo: 'Registro',
       ordenavel: true,
       principalMobile: true,
-      formatar: (_, evento) => evento.identificacaoRegistro,
-      etiqueta: evento => evento.registroExcluido ? 'Excluído' : null
+      formatar: (_, evento) => evento.identificacaoRegistro
     },
     {
       chave: 'nomeResponsavel',
@@ -169,7 +173,16 @@ export class Historico implements OnInit, OnDestroy {
   }
 
   get quantidadeFiltros(): number {
-    return Object.values(this.filtros).filter(valor => valor != null && valor !== '').length;
+    return Object.values(this.filtros).filter(valor => valor != null && valor !== '').length
+      + (this.areaAtual !== 'TODOS' ? 1 : 0) + (this.temContexto ? 1 : 0);
+  }
+
+  private get areaAtual(): TipoRegistroHistorico | AreaSistemaHistorico | 'TODOS' {
+    return this.grupoSelecionado ?? (this.todasAreas ? 'TODOS' : this.tipoRegistro);
+  }
+
+  get mostrarDataAula(): boolean {
+    return this.areaModal === 'TODOS' || this.areaModal === 'GESTAO_INTERNA' || this.areaModal === 'PRESENCAS';
   }
 
   ngOnInit(): void {
@@ -250,13 +263,6 @@ export class Historico implements OnInit, OnDestroy {
     this.atualizarConsulta();
   }
 
-  removerContexto(): void {
-    this.contexto = {};
-    this.filtros.dataAula = '';
-    this.pagina = 0;
-    this.atualizarConsulta();
-  }
-
   get temContexto(): boolean {
     return Object.values(this.contexto).some(valor => valor != null);
   }
@@ -314,34 +320,15 @@ export class Historico implements OnInit, OnDestroy {
   }
 
   trocarTipo(tipo: TipoRegistroHistorico | 'TODOS'): void {
-    this.grupoSelecionado = null;
+    this.areaModal = tipo;
     this.areaAberta = false;
-    this.todasAreas = tipo === 'TODOS';
-    if (tipo !== 'TODOS') this.tipoRegistro = tipo;
-    this.limparConsultaDaArea();
-    this.atualizarConsulta();
+    if (!this.mostrarDataAula) this.filtrosModal.dataAula = '';
   }
 
   trocarGrupo(grupo: AreaSistemaHistorico): void {
+    this.areaModal = grupo;
     this.areaAberta = false;
-    this.grupoSelecionado = grupo;
-    this.todasAreas = true;
-    this.limparConsultaDaArea();
-    this.atualizarConsulta();
-  }
-
-  private limparConsultaDaArea(): void {
-    this.busca = '';
-    this.contexto = {};
-    this.filtros = {};
-    this.filtrosModal = {};
-    this.responsavelBusca = null;
-    this.responsaveisFiltrados = [];
-    this.buscandoResponsavel = false;
-    this.buscaResponsavel.next('');
-    this.erroFiltros = '';
-    this.pagina = 0;
-    this.eventos = [];
+    if (!this.mostrarDataAula) this.filtrosModal.dataAula = '';
   }
 
   buscar(termo: string): void {
@@ -362,8 +349,9 @@ export class Historico implements OnInit, OnDestroy {
   }
 
   get nomeAreaSelecionada(): string {
-    if (this.grupoSelecionado) return this.gruposAreas.find(grupo => grupo.valor === this.grupoSelecionado)!.nome;
-    return this.todasAreas ? 'Todas as áreas' : this.tiposRegistro.find(tipo => tipo.valor === this.tipoRegistro)!.nome;
+    return this.gruposAreas.find(grupo => grupo.valor === this.areaModal)?.nome
+      ?? this.tiposRegistro.find(tipo => tipo.valor === this.areaModal)?.nome
+      ?? 'Todas as áreas';
   }
 
   ordenarPor(campo: string): void {
@@ -380,11 +368,39 @@ export class Historico implements OnInit, OnDestroy {
 
   alterarBuscaResponsavel(valor: ResponsavelHistorico | string | null): void {
     this.responsavelBusca = valor;
+    this.erroResponsavel = '';
     this.filtrosModal.idResponsavel = valor && typeof valor !== 'string' ? valor.id : null;
     this.responsaveisFiltrados = [];
     this.erroFiltros = '';
     this.buscandoResponsavel = typeof valor === 'string' && valor.trim().length >= 2;
     this.buscaResponsavel.next(typeof valor === 'string' ? valor : '');
+  }
+
+  validarBuscaResponsavel(): void {
+    const texto = typeof this.responsavelBusca === 'string' ? this.responsavelBusca.trim() : '';
+    this.erroResponsavel = texto.length > 0 && texto.length < 2 ? 'Mínimo de 2 caracteres.' : '';
+  }
+
+  private get filtrosModalAlterados(): boolean {
+    const campos: (keyof FiltrosHistorico)[] = [
+      'idResponsavel', 'dataInicial', 'dataFinal', 'dataAula', 'tipoAlteracao'
+    ];
+    return this.areaModal !== this.areaAtual
+      || (typeof this.responsavelBusca === 'string' && this.responsavelBusca.trim() !== '')
+      || campos.some(campo => (this.filtrosModal[campo] ?? '') !== (this.filtros[campo] ?? ''));
+  }
+
+  async fecharFiltros(): Promise<void> {
+    if (!this.filtrosAberto || this.confirmandoSaidaFiltros) return;
+    this.confirmandoSaidaFiltros = true;
+    try {
+      if (this.filtrosModalAlterados && await Alertas.confirmarSaidaFiltros() === 'voltar') return;
+      this.filtrosAberto = false;
+      this.areaAberta = false;
+    } finally {
+      this.confirmandoSaidaFiltros = false;
+      this.changeDetector.markForCheck();
+    }
   }
 
   private restaurarResponsavel(): void {
@@ -401,6 +417,9 @@ export class Historico implements OnInit, OnDestroy {
   }
 
   abrirFiltros(): void {
+    this.erroResponsavel = '';
+    this.areaModal = this.areaAtual;
+    this.areaAberta = false;
     this.filtrosModal = { ...this.filtros };
     this.responsavelBusca = null;
     this.buscandoResponsavel = false;
@@ -417,6 +436,9 @@ export class Historico implements OnInit, OnDestroy {
       return;
     }
 
+    this.validarBuscaResponsavel();
+    if (this.erroResponsavel) return;
+
     if (typeof this.responsavelBusca === 'string' && this.responsavelBusca.trim()) {
       this.erroFiltros = 'Selecione um responsável na lista ou limpe o campo para consultar todos.';
       return;
@@ -428,12 +450,29 @@ export class Historico implements OnInit, OnDestroy {
     }
 
     this.filtros = { ...this.filtrosModal };
+    if (this.areaModal !== this.areaAtual) this.contexto = {};
+    this.grupoSelecionado = this.gruposAreas.find(grupo => grupo.valor === this.areaModal)?.valor ?? null;
+    this.todasAreas = this.areaModal === 'TODOS' || this.grupoSelecionado !== null;
+    if (!this.todasAreas) this.tipoRegistro = this.areaModal as TipoRegistroHistorico;
+    if (!this.mostrarDataAula) this.filtros.dataAula = '';
+    this.areaAberta = false;
     this.filtrosAberto = false;
     this.pagina = 0;
     this.atualizarConsulta();
   }
 
   limparFiltros(): void {
+    this.erroResponsavel = '';
+    this.todasAreas = true;
+    this.grupoSelecionado = null;
+    this.areaModal = 'TODOS';
+    this.areaAberta = false;
+    this.contexto = {};
+    this.responsavelBusca = null;
+    this.responsaveisFiltrados = [];
+    this.buscandoResponsavel = false;
+    this.buscaResponsavel.next('');
+    this.erroFiltros = '';
     this.filtros = {};
     this.filtrosModal = {};
     this.filtrosAberto = false;

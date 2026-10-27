@@ -56,6 +56,15 @@ describe('ColaboradorComponent', () => {
       unidades: idsUnidades.map(id => ({ id, nome: `Unidade ${id}` })) };
   }
 
+  it('exibe CPF com máscara no modal de detalhes', () => {
+    component.colaboradorPreview = monitor([1]);
+    fixture.changeDetectorRef.markForCheck();
+    fixture.detectChanges();
+    const rotulo = Array.from(fixture.nativeElement.querySelectorAll('.detalhes-campos dt'))
+      .find((campo: any) => campo.textContent.trim() === 'CPF') as HTMLElement;
+    expect(rotulo.nextElementSibling?.textContent?.trim()).toBe('123.456.789-00');
+  });
+
   for (const ids of [[2], [1, 2]]) {
     it(`oculta editar e excluir quando o monitor tem unidade não permitida: ${ids}`, () => {
       configurarPerfil('COORDENADOR');
@@ -155,7 +164,7 @@ describe('ColaboradorComponent', () => {
     const propriaConta = { ...monitor([1], 'ADMINISTRADOR'), id: 10 };
     const acoes = component.acoesTabela.filter(acao => !acao.visivel || acao.visivel(propriaConta));
 
-    expect(acoes.map(acao => acao.acao)).toEqual(['meu-perfil', 'visualizar']);
+    expect(acoes.map(acao => acao.acao)).toEqual(['visualizar', 'meu-perfil']);
     component.abrirEdicao(propriaConta);
     expect(component.modalAberto).toBe(false);
     expect(component.podeGerenciarColaborador(monitor([1]))).toBe(true);

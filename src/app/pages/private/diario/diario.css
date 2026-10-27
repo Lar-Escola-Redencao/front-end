@@ -494,6 +494,10 @@
   grid-template-columns: minmax(0, 1fr);
 }
 
+.rodape-status--bloqueado:has(.acoes) {
+  grid-template-columns: minmax(0, 1fr) max-content;
+}
+
 .info-status {
   display: flex;
   align-items: center;
@@ -535,6 +539,11 @@
   font-size: 0.85rem;
   color: var(--input-color);
   cursor: pointer;
+}
+
+.declaracao-diario {
+  display: grid;
+  gap: 6px;
 }
 
 .rodape-diario .acoes {
@@ -819,38 +828,6 @@
   font-family: var(--fonte-texto);
 }
 
-.ocorrencia-preview-dados {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.ocorrencia-preview-dados div {
-  display: grid;
-  grid-template-columns: 28px minmax(0, 1fr);
-  gap: 12px;
-  align-items: start;
-  color: var(--preto);
-  font-family: var(--fonte-texto);
-  font-size: 16px;
-  line-height: 1.45;
-}
-
-.ocorrencia-preview-dados span {
-  min-width: 0;
-  overflow-wrap: anywhere;
-  word-break: break-word;
-  white-space: normal;
-}
-
-.ocorrencia-preview-icone {
-  color: var(--primary-color);
-  font-size: 22px;
-  width: 24px;
-  height: 24px;
-  margin-top: 1px;
-}
-
 @media (max-width: 768px) {
   .diario-page {
     padding-inline: 22px;
@@ -892,11 +869,22 @@
   .rodape-diario .acoes {
     width: 100%;
     justify-content: flex-end;
+    flex-wrap: wrap;
+  }
+
+  .rodape-diario .acoes .historico-diario {
+    order: 1;
+    width: 100%;
+    justify-content: center;
   }
 
   .rodape-status {
     grid-template-columns: minmax(0, 1fr);
     padding: 16px;
+  }
+
+  .rodape-status--bloqueado:has(.acoes) {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .rodape-status .btn-primary {
@@ -949,6 +937,5 @@
   display: flex;
   align-items: center;
   min-height: 44px;
-  padding-left: 8px;
-  border-left: 1px solid var(--input-border);
+  flex-shrink: 0;
 }

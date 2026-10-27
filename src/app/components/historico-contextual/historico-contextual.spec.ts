@@ -49,6 +49,37 @@ describe('Novidades no histórico contextual', () => {
 
   afterEach(() => componente.ngOnDestroy());
 
+  it('oculta o acesso quando não há registros no contexto', () => {
+    servico.consultarLeitura.mockReturnValue(of({ ultimoEvento: 0, ultimoLido: 0, temNovidades: false }));
+    atualizacoes.next();
+    expect(componente.temRegistros).toBe(false);
+  });
+
+  it('mantém o acesso aos registros que já foram lidos', () => {
+    servico.consultarLeitura.mockReturnValue(of({ ultimoEvento: 10, ultimoLido: 10, temNovidades: false }));
+    atualizacoes.next();
+    expect(componente.temRegistros).toBe(true);
+    expect(componente.temNovidades).toBe(false);
+  });
+
+  it('exibe o acesso ao diário quando somente ocorrências têm registros', () => {
+    componente.diario = true;
+    componente.ngOnChanges();
+    servico.consultarLeitura.mockImplementation(tipo => of({
+      ultimoEvento: tipo === 'OCORRENCIAS' ? 10 : 0, ultimoLido: 10, temNovidades: false
+    }));
+    atualizacoes.next();
+    expect(componente.temRegistros).toBe(true);
+  });
+
+  it('oculta o acesso anterior ao trocar de contexto', () => {
+    atualizacoes.next();
+    expect(componente.temRegistros).toBe(true);
+    componente.idRegistro = 5;
+    componente.ngOnChanges();
+    expect(componente.temRegistros).toBe(false);
+  });
+
   it('acende a bolinha quando uma atualização encontra eventos não lidos', () => {
     servico.consultarLeitura.mockReturnValueOnce(of({ temNovidades: false }));
     atualizacoes.next();

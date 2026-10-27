@@ -178,6 +178,7 @@ export class ColaboradorComponent
     {
       chave: 'cpf',
       titulo: 'CPF',
+      formatar: valor => this.formatarCpfExibicao(valor),
       ordenavel: true
     },
     {
@@ -191,15 +192,15 @@ export class ColaboradorComponent
 
   acoesTabela: TabelaAcao<Colaborador>[] = [
     {
+      icone: 'visibility',
+      tooltip: 'Visualizar',
+      acao: 'visualizar'
+    },
+    {
       icone: 'account_circle',
       tooltip: 'Meu perfil',
       acao: 'meu-perfil',
       visivel: colaborador => this.ehPropriaConta(colaborador)
-    },
-    {
-      icone: 'visibility',
-      tooltip: 'Visualizar',
-      acao: 'visualizar'
     },
     {
       icone: 'edit',
@@ -742,6 +743,14 @@ export class ColaboradorComponent
         this.formColaborador,
         this.mensagensCustomizadas
       );
+  }
+
+  formatarCpfExibicao(valor: string | null | undefined): string {
+    return formatarCpf(valor) || '-';
+  }
+
+  formatarTelefoneExibicao(valor: string | null | undefined): string {
+    return formatarTelefone(valor) || '-';
   }
 
   aplicarMascaraCpf(event: Event): void {

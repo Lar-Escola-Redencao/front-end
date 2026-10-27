@@ -487,7 +487,7 @@ export class UsuarioPerfilContatos implements OnDestroy {
   }
 
   formatarTelefoneContato(valor?: string | null): string {
-    return valor ? formatarTelefone(valor) : 'Telefone não informado';
+    return valor ? formatarTelefone(valor) : '-';
   }
 
   hrefTelefoneContato(valor?: string | null): string | null {
@@ -496,7 +496,7 @@ export class UsuarioPerfilContatos implements OnDestroy {
   }
 
   formatarCpfContato(valor?: string | null): string {
-    return valor ? formatarCpf(valor) : 'CPF não informado';
+    return valor ? formatarCpf(valor) : '-';
   }
 
   private configurarAutocomplete(): void {

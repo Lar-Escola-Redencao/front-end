@@ -3,10 +3,14 @@
 }
 
 <ng-template #botao>
-@if (auth.podeAcessar('historico-alteracoes')) {
+@if (auth.podeAcessar('historico-alteracoes') && temRegistros) {
   <button type="button" class="botao-acao botao-historico" (click)="abrir()" [attr.title]="titulo + (temNovidades ? ': novo' : '')"
+    [class.botao-historico--texto-mobile]="textoNoMobile"
     [attr.aria-label]="titulo + (temNovidades ? ': há alterações novas' : '')">
     <mat-icon aria-hidden="true">history</mat-icon>
+    @if (textoNoMobile) {
+      <span class="texto-mobile">Ver histórico</span>
+    }
     @if (temNovidades) {
       <span class="novidade" aria-hidden="true"></span>
     }
@@ -20,14 +24,11 @@
     (closed)="atividadeSelecionada ? atividadeSelecionada = null : fechar()">
     @if (atividadeSelecionada; as atividade) {
     <app-historico-detalhe [registros]="atividade.registros" />
-    <div class="rodape">
-      <button type="button" class="btn-cancelar" (click)="atividadeSelecionada = null">Voltar</button>
-    </div>
     } @else {
     @if (diario) {
       <div class="abas-container" role="group" aria-label="Histórico do diário">
         <button type="button" class="aba-btn" [class.ativa]="abaDiario === 'PRESENCAS'"
-          [attr.aria-pressed]="abaDiario === 'PRESENCAS'" (click)="selecionarAba('PRESENCAS')">Presenças
+          [attr.aria-pressed]="abaDiario === 'PRESENCAS'" (click)="selecionarAba('PRESENCAS')">Frequências
           @if (novidadesPresencas) { <span class="novidade-aba" title="Novo" aria-label="Novas alterações"></span> }
         </button>
         <button type="button" class="aba-btn" [class.ativa]="abaDiario === 'OCORRENCIAS'"
@@ -40,10 +41,14 @@
       <p role="status">Não foi possível atualizar a leitura.</p>
     }
     @if (carregando) {
-      <p role="status">Carregando histórico...</p>
+      <div class="carregando-historico" role="status" aria-label="Carregando histórico">
+        <span class="spinner-historico" aria-hidden="true"></span>
+      </div>
     } @else if (erro) {
-      <p role="alert">Não foi possível carregar o histórico.</p>
-      <button type="button" class="btn-cancelar" (click)="abrir()">Tentar novamente</button>
+      <div class="erro-historico">
+        <p role="alert">Não foi possível carregar o histórico. Tente novamente.</p>
+        <button type="button" class="botao-tentar-novamente" (click)="abrir()">Tentar novamente</button>
+      </div>
     } @else {
       <ul class="atividades">
         @for (atividade of atividades; track atividade.evento.id) {
@@ -53,12 +58,10 @@
                 @if (atividadesNovas.has(atividade.evento.id)) {
                   <span class="etiqueta-novo">Novo</span>
                 }
-                <em>
-                  @if (mostrarRegistro) {
-                    {{ atividade.evento.identificacaoRegistro }}:
-                  }
-                  {{ atividade.resumo }}
-                </em>
+                @if (mostrarRegistro) {
+                  {{ atividade.evento.identificacaoRegistro }}:
+                }
+                {{ atividade.resumo }}
               </p>
               <time>{{ atividade.evento.dataHora | date:'dd/MM/yyyy, HH:mm':'-0300' }}</time>
             </div>
@@ -72,13 +75,9 @@
         }
       </ul>
     }
-    <div class="rodape" [class.rodape--com-voltar]="mostrarVoltar">
-      @if (mostrarVoltar) {
-        <button type="button" class="btn-cancelar" (click)="fechar()">Voltar</button>
-      }
+    <div class="rodape">
       <a routerLink="/dashboard/historico-alteracoes" [queryParams]="parametrosPagina" (click)="fechar()">
         Ver histórico completo
-        <mat-icon aria-hidden="true">arrow_forward</mat-icon>
       </a>
     </div>
     }

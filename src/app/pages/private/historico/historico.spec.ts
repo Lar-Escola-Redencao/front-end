@@ -6,6 +6,7 @@ import { vi } from 'vitest';
 import { HistoricoService } from 'src/app/shared/services/historico/historico.service';
 import { AtividadeHistorico, HistoricoEvento } from 'src/app/shared/models/historico.model';
 import { Historico } from './historico';
+import { Alertas } from 'src/app/shared/utils/alerts';
 
 const evento: HistoricoEvento = {
   id: 1, revisao: 2, dataHora: '2026-10-20T23:30:00-03:00', idResponsavel: 3,
@@ -36,7 +37,68 @@ describe('Histórico de atividades', () => {
     componente = TestBed.createComponent(Historico).componentInstance;
   });
 
-  afterEach(() => componente.ngOnDestroy());
+  afterEach(() => {
+    componente.ngOnDestroy();
+    vi.restoreAllMocks();
+  });
+
+  it('valida o mínimo do responsável somente ao sair do campo', () => {
+    componente.abrirFiltros();
+    componente.alterarBuscaResponsavel('A');
+    expect(componente.erroResponsavel).toBe('');
+    componente.validarBuscaResponsavel();
+    expect(componente.erroResponsavel).toContain('2 caracteres');
+    componente.alterarBuscaResponsavel('An');
+    expect(componente.erroResponsavel).toBe('');
+    componente.validarBuscaResponsavel();
+    expect(componente.erroResponsavel).toBe('');
+    componente.alterarBuscaResponsavel('');
+    componente.validarBuscaResponsavel();
+    expect(componente.erroResponsavel).toBe('');
+  });
+
+  it('fecha filtros sem confirmação quando não há alterações', async () => {
+    const alerta = vi.spyOn(Alertas, 'confirmarSaidaFiltros').mockResolvedValue('descartar');
+    componente.filtros = { dataInicial: '', idResponsavel: null };
+    componente.abrirFiltros();
+    await componente.fecharFiltros();
+    expect(alerta).not.toHaveBeenCalled();
+    expect(componente.filtrosAberto).toBe(false);
+  });
+
+  for (const mudar of [
+    (c: Historico) => c.trocarTipo('TURMAS'),
+    (c: Historico) => { c.filtrosModal.dataInicial = '2026-10-01'; },
+    (c: Historico) => c.alterarBuscaResponsavel('A')
+  ]) {
+    it('permite voltar aos filtros e descartar alterações sem aplicá-las', async () => {
+      const alerta = vi.spyOn(Alertas, 'confirmarSaidaFiltros').mockResolvedValueOnce('voltar').mockResolvedValueOnce('descartar');
+      componente.abrirFiltros();
+      mudar(componente);
+      await componente.fecharFiltros();
+      expect(componente.filtrosAberto).toBe(true);
+      await componente.fecharFiltros();
+      expect(alerta).toHaveBeenCalledTimes(2);
+      expect(componente.filtrosAberto).toBe(false);
+      expect(navegar).not.toHaveBeenCalled();
+      componente.abrirFiltros();
+      expect(componente.nomeAreaSelecionada).toBe('Todas as áreas');
+      expect(componente.filtrosModal).toEqual({});
+      expect(componente.responsavelBusca).toBeNull();
+    });
+  }
+
+  it('não confirma descarte quando uma alteração foi desfeita', async () => {
+    const alerta = vi.spyOn(Alertas, 'confirmarSaidaFiltros').mockResolvedValue('descartar');
+    componente.abrirFiltros();
+    componente.filtrosModal.dataInicial = '2026-10-01';
+    componente.filtrosModal.dataInicial = '';
+    componente.trocarTipo('TURMAS');
+    componente.trocarTipo('TODOS');
+    await componente.fecharFiltros();
+    expect(alerta).not.toHaveBeenCalled();
+    expect(componente.filtrosAberto).toBe(false);
+  });
 
   it('pagina atividades agrupadas preservando todos os registros nos detalhes', () => {
     componente.ngOnInit();
@@ -75,11 +137,12 @@ describe('Histórico de atividades', () => {
     { nome: 'todas as áreas', selecionar: (c: Historico) => c.trocarTipo('TODOS') },
     { nome: 'grupo de áreas', selecionar: (c: Historico) => c.trocarGrupo('CONTEUDO_PUBLICO') }
   ]) {
-    it(`limpa busca, filtros e modal ao selecionar ${cenario.nome}`, () => {
+    it(`aplica ${cenario.nome} junto com os demais filtros, sem navegar durante a seleção`, () => {
       componente.busca = 'Maria';
       componente.contexto = { idRegistro: 4, idUsuario: 12, idTurma: 2, idContato: 5 };
       componente.filtros = { idResponsavel: 3, dataInicial: '2026-10-01',
         dataFinal: '2026-10-20', dataAula: '2026-10-20', tipoAlteracao: 'EDICAO' };
+      componente.abrirFiltros();
       componente.filtrosModal = { ...componente.filtros, idResponsavel: 9 };
       componente.responsavelBusca = { id: 9, nome: 'Ana' };
       componente.responsaveisFiltrados = [{ id: 9, nome: 'Ana' }];
@@ -89,24 +152,47 @@ describe('Histórico de atividades', () => {
 
       cenario.selecionar(componente);
 
-      expect(componente.busca).toBe('');
-      expect(componente.contexto).toEqual({});
-      expect(componente.filtros).toEqual({});
-      expect(componente.filtrosModal).toEqual({});
-      expect(componente.responsavelBusca).toBeNull();
-      expect(componente.responsaveisFiltrados).toEqual([]);
-      expect(componente.buscandoResponsavel).toBe(false);
-      expect(componente.erroFiltros).toBe('');
+      expect(navegar).not.toHaveBeenCalled();
+      expect(componente.filtros.idResponsavel).toBe(3);
+      expect(componente.contexto.idRegistro).toBe(4);
+      componente.aplicarFiltros({ invalid: false } as NgForm);
+      expect(componente.filtros.idResponsavel).toBe(9);
+      expect(componente.busca).toBe('Maria');
       expect(componente.pagina).toBe(0);
       const consulta = navegar.mock.lastCall![1].queryParams;
-      expect(consulta.search).toBeNull();
+      expect(consulta.search).toBe('Maria');
       expect(consulta.page).toBeNull();
-      for (const campo of ['idRegistro', 'idUsuario', 'idTurma', 'idContato',
-        'idResponsavel', 'dataInicial', 'dataFinal', 'dataAula', 'tipoAlteracao']) {
-        expect(consulta[campo]).toBeUndefined();
-      }
+      expect(consulta.idResponsavel).toBe(9);
+      expect(consulta.tipoAlteracao).toBe('EDICAO');
+      expect(consulta.dataInicial).toBe('2026-10-01');
+      expect(consulta.tipoRegistro).toBe(cenario.nome === 'categoria' ? 'CONTATOS' : 'TODOS');
+      expect(consulta.areaSistema).toBe(cenario.nome === 'grupo de áreas' ? 'CONTEUDO_PUBLICO' : null);
     });
   }
+
+  it('descarta a área não aplicada ao reabrir os filtros', () => {
+    componente.abrirFiltros();
+    componente.trocarTipo('TURMAS');
+    componente.filtrosAberto = false;
+    componente.abrirFiltros();
+    expect(componente.nomeAreaSelecionada).toBe('Todas as áreas');
+    expect(navegar).not.toHaveBeenCalled();
+  });
+
+  it('limpa área, filtros e contexto pelo único botão de limpeza', () => {
+    componente.todasAreas = false;
+    componente.tipoRegistro = 'CONTATOS';
+    componente.contexto = { idContato: 8 };
+    componente.filtros = { idResponsavel: 3 };
+    expect(componente.quantidadeFiltros).toBe(3);
+    componente.abrirFiltros();
+    componente.limparFiltros();
+    expect(componente.quantidadeFiltros).toBe(0);
+    expect(componente.contexto).toEqual({});
+    expect(navegar).toHaveBeenLastCalledWith([], expect.objectContaining({ queryParams: expect.objectContaining({
+      tipoRegistro: 'TODOS', areaSistema: null
+    }) }));
+  });
 
   it('cancela respostas antigas quando uma nova consulta começa', () => {
     const antiga = new Subject<typeof resposta>();

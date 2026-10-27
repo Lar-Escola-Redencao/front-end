@@ -51,20 +51,20 @@
     <app-historico-contextual modal-title-extra tipo="COLABORADORES" [idRegistro]="colaborador.id"
       titulo="Histórico deste colaborador" />
     <div class="colaborador-preview">
-      <h3>{{ colaborador.nomeCompleto }}</h3>
-      <dl>
-        <div><dt>E-mail</dt><dd>{{ colaborador.email || 'Não informado' }}</dd></div>
-        <div><dt>CPF</dt><dd>{{ colaborador.cpf || 'Não informado' }}</dd></div>
-        <div><dt>Telefone</dt><dd>{{ colaborador.telefone || 'Não informado' }}</dd></div>
-        <div><dt>Endereço</dt><dd>{{ colaborador.endereco || 'Não informado' }}</dd></div>
-        <div><dt>Papel</dt><dd>{{ formatarTextoExibicao(colaborador.nomePapel) }}</dd></div>
+      <dl class="detalhes-campos">
+        <div><dt>Nome completo</dt><dd>{{ colaborador.nomeCompleto }}</dd></div>
+        <div><dt>E-mail</dt><dd>{{ colaborador.email || '-' }}</dd></div>
+        <div><dt>CPF</dt><dd>{{ formatarCpfExibicao(colaborador.cpf) }}</dd></div>
+        <div><dt>Telefone</dt><dd>{{ formatarTelefoneExibicao(colaborador.telefone) }}</dd></div>
+        <div><dt>Endereço</dt><dd>{{ colaborador.endereco || '-' }}</dd></div>
+        <div><dt>Papel</dt><dd>{{ formatarTextoExibicao(colaborador.nomePapel) || '-' }}</dd></div>
         <div>
           <dt>Unidades</dt>
           <dd>
             @for (unidade of colaborador.unidades; track unidade.id; let ultima = $last) {
               {{ unidade.nome }}{{ ultima ? '' : ', ' }}
             } @empty {
-              Sem unidade vinculada
+              -
             }
           </dd>
         </div>

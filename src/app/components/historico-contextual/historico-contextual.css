@@ -73,9 +73,81 @@
   background: var(--primary-color);
 }
 
+.texto-mobile {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .botao-historico--texto-mobile {
+    flex-basis: auto;
+    width: auto;
+    padding: 0 16px;
+    gap: 8px;
+    border-radius: 6px;
+    color: var(--input-color);
+    font: 500 0.9rem var(--fonte-texto);
+  }
+
+  .texto-mobile {
+    display: inline;
+  }
+}
+
 .botao-historico .novidade {
   top: 7px;
   right: 6px;
+}
+
+.carregando-historico {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 0;
+}
+
+.spinner-historico {
+  width: 36px;
+  height: 36px;
+  box-sizing: border-box;
+  border: 3px solid color-mix(in srgb, var(--primary-color) 20%, transparent);
+  border-top-color: var(--primary-color);
+  border-radius: 50%;
+  animation: girar-historico 0.8s linear infinite;
+}
+
+@keyframes girar-historico {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.erro-historico {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 0;
+  text-align: center;
+}
+
+.erro-historico p {
+  margin: 0;
+  color: rgb(182, 43, 43);
+}
+
+.botao-tentar-novamente {
+  border: 1px solid var(--primary-color);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--primary-color);
+  padding: 8px 16px;
+  cursor: pointer;
+  font-family: var(--fonte-texto);
+}
+
+.botao-tentar-novamente:hover {
+  background: var(--primary-color);
+  color: var(--branco);
 }
 
 .atividades {
@@ -113,6 +185,10 @@
   overflow-wrap: anywhere;
 }
 
+time {
+  white-space: nowrap;
+}
+
 time,
 .vazio {
   color: var(--input-color);
@@ -136,12 +212,6 @@ time,
 
 .rodape a:hover {
   text-decoration: underline;
-}
-
-.rodape a mat-icon {
-  width: 18px;
-  height: 18px;
-  font-size: 18px;
 }
 
 .abas-container {
@@ -209,11 +279,4 @@ time,
   border-radius: 50%;
   background: var(--primary-color);
   vertical-align: middle;
-}
-
-.rodape--com-voltar {
-  justify-content: space-between;
-  align-items: center;
-  gap: 16px;
-  flex-wrap: wrap;
 }

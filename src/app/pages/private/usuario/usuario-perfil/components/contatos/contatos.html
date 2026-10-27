@@ -39,36 +39,38 @@
 
     @if (modoModal === 'visualizar' && contatoSelecionado) {
       <div class="contato-preview">
-        <p><b>{{ formatarParentesco(contatoSelecionado.parentesco) }}</b> de {{ usuario?.nomeCompleto }}</p>
+        <p><strong>{{ formatarParentesco(contatoSelecionado.parentesco) }}</strong> de {{ usuario?.nomeCompleto }}</p>
 
-        <div class="contato-preview-dados">
+        <dl class="detalhes-campos">
           <div>
-            <mat-icon class="material-symbols-outlined">call</mat-icon>
+            <dt>Telefone</dt>
+            <dd>
             <a *ngIf="hrefTelefoneContato(contatoSelecionado.telefone); else telefonePerfilContatoIndisponivel"
               class="telefone-link" [href]="hrefTelefoneContato(contatoSelecionado.telefone)">
               {{ formatarTelefoneContato(contatoSelecionado.telefone) }}
             </a>
             <ng-template #telefonePerfilContatoIndisponivel>
-              <span>Telefone não informado</span>
+              <span>-</span>
             </ng-template>
+            </dd>
           </div>
           <div>
-            <mat-icon class="material-symbols-outlined">mail</mat-icon>
-            <span>{{ contatoSelecionado.email || 'E-mail não informado' }}</span>
+            <dt>E-mail</dt>
+            <dd>{{ contatoSelecionado.email || '-' }}</dd>
           </div>
           <div>
-            <mat-icon class="material-symbols-outlined">badge</mat-icon>
-            <span>{{ formatarCpfContato(contatoSelecionado.cpf) }}</span>
+            <dt>CPF</dt>
+            <dd>{{ formatarCpfContato(contatoSelecionado.cpf) }}</dd>
           </div>
           <div>
-            <mat-icon class="material-symbols-outlined">home</mat-icon>
-            <span>{{ contatoSelecionado.endereco || 'Endereço não informado' }}</span>
+            <dt>Endereço</dt>
+            <dd>{{ contatoSelecionado.endereco || '-' }}</dd>
           </div>
           <div>
-            <mat-icon class="material-symbols-outlined">work</mat-icon>
-            <span>{{ contatoSelecionado.localTrabalho || 'Local de trabalho não informado' }}</span>
+            <dt>Local de trabalho</dt>
+            <dd>{{ contatoSelecionado.localTrabalho || '-' }}</dd>
           </div>
-        </div>
+        </dl>
       </div>
     } @else {
       <form class="form-contato" [formGroup]="form" (ngSubmit)="salvar()">

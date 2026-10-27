@@ -562,20 +562,11 @@
 
     <h2 class="preview-title">{{ usuarioPreview.nomeCompleto }}</h2>
 
-    <div class="preview-info-row">
-      <mat-icon>cake</mat-icon>
-      <span>{{ formatarDataNascimento(usuarioPreview.dataNascimento) }}</span>
-    </div>
-
-    <div class="preview-info-row">
-      <mat-icon>location_on</mat-icon>
-      <span>{{ usuarioPreview.endereco }}</span>
-    </div>
-
-    <div class="preview-info-row">
-      <mat-icon>badge</mat-icon>
-      <span>{{ formatarDocumentoPreview(usuarioPreview) }}</span>
-    </div>
+    <dl class="detalhes-campos">
+      <div><dt>Data de nascimento</dt><dd>{{ formatarDataNascimento(usuarioPreview.dataNascimento) }}</dd></div>
+      <div><dt>Endereço</dt><dd>{{ usuarioPreview.endereco || '-' }}</dd></div>
+      <div><dt>Documento</dt><dd>{{ formatarDocumentoPreview(usuarioPreview) }}</dd></div>
+    </dl>
 
     <div class="preview-section">
       <h3>Contatos / Responsáveis</h3>
@@ -586,14 +577,14 @@
               }})</span></div>
           <div class="contato-dados-preview">
             <span>
-              <mat-icon>phone</mat-icon>
+              Telefone:
               <a *ngIf="hrefTelefoneContato(c.telefone); else telefonePreviewUsuarioIndisponivel"
                 class="telefone-link" [href]="hrefTelefoneContato(c.telefone)">
                 {{ formatarTelefoneContato(c.telefone) }}
               </a>
-              <ng-template #telefonePreviewUsuarioIndisponivel>Telefone não informado</ng-template>
+              <ng-template #telefonePreviewUsuarioIndisponivel>-</ng-template>
             </span>
-            <span *ngIf="c.email"><mat-icon>email</mat-icon> {{ c.email }}</span>
+            <span *ngIf="c.email">E-mail: {{ c.email }}</span>
           </div>
         </div>
       </div>
@@ -608,7 +599,7 @@
 <!-- MODAL DE PREVIEW DE CONTATO -->
 @if (modalPreviewContatoAberto) {
   <app-historico-contextual #historicoContato tipo="CONTATOS" [idContato]="contatoPreview?.id ?? null"
-    [mostrarBotao]="false" [mostrarVoltar]="true" titulo="Histórico deste contato" />
+    [mostrarBotao]="false" titulo="Histórico deste contato" />
   @if (!historicoContato.aberto) {
 <app-modal-layout [titulo]="contatoPreview?.nomeCompleto || 'Contato'" (closed)="fecharPreviewContato()">
   <span modal-title-extra>
@@ -620,34 +611,36 @@
       <p>{{ erroPreviewContato }}</p><button type="button" class="btn-cancelar"
         (click)="abrirPreviewContato(contato)">Tentar novamente</button>
     </div>
-    <div class="contato-preview-dados" *ngIf="!carregandoPreviewContato && !erroPreviewContato">
+    <dl class="detalhes-campos" *ngIf="!carregandoPreviewContato && !erroPreviewContato">
       <div>
-        <span class="material-symbols-outlined contato-preview-icone">call</span>
+        <dt>Telefone</dt>
+        <dd>
         <a *ngIf="hrefTelefoneContato(contato.telefone); else telefonePreviewContatoIndisponivel"
           class="telefone-link" [href]="hrefTelefoneContato(contato.telefone)">
           {{ formatarTelefoneContato(contato.telefone) }}
         </a>
         <ng-template #telefonePreviewContatoIndisponivel>
-          <span>Telefone não informado</span>
+          <span>-</span>
         </ng-template>
+        </dd>
       </div>
       <div>
-        <span class="material-symbols-outlined contato-preview-icone">mail</span>
-        <span>{{ contato.email || 'E-mail não informado' }}</span>
+        <dt>E-mail</dt>
+        <dd>{{ contato.email || '-' }}</dd>
       </div>
       <div>
-        <span class="material-symbols-outlined contato-preview-icone">badge</span>
-        <span>{{ contato.cpf || 'CPF não informado' }}</span>
+        <dt>CPF</dt>
+        <dd>{{ contato.cpf || '-' }}</dd>
       </div>
       <div>
-        <span class="material-symbols-outlined contato-preview-icone">home</span>
-        <span>{{ contato.endereco || 'Endereço não informado' }}</span>
+        <dt>Endereço</dt>
+        <dd>{{ contato.endereco || '-' }}</dd>
       </div>
       <div>
-        <span class="material-symbols-outlined contato-preview-icone">work</span>
-        <span>{{ contato.localTrabalho || 'Local de trabalho não informado' }}</span>
+        <dt>Local de trabalho</dt>
+        <dd>{{ contato.localTrabalho || '-' }}</dd>
       </div>
-    </div>
+    </dl>
   </div>
 </app-modal-layout>
   }

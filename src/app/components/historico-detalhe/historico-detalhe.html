@@ -7,10 +7,10 @@
   <dl class="identificacao">
     <div><dt>Registro</dt><dd>{{ registroPrincipal }}</dd></div>
     <div><dt>Responsável</dt><dd>{{ registros[0].nomeResponsavel }}</dd></div>
-    <div><dt>Data e hora</dt><dd>{{ registros[0].dataHora | date:'dd/MM/yyyy, HH:mm':'-0300' }}</dd></div>
+    <div><dt>Data e hora</dt><dd class="data-hora">{{ registros[0].dataHora | date:'dd/MM/yyyy, HH:mm':'-0300' }}</dd></div>
   </dl>
   @if (chamadaRegistrada) {
-    <div class="cabecalho-chamada"><h3>Chamada</h3><span class="acao">Cadastro</span></div>
+    <div class="cabecalho-chamada"><h3>Frequências</h3><span class="acao">Cadastro</span></div>
     <div class="grupos-presenca">
       @for (presente of [true, false]; track presente) {
         <section class="grupo-presenca" [class.ausentes]="!presente">
@@ -29,7 +29,8 @@
     @for (dados of detalhes; track dados.evento.id) {
       <section class="secao-alteracao">
         <h3>{{ somentePresenca(dados) ? nomeAluno(dados) : tituloSecao(dados) }}
-          <span class="acao">{{ nomeAcao(dados.evento.tipoAlteracao) }}</span>
+          <span class="acao" [class.acao--edicao]="dados.evento.tipoAlteracao === 'EDICAO'"
+            [class.acao--exclusao]="dados.evento.tipoAlteracao === 'EXCLUSAO'">{{ nomeAcao(dados.evento.tipoAlteracao) }}</span>
         </h3>
         @if (dados.observacao) {
           <p class="aviso">{{ dados.observacao }}</p>

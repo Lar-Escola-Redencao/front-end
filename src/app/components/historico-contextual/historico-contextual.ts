@@ -27,7 +27,7 @@ export class HistoricoContextual implements OnInit, OnChanges, OnDestroy {
   @Input() diario = false;
   @Input() mostrarRegistro = false;
   @Input() mostrarBotao = true;
-  @Input() mostrarVoltar = false;
+  @Input() textoNoMobile = false;
   @ViewChild('botao', { static: true }) botao!: TemplateRef<unknown>;
   abaDiario: TipoRegistroHistorico = 'PRESENCAS';
   readonly auth = inject(Auth);
@@ -42,6 +42,7 @@ export class HistoricoContextual implements OnInit, OnChanges, OnDestroy {
   erro = false;
   erroLeitura = false;
   temNovidades = false;
+  temRegistros = false;
   novidadesPresencas = false;
   novidadesOcorrencias = false;
   atividadesNovas = new Set<number>();
@@ -74,6 +75,7 @@ export class HistoricoContextual implements OnInit, OnChanges, OnDestroy {
       this.consulta?.unsubscribe();
       this.leitura?.unsubscribe();
       this.temNovidades = false;
+      this.temRegistros = false;
       this.novidadesPresencas = false;
       this.novidadesOcorrencias = false;
       this.monitorar();
@@ -97,6 +99,7 @@ export class HistoricoContextual implements OnInit, OnChanges, OnDestroy {
           : [this.service.consultarLeitura(this.tipo, this.filtros)];
         return forkJoin(consultas).pipe(
           map(estados => ({
+            temRegistros: estados.some(estado => estado.ultimoEvento > 0),
             temNovidades: estados.some(estado => estado.temNovidades),
             presencas: this.diario && estados[0].temNovidades,
             ocorrencias: this.diario && estados[1].temNovidades
@@ -106,6 +109,7 @@ export class HistoricoContextual implements OnInit, OnChanges, OnDestroy {
     ).subscribe({
       next: estado => {
         if (!estado) return;
+        this.temRegistros = estado.temRegistros;
         this.temNovidades = estado.temNovidades;
         this.novidadesPresencas = estado.presencas;
         this.novidadesOcorrencias = estado.ocorrencias;

@@ -2,6 +2,16 @@
   display: block;
 }
 
+:host ::ng-deep app-tabela-layout .celula-dado[data-label="Data e hora"] {
+  grid-template-columns: minmax(0, 1fr) max-content;
+  gap: 8px;
+}
+
+:host ::ng-deep app-tabela-layout .celula-dado[data-label="Data e hora"] .valor-celula {
+  white-space: nowrap;
+  word-break: normal;
+}
+
 .historico-admin {
   min-height: calc(100vh - 130px);
   padding: 32px 24px 48px;
@@ -36,11 +46,14 @@ app-barra-busca {
 }
 
 .seletor-tipo {
-  flex: 0 1 240px;
+  min-width: 0;
 }
 
-.btn-filtros,
-.btn-atualizar {
+.seletor-tipo mat-form-field {
+  width: 100%;
+}
+
+.btn-filtros {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -58,8 +71,7 @@ app-barra-busca {
   border-radius: var(--input-radius);
 }
 
-.btn-filtros:hover,
-.btn-atualizar:hover {
+.btn-filtros:hover {
   color: var(--primary-color);
   border-color: var(--primary-color);
 }
@@ -75,11 +87,6 @@ app-barra-busca {
 
 .acoes-historico {
   margin-bottom: 20px;
-}
-
-.btn-atualizar {
-  min-height: 40px;
-  border: 0;
 }
 
 button:disabled {
@@ -127,11 +134,6 @@ button:disabled {
 
   app-barra-busca {
     flex-basis: 100%;
-  }
-
-  .seletor-tipo {
-    flex: 1 1 180px;
-    min-width: 0;
   }
 
   .btn-filtros {
@@ -185,12 +187,6 @@ button:disabled {
   color: var(--primary-color);
   border-bottom-color: var(--primary-color);
   font-weight: 600;
-}
-
-.contexto-consulta {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 12px;
 }
 
 .seletor-area {
@@ -259,9 +255,9 @@ button:disabled {
 .opcao-grupo { flex: 1; min-width: 0; }
 
 .info-arquivados {
-  width: 16px;
-  height: 16px;
-  font-size: 16px;
+  width: 24px;
+  height: 24px;
+  font-size: 24px;
   margin-left: 4px;
   vertical-align: middle;
 }

@@ -1,11 +1,6 @@
 <section class="unidades-admin">
   <div class="cabecalho-unidades">
-    <h1>Unidades e Turmas</h1>
-    <app-historico-contextual
-      [tipo]="abaAtiva === 'unidades' ? 'UNIDADES' : 'TURMAS'"
-      [titulo]="abaAtiva === 'unidades' ? 'Histórico das unidades' : 'Histórico das turmas'"
-      [mostrarRegistro]="true"
-    />
+    <h1>Unidades e turmas</h1>
   </div>
   <div class="conteudo">
     <div appAbasResponsivas class="abas-container">
@@ -452,5 +447,18 @@
         [numero]="numeroUnidadeVisualizacao"
         [imagemUrl]="tratarImagem(unidadeVisualizacao.imagem) || ''" />
     </div>
+  </app-modal-layout>
+}
+
+@if (turmaVisualizacao; as turma) {
+  <app-modal-layout titulo="Detalhes da turma" (closed)="turmaVisualizacao = null">
+    <app-historico-contextual modal-title-extra tipo="TURMAS"
+      [idRegistro]="turma.id" titulo="Histórico desta turma" />
+    <dl class="detalhes-campos">
+      <div><dt>Período</dt><dd>{{ formatarPeriodo(turma.periodo) || '-' }}</dd></div>
+      <div><dt>Horário de início</dt><dd>{{ formatarHorario(turma.horaInicio) }}</dd></div>
+      <div><dt>Horário de término</dt><dd>{{ formatarHorario(turma.horaFim) }}</dd></div>
+      <div><dt>Unidade</dt><dd>{{ turma.unidade.nome || '-' }}</dd></div>
+    </dl>
   </app-modal-layout>
 }

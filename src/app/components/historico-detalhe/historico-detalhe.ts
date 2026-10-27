@@ -4,6 +4,7 @@ import { Subscription, forkJoin } from 'rxjs';
 import { CampoHistorico, HistoricoDetalhe, HistoricoEvento, TipoAlteracaoHistorico, ValorHistorico } from '../../shared/models/historico.model';
 import { HistoricoService } from '../../shared/services/historico/historico.service';
 import { formatarCep, formatarCpf, formatarTelefone } from '../../shared/utils/masks';
+import { DiasFuncionamentoPipe } from '../../shared/pipes/dias-funcionamento.pipe';
 
 @Component({
   selector: 'app-historico-detalhe',
@@ -18,6 +19,20 @@ export class HistoricoDetalheComponent implements OnChanges, OnDestroy {
   private readonly cdr = inject(ChangeDetectorRef);
   private requisicao?: Subscription;
   private readonly moeda = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
+  private readonly diasFuncionamento = new DiasFuncionamentoPipe();
+  private readonly nomesPorCampo: Record<string, Record<string, string>> = {
+    escolaridade: {
+      ANALFABETO: 'Analfabeto', ALFABETIZADO: 'Alfabetizado',
+      FUNDAMENTAL_INCOMPLETO: 'Fundamental incompleto', FUNDAMENTAL_COMPLETO: 'Fundamental completo',
+      MEDIO_INCOMPLETO: 'Médio incompleto', MEDIO_COMPLETO: 'Médio completo',
+      SUPERIOR_INCOMPLETO: 'Superior incompleto', SUPERIOR_COMPLETO: 'Superior completo',
+      POS_GRADUACAO: 'Pós-graduação'
+    },
+    tipoDocumento: { CERTIDAO_NASCIMENTO: 'Certidão de Nascimento', CRNM_RNE: 'CRNM/RNE', OUTRO: 'Outro' },
+    status: { ATIVO: 'Ativo', INATIVO: 'Inativo', EGRESSO: 'Desligado', EXCLUIDO: 'Excluído' },
+    periodo: { MANHA: 'Manhã', TARDE: 'Tarde', NOITE: 'Noite', INTEGRAL: 'Integral' },
+    papel: { ADMINISTRADOR: 'Administrador', COORDENADOR: 'Coordenador', MONITOR: 'Monitor', COLABORADOR: 'Colaborador' }
+  };
   private readonly camposMonetarios = new Set([
     'valor', 'renda', 'beneficios', 'valorAluguel', 'valorFinanciamento',
     'despesaEnergia', 'despesaAgua', 'despesaInternet', 'despesaTelefone',
@@ -101,7 +116,7 @@ export class HistoricoDetalheComponent implements OnChanges, OnDestroy {
     const detalhe = this.detalhes[0];
     const turma = detalhe.contextoNovo?.['turma'];
     const data = detalhe.campos.find(campo => campo.campo === 'dataRegistro')?.valorNovo;
-    let nomeTurma = 'Chamada';
+    let nomeTurma = 'Frequências';
     if (turma && typeof turma === 'object' && !Array.isArray(turma)) {
       const periodo = String(turma['periodo'] ?? '');
       const periodos: Record<string, string> = { MANHA: 'Manhã', TARDE: 'Tarde', NOITE: 'Noite', INTEGRAL: 'Integral' };
@@ -161,6 +176,12 @@ export class HistoricoDetalheComponent implements OnChanges, OnDestroy {
     }
     const valor = anterior ? campo.valorAnterior : campo.valorNovo;
     const contexto = anterior ? detalhe.contextoAnterior : detalhe.contextoNovo;
+    if (campo.campo === 'status' && detalhe.evento.informacaoAlterada === 'Matrícula' && typeof valor === 'string') {
+      const statusMatricula: Record<string, string> = {
+        ATIVO: 'Ativa', INATIVO: 'Transferida', EGRESSO: 'Desligada', EXCLUIDO: 'Excluída'
+      };
+      return statusMatricula[valor] ?? valor;
+    }
     if (['parentesco', 'parentescoVinculo'].includes(campo.campo) && typeof valor === 'string') {
       const parentescos: Record<string, string> = {
         MAE: 'Mãe', PAI: 'Pai', AVO: 'Avô/Avó', IRMAO: 'Irmão/Irmã',
@@ -191,7 +212,7 @@ export class HistoricoDetalheComponent implements OnChanges, OnDestroy {
       const referencia = campo.campo === 'membro' ? 'autorOriginal' : campo.campo;
       const informacao = contexto?.[referencia];
       if (informacao) {
-        return this.formatar(informacao);
+        return this.formatar(informacao, campo.campo);
       }
       return valor == null ? 'Sem vínculo' : 'Nome do vínculo indisponível neste registro';
     }
@@ -200,7 +221,7 @@ export class HistoricoDetalheComponent implements OnChanges, OnDestroy {
 
   private formatarCampo(detalhe: HistoricoDetalhe, campo: CampoHistorico, valor: ValorHistorico): string {
     if (valor === null || valor === '' || (typeof valor !== 'string' && typeof valor !== 'number')) {
-      return this.formatar(valor);
+      return this.formatar(valor, campo.campo);
     }
 
     const texto = String(valor);
@@ -222,27 +243,35 @@ export class HistoricoDetalheComponent implements OnChanges, OnDestroy {
     if (this.camposMonetarios.has(campo.campo) && texto.trim() !== '' && Number.isFinite(Number(valor))) {
       return this.moeda.format(Number(valor));
     }
-    return this.formatar(valor);
+    return this.formatar(valor, campo.campo);
   }
 
-  private formatar(valor: ValorHistorico): string {
+  private formatar(valor: ValorHistorico, campo = ''): string {
     if (valor === null || valor === '') {
-      return 'Vazio';
+      return '-';
+    }
+    if (campo === 'diasFuncionamento' && typeof valor === 'string') {
+      return this.diasFuncionamento.transform(valor);
     }
     if (typeof valor === 'boolean') {
+      if (campo === 'ativo') return valor ? 'Ativo' : 'Inativo';
+      if (campo === 'presente') return valor ? 'Presente' : 'Ausente';
       return valor ? 'Sim' : 'Não';
     }
+    if (typeof valor === 'string' && this.nomesPorCampo[campo]) {
+      return this.nomesPorCampo[campo][valor] ?? valor;
+    }
     if (Array.isArray(valor)) {
-      return valor.map(item => this.formatar(item)).join(', ') || 'Nenhum';
+      return valor.map(item => this.formatar(item, campo)).join(', ') || 'Nenhum';
     }
     if (typeof valor === 'object') {
       const nome = valor['nome'] ?? valor['titulo'] ?? valor['nomeCompleto'] ?? valor['nome_completo'];
       if (nome) {
-        return String(nome);
+        return this.formatar(nome, campo);
       }
       return Object.entries(valor)
         .filter(([chave]) => chave !== 'id' && !chave.startsWith('id_'))
-        .map(([, conteudo]) => this.formatar(conteudo)).join(', ') || 'Vínculo registrado';
+        .map(([chave, conteudo]) => this.formatar(conteudo, chave)).join(', ') || 'Vínculo registrado';
     }
     if (typeof valor === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(valor)) {
       return valor.split('-').reverse().join('/');

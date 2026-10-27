@@ -1751,7 +1751,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
     if (usuario.documentoAuxiliar) {
       return `${usuario.documentoAuxiliar} (${usuario.tipoDocumento || 'Outro'})`;
     }
-    return 'Não informado';
+    return '-';
   }
 
   formatarDataNascimento(valor?: string | null): string {

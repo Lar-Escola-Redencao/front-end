@@ -59,6 +59,40 @@ describe('Diário de turma', () => {
     component.filtroForm.get('idTurma')!.setValue(2);
   });
 
+  it('permite tentar salvar e indica a declaração obrigatória sem enviar dados', () => {
+    component.iniciarChamada();
+    fixture.changeDetectorRef.markForCheck();
+    fixture.detectChanges();
+    const botao = fixture.nativeElement.querySelector('.rodape-diario .btn-primary') as HTMLButtonElement;
+    expect(botao.disabled).toBe(false);
+    expect(fixture.nativeElement.querySelector('#erro-declaracao')).toBeNull();
+    botao.click();
+    fixture.detectChanges();
+    expect(api.salvarEmLote).not.toHaveBeenCalled();
+    expect(fixture.nativeElement.querySelector('#erro-declaracao')?.textContent).toContain('Marque a caixa');
+    const checkbox = fixture.nativeElement.querySelector('.checkbox-declaracao input') as HTMLInputElement;
+    expect(checkbox.getAttribute('aria-invalid')).toBe('true');
+    checkbox.click();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('#erro-declaracao')).toBeNull();
+    botao.click();
+    expect(api.salvarEmLote).toHaveBeenCalledTimes(1);
+    expect(api.salvarEmLote).toHaveBeenCalledWith(expect.objectContaining({ declaracaoAceita: true }));
+  });
+
+  it('remove o erro da declaração ao iniciar um novo preenchimento', () => {
+    component.iniciarChamada();
+    component.salvarDiarioLote();
+    fixture.changeDetectorRef.markForCheck();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('#erro-declaracao')).not.toBeNull();
+    component.estadoTela = 'INICIAL';
+    component.iniciarChamada();
+    fixture.changeDetectorRef.markForCheck();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('#erro-declaracao')).toBeNull();
+  });
+
   it('usa a criação do servidor para a janela e a hora do fato para editar', () => {
     const registro = {
       ...ocorrencia('2026-10-06T11:00:00'),
@@ -150,7 +184,7 @@ describe('Diário de turma', () => {
 
   it('exibe regras específicas para cada perfil', () => {
     expect(component.perfilDoDiario).toBe('Monitor');
-    expect(component.regrasDoDiario.find(item => item.acao === 'Editar presenças lançadas')?.regra).toContain('48 horas');
+    expect(component.regrasDoDiario.find(item => item.acao === 'Editar frequências lançadas')?.regra).toContain('48 horas');
     for (const perfil of ['COORDENADOR', 'ADMINISTRADOR']) {
       papel = perfil;
       expect(component.perfilDoDiario).toBe(perfil === 'COORDENADOR' ? 'Coordenador' : 'Administrador');
@@ -229,16 +263,17 @@ describe('Diário de turma', () => {
     ]);
   });
 
-  it('desabilita salvar sem declaração e oculta iniciar/salvar após sucesso', () => {
+  it('permite tentar salvar sem declaração e oculta iniciar/salvar após sucesso', () => {
     component.iniciarChamada(); fixture.detectChanges();
     const salvar = () => Array.from(fixture.nativeElement.querySelectorAll('button')).find((b: any) => b.textContent.trim() === 'Salvar') as HTMLButtonElement;
-    expect(salvar().disabled).toBe(true);
+    expect(salvar().disabled).toBe(false);
     component.declaracaoAceita = true;
     api.listarFrequencia.mockReturnValue(of([{ ...aluno(), idFrequencia: 20, presente: true }]));
     component.salvarDiarioLote(); fixture.detectChanges();
     expect(component.estadoTela).toBe('SALVO');
     expect(salvar()).toBeUndefined();
-    expect(fixture.nativeElement.textContent).not.toContain('Registrar frequências');
+    expect(Array.from(fixture.nativeElement.querySelectorAll('button')).some((botao: any) =>
+      botao.textContent.trim() === 'Registrar frequências')).toBe(false);
     expect(fixture.nativeElement.querySelector('.toggle-fp').disabled).toBe(true);
   });
 
