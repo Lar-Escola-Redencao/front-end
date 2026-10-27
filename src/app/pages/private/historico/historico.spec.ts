@@ -70,13 +70,43 @@ describe('Histórico de atividades', () => {
     }) }));
   });
 
-  it('preserva filtros compatíveis ao trocar de área', () => {
-    componente.filtros = { idResponsavel: 3, dataInicial: '2026-10-01', dataAula: '2026-10-20' };
-    componente.trocarTipo('CONTATOS');
-    expect(componente.filtros.idResponsavel).toBe(3);
-    expect(componente.filtros.dataInicial).toBe('2026-10-01');
-    expect(componente.filtros.dataAula).toBe('');
-  });
+  for (const cenario of [
+    { nome: 'categoria', selecionar: (c: Historico) => c.trocarTipo('CONTATOS') },
+    { nome: 'todas as áreas', selecionar: (c: Historico) => c.trocarTipo('TODOS') },
+    { nome: 'grupo de áreas', selecionar: (c: Historico) => c.trocarGrupo('CONTEUDO_PUBLICO') }
+  ]) {
+    it(`limpa busca, filtros e modal ao selecionar ${cenario.nome}`, () => {
+      componente.busca = 'Maria';
+      componente.contexto = { idRegistro: 4, idUsuario: 12, idTurma: 2, idContato: 5 };
+      componente.filtros = { idResponsavel: 3, dataInicial: '2026-10-01',
+        dataFinal: '2026-10-20', dataAula: '2026-10-20', tipoAlteracao: 'EDICAO' };
+      componente.filtrosModal = { ...componente.filtros, idResponsavel: 9 };
+      componente.responsavelBusca = { id: 9, nome: 'Ana' };
+      componente.responsaveisFiltrados = [{ id: 9, nome: 'Ana' }];
+      componente.buscandoResponsavel = true;
+      componente.erroFiltros = 'Erro anterior';
+      componente.pagina = 3;
+
+      cenario.selecionar(componente);
+
+      expect(componente.busca).toBe('');
+      expect(componente.contexto).toEqual({});
+      expect(componente.filtros).toEqual({});
+      expect(componente.filtrosModal).toEqual({});
+      expect(componente.responsavelBusca).toBeNull();
+      expect(componente.responsaveisFiltrados).toEqual([]);
+      expect(componente.buscandoResponsavel).toBe(false);
+      expect(componente.erroFiltros).toBe('');
+      expect(componente.pagina).toBe(0);
+      const consulta = navegar.mock.lastCall![1].queryParams;
+      expect(consulta.search).toBeNull();
+      expect(consulta.page).toBeNull();
+      for (const campo of ['idRegistro', 'idUsuario', 'idTurma', 'idContato',
+        'idResponsavel', 'dataInicial', 'dataFinal', 'dataAula', 'tipoAlteracao']) {
+        expect(consulta[campo]).toBeUndefined();
+      }
+    });
+  }
 
   it('cancela respostas antigas quando uma nova consulta começa', () => {
     const antiga = new Subject<typeof resposta>();

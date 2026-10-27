@@ -318,11 +318,7 @@ export class Historico implements OnInit, OnDestroy {
     this.areaAberta = false;
     this.todasAreas = tipo === 'TODOS';
     if (tipo !== 'TODOS') this.tipoRegistro = tipo;
-    if (tipo !== 'PRESENCAS' && tipo !== 'TODOS') this.filtros.dataAula = '';
-    this.contexto.idRegistro = null;
-    this.filtrosModal = {};
-    this.pagina = 0;
-    this.eventos = [];
+    this.limparConsultaDaArea();
     this.atualizarConsulta();
   }
 
@@ -330,12 +326,22 @@ export class Historico implements OnInit, OnDestroy {
     this.areaAberta = false;
     this.grupoSelecionado = grupo;
     this.todasAreas = true;
-    if (grupo === 'CONTEUDO_PUBLICO') this.filtros.dataAula = '';
-    this.contexto.idRegistro = null;
+    this.limparConsultaDaArea();
+    this.atualizarConsulta();
+  }
+
+  private limparConsultaDaArea(): void {
+    this.busca = '';
+    this.contexto = {};
+    this.filtros = {};
     this.filtrosModal = {};
+    this.responsavelBusca = null;
+    this.responsaveisFiltrados = [];
+    this.buscandoResponsavel = false;
+    this.buscaResponsavel.next('');
+    this.erroFiltros = '';
     this.pagina = 0;
     this.eventos = [];
-    this.atualizarConsulta();
   }
 
   buscar(termo: string): void {
