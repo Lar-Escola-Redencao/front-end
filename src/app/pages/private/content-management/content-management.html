@@ -1,6 +1,11 @@
 <div class="content-management-page">
   <div class="header-gerenciamento">
-    <h1>Conteúdo público</h1>
+    <div class="titulo-conteudo">
+      <h1>Conteúdo público</h1>
+      @if (historicos[secaoSelecionada]; as historico) {
+        <app-historico-contextual [tipo]="historico.tipo" [titulo]="historico.titulo" [mostrarRegistro]="true" />
+      }
+    </div>
 
     <mat-form-field appearance="outline" class="seletor-secao">
       <mat-label>Visualizando</mat-label>

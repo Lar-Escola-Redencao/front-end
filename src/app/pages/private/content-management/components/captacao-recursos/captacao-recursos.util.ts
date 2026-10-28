@@ -100,11 +100,17 @@ export function montarDtoGrupo(
   grupo: GrupoSecaoConfig,
   form: FormGroup,
   arquivo: File | null,
+  original: SecaoGrupo | null = null,
 ): SalvarSecaoGrupoDTO {
   const dto: SalvarSecaoGrupoDTO = { grupo: grupo.grupo };
 
+  const valoresOriginais = valoresIniciaisGrupo(grupo, original);
   for (const campo of grupo.campos) {
     const texto = String(form.get(campo.campo)?.value ?? '');
+    if (original && texto === String(valoresOriginais[campo.campo] ?? '')) {
+      dto[campo.campo] = original[campo.campo] ?? '';
+      continue;
+    }
     dto[campo.campo] = campo.tipo === 'telefone' ? texto.replace(/\D/g, '') : texto.trim();
   }
 

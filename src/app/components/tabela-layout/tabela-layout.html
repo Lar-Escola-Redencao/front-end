@@ -26,10 +26,14 @@
           @for (coluna of colunas; track coluna.chave) {
           <th
             [class.coluna-ordenavel]="coluna.ordenavel"
+            [attr.aria-sort]="coluna.ordenavel ? (direcaoOrdenacao(coluna) === 'asc' ? 'ascending' : direcaoOrdenacao(coluna) === 'desc' ? 'descending' : 'none') : null"
             (click)="ordenarPor(coluna)"
           >
-            {{ coluna.titulo }}
             @if (coluna.ordenavel) {
+              <button type="button" class="botao-ordenacao" [disabled]="carregando"
+                [attr.aria-label]="'Ordenar por ' + coluna.titulo + (direcaoOrdenacao(coluna) === 'asc' ? ' em ordem decrescente' : ' em ordem crescente')"
+                (click)="$event.stopPropagation(); ordenarPor(coluna)">
+                {{ coluna.titulo }}
               @if (direcaoOrdenacao(coluna) === 'asc') {
                 <span class="icone-ordenacao">▲</span>
               } @else if (direcaoOrdenacao(coluna) === 'desc') {
@@ -37,6 +41,9 @@
               } @else {
                 <span class="icone-ordenacao icone-ordenacao--inativo">⇅</span>
               }
+              </button>
+            } @else {
+              {{ coluna.titulo }}
             }
           </th>
           }

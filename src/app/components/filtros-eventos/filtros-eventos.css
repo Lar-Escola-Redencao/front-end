@@ -31,19 +31,6 @@
 }
 .filtros-eventos { display: grid; gap: 12px; text-align: left; }
 .filtros-eventos .mat-mdc-form-field { width: 100%; }
-.filtros-eventos button[mat-icon-button] {
-  --mdc-icon-button-state-layer-size: 36px;
-  width: 36px;
-  height: 36px;
-  padding: 6px;
-  border-radius: 50%;
-  color: var(--input-color);
-  transition: background-color 0.2s ease, color 0.2s ease;
-}
-.filtros-eventos button[mat-icon-button]:hover {
-  background-color: #f0f0f0;
-  color: var(--primary-color);
-}
 .filtros-eventos ::ng-deep .mat-mdc-select { margin-top: 10px; }
 .acoes-filtros { display: flex; justify-content: flex-end; align-items: center; gap: 12px; margin-top: 4px; }
 .btn-filtro-secundario {

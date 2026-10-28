@@ -1,3 +1,5 @@
+import { AnexoDrop } from 'src/app/shared/directives/anexo-drop';
+import { HistoricoContextual } from '@components/historico-contextual/historico-contextual';
 import { EstadoVazio } from 'src/app/components/estado-vazio/estado-vazio';
 import { AbasResponsivas } from 'src/app/shared/directives/abas-responsivas';
 import {
@@ -44,6 +46,7 @@ import { BarraBusca } from '@components/barra-busca/barra-busca';
 import { ComponentComAlteracoesNaoSalvas } from 'src/app/shared/guards/can-deactivate.guard';
 import { UsuarioService } from 'src/app/shared/services/usuario/usuario.service';
 import { CepService } from 'src/app/shared/services/usuario/cep.service';
+import { dependenciasFichaSocioeconomica, preservarCamposNaoEditados } from './usuario-perfil/utils/usuario-atualizacao-dto';
 import { montarEndereco, separarEndereco } from 'src/app/shared/utils/endereco';
 import { ContatoService } from 'src/app/shared/services/usuario/contato.service';
 import { SessaoService } from 'src/app/shared/services/auth/sessao.service';
@@ -77,7 +80,10 @@ import { environment } from 'src/environments/environment';
 @Component({
   selector: 'app-usuario',
   standalone: true,
-  imports: [EstadoVazio,
+  imports: [
+    AnexoDrop,
+    HistoricoContextual,
+    EstadoVazio,
     AbasResponsivas,
     CommonModule,
     RouterLink,
@@ -244,6 +250,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
   formUsuario!: FormGroup;
   erros: { [key: string]: string } = {};
   valoresOriginaisDoFormulario: any = null;
+  private usuarioOriginalEdicao: UsuarioResponseDTO | null = null;
 
   opcoesAutocomplete: ContatoListagemDTO[][] = [];
   unidadesDisponiveis: any[] = []; // filtradas por acesso do coordenador (cadastro/edição de usuário)
@@ -258,8 +265,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
   readonly limiteArquivo = TAMANHO_MAXIMO_ARQUIVO_BYTES;
   readonly etapas = ['Dados pessoais', 'Contatos', 'Dados socioeconômicos', 'Dados complementares', 'Matrícula'];
   readonly periodosEscolares = [
-    { value: 'MANHA', label: 'Manhã' }, { value: 'TARDE', label: 'Tarde' },
-    { value: 'INTEGRAL', label: 'Integral' }, { value: 'OUTRO', label: 'Outro' }
+    { value: 'MANHA', label: 'Manhã' }, { value: 'TARDE', label: 'Tarde' }
   ];
   readonly seriesEscolares = [
     { value: 'PRE_ESCOLA', label: 'Pré-escola' },
@@ -936,6 +942,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
 
   adicionarFamiliar(): void {
     this.familiaresArray.push(this.fb.group({
+      id: [null as number | null],
       nomeCompleto: ['', Validators.required], idade: [null],
       parentescoVinculo: ['', Validators.required], escolaridade: ['', Validators.required],
       renda: [null], beneficios: [null]
@@ -1127,6 +1134,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
           return;
         }
         this.iniciarFormulario();
+        this.usuarioOriginalEdicao = dadosCompletos;
         this.fotoPreviewUrl = dadosCompletos.imagemPerfil || null;
         const usaOutro = !dadosCompletos.cpf && !!dadosCompletos.documentoAuxiliar;
 
@@ -1743,7 +1751,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
     if (usuario.documentoAuxiliar) {
       return `${usuario.documentoAuxiliar} (${usuario.tipoDocumento || 'Outro'})`;
     }
-    return 'Não informado';
+    return '-';
   }
 
   formatarDataNascimento(valor?: string | null): string {
@@ -2015,6 +2023,22 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
 
     if (this.modoEdicao) {
       const dtoEdicao: Partial<CadastroUsuarioCompletoDTO> = { ...dto };
+      if (this.usuarioOriginalEdicao?.fichaSocioeconomica) {
+        dtoEdicao.fichaSocioeconomica = preservarCamposNaoEditados(
+          this.usuarioOriginalEdicao.fichaSocioeconomica,
+          dto.fichaSocioeconomica,
+          { ...this.valoresOriginaisDoFormulario.socioeconomico, ...this.valoresOriginaisDoFormulario.complementares },
+          { ...socio, ...complemento },
+          dependenciasFichaSocioeconomica
+        );
+      }
+      const documentosAlterados = ['cpf', 'documentoAuxiliar', 'tipoDocumento', 'usarOutroDocumento']
+        .some(campo => dados[campo] !== this.valoresOriginaisDoFormulario?.[campo]);
+      if (!documentosAlterados) {
+        dtoEdicao.cpf = dados.cpf?.replace(/\D/g, '') || null;
+        dtoEdicao.documentoAuxiliar = dados.documentoAuxiliar || null;
+        dtoEdicao.tipoDocumento = dados.tipoDocumento || null;
+      }
       this.usuarioService.atualizar(this.usuarioSelecionadoId!, dtoEdicao).subscribe({
         next: () => this.processarUploadFoto(this.usuarioSelecionadoId!, 'Usuário atualizado com sucesso!'),
         error: (err: any) => {

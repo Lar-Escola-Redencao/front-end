@@ -1,4 +1,4 @@
-<div class="dropzone" [class.dropzone--invalid]="invalid()">
+<div [appAnexoDrop]="fileInput" class="dropzone" [class.dropzone--invalid]="invalid()">
   @if (imageUrl()) {
     <img [src]="imageUrl()" alt="Pré-visualização da imagem" class="dropzone__preview" />
   } @else {

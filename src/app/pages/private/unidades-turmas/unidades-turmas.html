@@ -1,5 +1,7 @@
 <section class="unidades-admin">
-  <h1>Unidades e Turmas</h1>
+  <div class="cabecalho-unidades">
+    <h1>Unidades e turmas</h1>
+  </div>
   <div class="conteudo">
     <div appAbasResponsivas class="abas-container">
       <button
@@ -97,6 +99,10 @@
     [titulo]="modoEdicao ? 'Editar unidade' : 'Cadastrar nova unidade'"
     (closed)="fecharModal()"
   >
+    @if (modoEdicao && unidadeSelecionadaId) {
+      <app-historico-contextual modal-title-extra tipo="UNIDADES"
+        [idRegistro]="unidadeSelecionadaId" titulo="Histórico desta unidade" />
+    }
     <form class="form-modal" [formGroup]="formUnidade" (ngSubmit)="salvar()">
       <mat-form-field appearance="outline">
         <mat-label>Nome da unidade</mat-label>
@@ -249,7 +255,7 @@
           (change)="onImagemSelecionada($event)"
         />
 
-        <div
+        <div [appAnexoDrop]="inputImagem"
           class="upload-arquivo"
           [class.upload-arquivo-erro]="erros['imagem']"
           (click)="inputImagem.click()"
@@ -308,6 +314,10 @@
     [titulo]="modoEdicaoTurma ? 'Editar turma' : 'Cadastrar nova turma'"
     (closed)="fecharModalTurma()"
   >
+    @if (modoEdicaoTurma && turmaSelecionadaId) {
+      <app-historico-contextual modal-title-extra tipo="TURMAS"
+        [idRegistro]="turmaSelecionadaId" titulo="Histórico desta turma" />
+    }
     <form class="form-modal" [formGroup]="formTurma" (ngSubmit)="salvarTurma()">
       <mat-form-field appearance="outline">
         <mat-label>Período</mat-label>
@@ -427,11 +437,28 @@
 
 @if (modalVisualizacaoAberto) {
   <app-modal-layout titulo="Detalhes da unidade" (closed)="fecharVisualizacao()">
+    @if (unidadeVisualizacao) {
+      <app-historico-contextual modal-title-extra tipo="UNIDADES"
+        [idRegistro]="unidadeVisualizacao.id" titulo="Histórico desta unidade" />
+    }
     <div class="modal-body-preview" *ngIf="unidadeVisualizacao">
       <app-unidade-card
         [unidade]="unidadeVisualizacao"
         [numero]="numeroUnidadeVisualizacao"
         [imagemUrl]="tratarImagem(unidadeVisualizacao.imagem) || ''" />
     </div>
+  </app-modal-layout>
+}
+
+@if (turmaVisualizacao; as turma) {
+  <app-modal-layout titulo="Detalhes da turma" (closed)="turmaVisualizacao = null">
+    <app-historico-contextual modal-title-extra tipo="TURMAS"
+      [idRegistro]="turma.id" titulo="Histórico desta turma" />
+    <dl class="detalhes-campos">
+      <div><dt>Período</dt><dd>{{ formatarPeriodo(turma.periodo) || '-' }}</dd></div>
+      <div><dt>Horário de início</dt><dd>{{ formatarHorario(turma.horaInicio) }}</dd></div>
+      <div><dt>Horário de término</dt><dd>{{ formatarHorario(turma.horaFim) }}</dd></div>
+      <div><dt>Unidade</dt><dd>{{ turma.unidade.nome || '-' }}</dd></div>
+    </dl>
   </app-modal-layout>
 }

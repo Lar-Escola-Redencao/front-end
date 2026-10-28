@@ -91,7 +91,7 @@
             application/vnd.openxmlformats-officedocument.wordprocessingml.document,
             application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" (change)="selecionarDocumento($event)">
 
-      <div class="upload-arquivo" [class.upload-arquivo-erro]="errosDocumento['arquivo']"
+      <div [appAnexoDrop]="inputDocumento" class="upload-arquivo" [class.upload-arquivo-erro]="errosDocumento['arquivo']"
         (click)="inputDocumento.click()">
 
         <span class="material-symbols-outlined upload-arquivo-icone">
