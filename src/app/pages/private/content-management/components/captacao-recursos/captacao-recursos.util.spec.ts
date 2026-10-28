@@ -118,14 +118,14 @@ describe('captacao-recursos.util', () => {
     });
   });
 
-  it('maps Pix to conteudo + imagem, without titulo', () => {
+  it.each([true, false])('maps Pix to conteudo + imagem with ativo=%s, without titulo', (ativo) => {
     const grupo = grupoPorNome('pix');
     const form = criarFormularioGrupo(fb, grupo);
-    form.patchValue({ conteudo: 'chave@lar.org' });
+    form.patchValue({ conteudo: 'chave@lar.org', ativo });
 
     const dto = montarDtoGrupo(grupo, form, null);
 
-    expect(dto).toEqual({ grupo: 'pix', conteudo: 'chave@lar.org' });
+    expect(dto).toEqual({ grupo: 'pix', conteudo: 'chave@lar.org', ativo });
     expect('titulo' in dto).toBe(false);
   });
 

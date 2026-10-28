@@ -122,8 +122,8 @@ describe('PrivateNavbar', () => {
       '/dashboard/usuarios',
       '/dashboard/colaboradores',
       '/dashboard/unidades-turmas',
-      '/dashboard/historico-alteracoes',
       '/dashboard/conteudo-publico',
+      '/dashboard/historico-alteracoes',
     ]);
   });
 
