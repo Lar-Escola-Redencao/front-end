@@ -49,5 +49,9 @@ export const routes: Routes = [
         path: 'transparencia',
         loadComponent: () => import('./pages/public/transparencia/transparencia').then((m) => m.Transparencia),
     },
+    {
+        path: 'grafica',
+        loadComponent: () => import('./pages/public/grafica/grafica').then((m) => m.Grafica),
+    },
     { path: '**', redirectTo: '' }
 ];
