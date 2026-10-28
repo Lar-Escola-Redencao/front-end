@@ -54,8 +54,6 @@ describe('Histórico de atividades', () => {
     expect(input.placeholder).toBe('Não foi possível carregar os responsáveis.');
     expect(fixture.nativeElement.querySelector('.form-filtros > p[role="alert"]')).toBeNull();
     input.focus();
-    const abrir = fixture.nativeElement.querySelector('button[aria-label="Selecionar responsável"]') as HTMLButtonElement;
-    abrir.click();
     fixture.detectChanges();
     await fixture.whenStable();
     expect(document.querySelector('[role="listbox"]')?.textContent).toContain('Não foi possível carregar os responsáveis.');
