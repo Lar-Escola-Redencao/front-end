@@ -1,3 +1,40 @@
+body:has(app-historico .form-filtros) .cdk-overlay-container {
+  z-index: 2500;
+}
+
+.detalhes-campos {
+  display: grid;
+  gap: 18px;
+  margin: 0;
+  font-family: var(--fonte-texto);
+  font-size: 0.95rem;
+  line-height: 1.5;
+  text-align: left;
+}
+
+.detalhes-campos > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 2px;
+}
+
+.detalhes-campos dt {
+  color: var(--input-color);
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.detalhes-campos dd {
+  min-width: 0;
+  margin: 0;
+  color: var(--preto);
+  overflow-wrap: anywhere;
+}
+
+.detalhes-campos .telefone-link {
+  white-space: normal;
+}
+
 @font-face {
   font-family: 'Inter';
   src: url('/fonts/inter-regular.ttf') format('truetype');
@@ -804,4 +841,69 @@ div.mat-mdc-autocomplete-panel .mdc-list-item__primary-text {
 div.mat-mdc-autocomplete-panel .mat-mdc-option:hover:not(.mdc-list-item--disabled),
 div.mat-mdc-autocomplete-panel .mat-mdc-option.mat-mdc-option-active:not(.mdc-list-item--disabled) {
   background-color: rgba(54, 130, 220, 0.08) !important;
+}
+
+.icone-historico { position: relative; }
+.novidade-historico {
+  position: absolute;
+  top: 0;
+  right: -3px;
+  width: 10px;
+  height: 10px;
+  border: 2px solid var(--branco);
+  border-radius: 50%;
+  background: var(--primary-color);
+}
+
+/* O calendário dos campos Material usa o ícone do projeto. */
+input[matInput][type="date"]::-webkit-calendar-picker-indicator,
+input[matInput][type="datetime-local"]::-webkit-calendar-picker-indicator {
+  display: none;
+}
+
+.btn-calendario-data {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  margin-right: 2px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--input-color);
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.btn-calendario-data:hover,
+.btn-calendario-data:focus-visible {
+  background-color: #f0f0f0;
+  color: var(--primary-color);
+}
+
+.btn-calendario-data:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+[appAnexoDrop].anexo-arrastando {
+  outline: 2px dashed var(--primary-color);
+  outline-offset: -2px;
+  background-color: #3682dc14;
+}
+
+.mat-mdc-tooltip.ajuda-arquivados .mdc-tooltip__surface {
+  max-width: min(340px, calc(100vw - 32px));
+  padding: 16px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: var(--branco);
+  box-shadow: var(--sombra-padrao);
+  color: var(--input-color);
+  font-family: var(--fonte-texto);
+  font-size: 16px;
+  line-height: 1.5;
+  text-align: left;
 }

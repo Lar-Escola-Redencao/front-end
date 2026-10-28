@@ -15,6 +15,8 @@ import { CaptacaoRecursos } from './content-management/components/captacao-recur
 import { CAPTACAO_RECURSOS_CONFIG } from './content-management/components/captacao-recursos/captacao-recursos.config';
 import { DiretoriaService } from 'src/app/shared/services/content-management/diretoria/diretoria.service';
 import { SecoesGrupoService } from 'src/app/shared/services/pagina/secoes-grupo.service';
+import { Auth } from 'src/app/shared/services/auth/auth';
+import { SessaoService } from 'src/app/shared/services/auth/sessao.service';
 import { UnidadesTurmas } from './unidades-turmas/unidades-turmas';
 import { ColaboradorComponent } from './colaborador/colaborador.component';
 
@@ -98,11 +100,20 @@ describe.each(casos)('Ações de formulário: $nome', caso => {
     TestBed.configureTestingModule({
       imports: [caso.componente],
       providers: [provideHttpClient(), provideRouter([]),
+        { provide: Auth, useValue: {
+          hasRole: (papel: string) => papel === 'ADMINISTRADOR',
+          podeAcessar: () => false
+        } },
+        { provide: SessaoService, useValue: {
+          membro: () => ({ id: 99, nomePapel: 'ADMINISTRADOR', unidades: [] })
+        } },
         { provide: ToastrService, useValue: { success: vi.fn(), error: vi.fn(), warning: vi.fn(), info: vi.fn() } },
         { provide: DiretoriaService, useValue: {
           buscarPorId: () => of({ id: 1, nome: 'Diretor', cargo: 'Presidente', ativo: true }), fotoUrl: () => ''
         } },
-        { provide: SecoesGrupoService, useValue: { listarPorGrupo: () => of(
+        { provide: SecoesGrupoService, useValue: {
+          listarPorGrupoPaginado: () => of({ content: [], page: { size: 10, number: 0, totalElements: 0, totalPages: 0 } }),
+          listarPorGrupo: () => of(
           caso.nome === 'contato da gráfica' && edicao
             ? [{ id: 1, grupo: 'telefone', titulo: '16999999999', conteudo: '', imagem: null }] : []
         ) } }
@@ -129,6 +140,7 @@ describe.each(casos)('Ações de formulário: $nome', caso => {
 
   it('bloqueia edição original, libera ao alterar e bloqueia ao desfazer', () => {
     const { fixture, componente, salvar } = abrir(true);
+    expect(salvar()).not.toBeNull();
     const campo = componente[caso.formulario].get(caso.campo);
     const original = campo.value;
     expect(salvar().disabled).toBe(true);

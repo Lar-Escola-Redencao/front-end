@@ -1,3 +1,4 @@
+import { AnexoDrop } from 'src/app/shared/directives/anexo-drop';
 import { AbasResponsivas } from 'src/app/shared/directives/abas-responsivas';
 import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, HostListener, Input, OnDestroy, OnInit } from '@angular/core';
@@ -46,6 +47,7 @@ import {
   selector: 'app-captacao-recursos',
   standalone: true,
   imports: [
+    AnexoDrop,
     AbasResponsivas,
     CommonModule,
     ReactiveFormsModule,
@@ -578,7 +580,12 @@ export class CaptacaoRecursos implements OnInit, OnDestroy, ComponentComAlteraco
     }
 
     this.salvando = true;
-    const dto = montarDtoGrupo(this.grupoAtivo, this.form, this.arquivoSelecionado);
+    const dto = montarDtoGrupo(
+      this.grupoAtivo,
+      this.form,
+      this.arquivoSelecionado,
+      this.itemEditando ?? this.secaoContato,
+    );
 
     // Contato edita o registro único do grupo; nas tabelas, só há id ao editar
     // um item — criar é sempre POST.

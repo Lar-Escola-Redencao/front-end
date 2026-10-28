@@ -18,7 +18,7 @@ describe('parseRole', () => {
 });
 
 describe('roleTemAcesso (matriz de permissões)', () => {
-  const todos: Modulo[] = ['diario', 'usuarios', 'colaboradores', 'unidades-turmas', 'conteudo-publico'];
+  const todos: Modulo[] = ['diario', 'usuarios', 'colaboradores', 'unidades-turmas', 'conteudo-publico', 'historico-alteracoes'];
 
   function modulosDe(role: Role | null): Modulo[] {
     return todos.filter((modulo) => roleTemAcesso(role, modulo));

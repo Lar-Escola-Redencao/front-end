@@ -30,6 +30,12 @@ export const routes: Routes = [
             { path: 'usuarios/:id', canDeactivate: [canDeactivateGuard], loadComponent: () => import('@pages/private/usuario/usuario-perfil/usuario-perfil').then(m => m.UsuarioPerfil), canActivate: [roleGuard], data: { modulo: 'perfil-usuario' } },
             { path: 'diario', canDeactivate: [canDeactivateGuard], loadComponent: () => import('@pages/private/diario/diario').then(m => m.Diario), canActivate: [roleGuard], data: { modulo: 'diario' } },
             { path: 'unidades-turmas', loadComponent: () => import('@pages/private/unidades-turmas/unidades-turmas').then(m => m.UnidadesTurmas), canActivate: [roleGuard], data: { modulo: 'unidades-turmas' } },
+            {
+                path: 'historico-alteracoes',
+                loadComponent: () => import('@pages/private/historico/historico').then(m => m.Historico),
+                canActivate: [roleGuard],
+                data: { modulo: 'historico-alteracoes' }
+            },
             { path: 'perfil', canDeactivate: [canDeactivateGuard], loadComponent: () => import('@pages/private/perfil/perfil').then(m => m.Perfil)}
         ]
     },
@@ -46,6 +52,10 @@ export const routes: Routes = [
     {
         path: 'transparencia',
         loadComponent: () => import('./pages/public/transparencia/transparencia').then((m) => m.Transparencia),
+    },
+    {
+        path: 'grafica',
+        loadComponent: () => import('./pages/public/grafica/grafica').then((m) => m.Grafica),
     },
     { path: '**', redirectTo: '' }
 ];

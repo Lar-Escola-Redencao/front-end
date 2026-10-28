@@ -1,6 +1,17 @@
 import Swal from 'sweetalert2';
 
 export const Alertas = {
+  confirmarAlteracaoIdentificadores: (): Promise<boolean> => {
+    return Swal.fire({
+      title: 'Alterar dados de acesso?',
+      text: 'Ao alterar seu CPF ou e-mail, você será desconectado após salvar e precisará entrar novamente com os dados atualizados.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Salvar e sair',
+      cancelButtonText: 'Continuar editando',
+      reverseButtons: false
+    }).then(resultado => resultado.isConfirmed);
+  },
   confirmarDescarte: (mensagem = 'Existem dados preenchidos que ainda não foram salvos. Deseja realmente sair?'): Promise<boolean> => {
     return Swal.fire({
       title: 'Descartar alterações?',

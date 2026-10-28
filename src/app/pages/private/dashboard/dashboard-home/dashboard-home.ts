@@ -1,3 +1,5 @@
+import { AsyncPipe } from '@angular/common';
+import { HistoricoService } from 'src/app/shared/services/historico/historico.service';
 import { Component, OnInit, computed, inject } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { Modulo } from 'src/app/shared/models/permissao.model';
@@ -6,12 +8,13 @@ import { PerfilService } from 'src/app/shared/services/colaborador/perfil.servic
 
 @Component({
   selector: 'app-dashboard-home',
-  imports: [RouterLink, RouterLinkActive],
+  imports: [AsyncPipe, RouterLink, RouterLinkActive],
   templateUrl: './dashboard-home.html',
   styleUrl: './dashboard-home.css',
 })
 export class DashboardHome implements OnInit {
   private readonly auth = inject(Auth);
+  protected readonly temNovidadesHistorico = inject(HistoricoService).novidadesGerais;
   private readonly router = inject(Router);
   private readonly perfilService = inject(PerfilService);
 
