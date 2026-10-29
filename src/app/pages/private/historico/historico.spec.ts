@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { OverlayContainer } from '@angular/cdk/overlay';
 import { NgForm } from '@angular/forms';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { BehaviorSubject, Subject, of, throwError } from 'rxjs';
@@ -42,6 +43,41 @@ describe('Histórico de atividades', () => {
   afterEach(() => {
     componente.ngOnDestroy();
     vi.restoreAllMocks();
+  });
+
+  it('mantém o seletor aberto ao rolar e aplica a camada própria abaixo da navbar', async () => {
+    fixture.detectChanges();
+    componente.areaAberta = true; fixture.changeDetectorRef.markForCheck(); fixture.detectChanges();
+    await fixture.whenStable();
+    const overlay = TestBed.inject(OverlayContainer).getContainerElement();
+    const painel = overlay.querySelector('.arvore-areas') as HTMLElement;
+    expect(painel).not.toBeNull();
+    expect(overlay.querySelector('.area-sistema-historico-overlay')).not.toBeNull();
+    painel.dispatchEvent(new Event('scroll')); fixture.detectChanges();
+    expect(componente.areaAberta).toBe(true);
+    document.dispatchEvent(new Event('scroll')); fixture.detectChanges();
+    expect(componente.areaAberta).toBe(true);
+    expect(overlay.querySelector('.arvore-areas')).not.toBeNull();
+  });
+
+  it('não usa a camada nativa de popover mesmo quando o navegador oferece suporte', async () => {
+    const mostrarOriginal = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'showPopover');
+    const ocultarOriginal = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'hidePopover');
+    Object.defineProperty(HTMLElement.prototype, 'showPopover', { configurable: true, value: vi.fn() });
+    Object.defineProperty(HTMLElement.prototype, 'hidePopover', { configurable: true, value: vi.fn() });
+    try {
+      fixture.detectChanges(); componente.areaAberta = true;
+      fixture.changeDetectorRef.markForCheck(); fixture.detectChanges(); await fixture.whenStable();
+      const painel = document.querySelector('.area-sistema-historico-overlay');
+      expect(painel).not.toBeNull();
+      expect(painel?.closest('[popover]')).toBeNull();
+    } finally {
+      fixture.destroy();
+      if (mostrarOriginal) Object.defineProperty(HTMLElement.prototype, 'showPopover', mostrarOriginal);
+      else Reflect.deleteProperty(HTMLElement.prototype, 'showPopover');
+      if (ocultarOriginal) Object.defineProperty(HTMLElement.prototype, 'hidePopover', ocultarOriginal);
+      else Reflect.deleteProperty(HTMLElement.prototype, 'hidePopover');
+    }
   });
 
   it('mostra a falha dentro do campo e do dropdown, sem alerta externo ao campo', async () => {

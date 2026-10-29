@@ -2,7 +2,8 @@ import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angula
 import { NgTemplateOutlet } from '@angular/common';
 import { AbasResponsivas } from 'src/app/shared/directives/abas-responsivas';
 import { A11yModule } from '@angular/cdk/a11y';
-import { OverlayModule } from '@angular/cdk/overlay';
+import { Overlay, OverlayModule } from '@angular/cdk/overlay';
+import { CdkScrollable } from '@angular/cdk/scrolling';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { FormsModule, NgForm } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -46,6 +47,7 @@ interface GrupoAreaHistorico {
     FormsModule,
     NgTemplateOutlet,
     OverlayModule,
+    CdkScrollable,
     A11yModule,
     MatAutocompleteModule,
     MatFormFieldModule,
@@ -84,6 +86,7 @@ export class Historico implements OnInit, OnDestroy {
   private readonly buscaResponsavel = new Subject<string>();
   private buscaResponsavelSub?: Subscription;
   areaAberta = false;
+  readonly rolagemArea = inject(Overlay).scrollStrategies.reposition();
   readonly gruposExpandidos: Record<AreaSistemaHistorico, boolean> = {
     GESTAO_INTERNA: false,
     USUARIOS_E_ACOMPANHAMENTO: false,

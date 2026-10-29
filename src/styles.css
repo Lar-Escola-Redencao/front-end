@@ -1,3 +1,7 @@
+body:has(.area-sistema-historico-overlay) .cdk-overlay-container {
+  z-index: 998;
+}
+
 body:has(app-historico .form-filtros) .cdk-overlay-container,
 body:has(.dica-acompanhamento-overlay) .cdk-overlay-container {
   z-index: 2500;

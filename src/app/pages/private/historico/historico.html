@@ -40,11 +40,15 @@
         </mat-form-field>
         <ng-template cdkConnectedOverlay [cdkConnectedOverlayOrigin]="origemArea"
           [cdkConnectedOverlayOpen]="areaAberta" [cdkConnectedOverlayHasBackdrop]="true"
+          [cdkConnectedOverlayScrollStrategy]="rolagemArea"
+          [cdkConnectedOverlayUsePopover]="null"
+          cdkConnectedOverlayPanelClass="area-sistema-historico-overlay"
           [cdkConnectedOverlayWidth]="origemArea.elementRef.nativeElement.getBoundingClientRect().width"
           cdkConnectedOverlayBackdropClass="cdk-overlay-transparent-backdrop"
           (backdropClick)="areaAberta = false"
+          (detach)="areaAberta = false"
           (overlayKeydown)="$event.key === 'Escape' && (areaAberta = false)">
-          <div class="arvore-areas" role="dialog" aria-label="Área do sistema" cdkTrapFocus [cdkTrapFocusAutoCapture]="true">
+          <div class="arvore-areas" role="dialog" aria-label="Área do sistema" cdkScrollable cdkTrapFocus [cdkTrapFocusAutoCapture]="true">
             <button type="button" class="opcao-area" [attr.aria-pressed]="areaAtual === 'TODOS'" (click)="trocarTipo('TODOS')">Todas as áreas</button>
             @for (grupo of gruposAreas; track grupo.nome) {
               <ng-container *ngTemplateOutlet="grupoTemplate; context: { $implicit: grupo }" />
