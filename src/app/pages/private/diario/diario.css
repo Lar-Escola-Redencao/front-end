@@ -785,7 +785,7 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  color: var(--input-color);
+  color: var(--preto);
 }
 
 .acoes-oc {

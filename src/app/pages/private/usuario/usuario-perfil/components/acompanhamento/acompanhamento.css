@@ -1,0 +1,49 @@
+:host { display: block; min-width: 0; }
+.cabecalho { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; }
+h2 { margin: 0; font: 700 1.3rem var(--fonte-titulo); }
+.titulo-ajuda { display: flex; align-items: center; gap: 4px; }
+.botao-seletor-hora { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px;
+  margin-right: 2px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--input-color); cursor: pointer; }
+.botao-seletor-hora:hover:not(:disabled) { background: #f0f0f0; color: var(--primary-color); }
+.botao-seletor-hora:disabled { opacity: .5; cursor: default; }
+.botao-seletor-hora:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 2px; }
+.campo-hora input::-webkit-calendar-picker-indicator { display: none; }
+:host ::ng-deep .responsavel-fixo .mat-mdc-text-field-wrapper { background-color: #eeeeee !important; }
+:host ::ng-deep .responsavel-fixo .mat-mdc-input-element {
+  color: var(--input-color) !important; -webkit-text-fill-color: var(--input-color) !important;
+}
+:host ::ng-deep .responsavel-fixo .mat-mdc-form-field-infix { z-index: 1; }
+:host ::ng-deep .responsavel-fixo .mat-mdc-floating-label {
+  padding: 0 4px; background-color: #eeeeee !important; color: var(--input-color) !important; z-index: 2;
+}
+:host ::ng-deep .responsavel-fixo .mdc-notched-outline__notch { background-color: transparent !important; }
+.cabecalho button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+app-barra-busca { display: block; margin-bottom: 16px; }
+.formulario { display: flex; flex-direction: column; gap: 8px; }
+.linha { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+mat-form-field { width: 100%; min-width: 0; }
+.acoes { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+.detalhes { display: grid; gap: 18px; margin: 0; }
+.detalhes div { min-width: 0; }
+dt { color: var(--input-color); font-size: .85rem; margin-bottom: 5px; }
+dd { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.erro { color: var(--error-color, #b62b2b); margin: 0; }
+.aviso { color: var(--input-color); font-size: .9rem; }
+.subtitulos-modal { margin: -10px 0 20px; color: #555; font: 400 14px var(--fonte-texto); }
+.subtitulos-modal p { margin: 0 0 8px; }
+:host ::ng-deep app-tabela-layout .celula-dado[data-label="Descrição"] .valor-celula {
+  display: block; min-width: 0; max-width: 100%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+}
+@media (min-width: 1001px) {
+  :host ::ng-deep app-tabela-layout .tabela { table-layout: fixed; }
+  :host ::ng-deep app-tabela-layout .tabela th:first-child { width: 30%; }
+  :host ::ng-deep app-tabela-layout.tabela-ocorrencias .tabela th:nth-child(2) { width: 20%; }
+  /* Três botões de 36px, dois intervalos de 4px e o padding padrão da célula. */
+  :host ::ng-deep app-tabela-layout .tabela th.coluna-acoes { width: 164px; box-sizing: border-box; }
+  :host ::ng-deep app-tabela-layout .coluna-acoes .botao-acao { flex-shrink: 0; }
+}
+@media (max-width: 480px) {
+  .linha { grid-template-columns: 1fr; }
+  .cabecalho > button { width: 100%; }
+  .acoes > button { flex: 1 1 120px; }
+}

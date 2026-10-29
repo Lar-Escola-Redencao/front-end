@@ -239,6 +239,7 @@
     [class.tremer]="modalTremendo"
     titulo="Ocorrências"
     (closed)="fecharModalOcorrencia()">
+    <app-ajuda-acompanhamento modal-title-extra [diario]="true" />
     
     <p class="modal-subtitulo">{{ subtituloOcorrencia }}</p>
 
@@ -294,6 +295,9 @@
     [class.tremer]="modalTremendo"
     [titulo]="modoOcorrencia === 'NOVO' ? 'Nova ocorrência' : (modoOcorrencia === 'VER' ? 'Detalhes da ocorrência' : 'Editar ocorrência')"
     (closed)="fecharModalOcorrenciaDetalhe()">
+    <span modal-title-extra>
+      @if (modoOcorrencia !== 'VER') { <app-ajuda-acompanhamento [diario]="true" /> }
+    </span>
 
     <p class="modal-subtitulo">{{ subtituloOcorrencia }}</p>
 

@@ -400,6 +400,23 @@ describe('Diário de turma', () => {
     expect(component.usuarioSelecionado).toBe(usuario);
   });
 
+  it('exibe a dica na lista, no cadastro e na edição, mas não nos detalhes', () => {
+    const usuario = { ...aluno(), ocorrencias: [ocorrencia('2026-10-06T09:15:00')] };
+    component.abrirGerenciadorOcorrencias(usuario); fixture.changeDetectorRef.markForCheck(); fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('app-modal-layout .modal-title-area app-ajuda-acompanhamento')).not.toBeNull();
+
+    component.abrirFormOcorrencia(usuario.ocorrencias[0], 'VER'); fixture.changeDetectorRef.markForCheck(); fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.modal-sobreposto .modal-title-area app-ajuda-acompanhamento')).toBeNull();
+
+    component.fecharModalOcorrenciaDetalhe();
+    component.abrirFormOcorrencia(usuario.ocorrencias[0], 'EDITAR'); fixture.changeDetectorRef.markForCheck(); fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.modal-sobreposto .modal-title-area app-ajuda-acompanhamento')).not.toBeNull();
+
+    component.fecharModalOcorrenciaDetalhe();
+    component.abrirFormOcorrencia(null, 'NOVO'); fixture.changeDetectorRef.markForCheck(); fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.modal-sobreposto .modal-title-area app-ajuda-acompanhamento')).not.toBeNull();
+  });
+
   it('exibe apenas a hora do fato na lista e mensagem quando não há ocorrências', () => {
     const usuario = { ...aluno(), ocorrencias: [ocorrencia('2026-10-06T09:15:00')] };
     component.abrirGerenciadorOcorrencias(usuario);

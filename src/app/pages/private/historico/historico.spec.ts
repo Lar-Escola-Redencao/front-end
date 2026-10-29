@@ -144,6 +144,32 @@ describe('Histórico de atividades', () => {
     componente.ngOnInit();
     expect(servico.atividades).toHaveBeenLastCalledWith(null, 0, 10, '', expect.objectContaining({ idUsuario: 12, periodo: 'TODOS' }), undefined);
     expect(componente.temContexto).toBe(true);
+    expect(componente.nomeAreaSelecionada).toBe('Usuários');
+    expect(servico.atividades).toHaveBeenLastCalledWith(null, 0, 10, '', expect.objectContaining({
+      idUsuario: 12, areaSistema: 'USUARIOS_E_ACOMPANHAMENTO'
+    }), undefined);
+  });
+
+  it('permite filtrar entrevistas mantendo o usuário de origem', () => {
+    parametros.next(convertToParamMap({ tipoRegistro: 'TODOS', idUsuario: '12', periodo: 'TODOS' }));
+    componente.ngOnInit();
+    const entrevistas = componente.tiposRegistro.find(tipo => tipo.nome === 'Entrevistas');
+    expect(entrevistas).toBeDefined();
+    componente.trocarTipo(entrevistas!.valor);
+    expect(navegar).toHaveBeenCalledWith([], expect.objectContaining({ queryParams: expect.objectContaining({
+      tipoRegistro: 'ENTREVISTAS', idUsuario: 12, areaSistema: null
+    }) }));
+  });
+
+  it('mantém contatos fora do grupo de usuários, sem perder o contexto ao consultá-los pelo perfil', () => {
+    expect(componente.grupoUsuarios.tipos.map(tipo => tipo.valor)).not.toContain('CONTATOS');
+    expect(componente.grupoUsuarios.tipos.map(tipo => tipo.valor)).toContain('VINCULOS_CONTATOS');
+    expect(componente.gruposAreas[0].tipos.map(tipo => tipo.valor)).toContain('CONTATOS');
+    parametros.next(convertToParamMap({ tipoRegistro: 'TODOS', idUsuario: '12', periodo: 'TODOS' }));
+    componente.ngOnInit(); componente.trocarTipo('CONTATOS');
+    expect(navegar).toHaveBeenCalledWith([], expect.objectContaining({ queryParams: expect.objectContaining({
+      tipoRegistro: 'CONTATOS', idUsuario: 12, areaSistema: null
+    }) }));
   });
 
   it('separa arquivados mantendo busca e contexto na URL', () => {
@@ -154,6 +180,17 @@ describe('Histórico de atividades', () => {
     expect(navegar).toHaveBeenCalledWith([], expect.objectContaining({ queryParams: expect.objectContaining({
       idUsuario: 12, search: 'Maria', periodo: 'ARQUIVADOS', page: null
     }) }));
+  });
+
+  it('substitui a URL ao alterar filtros, busca e paginação sem criar etapas para o botão Voltar', () => {
+    componente.trocarTipo('ENTREVISTAS');
+    componente.buscar('Ana');
+    componente.irParaPagina(1);
+    componente.mudarTamanho(25);
+    componente.trocarPeriodo('ARQUIVADOS');
+    for (const chamada of navegar.mock.calls) {
+      expect(chamada[1]).toEqual(expect.objectContaining({ replaceUrl: true }));
+    }
   });
 
   it('aplica a área diretamente mantendo a busca e os filtros adicionais', () => {

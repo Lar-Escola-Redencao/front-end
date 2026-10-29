@@ -1,0 +1,57 @@
+<section aria-labelledby="titulo-entrevistas">
+  <header class="cabecalho">
+    <div class="titulo-ajuda"><h2 id="titulo-entrevistas">Entrevistas</h2><app-ajuda-acompanhamento [entrevista]="true" /></div>
+    <button type="button" class="btn-primary" [disabled]="salvando()" (click)="abrir('NOVO')">Nova entrevista</button>
+  </header>
+  <app-barra-busca placeholder="Buscar por responsável ou descrição" [valor]="lista.busca()" (buscar)="lista.pesquisar($event)" />
+  <app-tabela-layout class="tabela-entrevistas" [colunas]="colunas" [dados]="lista.dados()" [acoes]="acoes" [carregando]="lista.carregando()" [erro]="lista.erro()"
+    mensagemVazia="Nenhuma entrevista encontrada." (tentarNovamente)="lista.carregar()" />
+  <app-paginacao [paginaAtual]="lista.pagina()" [tamanho]="lista.tamanho()" [totalPaginas]="lista.paginas()" [totalElementos]="lista.total()"
+    [carregando]="lista.carregando()" (paginaChange)="lista.mudarPagina($event)" (tamanhoChange)="lista.mudarTamanho($event)" />
+</section>
+
+@if (modal()) {
+  <app-modal-layout [titulo]="modal() === 'NOVO' ? 'Nova entrevista' : modal() === 'EDITAR' ? 'Editar entrevista' : 'Detalhes da entrevista'" (closed)="fechar()">
+    <span modal-title-extra>@if (modal() !== 'VER') { <app-ajuda-acompanhamento [entrevista]="true" /> }</span>
+    @if (selecionada(); as entrevista) {
+      <div class="subtitulos-modal">
+        <p>Usuário: {{ usuario.nomeCompleto }}</p>
+        <p>Registrado por {{ entrevista.nomeResponsavel }} em {{ formatarData(entrevista.dataRegistro) }}</p>
+      </div>
+    }
+    @if (modal() === 'VER') {
+      <dl class="detalhes">
+        <div><dt>Data e hora da entrevista</dt><dd>{{ formatarData(selecionada()!.dataEntrevista) }}</dd></div>
+        <div><dt>Descrição</dt><dd>{{ selecionada()!.relato }}</dd></div>
+      </dl>
+    } @else {
+      <form class="formulario" [formGroup]="form" (ngSubmit)="salvar()">
+        <div class="linha">
+          <mat-form-field appearance="outline">
+            <mat-label>Data da entrevista</mat-label><input #data matInput type="date" formControlName="data" required>
+            <button type="button" matSuffix class="btn-calendario-data" aria-label="Abrir calendário" (click)="abrirCalendario(data)"><mat-icon>calendar_month</mat-icon></button>
+            @if (form.controls.data.touched && form.controls.data.invalid) { <mat-error>Informe a data.</mat-error> }
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="campo-hora"><mat-label>Horário</mat-label><input #inputHora matInput type="time" formControlName="horario" required>
+            <button type="button" matSuffix class="botao-seletor-hora" aria-label="Selecionar hora" [disabled]="form.controls.horario.disabled" (click)="abrirSeletorHora(inputHora)"><mat-icon>schedule</mat-icon></button>
+            @if (form.controls.horario.touched && form.controls.horario.invalid) { <mat-error>Informe o horário.</mat-error> }
+          </mat-form-field>
+        </div>
+        @if (form.touched && form.hasError('dataHoraFutura')) {
+          <p class="erro" role="alert">A data e o horário da entrevista não podem estar no futuro.</p>
+        }
+        @if (form.touched && form.hasError('dataHoraInvalida')) {
+          <p class="erro" role="alert">Informe data e horário válidos.</p>
+        }
+        <mat-form-field appearance="outline" class="responsavel-fixo"><mat-label>Responsável</mat-label><input matInput [value]="responsavel" [disabled]="true"></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Descrição</mat-label><textarea matInput formControlName="relato" rows="6" maxlength="20000" required></textarea>
+          @if (form.controls.relato.touched && form.controls.relato.invalid) { <mat-error>Informe uma descrição válida.</mat-error> }
+        </mat-form-field>
+        @if (erro()) { <p class="erro" role="alert">{{ erro() }}</p> }
+        <div class="acoes"><button type="button" class="btn-cancelar" [disabled]="salvando()" (click)="fechar()">Cancelar</button>
+          <button type="submit" class="btn-primary" [disabled]="salvando() || (modal() === 'EDITAR' && !temAlteracoes)">{{ salvando() ? 'Salvando...' : 'Salvar' }}</button>
+        </div>
+      </form>
+    }
+  </app-modal-layout>
+}

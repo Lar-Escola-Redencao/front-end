@@ -11,6 +11,10 @@ import { SessaoService } from 'src/app/shared/services/auth/sessao.service';
 import { Unidade } from 'src/app/shared/models/unidade.model';
 import { UnidadeService } from 'src/app/shared/services/unidade/unidade.service';
 import { TurmaService } from 'src/app/shared/services/turma/turma.service';
+import { AcompanhamentoService } from 'src/app/shared/services/acompanhamento/acompanhamento.service';
+import { DiarioService } from 'src/app/shared/services/diario/diario.service';
+import { By } from '@angular/platform-browser';
+import { AcompanhamentoEntrevistas } from './components/acompanhamento/entrevistas';
 import Swal from 'sweetalert2';
 
 vi.mock('sweetalert2', () => ({
@@ -33,8 +37,10 @@ describe('UsuarioPerfil', () => {
   let router: { navigate: ReturnType<typeof vi.fn>; navigateByUrl: ReturnType<typeof vi.fn> };
   let sessaoService: {
     carregar: ReturnType<typeof vi.fn>;
-    isMonitor: ReturnType<typeof vi.fn>;
-    isCoordenador: ReturnType<typeof vi.fn>;
+    isMonitor: ReturnType<typeof vi.fn<() => boolean>>;
+    isCoordenador: ReturnType<typeof vi.fn<() => boolean>>;
+    isAdministrador: ReturnType<typeof vi.fn>;
+    membro: ReturnType<typeof vi.fn>;
     temAcessoAUnidade: ReturnType<typeof vi.fn>;
     unidadesPermitidasIds: ReturnType<typeof vi.fn>;
     podeRemoverVinculo: ReturnType<typeof vi.fn>;
@@ -62,6 +68,8 @@ describe('UsuarioPerfil', () => {
       carregar: vi.fn(() => of(null)),
       isMonitor: vi.fn(() => false),
       isCoordenador: vi.fn(() => false),
+      isAdministrador: vi.fn(() => !sessaoService.isMonitor() && !sessaoService.isCoordenador()),
+      membro: vi.fn(() => ({ id: 1, nomeCompleto: 'Administrador' })),
       temAcessoAUnidade: vi.fn(() => true),
       unidadesPermitidasIds: vi.fn(() => []),
       podeRemoverVinculo: vi.fn(() => true),
@@ -75,6 +83,11 @@ describe('UsuarioPerfil', () => {
         { provide: ContatoService, useValue: { buscarAutocomplete: vi.fn(() => of([])), atualizarContato: vi.fn() } },
         { provide: ToastrService, useValue: toastr },
         { provide: SessaoService, useValue: sessaoService },
+        { provide: AcompanhamentoService, useValue: {
+          ocorrencias: vi.fn(() => of({ content: [], page: { totalPages: 0, totalElements: 0 } })),
+          entrevistas: vi.fn(() => of({ content: [], page: { totalPages: 0, totalElements: 0 } })),
+        } },
+        { provide: DiarioService, useValue: {} },
         { provide: UnidadeService, useValue: { listarTodas: vi.fn(() => of([])) } },
         { provide: TurmaService, useValue: { listar: vi.fn(() => of([])) } },
         {
@@ -97,6 +110,18 @@ describe('UsuarioPerfil', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  it('preserva entrevista não salva ao recusar descarte na troca de aba', async () => {
+    fixture.detectChanges();
+    const entrevistas = fixture.debugElement.query(By.directive(AcompanhamentoEntrevistas)).componentInstance as AcompanhamentoEntrevistas;
+    entrevistas.abrir('NOVO');
+    entrevistas.form.controls.relato.setValue('Descrição em preenchimento');
+    vi.mocked(Swal.fire).mockResolvedValue({ isConfirmed: false } as any);
+    await component.selecionarAba('contatos');
+    expect(component.abaAtiva).toBe('acompanhamento');
+    expect(entrevistas.modal()).toBe('NOVO');
+    expect(component.formularioTemAlteracoesNaoSalvas()).toBe(true);
   });
 
   it('carrega o usuário da rota e exibe os dados principais no card lateral', () => {

@@ -5,12 +5,13 @@ export type TipoRegistroHistorico =
   | 'VINCULOS_CONTATOS'
   | 'PRESENCAS'
   | 'OCORRENCIAS'
+  | 'ENTREVISTAS'
   | 'UNIDADES'
   | 'TURMAS'
   | 'EVENTOS' | 'DIRETORIA' | 'PARCEIROS' | 'REDES_SOCIAIS'
   | 'TRANSPARENCIA' | 'CONHECA_OSC' | 'GRAFICA' | 'PIX';
 
-export type AreaSistemaHistorico = 'GESTAO_INTERNA' | 'CONTEUDO_PUBLICO';
+export type AreaSistemaHistorico = 'GESTAO_INTERNA' | 'CONTEUDO_PUBLICO' | 'USUARIOS_E_ACOMPANHAMENTO';
 
 export type TipoAlteracaoHistorico = 'CADASTRO' | 'EDICAO' | 'EXCLUSAO';
 

@@ -47,8 +47,11 @@
           <div class="arvore-areas" role="dialog" aria-label="Área do sistema" cdkTrapFocus [cdkTrapFocusAutoCapture]="true">
             <button type="button" class="opcao-area" [attr.aria-pressed]="areaAtual === 'TODOS'" (click)="trocarTipo('TODOS')">Todas as áreas</button>
             @for (grupo of gruposAreas; track grupo.nome) {
-              <details #grupoArea class="grupo-area" [open]="gruposExpandidos[grupo.valor]"
-                (toggle)="gruposExpandidos[grupo.valor] = grupoArea.open">
+              <ng-container *ngTemplateOutlet="grupoTemplate; context: { $implicit: grupo }" />
+            }
+            <ng-template #grupoTemplate let-grupo>
+              <details #grupoArea class="grupo-area" [open]="grupoExpandido(grupo.valor)"
+                (toggle)="expandirGrupo(grupo.valor, grupoArea.open)">
                 <summary [attr.aria-label]="'Expandir ou recolher ' + grupo.nome">
                   <mat-icon aria-hidden="true">arrow_right</mat-icon>
                   <button type="button" class="opcao-area opcao-grupo"
@@ -56,13 +59,16 @@
                     (click)="$event.preventDefault(); $event.stopPropagation(); trocarGrupo(grupo.valor)">{{ grupo.nome }}</button>
                 </summary>
                 <div class="itens-area">
+                  @for (subgrupo of grupo.subgrupos ?? []; track subgrupo.valor) {
+                    <ng-container *ngTemplateOutlet="grupoTemplate; context: { $implicit: subgrupo }" />
+                  }
                   @for (tipo of grupo.tipos; track tipo.valor) {
                     <button type="button" class="opcao-area" [attr.aria-pressed]="areaAtual === tipo.valor"
                       (click)="trocarTipo(tipo.valor)">{{ tipo.nome }}</button>
                   }
                 </div>
               </details>
-            }
+            </ng-template>
           </div>
         </ng-template>
       </div>

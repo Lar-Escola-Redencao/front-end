@@ -1,4 +1,5 @@
 import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { AbasResponsivas } from 'src/app/shared/directives/abas-responsivas';
 import { A11yModule } from '@angular/cdk/a11y';
 import { OverlayModule } from '@angular/cdk/overlay';
@@ -30,12 +31,20 @@ import { HistoricoService } from 'src/app/shared/services/historico/historico.se
 import { CampoOrdenacao, alternarOrdenacao, analisarOrdenacao, TAMANHOS_PAGINA_PERMITIDOS } from 'src/app/shared/utils/paginacao-url';
 import { Alertas } from 'src/app/shared/utils/alerts';
 
+interface GrupoAreaHistorico {
+  valor: AreaSistemaHistorico;
+  nome: string;
+  tipos: { valor: TipoRegistroHistorico; nome: string; busca: string }[];
+  subgrupos?: GrupoAreaHistorico[];
+}
+
 @Component({
   selector: 'app-historico',
   standalone: true,
   imports: [
     AbasResponsivas,
     FormsModule,
+    NgTemplateOutlet,
     OverlayModule,
     A11yModule,
     MatAutocompleteModule,
@@ -77,6 +86,7 @@ export class Historico implements OnInit, OnDestroy {
   areaAberta = false;
   readonly gruposExpandidos: Record<AreaSistemaHistorico, boolean> = {
     GESTAO_INTERNA: false,
+    USUARIOS_E_ACOMPANHAMENTO: false,
     CONTEUDO_PUBLICO: false
   };
   sort: string | undefined;
@@ -90,11 +100,12 @@ export class Historico implements OnInit, OnDestroy {
 
   readonly tiposRegistro: { valor: TipoRegistroHistorico; nome: string; busca: string }[] = [
     { valor: 'COLABORADORES', nome: 'Colaboradores', busca: 'Buscar por nome, CPF, e-mail...' },
-    { valor: 'USUARIOS', nome: 'Usuários', busca: 'Buscar por nome, CPF, endereço...' },
+    { valor: 'USUARIOS', nome: 'Dados dos usuários', busca: 'Buscar por nome, CPF, endereço...' },
     { valor: 'CONTATOS', nome: 'Contatos', busca: 'Buscar por contato ou usuário vinculado...' },
     { valor: 'VINCULOS_CONTATOS', nome: 'Vínculos de contatos', busca: 'Buscar por contato ou usuário vinculado...' },
     { valor: 'PRESENCAS', nome: 'Presenças', busca: 'Buscar por usuário ou turma...' },
     { valor: 'OCORRENCIAS', nome: 'Ocorrências', busca: 'Buscar por usuário, tipo ou descrição...' },
+    { valor: 'ENTREVISTAS', nome: 'Entrevistas', busca: 'Buscar por usuário ou descrição da entrevista...' },
     { valor: 'UNIDADES', nome: 'Unidades', busca: 'Buscar por unidade...' },
     { valor: 'TURMAS', nome: 'Turmas', busca: 'Buscar por período ou unidade...' },
     { valor: 'EVENTOS', nome: 'Eventos', busca: 'Buscar por título ou informação do evento...' },
@@ -107,10 +118,21 @@ export class Historico implements OnInit, OnDestroy {
     { valor: 'PIX', nome: 'Pix', busca: 'Buscar por informação da doação...' }
   ];
 
-  readonly gruposAreas: { valor: AreaSistemaHistorico; nome: string; tipos: Historico['tiposRegistro'] }[] = [
-    { valor: 'GESTAO_INTERNA', nome: 'Gestão interna', tipos: this.tiposRegistro.slice(0, 8) },
-    { valor: 'CONTEUDO_PUBLICO', nome: 'Conteúdo público', tipos: this.tiposRegistro.slice(8) }
+  readonly grupoUsuarios: GrupoAreaHistorico = {
+    valor: 'USUARIOS_E_ACOMPANHAMENTO', nome: 'Usuários',
+    tipos: this.tiposRegistro.filter(tipo => ['USUARIOS', 'VINCULOS_CONTATOS', 'PRESENCAS', 'OCORRENCIAS', 'ENTREVISTAS'].includes(tipo.valor)),
+  };
+  readonly gruposAreas: GrupoAreaHistorico[] = [
+    { valor: 'GESTAO_INTERNA', nome: 'Gestão interna',
+      tipos: this.tiposRegistro.filter(tipo => ['COLABORADORES', 'CONTATOS', 'UNIDADES', 'TURMAS'].includes(tipo.valor)),
+      subgrupos: [this.grupoUsuarios] },
+    { valor: 'CONTEUDO_PUBLICO', nome: 'Conteúdo público',
+      tipos: this.tiposRegistro.filter(tipo => ['EVENTOS', 'DIRETORIA', 'PARCEIROS', 'REDES_SOCIAIS', 'TRANSPARENCIA', 'CONHECA_OSC', 'GRAFICA', 'PIX'].includes(tipo.valor)) }
   ];
+  readonly gruposSelecionaveis = [...this.gruposAreas, this.grupoUsuarios];
+
+  grupoExpandido(valor: AreaSistemaHistorico): boolean { return this.gruposExpandidos[valor]; }
+  expandirGrupo(valor: AreaSistemaHistorico, aberto: boolean): void { this.gruposExpandidos[valor] = aberto; }
 
   readonly nomesAlteracao: Record<TipoAlteracaoHistorico, string> = {
     CADASTRO: 'Cadastro',
@@ -188,7 +210,8 @@ export class Historico implements OnInit, OnDestroy {
   }
 
   get mostrarDataAula(): boolean {
-    return this.areaAtual === 'TODOS' || this.areaAtual === 'GESTAO_INTERNA' || this.areaAtual === 'PRESENCAS';
+    return this.areaAtual === 'TODOS' || this.areaAtual === 'GESTAO_INTERNA'
+      || this.areaAtual === 'USUARIOS_E_ACOMPANHAMENTO' || this.areaAtual === 'PRESENCAS';
   }
 
   ngOnInit(): void {
@@ -202,7 +225,7 @@ export class Historico implements OnInit, OnDestroy {
       const area = parametros.get('tipoRegistro');
       this.todasAreas = !this.tiposRegistro.some(tipo => tipo.valor === area);
       const grupo = parametros.get('areaSistema');
-      this.grupoSelecionado = this.todasAreas && this.gruposAreas.some(item => item.valor === grupo)
+      this.grupoSelecionado = this.todasAreas && this.gruposSelecionaveis.some(item => item.valor === grupo)
         ? grupo as AreaSistemaHistorico : null;
       if (this.tiposRegistro.some(tipo => tipo.valor === area)) {
         this.tipoRegistro = area as TipoRegistroHistorico;
@@ -213,6 +236,14 @@ export class Historico implements OnInit, OnDestroy {
       };
       this.contexto = { idRegistro: numero('idRegistro'), idUsuario: numero('idUsuario'),
         idTurma: numero('idTurma'), idContato: numero('idContato') };
+      if (this.todasAreas && !this.grupoSelecionado && this.contexto.idUsuario) {
+        this.grupoSelecionado = 'USUARIOS_E_ACOMPANHAMENTO';
+      }
+      if (this.grupoSelecionado === 'USUARIOS_E_ACOMPANHAMENTO'
+          || (!this.todasAreas && this.grupoUsuarios.tipos.some(tipo => tipo.valor === this.tipoRegistro))) {
+        this.gruposExpandidos.GESTAO_INTERNA = true;
+        this.gruposExpandidos.USUARIOS_E_ACOMPANHAMENTO = true;
+      }
       const periodo = parametros.get('periodo');
       this.periodo = periodo === 'ARQUIVADOS' || periodo === 'TODOS' ? periodo : 'RECENTES';
       this.filtros = {
@@ -258,7 +289,7 @@ export class Historico implements OnInit, OnDestroy {
   }
 
   private atualizarConsulta(): void {
-    void this.router.navigate([], { relativeTo: this.route, queryParams: {
+    void this.router.navigate([], { relativeTo: this.route, replaceUrl: true, queryParams: {
       ...this.contexto, ...this.filtros, tipoRegistro: this.todasAreas ? 'TODOS' : this.tipoRegistro,
       areaSistema: this.grupoSelecionado,
       periodo: this.periodo, search: this.busca || null, page: this.pagina || null, size: this.tamanho, sort: this.sort ?? null
@@ -340,10 +371,12 @@ export class Historico implements OnInit, OnDestroy {
     this.areaAberta = false;
     if (area === this.areaAtual) return;
 
-    this.grupoSelecionado = this.gruposAreas.find(grupo => grupo.valor === area)?.valor ?? null;
+    this.grupoSelecionado = this.gruposSelecionaveis.find(grupo => grupo.valor === area)?.valor ?? null;
     this.todasAreas = area === 'TODOS' || this.grupoSelecionado !== null;
     if (!this.todasAreas) this.tipoRegistro = area as TipoRegistroHistorico;
-    this.contexto = {};
+    const pertenceAoUsuario = area === this.grupoUsuarios.valor || area === 'CONTATOS'
+      || this.grupoUsuarios.tipos.some(tipo => tipo.valor === area);
+    this.contexto = this.contexto.idUsuario && pertenceAoUsuario ? this.contexto : {};
     if (!this.mostrarDataAula) this.filtros.dataAula = '';
     this.pagina = 0;
     this.atualizarConsulta();
@@ -367,7 +400,7 @@ export class Historico implements OnInit, OnDestroy {
   }
 
   get nomeAreaSelecionada(): string {
-    return this.gruposAreas.find(grupo => grupo.valor === this.areaAtual)?.nome
+    return this.gruposSelecionaveis.find(grupo => grupo.valor === this.areaAtual)?.nome
       ?? this.tiposRegistro.find(tipo => tipo.valor === this.areaAtual)?.nome
       ?? 'Todas as áreas';
   }

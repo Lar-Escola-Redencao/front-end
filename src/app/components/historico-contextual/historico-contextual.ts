@@ -54,7 +54,8 @@ export class HistoricoContextual implements OnInit, OnChanges, OnDestroy {
   }
 
   get filtros(): FiltrosHistorico {
-    return { idRegistro: this.idRegistro, idUsuario: this.idUsuario,
+    return { ...(this.idUsuario && !this.tipoConsulta ? { areaSistema: 'USUARIOS_E_ACOMPANHAMENTO' as const } : {}),
+      idRegistro: this.idRegistro, idUsuario: this.idUsuario,
       idTurma: this.idTurma, idContato: this.idContato,
       dataAula: this.diario && this.abaDiario === 'OCORRENCIAS' ? '' : this.dataAula, periodo: 'TODOS' };
   }

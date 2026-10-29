@@ -275,6 +275,8 @@ button:disabled {
 .grupo-area summary::-webkit-details-marker { display: none; }
 .grupo-area[open] > summary mat-icon { transform: rotate(90deg); }
 .itens-area .opcao-area { padding-left: 40px; }
+.itens-area .grupo-area { margin-left: 16px; }
+.itens-area .opcao-grupo { padding-left: 0; }
 .opcao-area {
   display: block;
   width: 100%;
