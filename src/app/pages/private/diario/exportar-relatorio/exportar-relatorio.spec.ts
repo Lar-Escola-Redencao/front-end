@@ -70,7 +70,7 @@ describe('Exportar relatório do diário', () => {
     expect(component.erroPeriodo).toContain('anterior');
   });
 
-  it('gera o detalhado, baixa o arquivo e fecha o modal', () => {
+  it('gera o detalhado, baixa o arquivo e mantém o modal aberto', () => {
     const fechado = vi.fn();
     component.closed.subscribe(fechado);
     component.gerar();
@@ -78,7 +78,53 @@ describe('Exportar relatório do diário', () => {
       idTurma: 2, dataInicio: '2028-02-01', dataFim: '2028-02-29', formato: 'PDF', incluirOcorrencias: true
     });
     expect(HTMLAnchorElement.prototype.click).toHaveBeenCalled();
-    expect(fechado).toHaveBeenCalled();
+    expect(fechado).not.toHaveBeenCalled();
+  });
+
+  it.each(['PRESENCAS', 'RESUMO'] as const)('mostra o limite abaixo da data final em %s', tipo => {
+    component.selecionarTipo(tipo);
+    component.formAtual.patchValue({ dataInicio: '2025-01-01', dataFim: '2027-01-01' });
+    component.gerar();
+    fixture.detectChanges();
+    const mensagem = fixture.nativeElement.querySelector('#erro-data-fim');
+    expect(mensagem?.textContent).toContain('366 dias');
+    expect(mensagem?.parentElement.querySelector('input[formControlName="dataFim"]')).toBeTruthy();
+    expect(api.exportarPresencas).not.toHaveBeenCalled();
+    expect(api.exportarResumo).not.toHaveBeenCalled();
+  });
+
+  it('mantém o resumo aberto após baixar e permite exportar novamente', () => {
+    const fechado = vi.fn();
+    component.closed.subscribe(fechado);
+    component.selecionarTipo('RESUMO');
+    component.gerar();
+    component.gerar();
+    expect(api.exportarResumo).toHaveBeenCalledTimes(2);
+    expect(fechado).not.toHaveBeenCalled();
+  });
+
+  it('isola o clique do download dos ouvintes externos e mantém o modal aberto', () => {
+    const fechado = vi.fn();
+    const cliqueExterno = vi.fn();
+    component.closed.subscribe(fechado);
+    const pendente = new Subject<HttpResponse<Blob>>();
+    api.exportarPresencas.mockReturnValue(pendente);
+    vi.mocked(HTMLAnchorElement.prototype.click).mockImplementation(function (this: HTMLAnchorElement) {
+      this.addEventListener('click', evento => evento.preventDefault());
+      this.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+    });
+    document.addEventListener('click', cliqueExterno);
+    try {
+      fixture.nativeElement.querySelector('button[type="submit"]').click();
+      pendente.next(arquivo());
+      fixture.detectChanges();
+      expect(api.exportarPresencas).toHaveBeenCalledTimes(1);
+      expect(fechado).not.toHaveBeenCalled();
+      expect(cliqueExterno).not.toHaveBeenCalled();
+      expect(fixture.nativeElement.querySelector('app-modal-layout')).toBeTruthy();
+    } finally {
+      document.removeEventListener('click', cliqueExterno);
+    }
   });
 
   it('não envia solicitações duplicadas enquanto gera', () => {

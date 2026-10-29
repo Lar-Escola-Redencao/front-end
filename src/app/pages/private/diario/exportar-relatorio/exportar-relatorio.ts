@@ -136,6 +136,17 @@ export class ExportarRelatorio implements OnInit, OnDestroy {
     return this.tipo() === 'PRESENCAS' ? this.formPresencas : this.formResumo;
   }
 
+  get rotuloTurmasSelecionadas(): string {
+    const selecionadas = new Set(this.formResumo.controls.idsTurmas.value ?? []);
+    return this.turmasPorUnidade().flatMap(grupo => {
+      const turmas = grupo.turmas.filter(turma => selecionadas.has(turma.id));
+      const periodos = (['MANHA', 'TARDE'] as const)
+        .filter(periodo => turmas.some(turma => turma.periodo === periodo))
+        .map(periodo => periodo === 'MANHA' ? 'Manhã' : 'Tarde');
+      return periodos.length ? [`${grupo.unidade.nome} - ${periodos.join(' e ')}`] : [];
+    }).join(', ');
+  }
+
   selecionarTipo(tipo: TipoRelatorio): void {
     if (this.gerando()) return;
     this.tipo.set(tipo);
@@ -203,7 +214,6 @@ export class ExportarRelatorio implements OnInit, OnDestroy {
         }
         this.baixar(resposta);
         this.toastr.success('Relatório gerado com sucesso.');
-        this.closed.emit();
       },
       error: async (erro: unknown) => {
         this.erro.set(await this.mensagemErro(erro));
@@ -219,6 +229,8 @@ export class ExportarRelatorio implements OnInit, OnDestroy {
     const link = document.createElement('a');
     link.href = url;
     link.download = obterNomeDownload(resposta.headers.get('Content-Disposition'), nomePadrao, '', blob.type);
+    link.hidden = true;
+    link.addEventListener('click', evento => evento.stopPropagation());
     document.body.appendChild(link);
     link.click();
     link.remove();

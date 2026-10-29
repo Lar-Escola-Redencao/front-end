@@ -40,7 +40,7 @@
               }
             </mat-select>
           </mat-form-field>
-          @if (erroCampo('idUnidade'); as mensagem) { <span class="error-text">{{ mensagem }}</span> }
+          @if (erroCampo('idUnidade'); as mensagem) { <p class="erro-campo" role="alert">{{ mensagem }}</p> }
         </div>
         <div class="campo">
           <mat-form-field appearance="outline">
@@ -51,7 +51,7 @@
               }
             </mat-select>
           </mat-form-field>
-          @if (erroCampo('idTurma'); as mensagem) { <span class="error-text">{{ mensagem }}</span> }
+          @if (erroCampo('idTurma'); as mensagem) { <p class="erro-campo" role="alert">{{ mensagem }}</p> }
         </div>
       </div>
     } @else {
@@ -59,6 +59,9 @@
         <mat-form-field appearance="outline">
           <mat-label>Turmas</mat-label>
           <mat-select formControlName="idsTurmas" multiple>
+            <mat-select-trigger [title]="rotuloTurmasSelecionadas">
+              {{ rotuloTurmasSelecionadas }}
+            </mat-select-trigger>
             @for (grupo of turmasPorUnidade(); track grupo.unidade.id) {
               <mat-optgroup [label]="grupo.unidade.nome">
                 @for (turma of grupo.turmas; track turma.id) {
@@ -69,7 +72,7 @@
           </mat-select>
           @if (carregandoTurmas()) { <mat-hint>Carregando turmas...</mat-hint> }
         </mat-form-field>
-        @if (erroCampo('idsTurmas'); as mensagem) { <span class="error-text">{{ mensagem }}</span> }
+        @if (erroCampo('idsTurmas'); as mensagem) { <p class="erro-campo" role="alert">{{ mensagem }}</p> }
       </div>
     }
 
@@ -77,27 +80,27 @@
       <div class="campo">
         <mat-form-field appearance="outline">
           <mat-label>Data inicial</mat-label>
-          <input matInput type="date" formControlName="dataInicio" #inputInicio>
+          <input matInput type="date" formControlName="dataInicio" aria-describedby="erro-data-inicio" #inputInicio>
           <button matSuffix type="button" class="btn-calendario" aria-label="Abrir calendário da data inicial"
             (click)="inputInicio.showPicker()">
             <mat-icon aria-hidden="true">calendar_month</mat-icon>
           </button>
         </mat-form-field>
-        @if (erroCampo('dataInicio'); as mensagem) { <span class="error-text">{{ mensagem }}</span> }
+        @if (erroCampo('dataInicio'); as mensagem) { <p id="erro-data-inicio" class="erro-campo" role="alert">{{ mensagem }}</p> }
       </div>
       <div class="campo">
         <mat-form-field appearance="outline">
           <mat-label>Data final</mat-label>
-          <input matInput type="date" formControlName="dataFim" [min]="formAtual.get('dataInicio')?.value" #inputFim>
+          <input matInput type="date" formControlName="dataFim" aria-describedby="erro-data-fim" #inputFim>
           <button matSuffix type="button" class="btn-calendario" aria-label="Abrir calendário da data final"
             (click)="inputFim.showPicker()">
             <mat-icon aria-hidden="true">calendar_month</mat-icon>
           </button>
         </mat-form-field>
         @if (erroCampo('dataFim'); as mensagem) {
-          <span class="error-text">{{ mensagem }}</span>
+          <p id="erro-data-fim" class="erro-campo" role="alert">{{ mensagem }}</p>
         } @else if (erroPeriodo) {
-          <span class="error-text">{{ erroPeriodo }}</span>
+          <p id="erro-data-fim" class="erro-campo" role="alert">{{ erroPeriodo }}</p>
         }
       </div>
     </div>
@@ -132,7 +135,7 @@
     <div class="acoes-modal form-acoes">
       <button type="button" class="btn-cancelar" (click)="cancelar()">Cancelar</button>
       <button type="submit" class="btn-primary" [disabled]="gerando()" [attr.aria-busy]="gerando()">
-        @if (gerando()) { <span class="spinner"></span> Gerando... } @else { {{ erro() ? 'Tentar novamente' : 'Gerar arquivo' }} }
+        @if (gerando()) { <span class="spinner"></span> Gerando... } @else { {{ erro() ? 'Tentar novamente' : 'Baixar relatório' }} }
       </button>
     </div>
   </form>
