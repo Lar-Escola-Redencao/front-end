@@ -1,0 +1,285 @@
+.ajuda-tipos {
+  margin-top: -10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--input-color);
+  cursor: pointer;
+  border-radius: 50%;
+}
+
+.ajuda-tipos:hover,
+.ajuda-tipos[aria-expanded="true"] {
+  color: var(--primary-color);
+  background: #f5f5f5;
+}
+
+.ajuda-tipos:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+.ajuda-tipos-painel {
+  box-sizing: border-box;
+  width: min(300px, calc(100vw - 32px));
+  max-height: min(420px, calc(100dvh - 32px));
+  overflow-y: auto;
+  padding: 16px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: var(--branco);
+  box-shadow: var(--sombra-padrao);
+  font-family: var(--fonte-texto);
+  font-size: 14px;
+  line-height: 1.5;
+  text-align: left;
+}
+
+.ajuda-tipos-painel > strong {
+  display: block;
+  color: var(--preto);
+  text-align: center;
+}
+
+.ajuda-tipos-painel dl {
+  display: grid;
+  gap: 12px;
+  margin: 12px 0 0;
+}
+
+.ajuda-tipos-painel dt {
+  display: inline;
+  color: var(--preto);
+}
+
+.ajuda-tipos-painel dd {
+  display: inline;
+  margin: 0;
+  color: #737373;
+}
+
+.ajuda-tipos-painel dd::before {
+  content: ' ';
+}
+
+/* Os pais têm indicador próprio para representar também a seleção parcial. */
+::ng-deep .exportar-turmas-panel .opcao-pai > .mat-mdc-option-pseudo-checkbox { display: none; }
+.linha-selecao-pai { display: flex; align-items: center; font-weight: 400; }
+.indicador-selecao { flex-shrink: 0; }
+.opcao-todas { background: #f0f3f7; }
+.opcao-unidade { padding-inline-start: 16px; background: #fafafa; }
+.opcao-turma { padding-inline-start: 56px; }
+
+.instrucao-tipo {
+  margin: 0 0 12px;
+  color: var(--input-color);
+  font-family: var(--fonte-texto);
+  font-size: 0.95rem;
+}
+
+.tipos-relatorio {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.tipo-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: var(--fonte-texto);
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+  background-color: #f7f7f7;
+}
+
+.tipo-card input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.tipo-card:has(input:focus-visible) {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+.tipo-card.ativo {
+  border: 2px solid var(--primary-color);
+  padding: 13px 15px;
+  background: #f3f8fe;
+}
+
+.tipo-icone {
+  flex-shrink: 0;
+  color: var(--input-color);
+}
+
+/* Barras crescendo para a direita, como um gráfico de barras horizontal. */
+.tipo-icone-deitado {
+  transform: rotate(90deg);
+}
+
+.tipo-card.ativo .tipo-icone {
+  color: var(--primary-color);
+}
+
+.tipo-card .tipo-titulo {
+  color: var(--preto);
+  font-family: var(--fonte-texto);
+  font-weight: 400;
+  font-size: 0.95rem;
+}
+
+.form-exportar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.campos-2 {
+  display: grid;
+  align-items: start;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.campo .mat-mdc-form-field {
+  width: 100%;
+}
+
+.campo .erro-campo {
+  display: block;
+  position: static;
+  margin: 6px 4px 0;
+  color: var(--error-color);
+  font-family: var(--fonte-texto);
+  font-size: 0.8rem;
+  font-weight: 400;
+  line-height: 1.4;
+}
+
+.btn-calendario {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  margin-right: 4px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--input-color);
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.btn-calendario:hover,
+.btn-calendario:focus-visible {
+  background-color: #f0f0f0;
+  color: var(--primary-color);
+}
+
+.btn-calendario:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+/* O ícone do navegador é substituído pelo botão acima. */
+.campo input[type='date']::-webkit-calendar-picker-indicator {
+  display: none;
+}
+
+.formato {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-family: var(--fonte-texto);
+}
+
+.formato legend {
+  width: 100%;
+  margin-top: 16px;
+  color: var(--input-color);
+  font-size: 0.9rem;
+}
+
+.opcao-formato,
+.checkbox-ocorrencias {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  font-family: var(--fonte-texto);
+  cursor: pointer;
+}
+
+.opcao-formato input,
+.checkbox-ocorrencias input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--primary-color);
+}
+
+.nota {
+  margin: 4px 0 0;
+  color: #666;
+  font-family: var(--fonte-texto);
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+.erro-geracao {
+  margin-top: 8px;
+  padding: 12px 14px;
+  border: 1px solid var(--error-color);
+  border-radius: 6px;
+  background: #fdecea;
+  color: #8a1c13;
+  font-family: var(--fonte-texto);
+  font-size: 0.9rem;
+}
+
+.acoes-modal {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+@media (max-width: 600px) {
+  .campos-2 {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .acoes-modal {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .acoes-modal .btn-primary {
+    width: 100%;
+  }
+}
