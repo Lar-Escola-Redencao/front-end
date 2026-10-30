@@ -40,6 +40,7 @@ export interface SalvarFrequenciaEmLoteDTO {
   idTurma: number;
   data: string;
   frequencias: FrequenciaDTO[];
+  declaracaoAceita: boolean;
 }
 
 export type FormatoRelatorio = 'PDF' | 'XLSX';
@@ -76,8 +77,8 @@ export class DiarioService {
     return this.http.post<void>(this.apiUrlFrequencia, dto);
   }
 
-  atualizarFrequencia(id: number, presente: boolean): Observable<FrequenciaUsuarioResponseDTO> {
-    return this.http.put<FrequenciaUsuarioResponseDTO>(`${this.apiUrlFrequencia}/${id}`, { presente });
+  atualizarFrequencia(id: number, presente: boolean, declaracaoAceita: boolean): Observable<FrequenciaUsuarioResponseDTO> {
+    return this.http.put<FrequenciaUsuarioResponseDTO>(`${this.apiUrlFrequencia}/${id}`, { presente, declaracaoAceita });
   }
 
   criarOcorrencia(dto: any): Observable<OcorrenciaResponseDTO> {

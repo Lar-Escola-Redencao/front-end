@@ -1,3 +1,12 @@
+<ng-template #historicoDiario>
+  @if (podeConsultarHistorico) {
+    <div class="historico-diario" [style.display]="historico.temRegistros ? null : 'none'" [attr.inert]="salvando ? '' : null">
+      <app-historico-contextual #historico [textoNoMobile]="true" [diario]="true" [idTurma]="filtroForm.get('idTurma')?.value"
+        [dataAula]="filtroForm.get('data')?.value ?? ''" titulo="Histórico do diário" />
+    </div>
+  }
+</ng-template>
+
 <section class="diario-page">
   <div class="diario-header" [formGroup]="filtroForm" [attr.inert]="salvando || confirmandoTrocaFiltro ? '' : null">
     <div class="titulo-linha">
@@ -151,6 +160,7 @@
         </table>
       </div>
 
+
       <!-- Rodapé: INICIAL -->
       @if (estadoTela === 'INICIAL') {
         <div class="rodape-diario rodape-status rodape-inicial">
@@ -166,6 +176,7 @@
           </div>
           
           <div class="acoes form-acoes">
+            <ng-container *ngTemplateOutlet="historicoDiario" />
             <button type="button" class="btn-primary" [disabled]="!podeIniciarChamada" (click)="iniciarChamada()">
               Registrar frequências
             </button>
@@ -176,13 +187,21 @@
       <!-- Rodapé: PREENCHENDO -->
       @if (estadoTela === 'PREENCHENDO') {
         <div class="rodape-diario">
-          <label class="checkbox-declaracao">
-            <input type="checkbox" [(ngModel)]="declaracaoAceita">
-            <span>Declaro que a chamada foi preenchida corretamente.</span>
-          </label>
+          <div class="declaracao-diario">
+            <label class="checkbox-declaracao">
+              <input type="checkbox" [(ngModel)]="declaracaoAceita" [disabled]="salvando"
+                aria-required="true" [attr.aria-invalid]="tentouSalvarDiario && !declaracaoAceita ? 'true' : null"
+                [attr.aria-describedby]="tentouSalvarDiario && !declaracaoAceita ? 'erro-declaracao' : null">
+              <span>Declaro que a chamada foi preenchida corretamente.</span>
+            </label>
+            @if (tentouSalvarDiario && !declaracaoAceita) {
+              <span id="erro-declaracao" class="error-text" role="alert">Marque a caixa para confirmar o preenchimento.</span>
+            }
+          </div>
           <div class="acoes form-acoes">
+            <ng-container *ngTemplateOutlet="historicoDiario" />
             <button type="button" class="btn-cancelar" [disabled]="salvando" (click)="cancelarPreenchimento()">Cancelar</button>
-            <button type="button" class="btn-primary" [disabled]="!declaracaoAceita || !podePreencherFrequencia" (click)="salvarDiarioLote()">
+            <button type="button" class="btn-primary" [disabled]="!podePreencherFrequencia" (click)="salvarDiarioLote()">
                <span *ngIf="salvando" class="spinner"></span> Salvar
             </button>
           </div>
@@ -198,6 +217,7 @@
               <span>Chamada registrada. Você pode editar as presenças.</span>
             </div>
             <div class="acoes form-acoes">
+              <ng-container *ngTemplateOutlet="historicoDiario" />
               <button type="button" class="btn-primary btn-editar-diario" [disabled]="salvando" (click)="editarChamada()">Editar</button>
             </div>
           </div>
@@ -207,6 +227,11 @@
                 <mat-icon aria-hidden="true">lock</mat-icon>
                 <span>{{ mensagemBloqueioEdicaoChamada }}</span>
               </div>
+              @if (podeConsultarHistorico) {
+                <div class="acoes form-acoes">
+                  <ng-container *ngTemplateOutlet="historicoDiario" />
+                </div>
+              }
            </div>
         }
       }
@@ -283,20 +308,20 @@
 
     @if (modoOcorrencia === 'VER' && ocorrenciaSelecionada) {
       <div class="ocorrencia-preview">
-        <div class="ocorrencia-preview-dados">
+        <dl class="detalhes-campos">
           <div>
-            <mat-icon class="material-symbols-outlined ocorrencia-preview-icone">schedule</mat-icon>
-            <span>{{ formatarDataHora(ocorrenciaSelecionada.dataOcorrencia) }}</span>
+            <dt>Data e hora da ocorrência</dt>
+            <dd>{{ formatarDataHora(ocorrenciaSelecionada.dataOcorrencia) }}</dd>
           </div>
           <div>
-            <mat-icon class="material-symbols-outlined ocorrencia-preview-icone">category</mat-icon>
-            <span>{{ obterLabelOcorrencia(ocorrenciaSelecionada.tipoOcorrencia) }}</span>
+            <dt>Tipo de ocorrência</dt>
+            <dd>{{ obterLabelOcorrencia(ocorrenciaSelecionada.tipoOcorrencia) }}</dd>
           </div>
           <div>
-            <mat-icon class="material-symbols-outlined ocorrencia-preview-icone">notes</mat-icon>
-            <span>{{ ocorrenciaSelecionada.descricao }}</span>
+            <dt>Descrição</dt>
+            <dd>{{ ocorrenciaSelecionada.descricao }}</dd>
           </div>
-        </div>
+        </dl>
 
         <div class="acoes-modal form-acoes">
           <button type="button" class="btn-cancelar" (click)="fecharModalOcorrenciaDetalhe()">Voltar</button>

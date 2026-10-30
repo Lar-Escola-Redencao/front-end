@@ -40,6 +40,10 @@
   [titulo]="modoEdicao ? 'Editar membro da diretoria' : 'Cadastrar membro da diretoria'"
   (closed)="fecharModal()"
 >
+  @if (modoEdicao && diretoriaSelecionadaId) {
+    <app-historico-contextual modal-title-extra tipo="DIRETORIA" [idRegistro]="diretoriaSelecionadaId"
+      titulo="Histórico deste registro" />
+  }
   <form class="form-modal" [formGroup]="formDiretoria" (ngSubmit)="salvar()">
     @if (!isCarregandoEdicao) {
 
@@ -88,7 +92,7 @@
         (change)="selecionarFoto($event)"
       >
 
-      <div
+      <div [appAnexoDrop]="inputFoto"
         class="upload-arquivo"
         [class.upload-arquivo-erro]="erros['foto']"
         (click)="inputFoto.click()"

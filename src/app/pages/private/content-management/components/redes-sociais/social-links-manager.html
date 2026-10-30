@@ -31,6 +31,10 @@
   [class.tremer-modal]="modalTremendo"
   (closed)="fecharModal()"
 >
+  @if (modoEdicao && socialLinkSelecionadoId) {
+    <app-historico-contextual modal-title-extra tipo="REDES_SOCIAIS" [idRegistro]="socialLinkSelecionadoId"
+      titulo="Histórico deste registro" />
+  }
   <form class="form-modal" [formGroup]="form" (ngSubmit)="salvarRedeSocial()">
 
     @if (modoEdicao) {

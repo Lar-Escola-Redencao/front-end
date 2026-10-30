@@ -1,3 +1,4 @@
+import { HistoricoContextual } from '@components/historico-contextual/historico-contextual';
 import { EstadoVazio } from 'src/app/components/estado-vazio/estado-vazio';
 import { Component, OnInit, OnDestroy, inject, NgZone, ChangeDetectorRef, HostListener, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -28,7 +29,9 @@ type FiltrosDiario = { idUnidade: number | null; idTurma: number | null; data: s
 @Component({
   selector: 'app-diario',
   standalone: true,
-  imports: [EstadoVazio,
+  imports: [
+    HistoricoContextual,
+    EstadoVazio,
     CommonModule, RouterLink, FormsModule, ReactiveFormsModule, ModalLayout, ExportarRelatorio,
     MatFormFieldModule, MatInputModule, MatSelectModule, MatIconModule
   ],
@@ -93,6 +96,7 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
   carregando = false;
   salvando = false;
   declaracaoAceita = false;
+  tentouSalvarDiario = false;
   confirmandoTrocaFiltro = false;
 
   private subs: Subscription = new Subscription();
@@ -183,6 +187,7 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
           this.usuarios = [];
           this.estadoTela = 'VAZIO';
           this.declaracaoAceita = false;
+          this.tentouSalvarDiario = false;
           this.executarFechamentoModal();
           const { idUnidade, idTurma, data } = this.filtroForm.getRawValue();
           if (!idUnidade || !idTurma || !data || !this.turmas.some(t => t.id === idTurma && t.unidade.id === idUnidade)) {
@@ -411,6 +416,10 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
       && decorrido <= 24 * 60 * 60 * 1000);
   }
 
+  get podeConsultarHistorico(): boolean {
+    return this.sessao.isAdministrador() && this.filtroForm.valid;
+  }
+
   get perfilDoDiario(): string {
     if (this.isMonitor) return 'Monitor';
     return this.sessao.isAdministrador() ? 'Administrador' : 'Coordenador';
@@ -429,7 +438,11 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
       { acao: 'Registrar nova chamada', regra: 'Sem limite de retroatividade.' },
       { acao: 'Editar presenças lançadas', regra: 'Sem limite de tempo.' },
       { acao: 'Registrar ocorrências', regra: 'Sem limite de retroatividade. O horário deve estar dentro do turno da turma.' },
-      { acao: 'Editar ou excluir ocorrência lançada', regra: 'Sem limite de tempo.' }
+      { acao: 'Editar ou excluir ocorrência lançada', regra: 'Sem limite de tempo.' },
+      ...(this.sessao.isAdministrador() ? [{
+        acao: 'Consultar histórico de alterações',
+        regra: 'Sem limite de tempo. Permite ver quem alterou as presenças e ocorrências da turma.'
+      }] : [])
     ];
   }
 
@@ -471,6 +484,7 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
     if (!this.podeIniciarChamada) return;
     this.estadoTela = 'PREENCHENDO';
     this.declaracaoAceita = false;
+    this.tentouSalvarDiario = false;
     this.usuarios.forEach(u => u.presente = true);
   }
 
@@ -479,6 +493,7 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
     this.estadoTela = 'PREENCHENDO';
     this.usuarios.forEach(u => u.presente ??= true);
     this.declaracaoAceita = false;
+    this.tentouSalvarDiario = false;
   }
 
   cancelarPreenchimento() {
@@ -496,13 +511,19 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
   }
 
   salvarDiarioLote() {
-    if (!this.declaracaoAceita || !this.podePreencherFrequencia || !this.usuarios.length) return;
+    if (!this.podePreencherFrequencia || !this.usuarios.length) return;
+    this.tentouSalvarDiario = true;
+    if (!this.declaracaoAceita) {
+      this.cdr.markForCheck();
+      return;
+    }
 
     this.salvando = true;
     this.cdr.markForCheck();
     const dto = {
       idTurma: this.filtroForm.get('idTurma')?.value,
       data: this.filtroForm.get('data')?.value,
+      declaracaoAceita: this.declaracaoAceita,
       frequencias: this.usuarios
         .map(u => ({
           idMatricula: u.idMatricula,
@@ -516,6 +537,7 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
         this.salvando = false;
         this.estadoTela = 'SALVO';
         this.declaracaoAceita = false;
+        this.tentouSalvarDiario = false;
         this.cdr.markForCheck();
         this.recarregar.next();
       },

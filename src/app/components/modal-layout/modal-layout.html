@@ -1,5 +1,5 @@
-<div appBloquearScroll class="modal-backdrop" (click)="closed.emit()">
-  <section class="modal-card" (click)="$event.stopPropagation()">
+<div appBloquearScroll class="modal-backdrop" (click)="$event.target === $event.currentTarget ? closed.emit() : null">
+  <section class="modal-card">
     <header class="modal-header">
       <div class="modal-title-area">
         <h2>{{ titulo }}</h2>
