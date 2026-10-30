@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { of, throwError } from 'rxjs';
+import { of, throwError, Subject } from 'rxjs';
 import { vi } from 'vitest';
 
 import { UsuarioPerfilContatos } from './contatos';
@@ -55,6 +55,24 @@ describe('UsuarioPerfilContatos', () => {
     expect(component.contatosOrdenados.map(contato => contato.id)).toEqual([1, 2]);
   });
 
+  it('exibe o aviso de seleção somente com a busca existente marcada', () => {
+    component.usuario = { id: 1, contatos: [] } as any;
+    component.abrirFormulario('novo');
+    component.form.get('parentesco')!.setValue('MAE');
+    component.form.get('parentesco')!.markAsTouched();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.busca-contato-error')).toBeNull();
+    component.alternarBuscaContato(true);
+    component.form.markAllAsTouched();
+    fixture.changeDetectorRef.markForCheck();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.busca-contato-error')).toBeTruthy();
+    component.form.get('id')!.setValue(9, { emitEvent: false });
+    fixture.changeDetectorRef.markForCheck();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.busca-contato-error')).toBeNull();
+  });
+
   it('só habilita salvar edição enquanto os valores diferem do contato original', () => {
     component.usuario = { id: 1, nomeCompleto: 'Aluno', contatos: [] } as any;
     component.abrirFormulario('editar', {
@@ -80,7 +98,7 @@ describe('UsuarioPerfilContatos', () => {
     await component.salvar();
     fixture.detectChanges();
     expect(component.form.get('nomeCompleto')!.touched).toBe(true);
-    expect(fixture.nativeElement.querySelector('.error-text')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.busca-contato-error')).toBeNull();
     expect(usuarioService.vincularNovoContato).not.toHaveBeenCalled();
   });
 
@@ -160,4 +178,59 @@ describe('UsuarioPerfilContatos', () => {
     expect(toastr.error).toHaveBeenCalledWith('Não é possível remover o status de principal diretamente.', 'Erro');
     expect(component.modalAberto).toBe(true);
   });
+  it('distingue espera, vazio, erro, vinculado e resultados da busca', async () => {
+    component.usuario = { id: 1, contatos: [{ id: 8, nomeCompleto: 'Ana Silva' }] } as any;
+    component.abrirFormulario('novo');
+    component.alternarBuscaContato(true);
+    const grupo = component.form;
+    const api = contatoService;
+    const mensagem = () => component.mensagemBuscaContato;
+    const opcoes = () => component.opcoesAutocomplete;
+    const resposta = new Subject<any[]>();
+    api.buscarAutocomplete = vi.fn(() => resposta);
+    expect(mensagem()).toBe('');
+    grupo.get('busca')!.setValue('A');
+    expect(mensagem()).toBe('');
+    grupo.get('busca')!.setValue('Ana');
+    expect(mensagem()).toBe('Carregando...');
+    await new Promise(resolve => setTimeout(resolve, 450));
+    expect(mensagem()).toBe('Carregando...');
+    resposta.next([]);
+    expect(mensagem()).toBe('Contato n\u00e3o encontrado');
+    resposta.next([{ id: 8, nomeCompleto: 'Ana Silva' }]);
+    expect(mensagem()).toBe('Contato j\u00e1 vinculado');
+    resposta.next([{ id: 9, nomeCompleto: 'Ana Nova' }]);
+    expect(mensagem()).toBe('');
+    expect(opcoes().map((c: any) => c.id)).toEqual([9]);
+    resposta.error(new Error('API indisponivel'));
+    expect(mensagem()).toBe('N\u00e3o foi poss\u00edvel consultar os contatos');
+    api.buscarAutocomplete = vi.fn(() => of([]));
+    grupo.get('busca')!.setValue('Outro');
+    await new Promise(resolve => setTimeout(resolve, 450));
+    expect(mensagem()).toBe('Contato n\u00e3o encontrado');
+    grupo.get('tipoBusca')!.setValue('CPF');
+    expect(mensagem()).toBe('');
+  });
+
+  it('ignora a resposta anterior durante a espera do novo termo e ao limpar', async () => {
+    component.usuario = { id: 1, contatos: [{ id: 8, nomeCompleto: 'Ana Silva' }] } as any;
+    component.abrirFormulario('novo');
+    component.alternarBuscaContato(true);
+    const grupo = component.form;
+    const api = contatoService;
+    const mensagem = () => component.mensagemBuscaContato;
+    const opcoes = () => component.opcoesAutocomplete;
+    const antiga = new Subject<any[]>();
+    api.buscarAutocomplete = vi.fn(() => antiga);
+    grupo.get('busca')!.setValue('Ana');
+    await new Promise(resolve => setTimeout(resolve, 450));
+    grupo.get('busca')!.setValue('Bia');
+    antiga.next([]);
+    expect(mensagem()).toBe('Carregando...');
+    grupo.get('busca')!.setValue('');
+    antiga.next([{ id: 9, nomeCompleto: 'Ana Nova' }]);
+    expect(mensagem()).toBe('');
+    expect(opcoes()).toEqual([]);
+  });
+
 });

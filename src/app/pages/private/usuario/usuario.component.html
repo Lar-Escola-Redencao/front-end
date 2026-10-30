@@ -250,10 +250,11 @@
                 formControlName="tipoBusca"><mat-option *ngFor="let opcao of opcoesBuscaContato" [value]="opcao">{{
                   opcao }}</mat-option></mat-select></mat-form-field>
             <mat-form-field appearance="outline"><mat-label>{{ contato.get('tipoBusca')?.value }}*</mat-label><input
-                matInput formControlName="busca" [matAutocomplete]="autoContato"
+                matInput appFecharAutocompleteFora formControlName="busca" [matAutocomplete]="autoContato"
                 (input)="onBuscaContatoAlterada(i, $any($event.target).value)"><mat-autocomplete
                 #autoContato="matAutocomplete" [displayWith]="exibirNomeContatoBusca"
-                (optionSelected)="selecionarContatoExistente(i, $event.option.value)"><mat-option
+                (optionSelected)="selecionarContatoExistente(i, $event.option.value)">
+                <mat-option *ngIf="mensagensBuscaContato[i]" disabled>{{ mensagensBuscaContato[i] }}</mat-option><mat-option
                   *ngFor="let op of opcoesAutocomplete[i]" [value]="op">{{ op.nomeCompleto }} - {{ formatarTelefoneContato(op.telefone)
                   }}</mat-option></mat-autocomplete></mat-form-field>
             <mat-form-field appearance="outline"><mat-label>Parentesco*</mat-label><mat-select

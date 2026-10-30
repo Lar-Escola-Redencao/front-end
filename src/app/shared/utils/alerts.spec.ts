@@ -47,6 +47,7 @@ describe('Ordem das ações nos SweetAlerts', () => {
     expect(await voltar).toBe('voltar');
 
     const descartar = Alertas.confirmarSaidaFiltros();
+    expect(Swal.getDenyButton()!.style.getPropertyValue('--swal2-deny-button-background-color')).toBe('#e04b3a');
     Swal.getDenyButton()!.click();
     expect(await descartar).toBe('descartar');
   });
