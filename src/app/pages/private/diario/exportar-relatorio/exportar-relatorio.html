@@ -1,16 +1,24 @@
-<app-modal-layout titulo="Exportar relatório" (closed)="cancelar()">
-  <details modal-title-extra class="ajuda-tipos" #ajudaTipos (keydown.escape)="ajudaTipos.open = false">
-    <summary aria-label="Entenda os tipos de relatório">
-      <mat-icon aria-hidden="true">help_outline</mat-icon>
-    </summary>
-    <div class="ajuda-tipos-painel">
+<app-modal-layout titulo="Relatório" (closed)="cancelar()">
+  <button modal-title-extra type="button" class="ajuda-tipos" cdkOverlayOrigin #origemAjuda="cdkOverlayOrigin"
+    aria-label="Entenda os tipos de relatório" [attr.aria-expanded]="ajudaAberta()"
+    [attr.aria-controls]="ajudaAberta() ? 'ajuda-tipos-relatorio' : null"
+    (click)="ajudaAberta.set(!ajudaAberta())" (keydown.escape)="ajudaAberta.set(false); $event.stopPropagation()">
+    <mat-icon aria-hidden="true">help_outline</mat-icon>
+  </button>
+  <ng-template cdkConnectedOverlay [cdkConnectedOverlayOrigin]="origemAjuda" [cdkConnectedOverlayOpen]="ajudaAberta()"
+    cdkConnectedOverlayPanelClass="ajuda-relatorio-overlay" [cdkConnectedOverlayUsePopover]="null"
+    [cdkConnectedOverlayPositions]="posicoesAjuda" [cdkConnectedOverlayPush]="true"
+    [cdkConnectedOverlayFlexibleDimensions]="true" [cdkConnectedOverlayViewportMargin]="16"
+    [cdkConnectedOverlayHasBackdrop]="true" cdkConnectedOverlayBackdropClass="cdk-overlay-transparent-backdrop"
+    (backdropClick)="ajudaAberta.set(false)" (overlayKeydown)="teclaAjuda($event)" (detach)="ajudaAberta.set(false)">
+    <div class="ajuda-tipos-painel" id="ajuda-tipos-relatorio" role="region" aria-label="Tipos de relatório">
       <strong>Tipos de relatório</strong>
       <dl>
-        <div><dt>Presenças detalhadas:</dt><dd>presença e falta de cada aluno de uma turma, data a data.</dd></div>
-        <div><dt>Resumo de frequência:</dt><dd>totais e percentual de presença por aluno, em uma ou mais turmas.</dd></div>
+        <div><dt>Presenças detalhadas:</dt><dd>presença e falta de cada usuário de uma turma, data a data.</dd></div>
+        <div><dt>Resumo de frequência:</dt><dd>totais e percentual de presença por usuário, em uma ou mais turmas.</dd></div>
       </dl>
     </div>
-  </details>
+  </ng-template>
 
   <p id="instrucao-tipo" class="instrucao-tipo">Escolha o tipo de relatório que deseja exportar:</p>
   <div class="tipos-relatorio" role="radiogroup" aria-labelledby="instrucao-tipo">
@@ -58,16 +66,24 @@
       <div class="campo">
         <mat-form-field appearance="outline">
           <mat-label>Turmas</mat-label>
-          <mat-select formControlName="idsTurmas" multiple>
+          <mat-select [formControl]="selecaoTurmas" multiple aria-label="Turmas" panelClass="exportar-turmas-panel"
+            (closed)="formResumo.controls.idsTurmas.markAsTouched()">
             <mat-select-trigger [title]="rotuloTurmasSelecionadas">
               {{ rotuloTurmasSelecionadas }}
             </mat-select-trigger>
+            <mat-option [value]="0" class="opcao-pai opcao-todas" [attr.aria-label]="'Todas as turmas: ' + descricaoEstadoSelecao()"
+              [disabled]="carregandoTurmas() || gerando() || !turmasPorUnidade().length" (onSelectionChange)="alterarSelecaoTurmas($event)">
+              <span class="linha-selecao-pai"><mat-pseudo-checkbox class="indicador-selecao" [state]="estadoSelecaoTurmas()" aria-hidden="true" />Todas as turmas</span>
+            </mat-option>
             @for (grupo of turmasPorUnidade(); track grupo.unidade.id) {
-              <mat-optgroup [label]="grupo.unidade.nome">
-                @for (turma of grupo.turmas; track turma.id) {
-                  <mat-option [value]="turma.id">{{ rotuloTurma(turma) }}</mat-option>
-                }
-              </mat-optgroup>
+              <mat-option [value]="-grupo.unidade.id" class="opcao-pai opcao-unidade" [disabled]="gerando()"
+                [attr.aria-label]="grupo.unidade.nome + ': ' + descricaoEstadoSelecao(grupo.unidade.id)" (onSelectionChange)="alterarSelecaoTurmas($event)">
+                <span class="linha-selecao-pai"><mat-pseudo-checkbox class="indicador-selecao" [state]="estadoSelecaoTurmas(grupo.unidade.id)" aria-hidden="true" />{{ grupo.unidade.nome }}</span>
+              </mat-option>
+              @for (turma of grupo.turmas; track turma.id) {
+                <mat-option [value]="turma.id" class="opcao-turma" [attr.data-turma]="turma.id" [disabled]="gerando()"
+                  [attr.aria-label]="grupo.unidade.nome + ' - ' + rotuloTurma(turma)" (onSelectionChange)="alterarSelecaoTurmas($event)">{{ rotuloTurma(turma) }}</mat-option>
+              }
             }
           </mat-select>
           @if (carregandoTurmas()) { <mat-hint>Carregando turmas...</mat-hint> }

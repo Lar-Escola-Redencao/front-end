@@ -1,4 +1,5 @@
-import { Component, ElementRef, OnDestroy, OnInit, ViewChild, computed, inject, input, output, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject, input, output, signal } from '@angular/core';
+import { ConnectedPosition, OverlayModule } from '@angular/cdk/overlay';
 import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subscription } from 'rxjs';
@@ -8,6 +9,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { MatOptionSelectionChange, MatPseudoCheckboxModule, MatPseudoCheckboxState } from '@angular/material/core';
 import { ModalLayout } from '@components/modal-layout/modal-layout';
 import { DiarioService, FormatoRelatorio } from 'src/app/shared/services/diario/diario.service';
 import { TurmaService } from 'src/app/shared/services/turma/turma.service';
@@ -40,7 +42,7 @@ export function mesDaData(data: string): { dataInicio: string; dataFim: string }
 @Component({
   selector: 'app-exportar-relatorio',
   standalone: true,
-  imports: [ReactiveFormsModule, ModalLayout, MatFormFieldModule, MatIconModule, MatInputModule, MatSelectModule],
+  imports: [ReactiveFormsModule, ModalLayout, MatFormFieldModule, MatIconModule, MatInputModule, MatSelectModule, MatPseudoCheckboxModule, OverlayModule],
   templateUrl: './exportar-relatorio.html',
   styleUrl: './exportar-relatorio.css'
 })
@@ -58,15 +60,17 @@ export class ExportarRelatorio implements OnInit, OnDestroy {
   private subs = new Subscription();
   private geracao?: Subscription;
 
-  @ViewChild('ajudaTipos') private ajudaTipos?: ElementRef<HTMLDetailsElement>;
+  readonly ajudaAberta = signal(false);
+  readonly posicoesAjuda: ConnectedPosition[] = [
+    { originX: 'start', originY: 'bottom', overlayX: 'start', overlayY: 'top', offsetY: 8 },
+    { originX: 'end', originY: 'bottom', overlayX: 'end', overlayY: 'top', offsetY: 8 },
+    { originX: 'start', originY: 'top', overlayX: 'start', overlayY: 'bottom', offsetY: -8 },
+    { originX: 'end', originY: 'top', overlayX: 'end', overlayY: 'bottom', offsetY: -8 },
+  ];
 
-  // Captura: o modal-card interrompe a propagação do clique, então um listener comum não o veria.
-  private readonly fecharAjudaAoClicarFora = (event: MouseEvent): void => {
-    const painel = this.ajudaTipos?.nativeElement;
-    if (painel?.open && !painel.contains(event.target as Node)) {
-      painel.open = false;
-    }
-  };
+  teclaAjuda(evento: KeyboardEvent): void {
+    if (evento.key === 'Escape') { this.ajudaAberta.set(false); evento.stopPropagation(); }
+  }
 
   readonly tipo = signal<TipoRelatorio>('PRESENCAS');
   readonly gerando = signal(false);
@@ -99,8 +103,10 @@ export class ExportarRelatorio implements OnInit, OnDestroy {
     formato: ['PDF' as FormatoRelatorio, Validators.required]
   }, { validators: periodoValido });
 
+  // Os itens-pai existem apenas no seletor; o formulário enviado mantém somente IDs reais de turmas.
+  readonly selecaoTurmas = this.fb.nonNullable.control<number[]>([], Validators.required);
+
   ngOnInit(): void {
-    document.addEventListener('click', this.fecharAjudaAoClicarFora, true);
     const periodo = mesDaData(this.data());
     this.formPresencas.patchValue({ idUnidade: this.idUnidade(), idTurma: this.idTurma(), ...periodo });
     this.formResumo.patchValue({ idsTurmas: this.idTurma() ? [this.idTurma()!] : [], ...periodo });
@@ -112,11 +118,13 @@ export class ExportarRelatorio implements OnInit, OnDestroy {
     }));
     this.subs.add(this.formPresencas.valueChanges.subscribe(() => this.erro.set(null)));
     this.subs.add(this.formResumo.valueChanges.subscribe(() => this.erro.set(null)));
+    this.subs.add(this.formResumo.controls.idsTurmas.valueChanges.subscribe(() => this.sincronizarSelecaoTurmas()));
 
     const permitidas = new Set(this.unidades().map(u => u.id));
     this.subs.add(this.turmaService.listar().subscribe({
       next: turmas => {
         this.todasTurmas.set(turmas.filter(t => permitidas.has(t.unidade.id)));
+        this.sincronizarSelecaoTurmas();
         this.carregandoTurmas.set(false);
       },
       error: () => {
@@ -127,13 +135,55 @@ export class ExportarRelatorio implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    document.removeEventListener('click', this.fecharAjudaAoClicarFora, true);
     this.subs.unsubscribe();
     this.geracao?.unsubscribe();
   }
 
   get formAtual(): FormGroup {
     return this.tipo() === 'PRESENCAS' ? this.formPresencas : this.formResumo;
+  }
+
+  private turmasParaSelecao(unidade?: number): Turma[] {
+    return this.turmasPorUnidade().filter(grupo => unidade === undefined || grupo.unidade.id === unidade)
+      .flatMap(grupo => grupo.turmas);
+  }
+
+  estadoSelecaoTurmas(unidade?: number): MatPseudoCheckboxState {
+    const selecionadas = new Set(this.formResumo.controls.idsTurmas.value ?? []);
+    const turmas = this.turmasParaSelecao(unidade);
+    const quantidade = turmas.filter(turma => selecionadas.has(turma.id)).length;
+    if (quantidade === 0) return 'unchecked';
+    return quantidade === turmas.length ? 'checked' : 'indeterminate';
+  }
+
+  descricaoEstadoSelecao(unidade?: number): string {
+    const estado = this.estadoSelecaoTurmas(unidade);
+    return estado === 'checked' ? 'todas selecionadas' : estado === 'indeterminate' ? 'seleção parcial' : 'nenhuma selecionada';
+  }
+
+  private sincronizarSelecaoTurmas(): void {
+    const ids = new Set(this.formResumo.controls.idsTurmas.value ?? []);
+    const valores: number[] = this.estadoSelecaoTurmas() === 'checked' ? [0] : [];
+    for (const grupo of this.turmasPorUnidade()) {
+      if (this.estadoSelecaoTurmas(grupo.unidade.id) === 'checked') valores.push(-grupo.unidade.id);
+      valores.push(...grupo.turmas.filter(turma => ids.has(turma.id)).map(turma => turma.id));
+    }
+    this.selecaoTurmas.setValue(valores, { emitEvent: false });
+  }
+
+  alterarSelecaoTurmas(evento: MatOptionSelectionChange): void {
+    if (!evento.isUserInput) return;
+    const chave = evento.source.value as number;
+    const disponiveis = this.turmasParaSelecao();
+    const alvo = chave === 0 ? disponiveis : chave < 0
+      ? this.turmasParaSelecao(-chave) : disponiveis.filter(turma => turma.id === chave);
+    const controle = this.formResumo.controls.idsTurmas;
+    const ids = new Set(controle.value ?? []);
+    for (const turma of alvo) {
+      if (evento.source.selected) ids.add(turma.id); else ids.delete(turma.id);
+    }
+    controle.setValue(disponiveis.filter(turma => ids.has(turma.id)).map(turma => turma.id));
+    controle.markAsDirty(); controle.markAsTouched();
   }
 
   get rotuloTurmasSelecionadas(): string {
@@ -187,6 +237,7 @@ export class ExportarRelatorio implements OnInit, OnDestroy {
     if (this.gerando()) return;
     this.tentouEnviar.set(true);
     this.formAtual.markAllAsTouched();
+    if (this.tipo() === 'RESUMO') this.selecaoTurmas.markAsTouched();
     if (this.formAtual.invalid) return;
 
     let requisicao: Observable<HttpResponse<Blob>>;
