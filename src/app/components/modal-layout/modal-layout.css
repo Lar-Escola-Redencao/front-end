@@ -25,7 +25,7 @@
 
 .modal-header {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 16px;
   text-align: start;
@@ -63,8 +63,12 @@
   background: transparent;
   color: var(--preto);
   cursor: pointer;
-  font-size: 2rem;
-  line-height: 1;
+}
+
+.modal-close mat-icon {
+  font-size: 28px;
+  width: 28px;
+  height: 28px;
 }
 
 
