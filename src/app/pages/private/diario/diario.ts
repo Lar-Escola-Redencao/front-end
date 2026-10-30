@@ -12,7 +12,7 @@ import { TurmaService } from 'src/app/shared/services/turma/turma.service';
 import { SessaoService } from 'src/app/shared/services/auth/sessao.service';
 import { DiarioService, FrequenciaUsuarioResponseDTO, OcorrenciaResponseDTO } from 'src/app/shared/services/diario/diario.service';
 import { ModalLayout } from '@components/modal-layout/modal-layout';
-import { AjudaAcompanhamento } from '../usuario/usuario-perfil/components/acompanhamento/ajuda-acompanhamento';
+import { AjudaAcompanhamento } from '../usuario/usuario-perfil/components/acompanhamento/compartilhado/ajuda-acompanhamento';
 
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';

@@ -13,8 +13,8 @@ import { UsuarioResponseDTO } from 'src/app/shared/models/usuario.model';
 import { AcompanhamentoService, Entrevista } from 'src/app/shared/services/acompanhamento/acompanhamento.service';
 import { SessaoService } from 'src/app/shared/services/auth/sessao.service';
 import { Alertas } from 'src/app/shared/utils/alerts';
-import { ListaPaginada } from './lista-paginada';
-import { AjudaAcompanhamento } from './ajuda-acompanhamento';
+import { ListaPaginada } from '../compartilhado/lista-paginada';
+import { AjudaAcompanhamento } from '../compartilhado/ajuda-acompanhamento';
 
 function validarInstanteEntrevista(form: AbstractControl): ValidationErrors | null {
   const data = form.get('data')?.value as string;
@@ -30,7 +30,7 @@ function validarInstanteEntrevista(form: AbstractControl): ValidationErrors | nu
   selector: 'app-acompanhamento-entrevistas', standalone: true,
   imports: [ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatIconModule,
     ModalLayout, BarraBusca, Paginacao, TabelaLayout, AjudaAcompanhamento],
-  templateUrl: './entrevistas.html', styleUrl: './acompanhamento.css',
+  templateUrl: './entrevistas.html', styleUrl: '../compartilhado/acompanhamento.css',
 })
 export class AcompanhamentoEntrevistas implements OnChanges, OnDestroy {
   @Input({ required: true }) usuario!: UsuarioResponseDTO;

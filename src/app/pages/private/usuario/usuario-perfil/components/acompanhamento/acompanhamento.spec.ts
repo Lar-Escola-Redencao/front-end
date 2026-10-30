@@ -3,15 +3,17 @@ import { of, Subject, throwError } from 'rxjs';
 import { vi } from 'vitest';
 import { ToastrService } from 'ngx-toastr';
 import { UsuarioPerfilAcompanhamento } from './acompanhamento';
-import { AcompanhamentoEntrevistas } from './entrevistas';
-import { AcompanhamentoOcorrencias } from './ocorrencias';
-import { ListaPaginada } from './lista-paginada';
+import { AcompanhamentoEntrevistas } from './entrevistas/entrevistas';
+import { AcompanhamentoOcorrencias } from './ocorrencias/ocorrencias';
+import { ListaPaginada } from './compartilhado/lista-paginada';
 import { AcompanhamentoService, Entrevista } from 'src/app/shared/services/acompanhamento/acompanhamento.service';
 import { DiarioService } from 'src/app/shared/services/diario/diario.service';
 import { SessaoService } from 'src/app/shared/services/auth/sessao.service';
 import { UsuarioResponseDTO } from 'src/app/shared/models/usuario.model';
 import { PaginaResposta } from 'src/app/shared/models/pagina.model';
 import { Alertas } from 'src/app/shared/utils/alerts';
+import { By } from '@angular/platform-browser';
+import { AcompanhamentoFrequencias } from './frequencias/frequencias';
 
 const vazia = { content: [], page: { number: 0, size: 5, totalPages: 0, totalElements: 0 } };
 const usuario = { id: 10 } as UsuarioResponseDTO;
@@ -21,11 +23,14 @@ const entrevista: Entrevista = { id: 3, idUsuario: 10, idMembro: 4, nomeResponsa
 describe('Acompanhamento', () => {
   let perfil: string;
   let service: { ocorrencias: ReturnType<typeof vi.fn>; entrevistas: ReturnType<typeof vi.fn>;
-    salvarEntrevista: ReturnType<typeof vi.fn>; excluirEntrevista: ReturnType<typeof vi.fn> };
+    salvarEntrevista: ReturnType<typeof vi.fn>; excluirEntrevista: ReturnType<typeof vi.fn>;
+    frequencias: ReturnType<typeof vi.fn>; matriculasFrequencia: ReturnType<typeof vi.fn> };
   beforeEach(() => {
     perfil = 'ADMINISTRADOR';
     service = { ocorrencias: vi.fn(() => of(vazia)), entrevistas: vi.fn(() => of(vazia)),
-      salvarEntrevista: vi.fn(() => of(entrevista)), excluirEntrevista: vi.fn(() => of(undefined)) };
+      salvarEntrevista: vi.fn(() => of(entrevista)), excluirEntrevista: vi.fn(() => of(undefined)),
+      frequencias: vi.fn(() => of({ dataInicio: '2026-01-01', dataFim: '2026-12-31', meses: [], presencas: 0, faltas: 0, totalRegistros: 0 })),
+      matriculasFrequencia: vi.fn(() => of([])) };
     TestBed.configureTestingModule({ providers: [
       { provide: AcompanhamentoService, useValue: service },
       { provide: DiarioService, useValue: { atualizarOcorrencia: vi.fn(), deletarOcorrencia: vi.fn(), criarOcorrencia: vi.fn() } },
@@ -37,6 +42,18 @@ describe('Acompanhamento', () => {
     ] });
   });
   afterEach(() => vi.restoreAllMocks());
+
+  it('filtros de frequência não refazem as consultas de ocorrências e entrevistas', () => {
+    const fixture = TestBed.createComponent(UsuarioPerfilAcompanhamento);
+    fixture.componentRef.setInput('usuario', usuario); fixture.detectChanges();
+    const frequencias = fixture.debugElement.query(By.directive(AcompanhamentoFrequencias)).componentInstance as AcompanhamentoFrequencias;
+    const chamadasOcorrencias = service.ocorrencias.mock.calls.length;
+    const chamadasEntrevistas = service.entrevistas.mock.calls.length;
+    frequencias.form.controls.periodo.setValue('MES_PASSADO'); frequencias.alterarPeriodo();
+    expect(service.frequencias).toHaveBeenCalledTimes(2);
+    expect(service.ocorrencias).toHaveBeenCalledTimes(chamadasOcorrencias);
+    expect(service.entrevistas).toHaveBeenCalledTimes(chamadasEntrevistas);
+  });
 
   it('monitor não renderiza nem consulta entrevistas', () => {
     perfil = 'MONITOR';

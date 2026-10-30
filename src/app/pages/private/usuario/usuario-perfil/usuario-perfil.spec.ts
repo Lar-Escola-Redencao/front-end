@@ -14,7 +14,7 @@ import { TurmaService } from 'src/app/shared/services/turma/turma.service';
 import { AcompanhamentoService } from 'src/app/shared/services/acompanhamento/acompanhamento.service';
 import { DiarioService } from 'src/app/shared/services/diario/diario.service';
 import { By } from '@angular/platform-browser';
-import { AcompanhamentoEntrevistas } from './components/acompanhamento/entrevistas';
+import { AcompanhamentoEntrevistas } from './components/acompanhamento/entrevistas/entrevistas';
 import Swal from 'sweetalert2';
 
 vi.mock('sweetalert2', () => ({
@@ -84,6 +84,8 @@ describe('UsuarioPerfil', () => {
         { provide: ToastrService, useValue: toastr },
         { provide: SessaoService, useValue: sessaoService },
         { provide: AcompanhamentoService, useValue: {
+          frequencias: vi.fn(() => of({ dataInicio: '2026-01-01', dataFim: '2026-12-31', meses: [], presencas: 0, faltas: 0, totalRegistros: 0 })),
+          matriculasFrequencia: vi.fn(() => of([])),
           ocorrencias: vi.fn(() => of({ content: [], page: { totalPages: 0, totalElements: 0 } })),
           entrevistas: vi.fn(() => of({ content: [], page: { totalPages: 0, totalElements: 0 } })),
         } },

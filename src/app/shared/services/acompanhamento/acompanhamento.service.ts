@@ -4,6 +4,18 @@ import { environment } from 'src/environments/environment';
 import { PaginaResposta } from '../../models/pagina.model';
 import { construirHttpParams } from '../../utils/paginacao-url';
 import { OcorrenciaResponseDTO } from '../diario/diario.service';
+import { MatriculaHistoricoDTO } from '../../models/usuario.model';
+
+export interface FrequenciaMensal { ano: number; mes: number; presencas: number; faltas: number; }
+export interface ResumoFrequencia {
+  dataInicio: string;
+  dataFim: string;
+  meses: FrequenciaMensal[];
+  presencas: number;
+  faltas: number;
+  totalRegistros: number;
+}
+export interface FiltrosFrequencia { inicio: string; fim: string; matricula?: number | null; }
 
 export interface OcorrenciaAcompanhamento extends OcorrenciaResponseDTO { turmaUnidade: string; }
 export interface Entrevista {
@@ -21,6 +33,16 @@ export interface DadosEntrevista { dataEntrevista: string; relato: string; }
 export class AcompanhamentoService {
   private readonly http = inject(HttpClient);
   private url(usuario: number) { return `${environment.apiUrl}/acompanhamento/usuarios/${usuario}`; }
+
+  frequencias(usuario: number, filtros: FiltrosFrequencia) {
+    const params: Record<string, string> = { inicio: filtros.inicio, fim: filtros.fim };
+    if (filtros.matricula != null) params['matricula'] = String(filtros.matricula);
+    return this.http.get<ResumoFrequencia>(`${this.url(usuario)}/frequencias`, { params });
+  }
+
+  matriculasFrequencia(usuario: number) {
+    return this.http.get<MatriculaHistoricoDTO[]>(`${this.url(usuario)}/frequencias/matriculas`);
+  }
 
   ocorrencias(usuario: number, pagina: number, tamanho: number, search: string) {
     return this.http.get<PaginaResposta<OcorrenciaAcompanhamento>>(`${this.url(usuario)}/ocorrencias`, {

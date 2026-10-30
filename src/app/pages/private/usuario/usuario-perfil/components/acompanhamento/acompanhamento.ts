@@ -1,14 +1,16 @@
 import { Component, Input, ViewChild, inject } from '@angular/core';
 import { UsuarioResponseDTO } from 'src/app/shared/models/usuario.model';
 import { SessaoService } from 'src/app/shared/services/auth/sessao.service';
-import { AcompanhamentoOcorrencias } from './ocorrencias';
-import { AcompanhamentoEntrevistas } from './entrevistas';
+import { AcompanhamentoOcorrencias } from './ocorrencias/ocorrencias';
+import { AcompanhamentoEntrevistas } from './entrevistas/entrevistas';
+import { AcompanhamentoFrequencias } from './frequencias/frequencias';
 
 @Component({
   selector: 'app-usuario-perfil-acompanhamento',
   standalone: true,
-  imports: [AcompanhamentoOcorrencias, AcompanhamentoEntrevistas],
+  imports: [AcompanhamentoFrequencias, AcompanhamentoOcorrencias, AcompanhamentoEntrevistas],
   template: `
+    <app-acompanhamento-frequencias [usuario]="usuario" />
     <app-acompanhamento-ocorrencias [usuario]="usuario" />
     @if (sessao.isAdministrador() || sessao.isCoordenador()) {
       <app-acompanhamento-entrevistas [usuario]="usuario" />
