@@ -118,7 +118,7 @@ describe('captacao-recursos.util', () => {
     });
   });
 
-  it.each([true, false])('maps Pix to conteudo + imagem with ativo=%s, without titulo', (ativo) => {
+  it.each([true, false])('maps Pix to conteudo with ativo=%s, without titulo or upload', (ativo) => {
     const grupo = grupoPorNome('pix');
     const form = criarFormularioGrupo(fb, grupo);
     form.patchValue({ conteudo: 'chave@lar.org', ativo });

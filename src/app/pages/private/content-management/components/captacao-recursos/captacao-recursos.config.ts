@@ -105,7 +105,6 @@ export const CAPTACAO_RECURSOS_CONFIG: CaptacaoRecursosConfig[] = [
         nomeItem: 'Pix',
         registroUnico: true,
         permiteExcluir: false,
-        imagemPrimeiro: true,
         controlaAtivo: true,
         campos: [
           {
@@ -115,10 +114,6 @@ export const CAPTACAO_RECURSOS_CONFIG: CaptacaoRecursosConfig[] = [
             tipo: 'texto',
           },
         ],
-        imagem: {
-          rotulo: 'QR Code',
-          obrigatoria: true,
-        },
       },
     ],
   },
