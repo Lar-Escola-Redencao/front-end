@@ -351,7 +351,6 @@ p {
 .mensagem-final {
   margin-top: 40px;
   padding-top: 32px;
-  border-top: 1px solid #e5e5e5;
   color: var(--primary-hover-color);
   font-family: var(--fonte-titulo);
   font-size: 1.5rem;
@@ -1215,7 +1214,7 @@ textarea:focus-visible {
   background: #edf5ff;
 }
 
-.abertura-ilustracao figcaption {
+:is(.abertura-ilustracao, .nfp-ilustracao) figcaption {
   margin-top: 12px;
   padding-right: 28px;
   color: rgba(30, 30, 30, 0.28);
@@ -1223,17 +1222,99 @@ textarea:focus-visible {
   font-size: 0.95rem;
   text-align: right;
 }
-.abertura-ilustracao figcaption a {
+:is(.abertura-ilustracao, .nfp-ilustracao) figcaption a {
   color: inherit;
   text-decoration: none;
 }
-.abertura-ilustracao figcaption a:hover,
-.abertura-ilustracao figcaption a:focus-visible {
+:is(.abertura-ilustracao, .nfp-ilustracao) figcaption a:hover,
+:is(.abertura-ilustracao, .nfp-ilustracao) figcaption a:focus-visible {
   color: var(--primary-color);
 }
 
 @media (max-width: 1000px) {
-  .abertura-ilustracao figcaption {
+  :is(.abertura-ilustracao, .nfp-ilustracao) figcaption {
     padding-right: 12px;
   }
+}
+
+.secao-nfp {
+  margin-top: 64px;
+}
+.nfp-cabecalho {
+  margin-bottom: 28px;
+  text-align: left;
+}
+.nfp-cabecalho h2 {
+  font-size: 1.875rem;
+  line-height: 1.2;
+}
+.nfp-cabecalho p {
+  margin-top: 12px;
+  color: #595959;
+}
+.nfp-conteudo {
+  display: flow-root;
+}
+.nfp-tutorial,
+.nfp-ilustracao {
+  min-width: 0;
+}
+.nfp-passos {
+  margin-top: 0;
+  text-align: left;
+}
+.nfp-passos li {
+  align-items: start;
+}
+.nfp-passos li::before {
+  margin-top: -3px;
+}
+.nfp-passos li > span {
+  min-width: 0;
+  text-wrap: pretty;
+}
+.nfp-tutorial a {
+  color: var(--primary-hover-color);
+  text-decoration: none;
+}
+.nfp-tutorial a:hover {
+  color: var(--primary-color);
+}
+.nfp-orientacao,
+.nfp-duvidas {
+  margin-top: 20px;
+  color: #595959;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  text-align: left;
+}
+.nfp-ilustracao {
+  float: right;
+  width: min(34%, 360px);
+  margin: 0 0 24px 32px;
+}
+.nfp-ilustracao img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+@media (max-width: 760px) {
+  .secao-nfp {
+    margin-top: 40px;
+  }
+  .nfp-conteudo {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+  .nfp-ilustracao {
+    order: 1;
+    float: none;
+    width: min(360px, 100%);
+    margin: 0 auto;
+  }
+}
+
+.nfp-passos + .nfp-orientacao {
+  clear: both;
 }

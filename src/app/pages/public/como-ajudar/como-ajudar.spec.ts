@@ -163,8 +163,11 @@ describe('ComoAjudar — geração local de Pix', () => {
     expect(elemento.querySelector('.abertura-botao')?.getAttribute('href')).toBe('/como-ajudar#pix');
     expect(elemento.querySelector('.secao-pix .pix-informacoes form')).not.toBeNull();
     expect(elemento.querySelector('.secao-pix .pix-imagem .chave-pix')).not.toBeNull();
-    expect(elemento.querySelector('#imposto-de-renda.secao-doacao')).not.toBeNull();
-    expect(elemento.querySelector('#notas-fiscais.secao-doacao')).not.toBeNull();
+    expect(elemento.querySelector('#imposto-de-renda')).toBeNull();
+    expect(elemento.querySelector('#titulo-nfp')?.textContent).toBe('Nota Fiscal Paulista');
+    expect(elemento.querySelectorAll('.nfp-passos li')).toHaveLength(8);
+    expect(elemento.querySelector('#notas-fiscais')?.textContent).toContain('50.400.951/0001-26');
+    expect(elemento.querySelector('.nfp-ilustracao img')?.getAttribute('src')).toBe('/images/nota-fiscal.png');
     expect(elemento.querySelector('.mensagem-final')).not.toBeNull();
   });
 
