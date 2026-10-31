@@ -5,7 +5,8 @@ import { CodigoPix } from './pix.service';
 @Injectable({ providedIn: 'root' })
 export class HistoricoPixService {
   private readonly documento = inject(DOCUMENT);
-  private readonly chave = 'ler.pix.codigos.v1';
+  private readonly chaveArmazenamento = 'ler.pix.codigos.v1';
+  private readonly limiteRegistros = 20;
   private readonly registros = signal<CodigoPix[]>([]);
   readonly codigos = this.registros.asReadonly();
   readonly indisponivel = signal(false);
@@ -17,19 +18,24 @@ export class HistoricoPixService {
         this.indisponivel.set(true);
         return;
       }
-      const dados: unknown = JSON.parse(armazenamento.getItem(this.chave) ?? '[]');
-      if (Array.isArray(dados))
-        this.registros.set(dados.filter((item) => this.codigoValido(item)).slice(0, 20));
+      const dados: unknown = JSON.parse(armazenamento.getItem(this.chaveArmazenamento) ?? '[]');
+      if (Array.isArray(dados)) {
+        this.registros.set(dados.filter((item) => this.codigoValido(item)).slice(0, this.limiteRegistros));
+      }
     } catch {
       this.indisponivel.set(true);
     }
   }
 
   salvar(codigo: CodigoPix): void {
-    this.registros.update((itens) =>
-      [codigo, ...itens.filter((item) => item.identificador !== codigo.identificador
-        && (item.contribuicaoInformada === true || item.chave !== codigo.chave))].slice(0, 20),
-    );
+    this.registros.update((itens) => {
+      const registrosMantidos = itens.filter((item) => {
+        const mesmoCodigo = item.identificador === codigo.identificador;
+        const pendenteDaMesmaChave = item.chave === codigo.chave && item.contribuicaoInformada !== true;
+        return !mesmoCodigo && !pendenteDaMesmaChave;
+      });
+      return [codigo, ...registrosMantidos].slice(0, this.limiteRegistros);
+    });
     this.persistir();
   }
 
@@ -45,8 +51,12 @@ export class HistoricoPixService {
   }
 
   informarContribuicao(identificador: string): void {
-    this.registros.update((itens) => itens.map((item) => item.identificador === identificador
-      ? { ...item, contribuicaoInformada: true } : item));
+    this.registros.update((itens) => itens.map((item) => {
+      if (item.identificador === identificador) {
+        return { ...item, contribuicaoInformada: true };
+      }
+      return item;
+    }));
     this.persistir();
   }
 
@@ -84,7 +94,7 @@ export class HistoricoPixService {
         this.indisponivel.set(true);
         return;
       }
-      armazenamento.setItem(this.chave, JSON.stringify(this.registros()));
+      armazenamento.setItem(this.chaveArmazenamento, JSON.stringify(this.registros()));
       this.indisponivel.set(false);
     } catch {
       this.indisponivel.set(true);
