@@ -21,6 +21,8 @@ import { forkJoin, timer } from 'rxjs';
   styleUrl: './como-ajudar.css',
 })
 export class ComoAjudar implements OnInit {
+  private readonly prazoSessaoMs = 15 * 60_000;
+  private readonly duracaoMinimaGeracaoMs = 500;
   private readonly ilustracoes = [
     '/images/doacao-solidaria.png',
     '/images/criancas-brincando.svg',
@@ -59,12 +61,9 @@ export class ComoAjudar implements OnInit {
   protected emailDigitado = '';
   protected readonly segundosRestantes = computed(() => {
     const codigo = this.codigo();
-    return codigo ? Math.max(0, Math.ceil((this.prazoCodigo(codigo) - this.agora()) / 1000)) : 0;
+    return codigo ? this.calcularSegundosRestantes(codigo) : 0;
   });
-  protected readonly tempoRestante = computed(() => {
-    const segundos = this.segundosRestantes();
-    return `${Math.floor(segundos / 60).toString().padStart(2, '0')}:${(segundos % 60).toString().padStart(2, '0')}`;
-  });
+  protected readonly tempoRestante = computed(() => this.formatarTempo(this.segundosRestantes()));
   protected valorDigitado = '';
   protected valorEmFoco = false;
   protected readonly etapaEmail = signal(false);
@@ -77,8 +76,8 @@ export class ComoAjudar implements OnInit {
       clearTimeout(this.copiaChaveTimer);
       clearTimeout(this.copiaCodigoTimer);
     });
-    const timer = setInterval(() => this.agora.set(Date.now()), 1000);
-    this.destroyRef.onDestroy(() => clearInterval(timer));
+    const intervaloRelogio = setInterval(() => this.agora.set(Date.now()), 1000);
+    this.destroyRef.onDestroy(() => clearInterval(intervaloRelogio));
   }
 
   @HostListener('document:keydown.escape')
@@ -93,7 +92,7 @@ export class ComoAjudar implements OnInit {
   }
 
   private prazoCodigo(codigo: CodigoPix): number {
-    const limite = Date.parse(codigo.geradoEm) + 15 * 60_000;
+    const limite = Date.parse(codigo.geradoEm) + this.prazoSessaoMs;
     return codigo.expiraEm ? Math.min(Date.parse(codigo.expiraEm), limite) : limite;
   }
 
@@ -102,8 +101,18 @@ export class ComoAjudar implements OnInit {
   }
 
   protected tempoRestanteDoCodigo(codigo: CodigoPix): string {
-    const segundos = Math.max(0, Math.ceil((this.prazoCodigo(codigo) - this.agora()) / 1000));
-    return `${Math.floor(segundos / 60).toString().padStart(2, '0')}:${(segundos % 60).toString().padStart(2, '0')}`;
+    return this.formatarTempo(this.calcularSegundosRestantes(codigo));
+  }
+
+  private calcularSegundosRestantes(codigo: CodigoPix): number {
+    const milissegundos = this.prazoCodigo(codigo) - this.agora();
+    return Math.max(0, Math.ceil(milissegundos / 1000));
+  }
+
+  private formatarTempo(totalSegundos: number): string {
+    const minutos = Math.floor(totalSegundos / 60).toString().padStart(2, '0');
+    const segundos = (totalSegundos % 60).toString().padStart(2, '0');
+    return `${minutos}:${segundos}`;
   }
 
   private prepararModal(): void {
@@ -188,36 +197,41 @@ export class ComoAjudar implements OnInit {
       return;
     }
     this.gerando.set(true);
-    this.codigo.set(null);
-    this.erroValor.set('');
-    this.erroGeracao.set('');
-    this.feedbackCopia.set('');
-    this.codigoCopiado.set(null);
-    clearTimeout(this.copiaCodigoTimer);
-    forkJoin({ codigo: this.pixService.gerarCodigo(valor), espera: timer(500) })
+    this.alterarValor();
+    forkJoin({
+      codigo: this.pixService.gerarCodigo(valor),
+      espera: timer(this.duracaoMinimaGeracaoMs),
+    })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: ({ codigo }) => {
-          this.codigo.set(codigo);
-          this.configuracao.update((config) => config ? { ...config, chave: codigo.chave, nomeRecebedor: codigo.nomeRecebedor } : config);
-          this.erroImagem.set(false);
-          this.historico.salvar(codigo);
-          this.gerando.set(false);
-          this.prepararModal();
-        },
+        next: ({ codigo }) => this.exibirCodigoGerado(codigo),
         error: (erro) => {
           this.gerando.set(false);
           if (erro.status === 404) {
             this.indisponivel.set(true);
             this.configuracao.set(null);
-          } else
+          } else {
             this.erroGeracao.set(
               erro.status === 429
                 ? 'Muitas tentativas de geração. Aguarde um pouco e tente novamente.'
                 : 'Não foi possível gerar o QR Code. Tente novamente em instantes.',
             );
+          }
         },
       });
+  }
+
+  private exibirCodigoGerado(codigo: CodigoPix): void {
+    this.codigo.set(codigo);
+    this.configuracao.update((configuracao) => configuracao ? {
+      ...configuracao,
+      chave: codigo.chave,
+      nomeRecebedor: codigo.nomeRecebedor,
+    } : configuracao);
+    this.erroImagem.set(false);
+    this.historico.salvar(codigo);
+    this.gerando.set(false);
+    this.prepararModal();
   }
 
   protected copiarCodigo(codigo: CodigoPix | null = this.codigo()): void {
