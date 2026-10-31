@@ -21,6 +21,12 @@ import { forkJoin, timer } from 'rxjs';
   styleUrl: './como-ajudar.css',
 })
 export class ComoAjudar implements OnInit {
+  private readonly ilustracoes = [
+    '/images/doacao-solidaria.png',
+    '/images/criancas-brincando.svg',
+    '/images/estudando.png',
+  ];
+  protected readonly ilustracao = this.ilustracoes[Math.floor(Math.random() * this.ilustracoes.length)];
   private readonly pixService = inject(PixService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly clipboard = inject(Clipboard);

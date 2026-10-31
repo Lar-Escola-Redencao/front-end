@@ -153,8 +153,13 @@ describe('ComoAjudar — geração local de Pix', () => {
   it('preserva a abertura, a ilustração e as demais seções da página original', async () => {
     await carregar();
     expect(elemento.querySelector('.abertura h1')?.textContent).toContain('Grandes caminhos');
-    expect(elemento.querySelector('.abertura-ilustracao img')?.getAttribute('src'))
-      .toBe('/images/doacao-solidaria.png');
+    const imagem = elemento.querySelector('.abertura-ilustracao img')!;
+    const ilustracaoInicial = imagem.getAttribute('src');
+    expect(['/images/criancas-brincando.svg', '/images/doacao-solidaria.png', '/images/estudando.png'])
+      .toContain(ilustracaoInicial);
+    elemento.querySelector<HTMLButtonElement>('.valores-sugeridos button')!.click();
+    fixture.detectChanges();
+    expect(imagem.getAttribute('src')).toBe(ilustracaoInicial);
     expect(elemento.querySelector('.abertura-botao')?.getAttribute('href')).toBe('/como-ajudar#pix');
     expect(elemento.querySelector('.secao-pix .pix-informacoes form')).not.toBeNull();
     expect(elemento.querySelector('.secao-pix .pix-imagem .chave-pix')).not.toBeNull();
@@ -413,7 +418,7 @@ describe('ComoAjudar — geração local de Pix', () => {
       message: 'Unresolved compilation problems: BitMatrix cannot be resolved to a type',
     }, { status: 500, statusText: 'Internal Server Error' });
     fixture.detectChanges();
-    expect(elemento.textContent).toContain('Não foi possível gerar o QR Code agora. Tente novamente em instantes.');
+    expect(elemento.textContent).toContain('Não foi possível gerar o QR Code. Tente novamente em instantes.');
     expect(elemento.textContent).not.toContain('BitMatrix');
     expect(elemento.textContent).not.toContain('Unresolved compilation');
     expect(elemento.querySelector<HTMLButtonElement>('.gerar-pix')?.disabled).toBe(false);

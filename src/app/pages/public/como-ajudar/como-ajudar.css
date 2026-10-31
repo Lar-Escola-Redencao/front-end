@@ -1214,3 +1214,26 @@ textarea:focus-visible {
 .pix-sem-email:hover:not(:disabled) {
   background: #edf5ff;
 }
+
+.abertura-ilustracao figcaption {
+  margin-top: 12px;
+  padding-right: 28px;
+  color: rgba(30, 30, 30, 0.28);
+  font-family: var(--fonte-texto);
+  font-size: 0.95rem;
+  text-align: right;
+}
+.abertura-ilustracao figcaption a {
+  color: inherit;
+  text-decoration: none;
+}
+.abertura-ilustracao figcaption a:hover,
+.abertura-ilustracao figcaption a:focus-visible {
+  color: var(--primary-color);
+}
+
+@media (max-width: 1000px) {
+  .abertura-ilustracao figcaption {
+    padding-right: 12px;
+  }
+}
