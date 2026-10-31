@@ -72,7 +72,7 @@
           </p>
 
           <ol class="pix-passos">
-            <li>Escolha o valor da doação e gere seu Pix.</li>
+            <li>Escolha o valor da doação e gere seu QR Code.</li>
             <li>No aplicativo do banco, escaneie o QR Code ou use o Pix Copia e Cola.</li>
             <li>Confira os dados antes de confirmar.</li>
           </ol>
@@ -81,6 +81,7 @@
           <form class="pix-form-valor" (ngSubmit)="gerarPix()" novalidate>
             <fieldset [disabled]="gerando()">
               <legend>Valor da doação</legend>
+              <p class="orientacao-valor">{{ orientacaoCodigoPix }}</p>
               <div class="valores-sugeridos" role="group" aria-label="Valores sugeridos">
                 @for (valor of config.valoresSugeridos; track valor) {
                   <button
@@ -93,22 +94,28 @@
                   </button>
                 }
               </div>
-              <label for="valor-doacao">Outro valor</label>
-              <div class="campo-valor" [class.invalido]="erroValor()">
-                <span aria-hidden="true">R$</span>
+              <mat-form-field appearance="outline" class="campo-valor" subscriptSizing="dynamic">
+                <mat-label>Outro valor</mat-label>
+                @if (valorEmFoco || valorDigitado) {
+                  <span matTextPrefix class="prefixo-moeda">R$</span>
+                }
                 <input
+                  matInput
                   id="valor-doacao"
                   name="valor"
                   type="text"
                   inputmode="decimal"
                   autocomplete="off"
                   maxlength="9"
-                  [(ngModel)]="valorDigitado"
-                  (ngModelChange)="alterarValor()"
+                  #campoValor
+                  [ngModel]="valorDigitado"
+                  (ngModelChange)="digitarValor($event, campoValor)"
+                  (focus)="valorEmFoco = true"
+                  (blur)="valorEmFoco = false"
                   [attr.aria-invalid]="!!erroValor()"
                   [attr.aria-describedby]="erroValor() ? 'erro-valor' : null"
                 />
-              </div>
+              </mat-form-field>
               @if (erroValor()) {
                 <p id="erro-valor" class="erro" role="alert">{{ erroValor() }}</p>
               }
@@ -116,7 +123,7 @@
                 @if (gerando()) {
                   <span class="indicador-carregamento pequeno" aria-hidden="true"></span>
                 }
-                {{ gerando() ? 'Gerando Pix...' : 'Gerar Pix' }}
+                {{ gerando() ? 'Gerando QR Code...' : 'Gerar QR Code' }}
               </button>
             </fieldset>
           </form>
@@ -126,132 +133,63 @@
         </div>
 
         <div class="pix-imagem">
-          <div class="pix-recebedor">
-            <span class="chave-pix-rotulo">Recebedor</span>
-            <strong>{{ config.nomeRecebedor }}</strong>
-          </div>
-            <div class="chave-pix">
-              <span class="chave-pix-rotulo">Chave Pix</span>
-              <button type="button" class="chave-pix-copiar" (click)="copiarChavePix()"
-                [attr.aria-label]="chaveCopiada() ? 'Chave Pix copiada' : 'Copiar chave Pix: ' + config.chave"
-                title="Copiar chave Pix">
-                <span class="chave-pix-valor">{{ config.chave }}</span>
-                <span class="material-symbols-outlined" aria-hidden="true">{{ chaveCopiada() ? 'check' : 'content_copy' }}</span>
-              </button>
-              <span class="chave-pix-feedback" role="status" aria-live="polite" aria-atomic="true">{{ feedbackChave() }}</span>
+          @if (config.nomeRecebedor?.trim()) {
+            <div class="pix-recebedor">
+              <span class="chave-pix-rotulo">Recebedor</span>
+              <strong>{{ config.nomeRecebedor }}</strong>
             </div>
-          @if (!modalAberto()) {
-            @if (pixEmAberto(); as pendente) {
-              <span class="pix-separador" aria-hidden="true">OU</span>
-              <div class="resultado-cabecalho">
-                <span>Pix em aberto</span>
-                <strong>{{ pendente.valor | currency: 'BRL' : 'symbol' : '1.2-2' : 'pt-BR' }}</strong>
-              </div>
-              <p class="pix-tempo">Disponível por <strong>{{ tempoRestanteDoCodigo(pendente) }}</strong></p>
-              <img class="qr-code" [src]="pendente.qrCode" width="240" height="240"
-                alt="QR Code do seu Pix em aberto" />
-              <button type="button" class="btn-primary copiar-pix" (click)="copiarCodigo(pendente)">
-                <span class="material-symbols-outlined" aria-hidden="true">content_copy</span>
-                Copiar Pix Copia e Cola
-              </button>
-              @if (feedbackCopia()) {
-                <span class="feedback" role="status">{{ feedbackCopia() }}</span>
-              }
-              <button type="button" class="pix-retomar" (click)="reabrirCodigo(pendente)">Continuar doação</button>
-              <button type="button" class="pix-cancelar" (click)="cancelarPix(pendente)">Cancelar Pix</button>
-            } @else {
-              <div class="pix-aguardando-codigo">
-                <p>Seu QR Code aparecerá aqui</p>
-                <span>Escolha o valor e clique em Gerar Pix.</span>
-              </div>
+          }
+          <div class="chave-pix">
+            <span class="chave-pix-rotulo">Chave Pix</span>
+            <button type="button" class="chave-pix-copiar" aria-live="polite" [disabled]="chaveCopiada()" (click)="copiarChavePix()"
+              [attr.aria-label]="chaveCopiada() ? 'Chave Pix copiada' : 'Copiar chave Pix: ' + config.chave"
+              title="Copiar chave Pix">
+              <span class="chave-pix-valor">{{ chaveCopiada() ? 'Chave Pix copiada!' : config.chave }}</span>
+              <span class="material-symbols-outlined" aria-hidden="true">{{ chaveCopiada() ? 'check' : 'content_copy' }}</span>
+            </button>
+            @if (feedbackChave()) {
+              <span class="erro" role="alert">{{ feedbackChave() }}</span>
             }
+          </div>
+          <span class="pix-separador">OU</span>
+          <span class="chave-pix-rotulo">QR Code</span>
+          @if (pixEmAberto(); as pendente) {
+            <div class="resultado-cabecalho">
+              <span>Valor da doação</span>
+              <strong>{{ pendente.valor | currency: 'BRL' : 'symbol' : '1.2-2' : 'pt-BR' }}</strong>
+            </div>
+            <p class="pix-tempo">Código disponível por <strong>{{ tempoRestanteDoCodigo(pendente) }}</strong></p>
+            <img class="qr-code" [src]="pendente.qrCode" width="240" height="240"
+              alt="QR Code para sua doação" />
+            <div class="codigo-texto">
+                <button type="button" class="copiar-pix" aria-live="polite"
+                  [disabled]="codigoCopiado() === pendente.identificador" (click)="copiarCodigo(pendente)">
+                  <span>{{ codigoCopiado() === pendente.identificador ? 'Pix copiado!' : 'Copiar Pix Copia e Cola' }}</span>
+                  <span class="material-symbols-outlined" aria-hidden="true">{{ codigoCopiado() === pendente.identificador ? 'check' : 'content_copy' }}</span>
+                </button>
+                <button type="button" class="expandir-codigo-pix" [attr.aria-expanded]="codigoPaginaExpandido()"
+                  aria-controls="pix-copia-cola-pagina" [attr.aria-label]="codigoPaginaExpandido() ? 'Ocultar código Pix completo' : 'Ver código Pix completo'"
+                  (click)="codigoPaginaExpandido.set(!codigoPaginaExpandido())">
+                  <span>{{ codigoPaginaExpandido() ? 'Ocultar Pix Copia e Cola' : 'Ver Pix Copia e Cola' }}</span>
+                </button>
+              @if (codigoPaginaExpandido()) {
+                <div id="pix-copia-cola-pagina" class="valor-codigo-pix" role="textbox" aria-readonly="true" aria-multiline="true"
+                  aria-label="Pix Copia e Cola" tabindex="0" [textContent]="pendente.copiaECola"></div>
+              }
+            </div>
+            @if (feedbackCopia()) {
+              <span class="feedback" role="status">{{ feedbackCopia() }}</span>
+            }
+            <button type="button" class="btn-primary pix-informar" (click)="abrirEmail(pendente)">Já fiz o pagamento</button>
+          } @else {
+            <div class="pix-aguardando-codigo">
+              <p>O QR Code será gerado após a escolha do valor e o clique em Gerar QR Code.</p>
+            </div>
           }
         </div>
-
       </section>
     } @else if (indisponivel()) {
       <div class="estado-carregamento"><p>Doações via Pix indisponíveis no momento.</p></div>
-    }
-
-    @if (pixInformados().length) {
-      <div class="historico-container">
-          <button type="button" class="historico-duvida" aria-label="Entenda a seção Seus Pix"
-            aria-haspopup="dialog" [attr.aria-expanded]="duvidaAberta()"
-            cdkOverlayOrigin #origemDuvida="cdkOverlayOrigin"
-            (click)="duvidaAberta.set(!duvidaAberta())">
-            <span aria-hidden="true">?</span>
-          </button>
-      <details class="historico">
-        <summary>Seus Pix</summary>
-        <ul class="historico-lista">
-          @for (item of pixInformados(); track item.identificador) {
-            <li>
-              <span class="material-symbols-outlined historico-icone" aria-hidden="true"
-                >qr_code_2</span
-              >
-              <div class="historico-dados">
-                <span class="historico-status">Você informou a doação</span>
-                <strong>{{ item.valor | currency: 'BRL' : 'symbol' : '1.2-2' : 'pt-BR' }}</strong>
-                <time [attr.datetime]="item.geradoEm">{{
-                  item.geradoEm | date: 'dd/MM/yyyy · HH:mm'
-                }}</time>
-                @if (configuracao() && item.chave !== configuracao()?.chave) {
-                  <span class="chave-alterada">A chave da OSC foi alterada. Gere um novo Pix.</span>
-                }
-              </div>
-              <div class="historico-acoes">
-                <button
-                  type="button"
-                  (click)="reabrirCodigo(item)"
-                  [disabled]="gerando() || item.chave !== configuracao()?.chave"
-                >
-                  Ver detalhes
-                </button>
-                <button type="button" (click)="baixarResumo(item)">Baixar dados do Pix</button>
-                <button
-                  type="button"
-                  class="remover-codigo"
-                  (click)="removerCodigo(item.identificador)"
-                  [attr.aria-label]="
-                    'Remover código de ' +
-                    (item.valor | currency: 'BRL' : 'symbol' : '1.2-2' : 'pt-BR') +
-                    ' gerado em ' +
-                    (item.geradoEm | date: 'dd/MM/yyyy HH:mm')
-                  "
-                >
-                  <span class="material-symbols-outlined" aria-hidden="true">delete</span>
-                </button>
-              </div>
-            </li>
-          }
-        </ul>
-      </details>
-        <ng-template cdkConnectedOverlay [cdkConnectedOverlayOrigin]="origemDuvida"
-          [cdkConnectedOverlayOpen]="duvidaAberta()" [cdkConnectedOverlayHasBackdrop]="true"
-          cdkConnectedOverlayBackdropClass="cdk-overlay-transparent-backdrop"
-          [cdkConnectedOverlayPush]="true" [cdkConnectedOverlayOffsetY]="8"
-          (backdropClick)="duvidaAberta.set(false)" (detach)="duvidaAberta.set(false)"
-          (overlayKeydown)="$event.key === 'Escape' ? duvidaAberta.set(false) : null">
-          <div class="historico-explicacao" role="dialog" aria-modal="true"
-            aria-labelledby="titulo-duvida-pix" cdkTrapFocus [cdkTrapFocusAutoCapture]="true">
-            <div class="historico-explicacao-cabecalho">
-              <h3 id="titulo-duvida-pix">Sobre seus Pix</h3>
-              <button type="button" aria-label="Fechar explicação" (click)="duvidaAberta.set(false)">×</button>
-            </div>
-            <p>Aqui ficam as doações em que você clicou em “Já fiz o Pix”. Você pode consultar os dados ou baixar um registro.</p>
-            <p>A lista fica salva somente neste navegador. Ela não confirma o recebimento da doação e não substitui o comprovante do banco.</p>
-          </div>
-        </ng-template>
-      </div>
-    }
-    @if (historico.indisponivel()) {
-      <p class="erro" role="status">
-        O navegador não permitiu salvar o histórico. Baixe os dados do Pix para guardar o registro.
-      </p>
-    }
-
-    @if (feedbackDownload() && !modalAberto()) {
-      <p class="feedback" role="status">{{ feedbackDownload() }}</p>
     }
 
     <section
@@ -311,65 +249,35 @@
 
 
 @if (modalAberto()) {
-  <app-modal-layout titulo="Sua doação via Pix" (closed)="fecharModal()"
-    role="dialog" aria-modal="true" aria-label="Sua doação via Pix"
-    [cdkTrapFocus]="!confirmandoAcaoPix()" [cdkTrapFocusAutoCapture]="true">
+  <app-modal-layout [titulo]="agradecimentoEnviado() ? '' : etapaEmail() ? 'Receber agradecimento' : 'Doação via Pix'" (closed)="fecharModal()"
+    role="dialog" aria-modal="true" [attr.aria-label]="agradecimentoEnviado() ? 'Agradecemos por sua doação!' : etapaEmail() ? 'Receber agradecimento' : 'Doação via Pix'"
+    [cdkTrapFocus]="true" [cdkTrapFocusAutoCapture]="true">
     <div class="pix-modal-conteudo" [attr.aria-busy]="gerando() || enviandoEmail()">
       @if (gerando()) {
         <div class="estado-carregamento" role="status">
           <span class="indicador-carregamento" aria-hidden="true"></span>
-          <p>Gerando seu Pix...</p>
+          <p>Gerando seu QR Code...</p>
         </div>
       } @else if (agradecimentoEnviado()) {
         <div class="pix-agradecimento" role="status">
-          <span class="material-symbols-outlined" aria-hidden="true">favorite</span>
-          <h3>Obrigado pela sua doação!</h3>
-          <p>Você informou que fez o Pix. Guarde o comprovante do banco.</p>
+          <span class="pix-agradecimento-icone" aria-hidden="true"><span class="material-symbols-outlined">favorite</span></span>
+          <h3>Agradecemos por sua doação!</h3>
+          <p>Seu apoio faz a diferença no cuidado e no acolhimento dos nossos meninos.</p>
+          <p class="pix-comprovante">Guarde o comprovante emitido pelo seu banco. É sua responsabilidade conservar esse documento: o site não confirma o pagamento automaticamente nem emite comprovantes.</p>
           <button type="button" class="btn-primary" (click)="fecharModal()">Concluir</button>
         </div>
-      } @else if (codigo(); as atual) {
-        <div class="resultado-cabecalho">
-          <strong>{{ atual.valor | currency: 'BRL' : 'symbol' : '1.2-2' : 'pt-BR' }}</strong>
-          <span>{{ atual.nomeRecebedor }}</span>
-        </div>
-        @if (prazoEncerrado(atual)) {
-          <div class="pix-prazo-encerrado" role="status">
-            <h3>O prazo desta sessão terminou</h3>
-            <p>O código ficou disponível por 15 minutos neste site.</p>
-            <button type="button" class="btn-primary" (click)="gerarPix()">Gerar novo Pix</button>
-          </div>
-        } @else {
-          <p class="pix-tempo">Disponível nesta sessão por <strong>{{ tempoRestante() }}</strong></p>
-          <p class="nota-prazo">O prazo de 15 minutos encerra a exibição no site. Um código já copiado pode continuar sendo aceito pelo banco.</p>
-          @if (!erroImagem()) {
-            <img class="qr-code" [src]="atual.qrCode" width="240" height="240"
-              alt="QR Code para doar ao Lar Escola Redenção"
-              (error)="erroImagem.set(true)" />
-          } @else {
-            <p class="erro">Não foi possível exibir a imagem. Use o Pix Copia e Cola.</p>
-          }
-          <button type="button" class="btn-primary copiar-pix" (click)="copiarCodigo()">
-            <span class="material-symbols-outlined" aria-hidden="true">content_copy</span>
-            Copiar Pix Copia e Cola
-          </button>
-          @if (feedbackCopia()) {
-            <span class="feedback" role="status">{{ feedbackCopia() }}</span>
-          }
-          <details class="codigo-texto">
-            <summary>Ver Pix Copia e Cola</summary>
-            <label class="sr-only" for="pix-copia-cola">Pix Copia e Cola</label>
-            <textarea id="pix-copia-cola" readonly rows="4" [value]="atual.copiaECola"></textarea>
-          </details>
-          <div class="acoes-download">
-            <button type="button" (click)="baixarQrCode()">Baixar QR Code</button>
-            <button type="button" (click)="baixarResumo(atual)">Baixar dados do Pix</button>
-          </div>
-          <p class="nota-pagamento">Confira o recebedor e o valor no banco antes de confirmar o Pix.</p>
+      } @else if (etapaEmail()) {
+        <button type="button" class="pix-voltar" [disabled]="enviandoEmail()" (click)="etapaEmail.set(false)">
+          <span class="material-symbols-outlined" aria-hidden="true">arrow_back</span> Voltar
+        </button>
+        <p class="pix-email-descricao">Se quiser, informe seu e-mail para receber uma mensagem de agradecimento.</p>
           <form class="pix-form-agradecimento" (ngSubmit)="informarPagamento()" novalidate>
-            <label for="email-agradecimento">E-mail para receber um agradecimento <span>(opcional)</span></label>
-            <input id="email-agradecimento" type="email" name="email" autocomplete="email"
-              maxlength="254" [(ngModel)]="emailDigitado" [disabled]="enviandoEmail()"
-              [attr.aria-invalid]="!!erroEmail()" [attr.aria-describedby]="erroEmail() ? 'erro-email' : null" />
+            <mat-form-field appearance="outline" subscriptSizing="dynamic">
+              <mat-label>E-mail (opcional)</mat-label>
+              <input matInput id="email-agradecimento" type="email" name="email" autocomplete="email"
+                maxlength="254" [(ngModel)]="emailDigitado" [disabled]="enviandoEmail()"
+                [attr.aria-invalid]="!!erroEmail()" [attr.aria-describedby]="erroEmail() ? 'erro-email' : null" />
+            </mat-form-field>
             @if (erroEmail()) {
               <p id="erro-email" class="erro" role="alert">{{ erroEmail() }}</p>
             }
@@ -377,20 +285,59 @@
               @if (enviandoEmail()) {
                 <span class="indicador-carregamento pequeno" aria-hidden="true"></span>
               }
-              {{ enviandoEmail() ? 'Enviando...' : 'Já fiz o Pix' }}
+              {{ enviandoEmail() ? 'Enviando...' : 'Receber por e-mail' }}
             </button>
           </form>
-          <button type="button" class="pix-cancelar" [disabled]="enviandoEmail()"
-            (click)="cancelarPix(atual)">Cancelar Pix</button>
+        <button type="button" class="pix-sem-email" [disabled]="enviandoEmail()" (click)="continuarSemEmail()">Continuar sem e-mail</button>
+      } @else if (codigo(); as atual) {
+        <p class="nota-prazo">{{ orientacaoCodigoPix }}</p>
+        <div class="resultado-cabecalho">
+          <strong>{{ atual.valor | currency: 'BRL' : 'symbol' : '1.2-2' : 'pt-BR' }}</strong>
+          @if (atual.nomeRecebedor?.trim()) {
+            <span>{{ atual.nomeRecebedor }}</span>
+          }
+        </div>
+        @if (prazoEncerrado(atual)) {
+          <div class="pix-prazo-encerrado" role="status">
+            <h3>O prazo desta sessão terminou</h3>
+            <p>O código ficou disponível por 15 minutos neste site.</p>
+            <button type="button" class="btn-primary" (click)="gerarPix()">Gerar novo QR Code</button>
+          </div>
+        } @else {
+          <p class="pix-tempo">Código disponível por <strong>{{ tempoRestante() }}</strong></p>
+          @if (!erroImagem()) {
+            <img class="qr-code" [src]="atual.qrCode" width="240" height="240"
+              alt="QR Code para doar ao Lar Escola Redenção"
+              (error)="erroImagem.set(true)" />
+          } @else {
+            <p class="erro">Não foi possível exibir a imagem. Use o Pix Copia e Cola.</p>
+          }
+          <div class="codigo-texto">
+              <button type="button" class="copiar-pix" aria-live="polite"
+                [disabled]="codigoCopiado() === atual.identificador" (click)="copiarCodigo(atual)">
+                <span>{{ codigoCopiado() === atual.identificador ? 'Pix copiado!' : 'Copiar Pix Copia e Cola' }}</span>
+                <span class="material-symbols-outlined" aria-hidden="true">{{ codigoCopiado() === atual.identificador ? 'check' : 'content_copy' }}</span>
+              </button>
+              <button type="button" class="expandir-codigo-pix" [attr.aria-expanded]="codigoModalExpandido()"
+                aria-controls="pix-copia-cola" [attr.aria-label]="codigoModalExpandido() ? 'Ocultar código Pix completo' : 'Ver código Pix completo'"
+                (click)="codigoModalExpandido.set(!codigoModalExpandido())">
+                <span>{{ codigoModalExpandido() ? 'Ocultar Pix Copia e Cola' : 'Ver Pix Copia e Cola' }}</span>
+              </button>
+            @if (codigoModalExpandido()) {
+              <div id="pix-copia-cola" class="valor-codigo-pix" role="textbox" aria-readonly="true" aria-multiline="true"
+                aria-label="Pix Copia e Cola" tabindex="0" [textContent]="atual.copiaECola"></div>
+            }
+          </div>
+          @if (feedbackCopia()) {
+            <span class="feedback" role="status">{{ feedbackCopia() }}</span>
+          }
+          <button type="button" class="btn-primary pix-informar" (click)="abrirEmail()">Já fiz o pagamento</button>
         }
       } @else if (erroGeracao()) {
         <p class="erro" role="alert">{{ erroGeracao() }}</p>
         <button type="button" class="btn-primary" (click)="gerarPix()">Tentar novamente</button>
       } @else {
         <p>Doações via Pix indisponíveis no momento.</p>
-      }
-      @if (feedbackDownload()) {
-        <p class="feedback" role="status">{{ feedbackDownload() }}</p>
       }
     </div>
   </app-modal-layout>

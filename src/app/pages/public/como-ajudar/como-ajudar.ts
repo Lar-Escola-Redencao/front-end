@@ -1,22 +1,22 @@
-import { CurrencyPipe, DatePipe, DOCUMENT, Location } from '@angular/common';
+import { CurrencyPipe, Location } from '@angular/common';
 import { Clipboard } from '@angular/cdk/clipboard';
 import { Component, computed, DestroyRef, ElementRef, HostListener, inject, OnInit, signal } from '@angular/core';
 import { A11yModule } from '@angular/cdk/a11y';
-import { OverlayModule } from '@angular/cdk/overlay';
 import { ModalLayout } from '@components/modal-layout/modal-layout';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
 import { PublicNavbar } from '@components/public-navbar/public-navbar';
 import { PublicFooter } from '@components/public-footer/public-footer';
 import { CodigoPix, ConfiguracaoPix, PixService } from 'src/app/shared/services/pix/pix.service';
 import { HistoricoPixService } from 'src/app/shared/services/pix/historico-pix.service';
-import { Alertas } from 'src/app/shared/utils/alerts';
 import { forkJoin, timer } from 'rxjs';
 
 @Component({
   selector: 'app-como-ajudar',
   standalone: true,
-  imports: [PublicNavbar, PublicFooter, FormsModule, CurrencyPipe, DatePipe, ModalLayout, A11yModule, OverlayModule],
+  imports: [PublicNavbar, PublicFooter, FormsModule, CurrencyPipe, ModalLayout, A11yModule, MatFormFieldModule, MatInputModule],
   templateUrl: './como-ajudar.html',
   styleUrl: './como-ajudar.css',
 })
@@ -24,7 +24,6 @@ export class ComoAjudar implements OnInit {
   private readonly pixService = inject(PixService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly clipboard = inject(Clipboard);
-  private readonly documento = inject(DOCUMENT);
   private readonly elemento = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly location = inject(Location);
   private copiaChaveTimer?: ReturnType<typeof setTimeout>;
@@ -45,11 +44,8 @@ export class ComoAjudar implements OnInit {
   protected readonly enviandoEmail = signal(false);
   protected readonly agradecimentoEnviado = signal(false);
   protected readonly erroEmail = signal('');
-  protected readonly feedbackDownload = signal('');
-  protected readonly duvidaAberta = signal(false);
-  protected readonly confirmandoAcaoPix = signal(false);
-  protected readonly pixInformados = computed(() => this.historico.codigos()
-    .filter((codigo) => codigo.contribuicaoInformada === true));
+  protected readonly codigoCopiado = signal<string | null>(null);
+  private copiaCodigoTimer?: ReturnType<typeof setTimeout>;
   protected readonly pixEmAberto = computed(() => this.historico.codigos()
     .find((codigo) => codigo.contribuicaoInformada !== true
       && codigo.chave === this.configuracao()?.chave && !this.prazoEncerrado(codigo)) ?? null);
@@ -63,18 +59,25 @@ export class ComoAjudar implements OnInit {
     const segundos = this.segundosRestantes();
     return `${Math.floor(segundos / 60).toString().padStart(2, '0')}:${(segundos % 60).toString().padStart(2, '0')}`;
   });
-  protected valorDigitado = '25,00';
+  protected valorDigitado = '';
+  protected valorEmFoco = false;
+  protected readonly etapaEmail = signal(false);
+  protected readonly codigoPaginaExpandido = signal(false);
+  protected readonly codigoModalExpandido = signal(false);
+  protected readonly orientacaoCodigoPix = 'Você pode escolher outro valor e gerar um novo código quando quiser. O pagamento só acontece quando você confirma no aplicativo do banco.';
 
   constructor() {
-    this.destroyRef.onDestroy(() => clearTimeout(this.copiaChaveTimer));
+    this.destroyRef.onDestroy(() => {
+      clearTimeout(this.copiaChaveTimer);
+      clearTimeout(this.copiaCodigoTimer);
+    });
     const timer = setInterval(() => this.agora.set(Date.now()), 1000);
     this.destroyRef.onDestroy(() => clearInterval(timer));
   }
 
   @HostListener('document:keydown.escape')
   protected fecharModal(): void {
-    if (this.confirmandoAcaoPix()) return;
-    this.duvidaAberta.set(false);
+    if (this.enviandoEmail()) return;
     this.modalAberto.set(false);
   }
 
@@ -100,10 +103,10 @@ export class ComoAjudar implements OnInit {
   private prepararModal(): void {
     this.agora.set(Date.now());
     this.modalAberto.set(true);
+    this.etapaEmail.set(false);
     this.agradecimentoEnviado.set(false);
     this.emailDigitado = '';
     this.erroEmail.set('');
-    this.feedbackDownload.set('');
   }
 
   ngOnInit(): void {
@@ -140,11 +143,22 @@ export class ComoAjudar implements OnInit {
     this.alterarValor();
   }
 
+  protected digitarValor(valor: string, campo: HTMLInputElement): void {
+    if (!/^\d{0,6}(?:[.,]\d{0,2})?$/.test(valor)) {
+      campo.value = this.valorDigitado;
+      return;
+    }
+    this.valorDigitado = valor;
+    this.alterarValor();
+  }
+
   protected alterarValor(): void {
     this.codigo.set(null);
     this.erroValor.set('');
     this.erroGeracao.set('');
     this.feedbackCopia.set('');
+    this.codigoCopiado.set(null);
+    clearTimeout(this.copiaCodigoTimer);
   }
 
   protected valorSelecionado(valor: number): boolean {
@@ -172,12 +186,14 @@ export class ComoAjudar implements OnInit {
     this.erroValor.set('');
     this.erroGeracao.set('');
     this.feedbackCopia.set('');
+    this.codigoCopiado.set(null);
+    clearTimeout(this.copiaCodigoTimer);
     forkJoin({ codigo: this.pixService.gerarCodigo(valor), espera: timer(500) })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: ({ codigo }) => {
           this.codigo.set(codigo);
-          this.configuracao.update((config) => config ? { ...config, chave: codigo.chave } : config);
+          this.configuracao.update((config) => config ? { ...config, chave: codigo.chave, nomeRecebedor: codigo.nomeRecebedor } : config);
           this.erroImagem.set(false);
           this.historico.salvar(codigo);
           this.gerando.set(false);
@@ -190,7 +206,9 @@ export class ComoAjudar implements OnInit {
             this.configuracao.set(null);
           } else
             this.erroGeracao.set(
-              erro.error?.message ?? 'Não foi possível gerar o Pix. Tente novamente.',
+              erro.status === 429
+                ? 'Muitas tentativas de geração. Aguarde um pouco e tente novamente.'
+                : 'Não foi possível gerar o QR Code. Tente novamente em instantes.',
             );
         },
       });
@@ -198,22 +216,24 @@ export class ComoAjudar implements OnInit {
 
   protected copiarCodigo(codigo: CodigoPix | null = this.codigo()): void {
     this.atualizarHorario();
-    if (!codigo || this.prazoEncerrado(codigo)) return;
-    this.feedbackCopia.set(
-      this.clipboard.copy(codigo.copiaECola)
-        ? 'Código Pix copiado.'
-        : 'Não foi possível copiar. Selecione o código abaixo.',
-    );
+    if (!codigo || this.prazoEncerrado(codigo) || this.codigoCopiado() === codigo.identificador) return;
+    clearTimeout(this.copiaCodigoTimer);
+    const copiou = this.clipboard.copy(codigo.copiaECola);
+    this.codigoCopiado.set(copiou ? codigo.identificador : null);
+    this.feedbackCopia.set(copiou ? '' : 'Não foi possível copiar. Selecione o código no modal.');
+    if (copiou) {
+      this.copiaCodigoTimer = setTimeout(() => this.codigoCopiado.set(null), 2500);
+    }
   }
 
   protected copiarChavePix(): void {
     const chave = this.configuracao()?.chave;
-    if (!chave) return;
+    if (!chave || this.chaveCopiada()) return;
     clearTimeout(this.copiaChaveTimer);
     const copiou = this.clipboard.copy(chave);
     this.chaveCopiada.set(copiou);
     this.feedbackChave.set(
-      copiou ? 'Chave Pix copiada!' : 'Não foi possível copiar. Selecione a chave para copiar.',
+      copiou ? '' : 'Não foi possível copiar. Selecione a chave para copiar.',
     );
     if (copiou) {
       this.copiaChaveTimer = setTimeout(() => {
@@ -248,66 +268,16 @@ export class ComoAjudar implements OnInit {
     this.agradecimentoEnviado.set(codigo.contribuicaoInformada === true);
   }
 
-  protected async removerCodigo(identificador: string): Promise<void> {
-    if (this.confirmandoAcaoPix()) return;
-    this.confirmandoAcaoPix.set(true);
-    let confirmou = false;
-    try {
-      confirmou = await Alertas.confirmarExclusao(
-        'Esta ação apenas remove o registro da seção Seus Pix neste navegador. Se você já pagou, o pagamento não será cancelado.',
-        'pix-alerta-acoes',
-      );
-    } finally {
-      this.confirmandoAcaoPix.set(false);
-    }
-    if (!confirmou || this.destroyRef.destroyed) return;
-    this.historico.remover(identificador);
-    if (this.codigo()?.identificador === identificador) this.codigo.set(null);
+  protected abrirEmail(codigo: CodigoPix | null = this.codigo()): void {
+    if (!codigo || this.enviandoEmail() || this.prazoEncerrado(codigo)) return;
+    if (!this.modalAberto()) this.reabrirCodigo(codigo);
+    this.etapaEmail.set(true);
   }
 
-  protected async cancelarPix(codigo: CodigoPix): Promise<void> {
-    if (this.gerando() || this.enviandoEmail() || this.confirmandoAcaoPix() || codigo.contribuicaoInformada === true) return;
-    this.confirmandoAcaoPix.set(true);
-    let confirmou = false;
-    try {
-      confirmou = await Alertas.confirmarCancelamentoPix();
-    } finally {
-      this.confirmandoAcaoPix.set(false);
-    }
-    if (!confirmou || this.destroyRef.destroyed) return;
-    this.historico.cancelarPendentes(codigo.chave);
-    this.codigo.set(null);
-    this.fecharModal();
-    this.feedbackCopia.set('');
-    this.feedbackDownload.set('');
-    this.erroEmail.set('');
-    this.emailDigitado = '';
-  }
-
-  protected baixarQrCode(): void {
+  protected continuarSemEmail(): void {
+    if (this.enviandoEmail()) return;
     const codigo = this.codigo();
-    this.atualizarHorario();
-    if (!codigo || this.prazoEncerrado(codigo)) return;
-    try {
-      const base64 = codigo.qrCode.split(',')[1];
-      const bytes = Uint8Array.from(atob(base64), (caractere) => caractere.charCodeAt(0));
-      this.baixarArquivo(new Blob([bytes], { type: 'image/png' }), `pix-${codigo.identificador}.png`);
-    } catch {
-      this.feedbackDownload.set('Não foi possível baixar a imagem. Use o Pix Copia e Cola.');
-    }
-  }
-
-  private baixarArquivo(blob: Blob, nome: string): void {
-    const url = URL.createObjectURL(blob);
-    const link = this.documento.createElement('a');
-    link.href = url;
-    link.download = nome;
-    link.rel = 'noopener';
-    this.documento.body.appendChild(link);
-    link.click();
-    link.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 60_000);
-    this.feedbackDownload.set('');
+    if (codigo) this.concluirAgradecimento(codigo);
   }
 
   protected informarPagamento(): void {
@@ -317,7 +287,7 @@ export class ComoAjudar implements OnInit {
     this.erroEmail.set('');
     const email = this.emailDigitado.trim();
     if (!email) {
-      this.concluirAgradecimento(codigo);
+      this.erroEmail.set('Informe um e-mail ou escolha continuar sem e-mail.');
       return;
     }
     if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -346,25 +316,4 @@ export class ComoAjudar implements OnInit {
     this.emailDigitado = '';
   }
 
-  protected baixarResumo(codigo: CodigoPix): void {
-    const texto = [
-      'LAR ESCOLA REDENÇÃO — CÓDIGO PIX',
-      `Valor solicitado: ${codigo.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`,
-      `Recebedor: ${codigo.nomeRecebedor}`,
-      `Cidade: ${codigo.cidadeRecebedor}`,
-      `Chave Pix: ${codigo.chave}`,
-      `Identificador: ${codigo.identificador}`,
-      `Gerado em: ${new Date(codigo.geradoEm).toLocaleString('pt-BR')}`,
-      '',
-      'PIX COPIA E COLA',
-      this.prazoEncerrado(codigo) ? 'Prazo de exibição encerrado. Gere um novo Pix no site.' : codigo.copiaECola,
-      '',
-      'Este registro não confirma pagamento. O comprovante é emitido pelo aplicativo do banco após a conclusão do Pix.',
-    ].join('\n');
-    try {
-      this.baixarArquivo(new Blob(['\uFEFF', texto], { type: 'text/plain;charset=utf-8' }), `meu-pix-${codigo.identificador}.txt`);
-    } catch {
-      this.feedbackDownload.set('Não foi possível baixar os dados. Tente novamente no navegador.');
-    }
-  }
 }

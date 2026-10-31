@@ -62,8 +62,7 @@ export class HistoricoPixService {
       codigo.valor <= 999999.99 &&
       typeof codigo.chave === 'string' &&
       codigo.chave.length <= 77 &&
-      typeof codigo.nomeRecebedor === 'string' &&
-      codigo.nomeRecebedor.length <= 25 &&
+      (codigo.nomeRecebedor === null || (typeof codigo.nomeRecebedor === 'string' && codigo.nomeRecebedor.length <= 25)) &&
       typeof codigo.cidadeRecebedor === 'string' &&
       codigo.cidadeRecebedor.length <= 15 &&
       typeof codigo.copiaECola === 'string' &&

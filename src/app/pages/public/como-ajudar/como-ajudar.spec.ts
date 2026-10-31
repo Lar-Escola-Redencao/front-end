@@ -12,7 +12,6 @@ import { PublicFooter } from '@components/public-footer/public-footer';
 import { environment } from 'src/environments/environment';
 import { CodigoPix, ConfiguracaoPix } from 'src/app/shared/services/pix/pix.service';
 import { HistoricoPixService } from 'src/app/shared/services/pix/historico-pix.service';
-import { Alertas } from 'src/app/shared/utils/alerts';
 import { ComoAjudar } from './como-ajudar';
 
 registerLocaleData(localePt);
@@ -29,7 +28,7 @@ describe('ComoAjudar — geração local de Pix', () => {
   const url = `${environment.apiUrl}/pix`;
   const config: ConfiguracaoPix = {
     chave: 'pix-demo@example.org',
-    nomeRecebedor: 'LAR ESCOLA REDENCAO',
+    nomeRecebedor: 'Instituto Esperança',
     cidadeRecebedor: 'ARARAQUARA',
     valoresSugeridos: [10, 25, 50, 100],
   };
@@ -86,16 +85,69 @@ describe('ComoAjudar — geração local de Pix', () => {
   }
 
   function enviar() {
+    if (!elemento.querySelector<HTMLInputElement>('#valor-doacao')!.value) {
+      elemento.querySelectorAll<HTMLButtonElement>('.valores-sugeridos button')[1].click();
+    }
     elemento
       .querySelector<HTMLFormElement>('form')!
       .dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
   }
+
+  it('mostra o prefixo monetário apenas com foco ou valor preenchido', async () => {
+    await carregar();
+    const input = elemento.querySelector<HTMLInputElement>('#valor-doacao')!;
+    expect(input.value).toBe('');
+    expect(elemento.querySelector('.prefixo-moeda')).toBeNull();
+    input.dispatchEvent(new Event('focus'));
+    fixture.detectChanges();
+    expect(elemento.querySelector('.prefixo-moeda')?.textContent).toBe('R$');
+    input.dispatchEvent(new Event('blur'));
+    fixture.detectChanges();
+    expect(elemento.querySelector('.prefixo-moeda')).toBeNull();
+    elemento.querySelector<HTMLButtonElement>('.valores-sugeridos button')!.click();
+    fixture.detectChanges();
+    expect(elemento.querySelector('.prefixo-moeda')).not.toBeNull();
+  });
+
+  it('abre e-mail pela ação de pagamento e fecha ao clicar fora após voltar ao QR Code', async () => {
+    await carregar();
+    enviar();
+    http.expectOne(`${url}/codigo`).flush(codigo);
+    await aguardarGeracao();
+    expect(elemento.querySelector('#email-agradecimento')).toBeNull();
+    elemento.querySelector<HTMLButtonElement>('app-modal-layout .pix-informar')!.click();
+    fixture.detectChanges();
+    expect(elemento.querySelector('#email-agradecimento')).not.toBeNull();
+    expect(elemento.querySelector('app-modal-layout .qr-code')).toBeNull();
+    expect(elemento.querySelector('.pix-imagem .qr-code')).not.toBeNull();
+    expect(TestBed.inject(HistoricoPixService).codigos()[0].contribuicaoInformada).not.toBe(true);
+    elemento.querySelector<HTMLButtonElement>('.pix-voltar')!.click();
+    fixture.detectChanges();
+    expect(elemento.querySelector('app-modal-layout .qr-code')?.getAttribute('src')).toBe(codigo.qrCode);
+    elemento.querySelector<HTMLElement>('.modal-backdrop')!.click();
+    fixture.detectChanges();
+    expect(elemento.querySelector('app-modal-layout')).toBeNull();
+    expect(elemento.querySelector('.pix-imagem .qr-code')).not.toBeNull();
+    http.expectNone(`${url}/codigo`);
+  });
 
   it('mostra valores sugeridos e recebe somente a chave configurada no servidor', async () => {
     await carregar();
     expect(elemento.querySelectorAll('.valores-sugeridos button')).toHaveLength(4);
     expect(elemento.textContent).toContain(config.chave);
     expect(elemento.querySelector('.qr-code')).toBeNull();
+  });
+
+  it('oculta o recebedor na página e no modal quando não está cadastrado', async () => {
+    http.expectOne(url).flush({ ...config, nomeRecebedor: null });
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(elemento.querySelector('.pix-recebedor')).toBeNull();
+    enviar();
+    http.expectOne(`${url}/codigo`).flush({ ...codigo, nomeRecebedor: null });
+    await aguardarGeracao();
+    expect(elemento.querySelector('app-modal-layout .resultado-cabecalho span')).toBeNull();
+    expect(elemento.querySelector('app-modal-layout .qr-code')).not.toBeNull();
   });
 
   it('preserva a abertura, a ilustração e as demais seções da página original', async () => {
@@ -117,7 +169,13 @@ describe('ComoAjudar — geração local de Pix', () => {
     elemento.querySelector<HTMLButtonElement>('.chave-pix-copiar')!.click();
     fixture.detectChanges();
     expect(copiar).toHaveBeenCalledWith(config.chave);
-    expect(elemento.querySelector('.chave-pix-feedback')?.textContent).toContain('Chave Pix copiada');
+    const botao = elemento.querySelector<HTMLButtonElement>('.chave-pix-copiar')!;
+    expect(botao.textContent).toContain('Chave Pix copiada!');
+    expect(botao.querySelector('.material-symbols-outlined')?.textContent).toContain('check');
+    expect(botao.disabled).toBe(true);
+    expect(elemento.querySelector('.chave-pix-feedback')).toBeNull();
+    botao.click();
+    expect(copiar).toHaveBeenCalledTimes(1);
     http.expectNone(`${url}/codigo`);
   });
 
@@ -129,11 +187,13 @@ describe('ComoAjudar — geração local de Pix', () => {
     expect(requisicao.request.method).toBe('POST');
     expect(requisicao.request.body).toEqual({ valor: 42.35 });
     requisicao.flush({ ...codigo, valor: 42.35 });
-    expect(elemento.querySelector('.gerar-pix')?.textContent).toContain('Gerando Pix');
+    fixture.detectChanges();
+    expect(elemento.querySelector('.gerar-pix')?.textContent).toContain('Gerando QR Code');
     expect(elemento.querySelector('app-modal-layout')).toBeNull();
     await aguardarGeracao();
     fixture.detectChanges();
     expect(elemento.querySelector('.qr-code')?.getAttribute('src')).toBe(codigo.qrCode);
+    expect(elemento.querySelector('app-modal-layout .resultado-cabecalho')?.textContent).toContain(codigo.nomeRecebedor);
     expect(elemento.querySelector('.historico')).toBeNull();
     const recuperado = TestBed.runInInjectionContext(() => new HistoricoPixService());
     expect(recuperado.codigos()[0].valor).toBe(42.35);
@@ -142,21 +202,26 @@ describe('ComoAjudar — geração local de Pix', () => {
     expect(copiar).toHaveBeenCalledWith(codigo.copiaECola);
   });
 
-  it('mostra o QR Code no modal e permite declarar a doação sem informar e-mail', async () => {
+  it('mostra o mesmo QR Code no modal e na página e permite declarar a doação sem informar e-mail', async () => {
     await carregar();
     enviar();
     http.expectOne(`${url}/codigo`).flush(codigo);
     await aguardarGeracao();
     fixture.detectChanges();
-    expect(elemento.querySelector('.secao-pix .qr-code')).toBeNull();
+    expect(elemento.querySelector('.secao-pix .qr-code')?.getAttribute('src')).toBe(codigo.qrCode);
     expect(elemento.querySelector('app-modal-layout .qr-code')).not.toBeNull();
     expect(elemento.querySelector('.pix-tempo')?.textContent).toMatch(/1[45]:\d{2}/);
-    elemento.querySelector<HTMLFormElement>('.pix-form-agradecimento')!
-      .dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+    elemento.querySelector<HTMLButtonElement>('app-modal-layout .pix-informar')!.click();
     fixture.detectChanges();
-    expect(elemento.querySelector('.pix-agradecimento')?.textContent).toContain('Obrigado');
+    elemento.querySelector<HTMLButtonElement>('.pix-sem-email')!.click();
+    fixture.detectChanges();
+    expect(elemento.querySelector('.pix-agradecimento')?.textContent).toContain('Agradecemos por sua doação!');
+    expect(elemento.querySelector('app-modal-layout .modal-header h2')).toBeNull();
+    expect(elemento.querySelector('.pix-agradecimento-icone')).not.toBeNull();
     expect(TestBed.inject(HistoricoPixService).codigos()[0].contribuicaoInformada).toBe(true);
-    expect(elemento.querySelector('.historico')?.textContent).toContain('Seus Pix');
+    expect(elemento.querySelector('.historico')).toBeNull();
+    expect(elemento.querySelector('.pix-comprovante')?.textContent).toContain('Guarde o comprovante emitido pelo seu banco');
+    expect(elemento.querySelector('.pix-comprovante')?.textContent).toContain('o site não confirma o pagamento automaticamente');
     http.expectNone(`${url}/codigo/${codigo.identificador}/agradecimento`);
   });
 
@@ -171,7 +236,10 @@ describe('ComoAjudar — geração local de Pix', () => {
     expect(elemento.querySelector('app-modal-layout')).toBeNull();
     expect(elemento.querySelector('.pix-imagem .qr-code')?.getAttribute('src')).toBe(codigo.qrCode);
     expect(elemento.querySelector('.historico')).toBeNull();
-    elemento.querySelector<HTMLButtonElement>('.pix-retomar')!.click();
+    elemento.querySelector<HTMLButtonElement>('.pix-imagem .pix-informar')!.click();
+    fixture.detectChanges();
+    expect(elemento.querySelector('#email-agradecimento')).not.toBeNull();
+    elemento.querySelector<HTMLButtonElement>('.pix-voltar')!.click();
     fixture.detectChanges();
     expect(elemento.querySelector('app-modal-layout .qr-code')).not.toBeNull();
     http.expectNone(`${url}/codigo`);
@@ -183,7 +251,12 @@ describe('ComoAjudar — geração local de Pix', () => {
     http.expectOne(`${url}/codigo`).flush(codigo);
     await aguardarGeracao();
     fixture.detectChanges();
+    elemento.querySelector<HTMLButtonElement>('app-modal-layout .pix-informar')!.click();
+    fixture.detectChanges();
     await fixture.whenStable();
+    expect(elemento.querySelector('app-modal-layout .modal-header h2')?.textContent).toContain('Receber agradecimento');
+    expect(elemento.querySelector('.pix-form-agradecimento button[type=submit]')?.textContent).toContain('Receber por e-mail');
+    expect(elemento.querySelector('.pix-voltar')?.textContent).toContain('Voltar');
     const email = elemento.querySelector<HTMLInputElement>('#email-agradecimento')!;
     email.value = 'doador@example.org';
     email.dispatchEvent(new Event('input'));
@@ -199,73 +272,70 @@ describe('ComoAjudar — geração local de Pix', () => {
     expect(elemento.querySelector('.pix-agradecimento')).not.toBeNull();
   });
 
-  it('abre a explicação de Seus Pix mesmo com a lista recolhida', async () => {
+  it('simplifica as ações e confirma a cópia no próprio botão, sem mensagem adicional', async () => {
     await carregar();
-    TestBed.inject(HistoricoPixService).salvar({ ...codigo, contribuicaoInformada: true });
-    fixture.detectChanges();
-    expect(elemento.querySelector('details.historico')?.hasAttribute('open')).toBe(false);
-    elemento.querySelector<HTMLButtonElement>('.historico-duvida')!.click();
-    fixture.detectChanges();
-    expect(document.querySelector('.historico-explicacao')?.textContent).toContain('somente neste navegador');
-    document.querySelector<HTMLButtonElement>('[aria-label="Fechar explicação"]')!.click();
-    fixture.detectChanges();
-    expect(document.querySelector('.historico-explicacao')).toBeNull();
-  });
-
-  it('cancela o Pix em aberto e permite gerar outro preservando as doações informadas', async () => {
-    await carregar();
-    const confirmar = vi.spyOn(Alertas, 'confirmarCancelamentoPix').mockResolvedValue(true);
-    const historico = TestBed.inject(HistoricoPixService);
-    historico.salvar({ ...codigo, identificador: 'DOACAOINFORMADA', contribuicaoInformada: true });
     enviar();
     http.expectOne(`${url}/codigo`).flush(codigo);
     await aguardarGeracao();
+    const copiar = vi.spyOn(TestBed.inject(Clipboard), 'copy').mockReturnValue(true);
+    const botao = elemento.querySelector<HTMLButtonElement>('app-modal-layout .copiar-pix')!;
+    expect(botao.textContent).toContain('Copiar Pix Copia e Cola');
+    botao.click();
     fixture.detectChanges();
-    elemento.querySelector<HTMLButtonElement>('app-modal-layout .pix-cancelar')!.click();
-    await fixture.whenStable();
+    expect(copiar).toHaveBeenCalledWith(codigo.copiaECola);
+    expect(botao.textContent).toContain('Pix copiado!');
+    expect(botao.querySelector('.material-symbols-outlined')?.textContent).toContain('check');
+    const botaoPagina = elemento.querySelector<HTMLButtonElement>('.pix-imagem .copiar-pix')!;
+    expect(botaoPagina.textContent).toContain('Pix copiado!');
+    expect(botao.disabled).toBe(true);
+    expect(botaoPagina.disabled).toBe(true);
+    botao.click();
+    botaoPagina.click();
+    expect(copiar).toHaveBeenCalledTimes(1);
+    expect(elemento.querySelector('#pix-copia-cola-pagina')).toBeNull();
+    elemento.querySelector<HTMLButtonElement>('.pix-imagem .expandir-codigo-pix')!.click();
     fixture.detectChanges();
-    expect(confirmar).toHaveBeenCalledOnce();
-    expect(elemento.querySelector('app-modal-layout')).toBeNull();
-    expect(elemento.querySelector('.pix-imagem .qr-code')).toBeNull();
-    expect(historico.codigos().map((item) => item.identificador)).toEqual(['DOACAOINFORMADA']);
-    await digitar('50,00');
-    enviar();
-    http.expectOne(`${url}/codigo`).flush({ ...codigo, identificador: 'NOVOPIX', valor: 50 });
-    await aguardarGeracao();
-    fixture.detectChanges();
-    expect(historico.codigos().map((item) => item.identificador)).toEqual(['NOVOPIX', 'DOACAOINFORMADA']);
+    expect(elemento.querySelector('#pix-copia-cola-pagina')?.textContent).toBe(codigo.copiaECola);
+    expect(elemento.querySelector('app-modal-layout .feedback')).toBeNull();
+    expect(elemento.querySelector('.pix-cancelar')).toBeNull();
+    expect(elemento.textContent).not.toContain('Baixar QR Code');
+    expect(elemento.textContent).not.toContain('Baixar dados do Pix');
+    expect(elemento.querySelector('.pix-recebedor')?.textContent).toContain(config.nomeRecebedor);
   });
 
-  it('preserva o Pix e o modal quando o usuário desiste do cancelamento', async () => {
+  it('expande o código sem copiar e mantém as duas ações independentes', async () => {
     await carregar();
-    vi.spyOn(Alertas, 'confirmarCancelamentoPix').mockResolvedValue(false);
     enviar();
     http.expectOne(`${url}/codigo`).flush(codigo);
     await aguardarGeracao();
+    const copiar = vi.spyOn(TestBed.inject(Clipboard), 'copy').mockReturnValue(true);
+    const seta = elemento.querySelector<HTMLButtonElement>('app-modal-layout .expandir-codigo-pix')!;
+    expect(elemento.querySelector('#pix-copia-cola')).toBeNull();
+    expect(seta.getAttribute('aria-expanded')).toBe('false');
+    seta.click();
     fixture.detectChanges();
-    elemento.querySelector<HTMLButtonElement>('app-modal-layout .pix-cancelar')!.click();
-    await fixture.whenStable();
+    expect(elemento.querySelector('#pix-copia-cola')?.textContent).toBe(codigo.copiaECola);
+    expect(seta.getAttribute('aria-expanded')).toBe('true');
+    expect(copiar).not.toHaveBeenCalled();
+    expect(elemento.querySelector('#pix-copia-cola-pagina')).toBeNull();
+    seta.click();
     fixture.detectChanges();
-    expect(elemento.querySelector('app-modal-layout .qr-code')).not.toBeNull();
-    expect(TestBed.inject(HistoricoPixService).codigos()).toHaveLength(1);
+    expect(elemento.querySelector('#pix-copia-cola')).toBeNull();
+    expect(elemento.querySelector('.orientacao-valor')?.textContent).toContain('Você pode escolher outro valor');
+    expect(elemento.querySelector('.orientacao-valor')?.textContent).toContain('O pagamento só acontece');
+    expect(elemento.querySelector('app-modal-layout .nota-prazo')?.textContent).toContain('Você pode escolher outro valor');
   });
 
-  it('exclui um registro de Seus Pix somente após confirmar o alerta padrão', async () => {
+  it('informa falha de cópia sem mostrar confirmação de sucesso', async () => {
     await carregar();
-    const historico = TestBed.inject(HistoricoPixService);
-    const confirmar = vi.spyOn(Alertas, 'confirmarExclusao').mockResolvedValue(false);
-    historico.salvar({ ...codigo, contribuicaoInformada: true });
+    enviar();
+    http.expectOne(`${url}/codigo`).flush(codigo);
+    await aguardarGeracao();
+    vi.spyOn(TestBed.inject(Clipboard), 'copy').mockReturnValue(false);
+    elemento.querySelector<HTMLButtonElement>('app-modal-layout .copiar-pix')!.click();
     fixture.detectChanges();
-    elemento.querySelector<HTMLButtonElement>('.remover-codigo')!.click();
-    await fixture.whenStable();
-    fixture.detectChanges();
-    expect(historico.codigos()).toHaveLength(1);
-    confirmar.mockResolvedValue(true);
-    elemento.querySelector<HTMLButtonElement>('.remover-codigo')!.click();
-    await fixture.whenStable();
-    fixture.detectChanges();
-    expect(historico.codigos()).toHaveLength(0);
-    expect(elemento.querySelector('.historico')).toBeNull();
+    expect(elemento.querySelector('app-modal-layout .copiar-pix')?.textContent).toContain('Copiar Pix Copia e Cola');
+    expect(elemento.querySelector('app-modal-layout .feedback')?.textContent).toContain('Não foi possível copiar');
   });
 
   it('substitui o código pendente ao gerar outro valor sem acumular códigos em aberto', async () => {
@@ -292,28 +362,40 @@ describe('ComoAjudar — geração local de Pix', () => {
     fixture.detectChanges();
     expect(elemento.querySelector('app-modal-layout .qr-code')).toBeNull();
     expect(elemento.querySelector('app-modal-layout .copiar-pix')).toBeNull();
-    expect(elemento.querySelector('.pix-prazo-encerrado')?.textContent).toContain('Gerar novo Pix');
+    expect(elemento.querySelector('.pix-prazo-encerrado')?.textContent).toContain('Gerar novo QR Code');
   });
 
-  it('recusa valor zero ou mais de duas casas sem chamar o back-end', async () => {
+  it('limita a digitação a seis inteiros e duas casas, inclusive ao colar', async () => {
     await carregar();
-    for (const valor of ['0', '1,001', '-5', '1000000']) {
+    await digitar('999999,99');
+    for (const valor of ['1000000', '999999,999', '-5', 'abc', '1,2,3']) {
       await digitar(valor);
-      enviar();
-      fixture.detectChanges();
-      expect(elemento.querySelector('#erro-valor')).not.toBeNull();
-      http.expectNone(`${url}/codigo`);
+      expect(elemento.querySelector<HTMLInputElement>('#valor-doacao')!.value).toBe('999999,99');
     }
+    enviar();
+    const requisicao = http.expectOne(`${url}/codigo`);
+    expect(requisicao.request.body).toEqual({ valor: 999999.99 });
+    requisicao.flush(codigo);
+    await aguardarGeracao();
   });
 
-  it('remove o código anterior da tela quando o valor é alterado', async () => {
+  it('recusa valor zero sem chamar o back-end', async () => {
+    await carregar();
+    await digitar('0');
+    enviar();
+    fixture.detectChanges();
+    expect(elemento.querySelector('#erro-valor')).not.toBeNull();
+    http.expectNone(`${url}/codigo`);
+  });
+
+  it('preserva o Pix gerado na página enquanto outro valor é escolhido', async () => {
     await carregar();
     enviar();
     http.expectOne(`${url}/codigo`).flush(codigo);
     await aguardarGeracao();
     fixture.detectChanges();
     await digitar('50,00');
-    expect(elemento.querySelector('.qr-code')).toBeNull();
+    expect(elemento.querySelector('.pix-imagem .qr-code')?.getAttribute('src')).toBe(codigo.qrCode);
     expect(TestBed.inject(HistoricoPixService).codigos()).toHaveLength(1);
   });
 
@@ -322,6 +404,19 @@ describe('ComoAjudar — geração local de Pix', () => {
     fixture.detectChanges();
     expect(elemento.querySelector('form')).toBeNull();
     expect(elemento.textContent).toContain('indisponíveis');
+  });
+
+  it('mostra uma mensagem amigável de geração sem expor erros internos do servidor', async () => {
+    await carregar();
+    enviar();
+    http.expectOne(`${url}/codigo`).flush({
+      message: 'Unresolved compilation problems: BitMatrix cannot be resolved to a type',
+    }, { status: 500, statusText: 'Internal Server Error' });
+    fixture.detectChanges();
+    expect(elemento.textContent).toContain('Não foi possível gerar o QR Code agora. Tente novamente em instantes.');
+    expect(elemento.textContent).not.toContain('BitMatrix');
+    expect(elemento.textContent).not.toContain('Unresolved compilation');
+    expect(elemento.querySelector<HTMLButtonElement>('.gerar-pix')?.disabled).toBe(false);
   });
 
   it('permite tentar novamente após falha de rede', async () => {

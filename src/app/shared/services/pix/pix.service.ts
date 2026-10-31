@@ -4,7 +4,7 @@ import { environment } from 'src/environments/environment';
 
 export interface ConfiguracaoPix {
   chave: string;
-  nomeRecebedor: string;
+  nomeRecebedor: string | null;
   cidadeRecebedor: string;
   valoresSugeridos: number[];
 }
@@ -13,7 +13,7 @@ export interface CodigoPix {
   identificador: string;
   valor: number;
   chave: string;
-  nomeRecebedor: string;
+  nomeRecebedor: string | null;
   cidadeRecebedor: string;
   copiaECola: string;
   qrCode: string;

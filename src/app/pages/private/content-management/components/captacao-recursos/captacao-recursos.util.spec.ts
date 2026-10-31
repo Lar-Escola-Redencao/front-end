@@ -118,15 +118,23 @@ describe('captacao-recursos.util', () => {
     });
   });
 
-  it.each([true, false])('maps Pix to conteudo with ativo=%s, without titulo or upload', (ativo) => {
+  it.each([true, false])('maps Pix receiver to titulo and key to conteudo with ativo=%s', (ativo) => {
     const grupo = grupoPorNome('pix');
     const form = criarFormularioGrupo(fb, grupo);
-    form.patchValue({ conteudo: 'chave@lar.org', ativo });
+    form.patchValue({ titulo: 'Lar Escola Redenção', conteudo: 'chave@lar.org', ativo });
 
     const dto = montarDtoGrupo(grupo, form, null);
 
-    expect(dto).toEqual({ grupo: 'pix', conteudo: 'chave@lar.org', ativo });
-    expect('titulo' in dto).toBe(false);
+    expect(dto).toEqual({ grupo: 'pix', titulo: 'Lar Escola Redenção', conteudo: 'chave@lar.org', ativo });
+  });
+
+  it('requires a receiver name and limits it to 25 characters', () => {
+    const form = criarFormularioGrupo(fb, grupoPorNome('pix'));
+    expect(form.get('titulo')?.hasError('required')).toBe(true);
+    form.patchValue({ titulo: 'A'.repeat(26) });
+    expect(form.get('titulo')?.hasError('maxlength')).toBe(true);
+    form.patchValue({ titulo: 'Lar Escola Redenção' });
+    expect(form.get('titulo')?.valid).toBe(true);
   });
 
   it('rejects a blank Pix key', () => {
