@@ -1,3 +1,4 @@
+import { HistoricoContextual } from '@components/historico-contextual/historico-contextual';
 import { EstadoVazio } from 'src/app/components/estado-vazio/estado-vazio';
 import { FecharAutocompleteFora } from 'src/app/shared/directives/fechar-autocomplete-fora';
 import { CommonModule } from '@angular/common';
@@ -26,7 +27,9 @@ type ModoModalContato = 'novo' | 'editar' | 'visualizar';
 @Component({
   selector: 'app-usuario-perfil-contatos',
   standalone: true,
-  imports: [EstadoVazio,
+  imports: [
+    HistoricoContextual,
+    EstadoVazio,
     FecharAutocompleteFora,
     CommonModule,
     ReactiveFormsModule,
@@ -493,7 +496,7 @@ export class UsuarioPerfilContatos implements OnDestroy {
   }
 
   formatarTelefoneContato(valor?: string | null): string {
-    return valor ? formatarTelefone(valor) : 'Telefone não informado';
+    return valor ? formatarTelefone(valor) : '-';
   }
 
   hrefTelefoneContato(valor?: string | null): string | null {
@@ -502,7 +505,7 @@ export class UsuarioPerfilContatos implements OnDestroy {
   }
 
   formatarCpfContato(valor?: string | null): string {
-    return valor ? formatarCpf(valor) : 'CPF não informado';
+    return valor ? formatarCpf(valor) : '-';
   }
 
   private configurarAutocomplete(): void {

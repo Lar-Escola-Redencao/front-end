@@ -497,3 +497,13 @@
     width: 100%;
   }
 }
+
+.perfil-card {
+  position: relative;
+}
+
+.perfil-historico {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+}

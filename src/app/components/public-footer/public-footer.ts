@@ -33,24 +33,51 @@ export class PublicFooter implements OnInit {
     { label: 'Unidades de atendimento', sectionId: 'unidades' },
     { label: 'Eventos', sectionId: 'eventos' },
     { label: 'Parceiros', sectionId: 'parceiros' },
-    { label: 'Transpar\u00eancia', route: '/transparencia' },
+    { label: 'Transparência', route: '/transparencia' },
   ];
 
   readonly helpLinks: FooterLink[] = [
-    { label: 'Doa\u00e7\u00e3o de nota fiscal', route: '/', fragment: 'como-ajudar' },
-    { label: 'Doa\u00e7\u00e3o via PIX', route: '/', fragment: 'como-ajudar' },
+    {
+      label: 'Doação de nota fiscal',
+      route: '/como-ajudar',
+      fragment: 'notas-fiscais',
+    },
+    {
+      label: 'Doação via Pix',
+      route: '/como-ajudar',
+    },
   ];
 
   readonly oscLinks: FooterLink[] = [
-    { label: 'Sobre', route: '/conheca-a-osc', fragment: 'sobre' },
-    { label: 'Nossa hist\u00f3ria', route: '/conheca-a-osc', fragment: 'historia' },
-    { label: 'Lar Escola Reden\u00e7\u00e3o em n\u00fameros', route: '/conheca-a-osc', fragment: 'numeros' },
-    { label: 'Composi\u00e7\u00e3o da diretoria', route: '/conheca-a-osc', fragment: 'conheca-osc' },
-    { label: 'Unidades de atendimento', route: '/conheca-a-osc', fragment: 'unidades' },
+    {
+      label: 'Sobre',
+      route: '/conheca-a-osc',
+      fragment: 'sobre',
+    },
+    {
+      label: 'Nossa história',
+      route: '/conheca-a-osc',
+      fragment: 'historia',
+    },
+    {
+      label: 'Lar Escola Redenção em números',
+      route: '/conheca-a-osc',
+      fragment: 'numeros',
+    },
+    {
+      label: 'Composição da diretoria',
+      route: '/conheca-a-osc',
+      fragment: 'conheca-osc',
+    },
+    {
+      label: 'Unidades de atendimento',
+      route: '/conheca-a-osc',
+      fragment: 'unidades',
+    },
   ];
 
   ngOnInit(): void {
-    this.publicContentService.getRedesSociaisAtivas().subscribe(socialLinks => {
+    this.publicContentService.getRedesSociaisAtivas().subscribe((socialLinks) => {
       this.socialLinks = socialLinks;
       this.cdr.detectChanges();
     });
@@ -96,8 +123,14 @@ export class PublicFooter implements OnInit {
 
   getSocialFallback(socialLink: SocialLink): string {
     const nome = socialLink.nome.trim();
-    if (!nome) return '?';
-    return nome.toLowerCase() === 'linkedin' ? 'in' : nome.charAt(0).toLowerCase();
+
+    if (!nome) {
+      return '?';
+    }
+
+    return nome.toLowerCase() === 'linkedin'
+      ? 'in'
+      : nome.charAt(0).toLowerCase();
   }
 
   onSocialIconError(event: Event): void {

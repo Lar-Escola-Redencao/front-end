@@ -1,11 +1,15 @@
-<div appBloquearScroll class="modal-backdrop" (click)="closed.emit()">
-  <section class="modal-card" (click)="$event.stopPropagation()">
+<div appBloquearScroll class="modal-backdrop" (click)="$event.target === $event.currentTarget ? clicarFora() : null">
+  <section class="modal-card">
     <header class="modal-header">
       <div class="modal-title-area">
-        <h2>{{ titulo }}</h2>
+        @if (titulo) {
+          <h2>{{ titulo }}</h2>
+        }
         <ng-content select="[modal-title-extra]"></ng-content>
       </div>
-      <button type="button" class="modal-close" aria-label="Fechar modal" (click)="closed.emit()">×</button>
+      <button type="button" class="modal-close" aria-label="Fechar modal" (click)="closed.emit()">
+        <mat-icon aria-hidden="true">close</mat-icon>
+      </button>
     </header>
 
     <ng-content></ng-content>

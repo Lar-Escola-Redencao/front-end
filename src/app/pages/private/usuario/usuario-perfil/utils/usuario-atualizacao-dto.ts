@@ -57,6 +57,43 @@ export function montarFichaSocioeconomicaBase(usuario: UsuarioResponseDTO): Fich
   return usuario.fichaSocioeconomica ?? { tipoMoradia: 'OUTRO' };
 }
 
+export function preservarCamposNaoEditados<T extends object>(
+  original: T,
+  atualizado: T,
+  formularioOriginal: Record<string, unknown>,
+  formularioAtual: Record<string, unknown>,
+  dependencias: Record<string, string[]> = {}
+): T {
+  const resultado = { ...atualizado };
+  for (const campo of Object.keys(atualizado) as (keyof T & string)[]) {
+    const controles = [campo, ...(dependencias[campo] ?? [])];
+    const possuiControle = controles.some(controle => controle in formularioAtual);
+    const foiEditado = controles.some(controle =>
+      JSON.stringify(formularioOriginal[controle]) !== JSON.stringify(formularioAtual[controle]));
+    if (!possuiControle || foiEditado) continue;
+
+    if (Object.prototype.hasOwnProperty.call(original, campo)) {
+      resultado[campo] = original[campo];
+    } else {
+      delete resultado[campo];
+    }
+  }
+  return resultado;
+}
+
+export const dependenciasFichaSocioeconomica: Record<string, string[]> = {
+  valorAluguel: ['tipoMoradia'],
+  valorFinanciamento: ['tipoMoradia'],
+  gastoCarro: ['utilizaCarro'],
+  gastoMoto: ['utilizaMoto'],
+  gastoTransportePublico: ['utilizaTransportePublico'],
+  gastoVan: ['utilizaVan'],
+  descProblemaSaude: ['possuiProblemaSaude'],
+  descMedicacao: ['usaMedicacao'],
+  descAlergia: ['temAlergia'],
+  religiao: ['professaReligiao', 'outraReligiao']
+};
+
 function obrigatorio(valor: unknown, campo: string): string {
   const texto = String(valor ?? '').trim();
   if (!texto) erroObrigatorio(campo);

@@ -10,14 +10,14 @@
       <mat-form-field appearance="outline">
         <mat-label>Data de início</mat-label>
         <input #dataInicial matInput type="date" name="dataInicial" [(ngModel)]="rascunho.dataInicial" />
-        <button mat-icon-button matSuffix type="button" aria-label="Abrir calendário da data de início" (click)="abrirCalendario(dataInicial)">
+        <button class="btn-calendario-data" matSuffix type="button" aria-label="Abrir calendário da data de início" (click)="abrirCalendario(dataInicial)">
           <mat-icon>calendar_month</mat-icon>
         </button>
       </mat-form-field>
       <mat-form-field appearance="outline">
         <mat-label>Data de fim</mat-label>
         <input #dataFinal matInput type="date" name="dataFinal" [(ngModel)]="rascunho.dataFinal" />
-        <button mat-icon-button matSuffix type="button" aria-label="Abrir calendário da data de fim" (click)="abrirCalendario(dataFinal)">
+        <button class="btn-calendario-data" matSuffix type="button" aria-label="Abrir calendário da data de fim" (click)="abrirCalendario(dataFinal)">
           <mat-icon>calendar_month</mat-icon>
         </button>
       </mat-form-field>

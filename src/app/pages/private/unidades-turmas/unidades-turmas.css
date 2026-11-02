@@ -299,3 +299,14 @@ h1 {
     width: 100%;
   }
 }
+
+.cabecalho-unidades {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.cabecalho-unidades h1 {
+  margin: 0;
+}

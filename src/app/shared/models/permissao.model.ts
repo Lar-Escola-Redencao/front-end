@@ -10,7 +10,8 @@ export type Modulo =
   | 'perfil-usuario'
   | 'colaboradores'
   | 'unidades-turmas'
-  | 'conteudo-publico';
+  | 'conteudo-publico'
+  | 'historico-alteracoes';
 
 /**
  * Matriz de permissões:
@@ -25,6 +26,7 @@ export const PERMISSOES: Record<Modulo, readonly Role[]> = {
   colaboradores: ['ADMINISTRADOR', 'COORDENADOR'],
   'unidades-turmas': ['ADMINISTRADOR'],
   'conteudo-publico': ['ADMINISTRADOR'],
+  'historico-alteracoes': ['ADMINISTRADOR'],
 };
 
 /** Converte o valor bruto da claim em um perfil conhecido (aceita o legado `ROLE_X`). */

@@ -41,7 +41,7 @@ export function criarFormularioGrupo(fb: FormBuilder, grupo: GrupoSecaoConfig): 
       validadores.push(validarTelefoneOuEmail());
     } else if (campo.campo === 'titulo') {
       const { minimo, maximo } = CONTRATO_SECOES_GRUPO.tamanhoTitulo;
-      validadores.push(Validators.minLength(minimo), Validators.maxLength(maximo));
+      validadores.push(Validators.minLength(minimo), Validators.maxLength(campo.maximo ?? maximo));
     }
 
     controles[campo.campo] = ['', validadores];
@@ -100,11 +100,17 @@ export function montarDtoGrupo(
   grupo: GrupoSecaoConfig,
   form: FormGroup,
   arquivo: File | null,
+  original: SecaoGrupo | null = null,
 ): SalvarSecaoGrupoDTO {
   const dto: SalvarSecaoGrupoDTO = { grupo: grupo.grupo };
 
+  const valoresOriginais = valoresIniciaisGrupo(grupo, original);
   for (const campo of grupo.campos) {
     const texto = String(form.get(campo.campo)?.value ?? '');
+    if (original && texto === String(valoresOriginais[campo.campo] ?? '')) {
+      dto[campo.campo] = original[campo.campo] ?? '';
+      continue;
+    }
     dto[campo.campo] = campo.tipo === 'telefone' ? texto.replace(/\D/g, '') : texto.trim();
   }
 
@@ -152,7 +158,7 @@ export function limiteCaracteres(campo: CampoTextoConfig): number | null {
     return TAMANHO_TELEFONE_MASCARADO;
   }
 
-  return campo.campo === 'titulo' ? CONTRATO_SECOES_GRUPO.tamanhoTitulo.maximo : null;
+  return campo.maximo ?? (campo.campo === 'titulo' ? CONTRATO_SECOES_GRUPO.tamanhoTitulo.maximo : null);
 }
 
 export function aplicarMascaraTelefone(controle: AbstractControl | null): void {

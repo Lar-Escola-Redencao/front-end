@@ -1,6 +1,17 @@
 import Swal from 'sweetalert2';
 
 export const Alertas = {
+  confirmarAlteracaoIdentificadores: (): Promise<boolean> => {
+    return Swal.fire({
+      title: 'Alterar dados de acesso?',
+      text: 'Ao alterar seu CPF ou e-mail, você será desconectado após salvar e precisará entrar novamente com os dados atualizados.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Salvar e sair',
+      cancelButtonText: 'Continuar editando',
+      reverseButtons: false
+    }).then(resultado => resultado.isConfirmed);
+  },
   confirmarDescarte: (mensagem = 'Existem dados preenchidos que ainda não foram salvos. Deseja realmente sair?'): Promise<boolean> => {
     return Swal.fire({
       title: 'Descartar alterações?',
@@ -14,14 +25,29 @@ export const Alertas = {
     }).then((resultado) => resultado.isConfirmed);
   },
 
-  confirmarExclusao: (mensagem = 'Esta ação não poderá ser desfeita.'): Promise<boolean> => {
+  confirmarExclusao: (mensagem = 'Esta ação não poderá ser desfeita.', classePopup = ''): Promise<boolean> => {
     return Swal.fire({
       title: 'Tem certeza?',
+      customClass: { popup: classePopup },
       text: mensagem,
       icon: 'warning',
       showCancelButton: true,
       confirmButtonText: 'Sim, excluir',
       cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#e04b3a',
+      reverseButtons: false
+    }).then((resultado) => resultado.isConfirmed);
+  },
+
+  confirmarCancelamentoPix: (): Promise<boolean> => {
+    return Swal.fire({
+      title: 'Cancelar este Pix?',
+      customClass: { popup: 'pix-alerta-acoes' },
+      text: 'O código será removido deste navegador. Um código já copiado ainda pode ser aceito pelo banco.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sim, cancelar Pix',
+      cancelButtonText: 'Continuar doação',
       confirmButtonColor: '#e04b3a',
       reverseButtons: false
     }).then((resultado) => resultado.isConfirmed);

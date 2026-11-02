@@ -1,0 +1,105 @@
+:host {
+  display: block;
+  font-family: var(--fonte-texto);
+  font-size: 0.9rem;
+  text-align: left;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.identificacao {
+  display: grid;
+  gap: 10px;
+  margin: 0 0 28px;
+  padding-bottom: 22px;
+  border-bottom: 1px solid var(--input-border);
+}
+
+.identificacao > div {
+  display: grid;
+  grid-template-columns: 100px minmax(0, 1fr);
+  gap: 12px;
+}
+
+.identificacao dt, .aviso, .sem-registros {
+  color: var(--input-color);
+  font-size: 0.8rem;
+}
+
+.identificacao dd { margin: 0; }
+.identificacao .data-hora { white-space: nowrap; }
+.identificacao > div:first-child dd { font-weight: 600; }
+.secao-alteracao + .secao-alteracao {
+  margin-top: 24px;
+  padding-top: 22px;
+  border-top: 1px solid var(--input-border);
+}
+
+.secao-alteracao h3, .grupo-presenca h3 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  margin: 0 0 18px;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.acao {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(19, 148, 69, 0.12);
+  color: #139445;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.4;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.acao--edicao {
+  color: #d98200;
+  background: rgba(217, 130, 0, 0.12);
+}
+
+.acao--exclusao {
+  color: rgb(182, 43, 43);
+  background: rgba(182, 43, 43, 0.12);
+}
+
+.campos, .grupo-presenca ul {
+  display: grid;
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.campos li { display: grid; gap: 3px; }
+.nome-campo { font-size: 0.8rem; font-weight: 500; color: var(--input-color); }
+.valor-anterior { color: #757575; }
+.valor-novo { font-weight: 500; }
+.comparacao { display: flex; flex-wrap: wrap; gap: 5px 10px; align-items: baseline; }
+.mudanca-presenca { display: flex; gap: 14px; margin: 0; align-items: center; }
+.grupos-presenca { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
+.grupo-presenca { border-top: 3px solid var(--primary-color); padding-top: 14px; }
+.grupo-presenca.ausentes { border-color: #9b9b9b; }
+.grupo-presenca h3 span { font-size: 0.8rem; font-weight: 400; }
+.grupo-presenca ul { gap: 10px; }
+@media (max-width: 480px) {
+  .grupos-presenca { grid-template-columns: 1fr; }
+  .identificacao > div { grid-template-columns: 1fr; gap: 2px; }
+}
+
+.cabecalho-chamada {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.cabecalho-chamada h3 { margin: 0; font-size: 0.95rem; font-weight: 600; }

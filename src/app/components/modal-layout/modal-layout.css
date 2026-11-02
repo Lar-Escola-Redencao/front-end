@@ -25,21 +25,24 @@
 
 .modal-header {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 16px;
-  margin-bottom: 24px;
+  text-align: start;
+  margin-bottom: 8px;
 }
 
 .modal-title-area {
   display: inline-flex;
-  align-items: center;
+  align-items: flex-start;
+  align-self: flex-start;
   flex-wrap: wrap;
   gap: 10px;
   min-width: 0;
 }
 
 .modal-header h2 {
+  margin: 0;
   font-family: var(--fonte-titulo);
   font-size: 1.75rem;
   line-height: 1;
@@ -49,17 +52,23 @@
 
 .modal-close {
   display: inline-flex;
-  align-items: center;
+  align-items: flex-start;
+  align-self: flex-start;
   justify-content: center;
   flex-shrink: 0;
   min-width: 48px;
   min-height: 48px;
+  padding: 0;
   border: 0;
   background: transparent;
   color: var(--preto);
   cursor: pointer;
-  font-size: 2rem;
-  line-height: 1;
+}
+
+.modal-close mat-icon {
+  font-size: 28px;
+  width: 28px;
+  height: 28px;
 }
 
 

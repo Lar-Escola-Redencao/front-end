@@ -1,3 +1,5 @@
+import { AnexoDrop } from 'src/app/shared/directives/anexo-drop';
+import { HistoricoContextual } from '@components/historico-contextual/historico-contextual';
 import {
   Component,
   OnInit,
@@ -69,6 +71,8 @@ import { environment } from '../../../../../../environments/environment';
   standalone: true,
 
   imports: [
+    AnexoDrop,
+    HistoricoContextual,
     CommonModule,
     ReactiveFormsModule,
     ModalLayout,

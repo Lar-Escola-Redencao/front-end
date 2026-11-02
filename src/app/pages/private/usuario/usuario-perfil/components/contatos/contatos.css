@@ -189,32 +189,10 @@
 
 .contato-preview p {
   margin: 0 0 26px;
-  color: #888;
+  color: var(--preto);
   font-family: var(--fonte-texto);
   font-size: 16px;
-}
-
-.contato-preview-dados {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.contato-preview-dados div {
-  display: grid;
-  grid-template-columns: 28px minmax(0, 1fr);
-  gap: 12px;
-  align-items: center;
-  color: #242424;
-  font-family: var(--fonte-texto);
-  font-size: 16px;
-}
-
-.contato-preview-dados mat-icon,
-.contato-preview-icone {
-  color: var(--primary-color);
-  font-family: 'Material Symbols Outlined';
-  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  font-weight: 400;
 }
 
 .telefone-link {

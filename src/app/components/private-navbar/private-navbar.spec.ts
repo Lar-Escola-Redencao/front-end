@@ -72,7 +72,7 @@ describe('PrivateNavbar', () => {
 
   it('abre o mesmo modal de senha pelo atalho abaixo de Meu perfil', async () => {
     await criar('ADMINISTRADOR');
-    component.menuUsuarioAberto = true;
+    fixture.nativeElement.querySelector('.btn-avatar').click();
     fixture.detectChanges();
     const botoes = fixture.nativeElement.querySelectorAll('.menu-usuario-item') as NodeListOf<HTMLButtonElement>;
     expect(Array.from(botoes).map(botao => botao.textContent?.trim())).toEqual([
@@ -123,6 +123,7 @@ describe('PrivateNavbar', () => {
       '/dashboard/colaboradores',
       '/dashboard/unidades-turmas',
       '/dashboard/conteudo-publico',
+      '/dashboard/historico-alteracoes',
     ]);
   });
 

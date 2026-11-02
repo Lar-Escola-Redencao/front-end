@@ -1,3 +1,5 @@
+import { AnexoDrop } from 'src/app/shared/directives/anexo-drop';
+import { HistoricoContextual } from '@components/historico-contextual/historico-contextual';
 import { UnidadeCard } from '@components/unidade-card/unidade-card';
 import { AbasResponsivas } from 'src/app/shared/directives/abas-responsivas';
 import { ChangeDetectorRef, Component, HostListener, NgZone, OnDestroy, OnInit } from '@angular/core';
@@ -47,12 +49,14 @@ type OpcaoPeriodo = { valor: Periodo; label: string };
   selector: 'app-unidades-turmas',
   standalone: true,
   imports: [
+    AnexoDrop,
     AbasResponsivas,
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
     ModalLayout,
     UnidadeCard,
+    HistoricoContextual,
     TabelaLayout,
     Paginacao,
     BarraBusca,
@@ -145,6 +149,7 @@ export class UnidadesTurmas implements OnInit, OnDestroy, ComponentComAlteracoes
   // ---------------------------------------------------------------
 
   turmas: Turma[] = [];
+  turmaVisualizacao: Turma | null = null;
   unidadeFiltroId: number | null = null;
 
   modalTurmaAberto = false;
@@ -198,6 +203,11 @@ export class UnidadesTurmas implements OnInit, OnDestroy, ComponentComAlteracoes
   ];
 
   acoesTabelaTurmas: TabelaAcao<Turma>[] = [
+    {
+      icone: 'visibility',
+      tooltip: 'Visualizar',
+      acao: 'visualizar',
+    },
     {
       icone: 'edit',
       tooltip: 'Editar',
@@ -884,6 +894,10 @@ export class UnidadesTurmas implements OnInit, OnDestroy, ComponentComAlteracoes
   }
 
   executarAcaoTurma(evento: { tipo: string; linha: Turma }): void {
+    if (evento.tipo === 'visualizar') {
+      this.turmaVisualizacao = evento.linha;
+      return;
+    }
     if (evento.tipo === 'editar') {
       this.abrirEdicaoTurma(evento.linha);
       return;

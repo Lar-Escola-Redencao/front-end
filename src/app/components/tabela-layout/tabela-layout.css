@@ -445,3 +445,18 @@
     align-items: end;
   }
 }
+
+.botao-ordenacao {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: inherit;
+  cursor: pointer;
+}
+.botao-ordenacao:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 4px; }
+.botao-ordenacao:disabled { cursor: default; opacity: 0.6; }

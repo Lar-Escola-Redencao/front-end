@@ -49,7 +49,7 @@
     <h3>Laudos, exames e receitas</h3>
 
     @if (editando) {
-      <div class="upload-foto" (click)="inputSaude.click()">
+      <div [appAnexoDrop]="inputSaude" class="upload-foto" (click)="inputSaude.click()">
         <span class="upload-foto-icone" aria-hidden="true"><mat-icon>upload_file</mat-icon></span>
         <div class="upload-foto-textos">
           <span class="upload-foto-titulo">

@@ -1,3 +1,4 @@
+import { AnexoDrop } from 'src/app/shared/directives/anexo-drop';
 import { AbasResponsivas } from 'src/app/shared/directives/abas-responsivas';
 import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, HostListener, Input, OnDestroy, OnInit } from '@angular/core';
@@ -8,6 +9,8 @@ import { ToastrService } from 'ngx-toastr';
 
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
+import { TipoChavePix, formatarChavePix, identificarTipoChavePix, validarTipoChavePix } from './chave-pix.util';
 
 import { BarraBusca } from '@components/barra-busca/barra-busca';
 import { Paginacao } from '@components/paginacao/paginacao';
@@ -46,6 +49,7 @@ import {
   selector: 'app-captacao-recursos',
   standalone: true,
   imports: [
+    AnexoDrop,
     AbasResponsivas,
     CommonModule,
     ReactiveFormsModule,
@@ -55,6 +59,7 @@ import {
     Paginacao,
     MatFormFieldModule,
     MatInputModule,
+    MatSelectModule,
   ],
   templateUrl: './captacao-recursos.html',
   styleUrl: './captacao-recursos.css',
@@ -82,6 +87,20 @@ export class CaptacaoRecursos implements OnInit, OnDestroy, ComponentComAlteraco
   salvando = false;
   editandoContato = false;
   tentouSalvar = false;
+  tipoChavePix: TipoChavePix = 'email';
+  private readonly validadorChavePix = validarTipoChavePix(() => this.tipoChavePix);
+
+  get cadastroPix(): boolean {
+    return this.config.secao === 'pix';
+  }
+
+  mudarTipoChavePix(tipo: TipoChavePix): void {
+    this.tipoChavePix = tipo;
+    const controle = this.form.get('conteudo');
+    controle?.setValue('');
+    controle?.markAsDirty();
+    this.erros = {};
+  }
 
   erros: Record<string, string> = {};
   arquivoSelecionado: File | null = null;
@@ -450,6 +469,14 @@ export class CaptacaoRecursos implements OnInit, OnDestroy, ComponentComAlteraco
     this.liberarPreviewNovaImagem();
 
     this.form.reset(valoresIniciaisGrupo(this.grupoAtivo, this.itemEditando));
+    if (this.cadastroPix) {
+      const controle = this.form.get('conteudo');
+      const chave = String(controle?.value ?? '');
+      this.tipoChavePix = chave ? identificarTipoChavePix(chave) : 'email';
+      controle?.setValue(formatarChavePix(chave, this.tipoChavePix));
+      controle?.addValidators(this.validadorChavePix);
+      controle?.updateValueAndValidity();
+    }
     this.form.enable();
     this.form.markAsPristine();
     this.form.markAsUntouched();
@@ -520,6 +547,11 @@ export class CaptacaoRecursos implements OnInit, OnDestroy, ComponentComAlteraco
   }
 
   aoDigitar(campo: CampoTextoConfig): void {
+    if (this.cadastroPix && campo.campo === 'conteudo') {
+      const controle = this.form.get('conteudo');
+      controle?.setValue(formatarChavePix(String(controle.value ?? ''), this.tipoChavePix), { emitEvent: false });
+      return;
+    }
     if (campo.tipo === 'telefone') {
       aplicarMascaraTelefone(this.form.get(campo.campo));
       return;
@@ -531,7 +563,8 @@ export class CaptacaoRecursos implements OnInit, OnDestroy, ComponentComAlteraco
   }
 
   verificarErros(): void {
-    this.erros = mapearErrosFormulario(this.form);
+    this.erros = mapearErrosFormulario(this.form, this.cadastroPix
+      ? { conteudo: { custom: 'Informe uma chave válida para o tipo selecionado.' } } : {});
 
     if (this.tentouSalvar && this.imagemPendente && !this.erros[CONTROLE_IMAGEM]) {
       this.erros[CONTROLE_IMAGEM] = MENSAGEM_IMAGEM_OBRIGATORIA;
@@ -578,7 +611,12 @@ export class CaptacaoRecursos implements OnInit, OnDestroy, ComponentComAlteraco
     }
 
     this.salvando = true;
-    const dto = montarDtoGrupo(this.grupoAtivo, this.form, this.arquivoSelecionado);
+    const dto = montarDtoGrupo(
+      this.grupoAtivo,
+      this.form,
+      this.arquivoSelecionado,
+      this.itemEditando ?? this.secaoContato,
+    );
 
     // Contato edita o registro único do grupo; nas tabelas, só há id ao editar
     // um item — criar é sempre POST.
