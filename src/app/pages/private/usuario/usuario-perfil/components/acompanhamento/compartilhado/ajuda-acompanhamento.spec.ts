@@ -3,6 +3,14 @@ import { OverlayContainer } from '@angular/cdk/overlay';
 import { AjudaAcompanhamento } from './ajuda-acompanhamento';
 
 describe('Dicas do acompanhamento', () => {
+  it('resume a orientação e esclarece horário anterior às atividades sem permitir registros futuros', () => {
+    const fixture = TestBed.createComponent(AjudaAcompanhamento);
+    const texto = fixture.componentInstance.texto;
+    expect(texto).toContain('anterior ao início das atividades');
+    expect(texto).toContain('Data e horário não podem ser futuros');
+    expect(texto).not.toContain('Monitores');
+    expect(texto).not.toContain('24 horas');
+  });
   it('omite a data somente na orientação de ocorrência do Diário', () => {
     const fixture = TestBed.createComponent(AjudaAcompanhamento);
     expect(fixture.componentInstance.texto).toContain('Informe data, horário');

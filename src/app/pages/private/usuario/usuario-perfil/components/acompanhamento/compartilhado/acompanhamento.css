@@ -8,20 +8,15 @@ h2 { margin: 0; font: 700 1.3rem var(--fonte-titulo); }
 .botao-seletor-hora:disabled { opacity: .5; cursor: default; }
 .botao-seletor-hora:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 2px; }
 .campo-hora input::-webkit-calendar-picker-indicator { display: none; }
-:host ::ng-deep .responsavel-fixo .mat-mdc-text-field-wrapper { background-color: #eeeeee !important; }
-:host ::ng-deep .responsavel-fixo .mat-mdc-input-element {
-  color: var(--input-color) !important; -webkit-text-fill-color: var(--input-color) !important;
-}
-:host ::ng-deep .responsavel-fixo .mat-mdc-form-field-infix { z-index: 1; }
-:host ::ng-deep .responsavel-fixo .mat-mdc-floating-label {
-  padding: 0 4px; background-color: #eeeeee !important; color: var(--input-color) !important; z-index: 2;
-}
-:host ::ng-deep .responsavel-fixo .mdc-notched-outline__notch { background-color: transparent !important; }
 .cabecalho button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
 app-barra-busca { display: block; margin-bottom: 16px; }
 .formulario { display: flex; flex-direction: column; gap: 8px; }
-.linha { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.linha { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; align-items: start; }
+.campo-com-erro { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 mat-form-field { width: 100%; min-width: 0; }
+:host ::ng-deep .linha .mat-mdc-text-field-wrapper { height: 62px; align-items: center; }
+:host ::ng-deep .linha .mat-mdc-form-field-flex,
+:host ::ng-deep .linha .mat-mdc-form-field-infix { min-height: 62px; align-items: center; }
 .acoes { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
 .detalhes { display: grid; gap: 18px; margin: 0; }
 .detalhes div { min-width: 0; }

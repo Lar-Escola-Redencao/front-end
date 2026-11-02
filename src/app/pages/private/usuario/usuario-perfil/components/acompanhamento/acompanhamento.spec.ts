@@ -43,6 +43,24 @@ describe('Acompanhamento', () => {
   });
   afterEach(() => vi.restoreAllMocks());
 
+  it('entrevista identifica o campo de data ou horário futuro e remove o erro ao corrigir', () => {
+    vi.spyOn(Date, 'now').mockReturnValue(Date.parse('2026-10-29T12:00:30-03:00'));
+    const fixture = TestBed.createComponent(AcompanhamentoEntrevistas);
+    fixture.componentRef.setInput('usuario', usuario); fixture.detectChanges();
+    const c = fixture.componentInstance; c.abrir('NOVO'); fixture.detectChanges();
+    c.form.setValue({ data: '2026-10-30', horario: '12:01', relato: 'Relato' }); c.salvar(); fixture.detectChanges();
+    const campoData = fixture.nativeElement.querySelector('input[formControlName="data"]').closest('.campo-com-erro');
+    const campoHora = fixture.nativeElement.querySelector('input[formControlName="horario"]').closest('.campo-com-erro');
+    expect(campoData.querySelector('.error-text')?.textContent).toContain('futuro');
+    expect(c.form.controls.horario.invalid).toBe(false);
+    c.form.controls.data.setValue('2026-10-29'); fixture.detectChanges();
+    expect(campoData.querySelector('.error-text')).toBeNull();
+    expect(campoHora.querySelector('.error-text')?.textContent).toContain('futuro');
+    expect(fixture.nativeElement.querySelector('.linha + .erro')).toBeNull();
+    c.form.controls.horario.setValue('12:00'); fixture.detectChanges();
+    expect(campoHora.querySelector('.error-text')).toBeNull(); expect(c.form.valid).toBe(true);
+  });
+
   it('filtros de frequência não refazem as consultas de ocorrências e entrevistas', () => {
     const fixture = TestBed.createComponent(UsuarioPerfilAcompanhamento);
     fixture.componentRef.setInput('usuario', usuario); fixture.detectChanges();
@@ -73,13 +91,10 @@ describe('Acompanhamento', () => {
     expect(service.ocorrencias).toHaveBeenCalledTimes(1);
   });
 
-  it('cadastro de entrevista mostra o colaborador logado e envia data, horário e relato', () => {
+  it('cadastro de entrevista envia data, horário e relato', () => {
     const fixture = TestBed.createComponent(AcompanhamentoEntrevistas);
     fixture.componentRef.setInput('usuario', usuario); fixture.detectChanges();
     const c = fixture.componentInstance; c.abrir('NOVO'); fixture.detectChanges();
-    const responsavel = fixture.nativeElement.querySelector('input[disabled]') as HTMLInputElement;
-    expect(responsavel.value).toBe('Colaborador logado');
-    expect(responsavel.disabled).toBe(true);
     c.form.setValue({ data: '2026-10-29', horario: '09:30', relato: ' Novo relato ' });
     c.salvar();
     expect(service.salvarEntrevista).toHaveBeenCalledWith(10, null, {
@@ -93,7 +108,7 @@ describe('Acompanhamento', () => {
     const fixture = TestBed.createComponent(AcompanhamentoEntrevistas);
     fixture.componentRef.setInput('usuario', usuario); fixture.detectChanges();
     const c = fixture.componentInstance; c.abrir('EDITAR', entrevista);
-    expect(c.responsavel).toBe('Autora original');
+    expect(c.selecionada()?.nomeResponsavel).toBe('Autora original');
     c.form.controls.relato.setValue('Relato corrigido'); c.salvar();
     expect(c.modal()).toBe('EDITAR'); expect(c.temAlteracoes).toBe(true);
     expect(c.form.controls.relato.value).toBe('Relato corrigido'); expect(c.erro()).not.toBe('');
@@ -174,6 +189,7 @@ describe('Acompanhamento', () => {
 
   it('monitor só altera ocorrência própria dentro de 24 horas; coordenador altera de outro autor', () => {
     const fixture = TestBed.createComponent(AcompanhamentoOcorrencias);
+    fixture.componentRef.setInput('usuario', usuario); fixture.detectChanges();
     const c = fixture.componentInstance;
     const agora = Date.parse('2026-10-29T12:00:00-03:00'); vi.spyOn(Date, 'now').mockReturnValue(agora);
     const oc = { id: 1, idMatricula: 2, dataOcorrencia: '2026-10-29T09:00:00', dataCriacao: '2026-10-28T12:00:00',

@@ -26,6 +26,8 @@ import { OverlayModule, ConnectedPosition } from '@angular/cdk/overlay';
   `,
   styles: [`
     :host { display: inline-flex; }
+    :host-context(.modal-title-area) { vertical-align: top; line-height: 0; }
+    :host-context(.modal-title-area) button { width: 44px; height: 44px; margin-top: -10px; }
     button { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px;
       padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--input-color); cursor: pointer; }
     button:hover { color: var(--primary-color); background: #f5f5f5; }
@@ -58,8 +60,9 @@ export class AjudaAcompanhamento {
       + 'Dias sem registro não são contabilizados como faltas. Os filtros desta seção afetam apenas os gráficos de frequência.';
     return this.entrevista
       ? 'Registro de informações relevantes obtidas durante a entrevista, observações, relatos, encaminhamentos e evolução do acompanhamento.'
-      : 'Registre fatos pontuais do cotidiano do usuário, como situações de comportamento, saúde ou assistência. '
-        + (this.diario ? 'Informe horário, tipo e uma descrição objetiva do ocorrido.'
-          : 'Informe data, horário, tipo e uma descrição objetiva do ocorrido.');
+      : 'Registre fatos pontuais de comportamento, saúde ou assistência. '
+        + (this.diario ? 'Informe horário, tipo e uma descrição objetiva.'
+          : 'Informe data, horário, tipo e uma descrição objetiva.')
+        + ' Data e horário não podem ser futuros. O horário pode ser anterior ao início das atividades.';
   }
 }

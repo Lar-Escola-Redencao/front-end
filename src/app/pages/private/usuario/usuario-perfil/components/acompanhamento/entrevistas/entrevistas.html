@@ -27,26 +27,25 @@
     } @else {
       <form class="formulario" [formGroup]="form" (ngSubmit)="salvar()">
         <div class="linha">
+          <div class="campo-com-erro">
           <mat-form-field appearance="outline">
             <mat-label>Data da entrevista</mat-label><input #data matInput type="date" formControlName="data" required>
             <button type="button" matSuffix class="btn-calendario-data" aria-label="Abrir calendário" (click)="abrirCalendario(data)"><mat-icon>calendar_month</mat-icon></button>
-            @if (form.controls.data.touched && form.controls.data.invalid) { <mat-error>Informe a data.</mat-error> }
           </mat-form-field>
+          @if (form.controls.data.touched && form.controls.data.invalid) { <span class="error-text" role="alert">{{ form.controls.data.getError('regra') || 'Informe a data.' }}</span> }
+        </div>
+          <div class="campo-com-erro">
           <mat-form-field appearance="outline" class="campo-hora"><mat-label>Horário</mat-label><input #inputHora matInput type="time" formControlName="horario" required>
             <button type="button" matSuffix class="botao-seletor-hora" aria-label="Selecionar hora" [disabled]="form.controls.horario.disabled" (click)="abrirSeletorHora(inputHora)"><mat-icon>schedule</mat-icon></button>
-            @if (form.controls.horario.touched && form.controls.horario.invalid) { <mat-error>Informe o horário.</mat-error> }
           </mat-form-field>
+          @if (form.controls.horario.touched && form.controls.horario.invalid) { <span class="error-text" role="alert">{{ form.controls.horario.getError('regra') || 'Informe o horário.' }}</span> }
         </div>
-        @if (form.touched && form.hasError('dataHoraFutura')) {
-          <p class="erro" role="alert">A data e o horário da entrevista não podem estar no futuro.</p>
-        }
-        @if (form.touched && form.hasError('dataHoraInvalida')) {
-          <p class="erro" role="alert">Informe data e horário válidos.</p>
-        }
-        <mat-form-field appearance="outline" class="responsavel-fixo"><mat-label>Responsável</mat-label><input matInput [value]="responsavel" [disabled]="true"></mat-form-field>
-        <mat-form-field appearance="outline"><mat-label>Descrição</mat-label><textarea matInput formControlName="relato" rows="6" maxlength="20000" required></textarea>
-          @if (form.controls.relato.touched && form.controls.relato.invalid) { <mat-error>Informe uma descrição válida.</mat-error> }
+        </div>
+        <div class="campo-com-erro">
+          <mat-form-field appearance="outline"><mat-label>Descrição</mat-label><textarea matInput formControlName="relato" rows="6" maxlength="20000" required></textarea>
         </mat-form-field>
+          @if (form.controls.relato.touched && form.controls.relato.invalid) { <span class="error-text" role="alert">Informe uma descrição válida.</span> }
+        </div>
         @if (erro()) { <p class="erro" role="alert">{{ erro() }}</p> }
         <div class="acoes"><button type="button" class="btn-cancelar" [disabled]="salvando()" (click)="fechar()">Cancelar</button>
           <button type="submit" class="btn-primary" [disabled]="salvando() || (modal() === 'EDITAR' && !temAlteracoes)">{{ salvando() ? 'Salvando...' : 'Salvar' }}</button>

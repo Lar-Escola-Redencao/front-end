@@ -1,5 +1,5 @@
 import { Component, Input, OnChanges, OnDestroy, inject, signal } from '@angular/core';
-import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
@@ -15,16 +15,7 @@ import { SessaoService } from 'src/app/shared/services/auth/sessao.service';
 import { Alertas } from 'src/app/shared/utils/alerts';
 import { ListaPaginada } from '../compartilhado/lista-paginada';
 import { AjudaAcompanhamento } from '../compartilhado/ajuda-acompanhamento';
-
-function validarInstanteEntrevista(form: AbstractControl): ValidationErrors | null {
-  const data = form.get('data')?.value as string;
-  const horario = form.get('horario')?.value as string;
-  if (!data || !horario) return null;
-  // Os horários do formulário e da API representam Brasília, como no Diário.
-  const instante = Date.parse(`${data}T${horario}:00-03:00`);
-  if (!Number.isFinite(instante)) return { dataHoraInvalida: true };
-  return instante > Date.now() ? { dataHoraFutura: true } : null;
-}
+import { dataNaoFutura, horarioNaoFuturo } from '../compartilhado/validacoes-data-hora';
 
 @Component({
   selector: 'app-acompanhamento-entrevistas', standalone: true,
@@ -45,9 +36,11 @@ export class AcompanhamentoEntrevistas implements OnChanges, OnDestroy {
   readonly salvando = signal(false);
   readonly erro = signal('');
   readonly form = this.fb.nonNullable.group({
-    data: ['', Validators.required], horario: ['', Validators.required],
+    data: ['', [Validators.required, dataNaoFutura]], horario: ['', [Validators.required, horarioNaoFuturo]],
     relato: ['', [Validators.required, Validators.pattern(/\S/), Validators.maxLength(20000)]],
-  }, { validators: validarInstanteEntrevista });
+  });
+  private readonly validacao = this.form.controls.data.valueChanges.subscribe(() =>
+    this.form.controls.horario.updateValueAndValidity({ emitEvent: false }));
   private inicial = '';
   readonly colunas: TabelaColuna<Entrevista>[] = [
     { chave: 'dataEntrevista', titulo: 'Data da entrevista', principalMobile: true, formatar: v => this.formatarData(v) },
@@ -60,11 +53,10 @@ export class AcompanhamentoEntrevistas implements OnChanges, OnDestroy {
   ];
 
   ngOnChanges(): void { this.cancelar(); this.lista.reiniciar(); }
-  ngOnDestroy(): void { this.lista.destruir(); this.operacao?.unsubscribe(); }
+  ngOnDestroy(): void { this.lista.destruir(); this.operacao?.unsubscribe(); this.validacao.unsubscribe(); }
   get temAlteracoes(): boolean {
     return (this.modal() === 'NOVO' || this.modal() === 'EDITAR') && JSON.stringify(this.form.getRawValue()) !== this.inicial;
   }
-  get responsavel(): string { return this.selecionada()?.nomeResponsavel ?? this.sessao.membro()?.nomeCompleto ?? '-'; }
 
   abrir(modo: 'NOVO' | 'EDITAR' | 'VER', entrevista: Entrevista | null = null): void {
     if (this.salvando()) return;
@@ -86,7 +78,8 @@ export class AcompanhamentoEntrevistas implements OnChanges, OnDestroy {
 
   salvar(): void {
     if (this.salvando() || this.modal() === 'VER' || !this.modal()) return;
-    this.form.updateValueAndValidity();
+    this.form.controls.data.updateValueAndValidity({ emitEvent: false });
+    this.form.controls.horario.updateValueAndValidity({ emitEvent: false });
     this.form.markAllAsTouched();
     if (this.form.invalid) return;
     const dados = this.form.getRawValue();

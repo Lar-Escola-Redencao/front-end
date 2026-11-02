@@ -28,26 +28,53 @@
       </dl>
     } @else {
       <form class="formulario" [formGroup]="form" (ngSubmit)="salvar()">
-        <div class="linha">
-          <mat-form-field appearance="outline"><mat-label>Data da ocorrência</mat-label><input #data matInput type="date" formControlName="data" required>
-            <button type="button" matSuffix class="btn-calendario-data" aria-label="Abrir calendário" [disabled]="form.controls.data.disabled" (click)="abrirCalendario(data)"><mat-icon>calendar_month</mat-icon></button>
-            @if (form.controls.data.touched && form.controls.data.invalid) { <mat-error>Informe a data.</mat-error> }
+        @if (modal() === 'NOVO') {
+          <div class="campo-com-erro">
+          <mat-form-field appearance="outline"><mat-label>Matrícula</mat-label>
+            <mat-select formControlName="matricula" required>
+              @for (matricula of matriculas(); track matricula.id) {
+                <mat-option [value]="matricula.id">{{ nomeMatricula(matricula) }}</mat-option>
+              }
+            </mat-select>
           </mat-form-field>
+          @if (form.controls.matricula.touched && form.controls.matricula.invalid) { <span class="error-text" role="alert">{{ form.controls.matricula.getError('regra') || 'Selecione a matrícula.' }}</span> }
+        </div>
+          @if (carregandoMatriculas()) { <p role="status">Carregando matrículas...</p> }
+          @if (erroMatriculas()) {
+            <p class="erro" role="alert">{{ erroMatriculas() }}</p>
+            <button type="button" class="btn-cancelar" (click)="carregarMatriculas()">Tentar novamente</button>
+          } @else if (!carregandoMatriculas() && !matriculas().length) {
+            <p class="erro" role="alert">Nenhuma matrícula disponível para registrar a ocorrência.</p>
+          }
+        }
+        <div class="linha">
+          <div class="campo-com-erro">
+          <mat-form-field appearance="outline"><mat-label>Data da ocorrência</mat-label><input #data matInput type="date" formControlName="data" [attr.min]="dataMinima" [attr.max]="dataMaxima" required>
+            <button type="button" matSuffix class="btn-calendario-data" aria-label="Abrir calendário" [disabled]="form.controls.data.disabled" (click)="abrirCalendario(data)"><mat-icon>calendar_month</mat-icon></button>
+          </mat-form-field>
+          @if (form.controls.data.touched && form.controls.data.invalid) { <span class="error-text" role="alert">{{ form.controls.data.getError('regra') || 'Informe a data.' }}</span> }
+        </div>
+          <div class="campo-com-erro">
           <mat-form-field appearance="outline" class="campo-hora"><mat-label>Horário</mat-label><input #inputHora matInput type="time" formControlName="horario" required>
             <button type="button" matSuffix class="botao-seletor-hora" aria-label="Selecionar hora" [disabled]="form.controls.horario.disabled" (click)="abrirSeletorHora(inputHora)"><mat-icon>schedule</mat-icon></button>
-            @if (form.controls.horario.touched && form.controls.horario.invalid) { <mat-error>Informe o horário.</mat-error> }
           </mat-form-field>
+          @if (form.controls.horario.touched && form.controls.horario.invalid) { <span class="error-text" role="alert">{{ form.controls.horario.getError('regra') || 'Informe o horário.' }}</span> }
         </div>
-        <mat-form-field appearance="outline"><mat-label>Tipo de ocorrência</mat-label>
+        </div>
+        <div class="campo-com-erro">
+          <mat-form-field appearance="outline"><mat-label>Tipo de ocorrência</mat-label>
           <mat-select formControlName="tipoOcorrencia" required>@for (tipo of tipos; track tipo.valor) { <mat-option [value]="tipo.valor">{{ tipo.nome }}</mat-option> }</mat-select>
-          @if (form.controls.tipoOcorrencia.touched && form.controls.tipoOcorrencia.invalid) { <mat-error>Selecione o tipo.</mat-error> }
         </mat-form-field>
-        <mat-form-field appearance="outline"><mat-label>Descrição</mat-label><textarea matInput formControlName="descricao" rows="6" required></textarea>
-          @if (form.controls.descricao.touched && form.controls.descricao.invalid) { <mat-error>Informe uma descrição válida.</mat-error> }
+          @if (form.controls.tipoOcorrencia.touched && form.controls.tipoOcorrencia.invalid) { <span class="error-text" role="alert">Selecione o tipo.</span> }
+        </div>
+        <div class="campo-com-erro">
+          <mat-form-field appearance="outline"><mat-label>Descrição</mat-label><textarea matInput formControlName="descricao" rows="6" required></textarea>
         </mat-form-field>
+          @if (form.controls.descricao.touched && form.controls.descricao.invalid) { <span class="error-text" role="alert">Informe uma descrição válida.</span> }
+        </div>
         @if (erro()) { <p class="erro" role="alert">{{ erro() }}</p> }
-        <div class="acoes"><button type="button" class="btn-cancelar" [disabled]="salvando()" (click)="fechar()">{{ modal() === 'NOVO' ? 'Fechar' : 'Cancelar' }}</button>
-          @if (modal() === 'EDITAR') { <button type="submit" class="btn-primary" [disabled]="salvando() || !temAlteracoes">{{ salvando() ? 'Salvando...' : 'Salvar' }}</button> }
+        <div class="acoes"><button type="button" class="btn-cancelar" [disabled]="salvando()" (click)="fechar()">Cancelar</button>
+          <button type="submit" class="btn-primary" [disabled]="salvando() || carregandoMatriculas() || (modal() === 'EDITAR' && !temAlteracoes)">{{ salvando() ? 'Salvando...' : 'Salvar' }}</button>
         </div>
       </form>
     }
