@@ -5,6 +5,7 @@ body:has(.dica-acompanhamento-overlay) .cdk-overlay-container {
 
 body:has(app-historico .form-filtros) .cdk-overlay-container,
 body:has(.modal-backdrop app-ajuda-acompanhamento button[aria-expanded="true"]) .cdk-overlay-container,
+body:has(app-historico .form-filtros) .cdk-overlay-container,
 body:has(.ajuda-relatorio-overlay) .cdk-overlay-container {
   z-index: 2500;
 }
