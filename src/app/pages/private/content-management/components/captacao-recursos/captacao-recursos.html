@@ -135,14 +135,27 @@
         </div>
       }
 
+      @if (cadastroPix) {
+        <mat-form-field appearance="outline">
+          <mat-label>Tipo de chave Pix</mat-label>
+          <mat-select [value]="tipoChavePix" (selectionChange)="mudarTipoChavePix($event.value)">
+            <mat-option value="email">E-mail</mat-option>
+            <mat-option value="cpf">CPF</mat-option>
+            <mat-option value="cnpj">CNPJ</mat-option>
+            <mat-option value="telefone">Telefone</mat-option>
+            <mat-option value="aleatoria">Chave aleatória</mat-option>
+          </mat-select>
+        </mat-form-field>
+      }
+
       @for (campo of grupoAtivo.campos; track campo.campo) {
         <mat-form-field appearance="outline">
           <mat-label>{{ campo.rotulo }}</mat-label>
           <input
             matInput
             [formControlName]="campo.campo"
-            [type]="campo.tipo === 'telefone' ? 'tel' : 'text'"
-            [attr.inputmode]="campo.tipo === 'telefone' ? 'tel' : null"
+            [type]="cadastroPix && tipoChavePix === 'email' ? 'email' : campo.tipo === 'telefone' || (cadastroPix && tipoChavePix === 'telefone') ? 'tel' : 'text'"
+            [attr.inputmode]="cadastroPix && (tipoChavePix === 'cpf') ? 'numeric' : campo.tipo === 'telefone' || (cadastroPix && tipoChavePix === 'telefone') ? 'tel' : null"
             [attr.maxlength]="limiteCaracteres(campo)"
             (input)="aoDigitar(campo)"
             (blur)="verificarErros()"

@@ -11,5 +11,12 @@ import { BloquearScroll } from '../../shared/directives/bloquear-scroll';
 })
 export class ModalLayout {
   @Input() titulo = '';
+  @Input() fecharAoClicarFora = true;
+  @Output() backdropClick = new EventEmitter<void>();
+
+  clicarFora(): void {
+    this.backdropClick.emit();
+    if (this.fecharAoClicarFora) this.closed.emit();
+  }
   @Output() closed = new EventEmitter<void>();
 }

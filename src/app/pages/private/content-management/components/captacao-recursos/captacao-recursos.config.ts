@@ -19,6 +19,7 @@ export interface CampoTextoConfig {
   rotulo: string;
   obrigatorio: boolean;
   tipo: 'texto' | 'telefone' | 'telefoneOuEmail';
+  maximo?: number;
 }
 
 export interface CampoImagemConfig {
@@ -105,9 +106,15 @@ export const CAPTACAO_RECURSOS_CONFIG: CaptacaoRecursosConfig[] = [
         nomeItem: 'Pix',
         registroUnico: true,
         permiteExcluir: false,
-        imagemPrimeiro: true,
         controlaAtivo: true,
         campos: [
+          {
+            campo: 'titulo',
+            rotulo: 'Nome do recebedor',
+            obrigatorio: true,
+            tipo: 'texto',
+            maximo: 25,
+          },
           {
             campo: 'conteudo',
             rotulo: 'Chave Pix',
@@ -115,10 +122,6 @@ export const CAPTACAO_RECURSOS_CONFIG: CaptacaoRecursosConfig[] = [
             tipo: 'texto',
           },
         ],
-        imagem: {
-          rotulo: 'QR Code',
-          obrigatoria: true,
-        },
       },
     ],
   },
