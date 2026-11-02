@@ -62,6 +62,11 @@
           }
         </mat-select>
       </mat-form-field>
+
+      <button type="button" class="btn-exportar" [disabled]="!unidades.length || salvando" (click)="abrirExportacao()">
+        <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">file_export</mat-icon>
+        Relatórios
+      </button>
     </div>
   </div>
 
@@ -161,10 +166,12 @@
         <div class="rodape-diario rodape-status rodape-inicial">
           <div class="info-status" [class.info-status--aviso]="!podeIniciarChamada" role="status">
             <mat-icon aria-hidden="true">{{ podeIniciarChamada ? 'info' : 'warning_amber' }}</mat-icon>
-            @if (dataForaDoPeriodoPermitido) {
+            @if (dataFutura) {
+              <span>Aguarde o horário de início das atividades para registrar a frequência.</span>
+            } @else if (dataForaDoPeriodoPermitido) {
               <span>Monitores só podem registrar chamadas a partir do primeiro dia do mês passado.</span>
             } @else if (!podeIniciarChamada) {
-              <span>O registro de frequências ficará disponível após o horário de início da aula.</span>
+              <span>Aguarde o horário de início das atividades para registrar a frequência.</span>
             } @else {
               <span>As presenças deste dia ainda não foram registradas.</span>
             }
@@ -391,4 +398,14 @@
       </form>
     }
   </app-modal-layout>
+}
+
+@if (modalExportarAberto) {
+  <app-exportar-relatorio
+    [unidades]="unidades"
+    [idUnidade]="filtroForm.get('idUnidade')?.value"
+    [idTurma]="filtroForm.get('idTurma')?.value"
+    [data]="filtroForm.get('data')?.value"
+    (closed)="fecharExportacao()">
+  </app-exportar-relatorio>
 }
