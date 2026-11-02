@@ -17,7 +17,9 @@
   padding-inline: 24px;
 }
 
-section {
+section,
+#titulo-pix,
+#titulo-nfp {
   scroll-margin-top: 106px;
 }
 

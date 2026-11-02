@@ -949,6 +949,20 @@ export class UnidadesTurmas implements OnInit, OnDestroy, ComponentComAlteracoes
     });
   }
 
+  abrirSeletorHora(input: HTMLInputElement): void {
+    if (input.disabled || input.readOnly) return;
+    if (typeof input.showPicker === 'function') {
+      try {
+        input.showPicker();
+        return;
+      } catch {
+        // Mantém o campo acessível quando o navegador não permite abrir o seletor.
+      }
+    }
+    input.focus();
+    input.click();
+  }
+
   private notificarErroExclusao(erro: HttpErrorResponse, tipo: 'unidade' | 'turma'): void {
     const bloqueado = erro.status === 409;
     const mensagemApi = erro.error?.message;

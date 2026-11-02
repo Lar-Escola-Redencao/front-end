@@ -108,6 +108,12 @@ form {
   right: 0.9rem;
   top: 50%;
   translate: 0 -50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  line-height: 1;
 }
 
 span.field-icon {
@@ -117,11 +123,6 @@ span.field-icon {
 }
 
 .btn-icone-senha {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
   border: 0;
   padding: 0;
   background: transparent;
@@ -131,6 +132,7 @@ span.field-icon {
 
 .btn-icone-senha .material-symbols-outlined {
   font-size: 1.25rem;
+  line-height: 1;
 }
 
 .btn-icone-senha:hover,

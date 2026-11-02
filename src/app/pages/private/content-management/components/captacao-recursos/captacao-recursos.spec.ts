@@ -74,6 +74,22 @@ describe('CaptacaoRecursos pagination', () => {
     expect(component.exibePaginacao).toBe(false);
   });
 
+  it.each([
+    ['52998224725', '529.982.247-25'],
+    ['+5516988550240', '+55 (16) 98855-0240'],
+    ['50400951000126', '50.400.951/0001-26'],
+    ['12ABC34501DE35', '12.ABC.345/01DE-35'],
+    ['doacoes@lar.com', 'doacoes@lar.com'],
+    ['123e4567-e89b-12d3-a456-426614174000', '123e4567-e89b-12d3-a456-426614174000'],
+  ])('exibe a chave %s formatada na tabela sem alterar o registro', (chave, esperado) => {
+    component.config = CAPTACAO_RECURSOS_CONFIG.find(config => config.secao === 'pix')!;
+    component.ngOnInit();
+    const registro = { id: 1, grupo: 'pix', titulo: 'Lar', conteudo: chave, imagem: null, ativo: true };
+    const coluna = component.colunas.find(coluna => coluna.chave === 'conteudo')!;
+    expect(coluna.formatar!(chave, registro)).toBe(esperado);
+    expect(registro.conteudo).toBe(chave);
+  });
+
   it('keeps Contato without pagination', () => {
     params.next(convertToParamMap({ aba: 'telefone' }));
     component.ngOnInit();

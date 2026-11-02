@@ -1,5 +1,5 @@
 import { EstadoVazio } from '@components/estado-vazio/estado-vazio';
-import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, OnInit, Output, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { Evento } from 'src/app/shared/models/evento.model';
@@ -13,6 +13,7 @@ import { EventoPublicoService } from 'src/app/shared/services/evento-publico/eve
   styleUrl: './public-eventos.css'
 })
 export class PublicEventosComponent implements OnInit {
+  @Output() carregado = new EventEmitter<void>();
   private readonly eventoPublicoService = inject(EventoPublicoService);
   private readonly cdr = inject(ChangeDetectorRef);
 
@@ -31,10 +32,12 @@ export class PublicEventosComponent implements OnInit {
           .slice(0, this.quantidadeDestaque);
         this.carregando = false;
         this.cdr.detectChanges();
+        this.carregado.emit();
       },
       error: () => {
         this.carregando = false;
         this.cdr.detectChanges();
+        this.carregado.emit();
       }
     });
   }

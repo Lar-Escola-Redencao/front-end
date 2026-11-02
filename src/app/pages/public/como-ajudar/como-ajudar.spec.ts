@@ -5,7 +5,8 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { ActivatedRoute, provideRouter } from '@angular/router';
+import { BehaviorSubject } from 'rxjs';
 import { vi } from 'vitest';
 import { PublicNavbar } from '@components/public-navbar/public-navbar';
 import { PublicFooter } from '@components/public-footer/public-footer';
@@ -23,6 +24,7 @@ class FooterStub {}
 
 describe('ComoAjudar — geração local de Pix', () => {
   let fixture: ComponentFixture<ComoAjudar>;
+  let fragmento: BehaviorSubject<string | null>;
   let http: HttpTestingController;
   let elemento: HTMLElement;
   const url = `${environment.apiUrl}/pix`;
@@ -43,10 +45,12 @@ describe('ComoAjudar — geração local de Pix', () => {
   };
 
   beforeEach(async () => {
+    fragmento = new BehaviorSubject<string | null>(null);
     localStorage.removeItem('ler.pix.codigos.v1');
     await TestBed.configureTestingModule({
       imports: [ComoAjudar],
-      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([]),
+        { provide: ActivatedRoute, useValue: { fragment: fragmento.asObservable() } }],
     })
       .overrideComponent(ComoAjudar, {
         remove: { imports: [PublicNavbar, PublicFooter] },
@@ -71,6 +75,20 @@ describe('ComoAjudar — geração local de Pix', () => {
     await fixture.whenStable();
   }
 
+  it.each(['titulo-pix', 'titulo-nfp'])('leva ao título %s depois de carregar a seção Pix', destino => {
+    const frames: FrameRequestCallback[] = [];
+    vi.spyOn(window, 'requestAnimationFrame').mockImplementation(callback => { frames.push(callback); return frames.length; });
+    vi.spyOn(window, 'cancelAnimationFrame').mockImplementation(() => {});
+    fragmento.next(destino);
+    expect(frames).toHaveLength(0);
+    http.expectOne(url).flush(config); fixture.detectChanges();
+    const titulo = elemento.querySelector<HTMLElement>('#' + destino)!;
+    const scroll = vi.fn(); titulo.scrollIntoView = scroll;
+    frames.splice(0).forEach(frame => frame(0));
+    expect(titulo.tagName).toBe('H2');
+    expect(scroll).toHaveBeenCalledWith({ block: 'start' });
+  });
+
   async function digitar(valor: string) {
     const input = elemento.querySelector<HTMLInputElement>('#valor-doacao')!;
     input.value = valor;
@@ -78,6 +96,23 @@ describe('ComoAjudar — geração local de Pix', () => {
     fixture.detectChanges();
     await fixture.whenStable();
   }
+
+  it('usa a mesma posição do botão Quero contribuir ao abrir o link Pix do rodapé', () => {
+    const frames: FrameRequestCallback[] = [];
+    vi.spyOn(window, 'requestAnimationFrame').mockImplementation(callback => { frames.push(callback); return frames.length; });
+    vi.spyOn(window, 'cancelAnimationFrame').mockImplementation(() => {});
+    const scroll = vi.spyOn(window, 'scrollTo').mockImplementation(() => {});
+    fragmento.next('pix');
+    http.expectOne(url).flush(config); fixture.detectChanges();
+    const pix = elemento.querySelector<HTMLElement>('#pix')!;
+    vi.spyOn(pix, 'getBoundingClientRect').mockReturnValue({ top: 500 } as DOMRect);
+    frames.splice(0).forEach(frame => frame(0));
+    const posicaoRodape = scroll.mock.lastCall?.[0];
+    expect(posicaoRodape).toEqual({ top: Math.max(0, 500 + window.scrollY - 82 - 8), behavior: 'smooth' });
+    scroll.mockClear();
+    elemento.querySelector<HTMLAnchorElement>('.abertura-botao')!.click();
+    expect(scroll).toHaveBeenCalledWith(posicaoRodape);
+  });
 
   async function aguardarGeracao() {
     await new Promise((resolve) => setTimeout(resolve, 520));

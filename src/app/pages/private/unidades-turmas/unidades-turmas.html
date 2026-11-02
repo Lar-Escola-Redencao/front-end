@@ -178,10 +178,15 @@
         <mat-form-field appearance="outline">
           <mat-label>Horário de abertura</mat-label>
           <input
+            #horarioAbertura
             matInput
             type="time"
             formControlName="horarioAbertura"
             (blur)="verificarErros()" />
+          <button type="button" matSuffix class="btn-seletor-hora" aria-label="Selecionar horário de abertura"
+            (click)="abrirSeletorHora(horarioAbertura)">
+            <span class="material-symbols-outlined" aria-hidden="true">schedule</span>
+          </button>
         </mat-form-field>
         <span class="error-text" *ngIf="erros['horarioAbertura']">
           {{ erros['horarioAbertura'] }}
@@ -192,10 +197,15 @@
         <mat-form-field appearance="outline">
           <mat-label>Horário de fechamento</mat-label>
           <input
+            #horarioFechamento
             matInput
             type="time"
             formControlName="horarioFechamento"
             (blur)="verificarErros()" />
+          <button type="button" matSuffix class="btn-seletor-hora" aria-label="Selecionar horário de fechamento"
+            (click)="abrirSeletorHora(horarioFechamento)">
+            <span class="material-symbols-outlined" aria-hidden="true">schedule</span>
+          </button>
         </mat-form-field>
         <span class="error-text" *ngIf="erros['horarioFechamento']">
           {{ erros['horarioFechamento'] }}
@@ -341,11 +351,16 @@
           <mat-form-field appearance="outline">
             <mat-label>Horário de início</mat-label>
             <input
+              #horaInicio
               matInput
               type="time"
               formControlName="horaInicio"
               (blur)="verificarErrosTurma()"
             />
+            <button type="button" matSuffix class="btn-seletor-hora" aria-label="Selecionar horário de início"
+              (click)="abrirSeletorHora(horaInicio)">
+              <span class="material-symbols-outlined" aria-hidden="true">schedule</span>
+            </button>
           </mat-form-field>
           <span class="error-text" *ngIf="errosTurma['horaInicio']">
             {{ errosTurma['horaInicio'] }}
@@ -355,7 +370,11 @@
         <div>
           <mat-form-field appearance="outline">
             <mat-label>Horário de término</mat-label>
-            <input matInput type="time" formControlName="horaFim" (blur)="verificarErrosTurma()" />
+            <input #horaFim matInput type="time" formControlName="horaFim" (blur)="verificarErrosTurma()" />
+            <button type="button" matSuffix class="btn-seletor-hora" aria-label="Selecionar horário de término"
+              (click)="abrirSeletorHora(horaFim)">
+              <span class="material-symbols-outlined" aria-hidden="true">schedule</span>
+            </button>
           </mat-form-field>
           <span class="error-text" *ngIf="errosTurma['horaFim']">
             {{ errosTurma['horaFim'] }}

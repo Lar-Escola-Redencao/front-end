@@ -304,8 +304,13 @@ export class CaptacaoRecursos implements OnInit, OnDestroy, ComponentComAlteraco
         chave: campo.campo,
         titulo: campo.rotulo,
         principalMobile: indice === 0,
-        formatar: (valor: string | null) =>
-          (campo.tipo === 'telefone' ? formatarTelefone(valor) : valor) || '-',
+        formatar: (valor: string | null) => {
+          if (!valor) return '-';
+          if (this.config.secao === 'pix' && campo.campo === 'conteudo') {
+            return formatarChavePix(valor, identificarTipoChavePix(valor));
+          }
+          return (campo.tipo === 'telefone' ? formatarTelefone(valor) : valor) || '-';
+        },
       })),
     );
 
