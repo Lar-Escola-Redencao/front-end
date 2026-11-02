@@ -9,6 +9,7 @@ import {
 } from '@angular/core';
 
 import { MatIconModule } from '@angular/material/icon';
+import { Params, RouterLink } from '@angular/router';
 
 import { environment } from 'src/environments/environment';
 
@@ -17,6 +18,8 @@ export interface TabelaColuna<T = any> {
   titulo: string;
   formatar?: (valor: any, linha: T) => string;
   principalMobile?: boolean;
+  link?: (linha: T) => string | any[];
+  parametrosLink?: (linha: T) => Params;
   tipo?: 'texto' | 'status' | 'matricula-status' | 'imagem' | 'documento' | 'telefone';
   /** Quando true, o cabeçalho fica clicável e emite (ordenar). */
   ordenavel?: boolean;
@@ -53,7 +56,8 @@ export interface TabelaOrdenacao {
 
   imports: [EstadoVazio,
     CommonModule,
-    MatIconModule
+    MatIconModule,
+    RouterLink
   ],
 
   templateUrl: './tabela-layout.html',

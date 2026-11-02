@@ -874,12 +874,13 @@ export class ColaboradorComponent
                 'Sucesso'
               );
             },
-            error: () => {
+            error: (erro) => {
               this.isLoading = false;
-              this.toastr.error(
-                'Erro ao excluir colaborador.',
-                'Erro'
-              );
+              const mensagem = erro.error?.message || (erro.status === 409
+                ? 'Não é possível excluir este colaborador porque existem registros vinculados a ele.'
+                : 'Não foi possível excluir o colaborador. Tente novamente.');
+              if (erro.status === 409) this.toastr.warning(mensagem, 'Exclusão não permitida');
+              else this.toastr.error(mensagem, 'Erro');
               this.cdr.detectChanges();
             }
           });

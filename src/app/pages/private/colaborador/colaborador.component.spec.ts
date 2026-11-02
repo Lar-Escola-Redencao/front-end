@@ -2,10 +2,10 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideRouter } from '@angular/router';
-import { provideToastr } from 'ngx-toastr';
+import { provideToastr, ToastrService } from 'ngx-toastr';
 import { ColaboradorComponent } from './colaborador.component';
 import { vi } from 'vitest';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { Auth } from 'src/app/shared/services/auth/auth';
 import { SessaoService } from 'src/app/shared/services/auth/sessao.service';
 import { UnidadeService } from 'src/app/shared/services/colaborador/unidade.service';
@@ -38,6 +38,19 @@ describe('ColaboradorComponent', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  it('mostra o motivo da API quando registros vinculados impedem excluir o colaborador', async () => {
+    configurarPerfil('ADMINISTRADOR');
+    vi.spyOn(Alertas, 'confirmarExclusao').mockResolvedValue(true);
+    const mensagem = 'Não é possível excluir este colaborador porque existem registros vinculados a ele.';
+    vi.spyOn(TestBed.inject(ColaboradorService), 'deletar').mockReturnValue(throwError(() => ({ status: 409, error: { message: mensagem } })));
+    const toast = TestBed.inject(ToastrService);
+    const aviso = vi.spyOn(toast, 'warning').mockReturnValue({} as ReturnType<ToastrService['warning']>);
+    const erro = vi.spyOn(toast, 'error').mockReturnValue({} as ReturnType<ToastrService['error']>);
+    component.deletarColaborador(monitor([1])); await Promise.resolve();
+    expect(aviso).toHaveBeenCalledWith(mensagem, 'Exclusão não permitida');
+    expect(erro).not.toHaveBeenCalled(); expect(component.isLoading).toBe(false);
   });
 
   afterEach(() => vi.restoreAllMocks());

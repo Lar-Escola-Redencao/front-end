@@ -9,10 +9,11 @@ import { MatriculaHistoricoDTO, UsuarioResponseDTO } from 'src/app/shared/models
 import { AcompanhamentoService, ResumoFrequencia } from 'src/app/shared/services/acompanhamento/acompanhamento.service';
 import { PERIODOS_FREQUENCIA, PeriodoFrequencia, completarMeses, hojeBrasilia, intervaloPeriodo, validarIntervalo } from './periodos-frequencia';
 import { AjudaAcompanhamento } from '../compartilhado/ajuda-acompanhamento';
+import { EstadoVazio } from '@components/estado-vazio/estado-vazio';
 
 @Component({
   selector: 'app-acompanhamento-frequencias', standalone: true,
-  imports: [ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatIconModule, AjudaAcompanhamento],
+  imports: [ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatIconModule, AjudaAcompanhamento, EstadoVazio],
   templateUrl: './frequencias.html', styleUrl: './frequencias.css',
 })
 export class AcompanhamentoFrequencias implements OnChanges, OnDestroy {

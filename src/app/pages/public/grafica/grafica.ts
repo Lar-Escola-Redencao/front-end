@@ -1,6 +1,7 @@
 import { ChangeDetectorRef, Component, DestroyRef, ElementRef, HostListener, OnDestroy, ViewChild, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { BloquearScroll } from 'src/app/shared/directives/bloquear-scroll';
+import { EstadoVazio } from '@components/estado-vazio/estado-vazio';
 import { PublicFooter } from '@components/public-footer/public-footer';
 import { PublicNavbar } from '@components/public-navbar/public-navbar';
 import { GraficaService } from 'src/app/shared/services/pagina/grafica.service';
@@ -29,7 +30,7 @@ export function normalizarTelefoneWhatsapp(telefone: string | null | undefined):
 
 @Component({
   selector: 'app-grafica',
-  imports: [PublicNavbar, PublicFooter, BloquearScroll],
+  imports: [PublicNavbar, PublicFooter, BloquearScroll, EstadoVazio],
   templateUrl: './grafica.html',
   styleUrl: './grafica.css',
 })

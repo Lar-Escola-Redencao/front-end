@@ -185,7 +185,8 @@ describe('Grafica', () => {
 
     const el: HTMLElement = fixture.nativeElement;
     expect(el.querySelector('.spinner')).toBeNull();
-    expect(el.querySelector('.mensagem-vazia')).not.toBeNull();
+    expect(el.querySelector('app-estado-vazio')).not.toBeNull();
+    expect(el.querySelector('app-estado-vazio mat-icon')?.textContent?.trim()).toBe('photo_prints');
     expect(el.querySelector('.contato-section')).toBeNull();
   });
 });

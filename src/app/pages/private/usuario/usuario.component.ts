@@ -338,6 +338,8 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
       chave: 'nomeCompleto',
       titulo: 'Usuário',
       principalMobile: true,
+      link: usuario => ['/dashboard/usuarios', usuario.id],
+      parametrosLink: () => this.perfilQueryParams,
       ordenavel: true,
       etiqueta: usuario => (usuario.statusMatricula || '').toUpperCase() === 'EGRESSO' ? 'Desligado' : null
     },

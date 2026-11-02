@@ -1,5 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { PublicFooter } from '@components/public-footer/public-footer';
+import { EstadoVazio } from '@components/estado-vazio/estado-vazio';
 
 import { PublicNavbar } from '@components/public-navbar/public-navbar';
 import { Secao, Documento } from 'src/app/shared/models/transparencia.model';
@@ -10,7 +11,7 @@ import { baixarArquivoComVerificacao, visualizarArquivoComVerificacao } from 'sr
 @Component({
   selector: 'app-transparencia',
   standalone: true,
-  imports: [PublicNavbar, PublicFooter],
+  imports: [PublicNavbar, PublicFooter, EstadoVazio],
   templateUrl: './transparencia.html',
   styleUrl: './transparencia.css',
 })

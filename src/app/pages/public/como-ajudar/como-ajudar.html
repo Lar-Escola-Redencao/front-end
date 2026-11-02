@@ -192,7 +192,7 @@
         </div>
       </section>
     } @else if (indisponivel()) {
-      <div class="estado-carregamento"><p>Doações via Pix indisponíveis no momento.</p></div>
+      <div class="estado-carregamento"><p>As doações via Pix estão indisponíveis no momento.</p></div>
     }
 
     <section id="notas-fiscais" class="secao-nfp" aria-labelledby="titulo-nfp">
@@ -322,7 +322,7 @@
         <p class="erro" role="alert">{{ erroGeracao() }}</p>
         <button type="button" class="btn-primary" (click)="gerarPix()">Tentar novamente</button>
       } @else {
-        <p>Doações via Pix indisponíveis no momento.</p>
+        <p>As doações via Pix estão indisponíveis no momento.</p>
       }
     </div>
   </app-modal-layout>

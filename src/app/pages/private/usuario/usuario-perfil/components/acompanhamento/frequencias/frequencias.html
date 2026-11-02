@@ -65,7 +65,8 @@
     } @else if (resumo(); as dados) {
       <p class="periodo-aplicado">{{ dataLegivel(dados.dataInicio) }} a {{ dataLegivel(dados.dataFim) }} · {{ dados.totalRegistros }} {{ dados.totalRegistros === 1 ? 'registro' : 'registros' }}</p>
       @if (!dados.totalRegistros) {
-        <div class="estado vazio">Nenhuma frequência registrada para os filtros selecionados.</div>
+        <app-estado-vazio icone="data_usage"
+          mensagem="Nenhuma frequência registrada para os filtros selecionados." />
       } @else {
         <div class="graficos">
           <article class="grafico-card">

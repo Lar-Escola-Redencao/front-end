@@ -7,11 +7,12 @@
 
     <div
       class="carousel-container"
+      [class.registro-unico]="diretoresOriginal.length === 1"
       *ngIf="diretoresOriginal.length > 0; else semDiretoria">
       <button
         class="nav-btn prev-btn"
+        *ngIf="diretoresOriginal.length > 1"
         (click)="prev()"
-        [class.hidden]="diretoresOriginal.length <= 1"
         aria-label="Anterior">
         <span class="material-symbols-outlined">chevron_left</span>
       </button>
@@ -22,7 +23,7 @@
           <div 
             class="diretor-card-wrapper" 
             *ngFor="let membro of diretoresCarousel; let i = index" 
-            [style.min-width]="(100 / itemsPerPage) + '%'">
+            [style.min-width]="diretoresOriginal.length === 1 ? '0' : (100 / itemsPerPage) + '%'">
             
             <div 
               class="diretor-card" 
@@ -57,8 +58,8 @@
 
       <button
         class="nav-btn next-btn"
+        *ngIf="diretoresOriginal.length > 1"
         (click)="next()"
-        [class.hidden]="diretoresOriginal.length <= 1"
         aria-label="Próximo">
         <span class="material-symbols-outlined">chevron_right</span>
       </button>

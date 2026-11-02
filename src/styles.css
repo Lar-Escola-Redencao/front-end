@@ -441,6 +441,16 @@ body {
 
 .swal2-container .swal2-actions > button {
   margin: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-height: 45px;
+  padding: 10px 24px;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.25;
 }
 
 .swal2-container .pix-alerta-acoes .swal2-actions {

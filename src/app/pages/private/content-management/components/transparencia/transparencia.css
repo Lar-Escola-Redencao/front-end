@@ -10,6 +10,16 @@
   margin-bottom: 24px;
 }
 
+.acoes-transparencia app-barra-busca {
+  flex: 1 1 250px;
+  min-width: 0;
+}
+
+.filtro-secao {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+
 .transparencia-card {
   min-height: 180px;
   border-radius: 6px;
@@ -154,6 +164,11 @@
 }
 
 @media (max-width: 600px) {
+  .acoes-transparencia app-barra-busca,
+  .filtro-secao {
+    flex-basis: 100%;
+  }
+
   .acoes-transparencia,
   .acoes-modal,
   .acoes-modal .btn-primary {
