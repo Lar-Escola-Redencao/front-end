@@ -11,5 +11,6 @@ import { MatIconModule } from '@angular/material/icon';
 export class EstadoVazio {
   @Input() mensagem = 'Nenhum registro cadastrado.';
   @Input() icone = 'inbox';
+  @Input() fontSet = 'material-icons';
   @Input() compacto = false;
 }

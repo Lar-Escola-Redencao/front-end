@@ -138,6 +138,7 @@ export class PublicDiretoriaComponent implements OnInit, OnDestroy {
   }
 
   get trackTransform(): string {
+    if (this.diretoresOriginal.length <= 1) return 'translateX(0)';
     if (this.itemsPerPage === 1) {
       return `translateX(-${this.currentIndex * 100}%)`;
     }

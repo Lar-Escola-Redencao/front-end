@@ -37,11 +37,11 @@ describe('SobrePublicoService', () => {
           id: 3,
           titulo: '1995',
           grupo: 'historia',
-          ordem: 2,
+          ordem: 1,
           ativo: true,
           imagem: '/uploads/paginas/historia.jpg',
         },
-        { id: 2, titulo: '1978', grupo: 'historia', ordem: 1, ativo: true },
+        { id: 2, titulo: '1978', grupo: 'historia', ordem: 9, ativo: true },
         { id: 1, titulo: 'Sobre', grupo: 'texto-sobre', ativo: true, conteudo: 'Missão e valores' },
         { id: 4, grupo: 'texto-sobre', ativo: false, conteudo: 'Não publicar' },
         {

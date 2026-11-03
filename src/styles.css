@@ -1,3 +1,10 @@
+body:has(.area-sistema-historico-overlay) .cdk-overlay-container,
+body:has(.dica-acompanhamento-overlay) .cdk-overlay-container {
+  z-index: 998;
+}
+
+body:has(app-historico .form-filtros) .cdk-overlay-container,
+body:has(.modal-backdrop app-ajuda-acompanhamento button[aria-expanded="true"]) .cdk-overlay-container,
 body:has(app-historico .form-filtros) .cdk-overlay-container,
 body:has(.ajuda-relatorio-overlay) .cdk-overlay-container {
   z-index: 2500;
@@ -434,6 +441,16 @@ body {
 
 .swal2-container .swal2-actions > button {
   margin: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-height: 45px;
+  padding: 10px 24px;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.25;
 }
 
 .swal2-container .pix-alerta-acoes .swal2-actions {
@@ -860,13 +877,24 @@ div.mat-mdc-autocomplete-panel .mat-mdc-option.mat-mdc-option-active:not(.mdc-li
   background: var(--primary-color);
 }
 
-/* O calendário dos campos Material usa o ícone do projeto. */
+/* Os campos Material usam os seletores e ícones do projeto. */
 input[matInput][type="date"]::-webkit-calendar-picker-indicator,
-input[matInput][type="datetime-local"]::-webkit-calendar-picker-indicator {
+input[matInput][type="datetime-local"]::-webkit-calendar-picker-indicator,
+input[matInput][type="time"]::-webkit-calendar-picker-indicator {
   display: none;
 }
 
-.btn-calendario-data {
+/* Não agrupar seletores de navegadores: um seletor desconhecido invalida a regra. */
+input[type="password"]::-ms-reveal {
+  display: none !important;
+}
+
+input::-ms-clear {
+  display: none;
+}
+
+.btn-calendario-data,
+.btn-seletor-hora {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -883,12 +911,15 @@ input[matInput][type="datetime-local"]::-webkit-calendar-picker-indicator {
 }
 
 .btn-calendario-data:hover,
-.btn-calendario-data:focus-visible {
+.btn-calendario-data:focus-visible,
+.btn-seletor-hora:hover,
+.btn-seletor-hora:focus-visible {
   background-color: #f0f0f0;
   color: var(--primary-color);
 }
 
-.btn-calendario-data:disabled {
+.btn-calendario-data:disabled,
+.btn-seletor-hora:disabled {
   opacity: 0.5;
   cursor: default;
 }

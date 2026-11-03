@@ -38,8 +38,8 @@ export class TransparenciaService {
   }
 
   /** Rota autenticada e paginada, usada pela tabela de documentos da tela admin. */
-  listarDocumentosAdmin(pagina: number, tamanho: number, sort?: string, search?: string): Observable<PaginaResposta<DocumentoAdmin>> {
-    return this.paginaCmsService.listarDocumentosAdmin(ID_PAGINA_TRANSPARENCIA, pagina, tamanho, sort, search);
+  listarDocumentosAdmin(pagina: number, tamanho: number, sort?: string, search?: string, secaoId?: number): Observable<PaginaResposta<DocumentoAdmin>> {
+    return this.paginaCmsService.listarDocumentosAdmin(ID_PAGINA_TRANSPARENCIA, pagina, tamanho, sort, search, secaoId);
   }
 
   buscarSecao(id: number): Observable<Secao> {

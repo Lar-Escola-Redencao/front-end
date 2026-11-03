@@ -71,7 +71,14 @@
               </span>
             } @else {
               <span class="titulo-mobile">
-                {{ obterValorPrincipal(linha) }}
+                @if (colunaPrincipal.link) {
+                  <a class="tabela-link" [routerLink]="colunaPrincipal.link(linha)"
+                    [queryParams]="colunaPrincipal.parametrosLink?.(linha)" (click)="$event.stopPropagation()">
+                    {{ obterValorPrincipal(linha) }}
+                  </a>
+                } @else {
+                  {{ obterValorPrincipal(linha) }}
+                }
               </span>
             }
             @if (obterEtiquetaPrincipal(linha); as etiqueta) {
@@ -208,7 +215,13 @@
 
       @else {
 
-        {{ obterValor(linha, coluna) }}
+        @if (coluna.link) {
+          <a class="tabela-link" [routerLink]="coluna.link(linha)" [queryParams]="coluna.parametrosLink?.(linha)">
+            {{ obterValor(linha, coluna) }}
+          </a>
+        } @else {
+          {{ obterValor(linha, coluna) }}
+        }
 
         @if (obterEtiqueta(linha, coluna); as etiqueta) {
           @if (etiqueta === 'kid_star') {

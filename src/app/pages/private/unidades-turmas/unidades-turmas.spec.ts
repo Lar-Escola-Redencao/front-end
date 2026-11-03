@@ -4,6 +4,7 @@ import { ActivatedRoute, ParamMap, Router, convertToParamMap } from '@angular/ro
 import { ToastrService } from 'ngx-toastr';
 import { BehaviorSubject, of, throwError } from 'rxjs';
 import { vi } from 'vitest';
+import { Alertas } from 'src/app/shared/utils/alerts';
 import { By } from '@angular/platform-browser';
 import { HistoricoContextual } from '@components/historico-contextual/historico-contextual';
 import { Auth } from 'src/app/shared/services/auth/auth';
@@ -38,6 +39,7 @@ describe('UnidadesTurmas', () => {
   };
 
   let toastr: {
+    warning: ReturnType<typeof vi.fn>;
     success: ReturnType<typeof vi.fn>;
     error: ReturnType<typeof vi.fn>;
     info: ReturnType<typeof vi.fn>;
@@ -118,6 +120,7 @@ describe('UnidadesTurmas', () => {
     };
 
     toastr = {
+      warning: vi.fn(),
       success: vi.fn(),
       error: vi.fn(),
       info: vi.fn(),
@@ -156,6 +159,27 @@ describe('UnidadesTurmas', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  it.each(['unidade', 'turma'] as const)('mostra o motivo da API quando a exclusão de %s é impedida', async tipo => {
+    vi.spyOn(Alertas, 'confirmarExclusao').mockResolvedValue(true);
+    const mensagem = `Não é possível excluir esta ${tipo}: existem matrículas vinculadas, inclusive de usuários transferidos ou desligados.`;
+    const api = tipo === 'unidade' ? unidadeService : turmaService;
+    api.deletar.mockReturnValue(throwError(() => ({ status: 409, error: { message: mensagem } })));
+    if (tipo === 'unidade') component.deletarUnidade(unidades[0]);
+    else component.deletarTurma(turma);
+    await Promise.resolve();
+    expect(toastr.warning).toHaveBeenCalledWith(mensagem, 'Exclusão não permitida');
+    expect(toastr.error).not.toHaveBeenCalled();
+    expect(component.isLoading).toBe(false); expect(component.isLoadingTurma).toBe(false);
+  });
+
+  it('mantém mensagem de falha quando o erro não é de vínculo', async () => {
+    vi.spyOn(Alertas, 'confirmarExclusao').mockResolvedValue(true);
+    turmaService.deletar.mockReturnValue(throwError(() => ({ status: 503 })));
+    component.deletarTurma(turma); await Promise.resolve();
+    expect(toastr.error).toHaveBeenCalledWith('Não foi possível excluir a turma. Tente novamente.', 'Erro');
+    expect(toastr.warning).not.toHaveBeenCalled();
   });
 
   it('preserva o card público e o histórico apenas da unidade selecionada', async () => {

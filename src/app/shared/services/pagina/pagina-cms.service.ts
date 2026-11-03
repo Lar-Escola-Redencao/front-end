@@ -102,8 +102,9 @@ export class PaginaCmsService {
     tamanho: number,
     sort?: string,
     search?: string,
+    secaoId?: number,
   ): Observable<PaginaResposta<DocumentoAdmin>> {
-    const params = construirHttpParams({ pagina, tamanho, sort, extras: { search } });
+    const params = construirHttpParams({ pagina, tamanho, sort, extras: { search, secaoId } });
     return this.http.get<PaginaResposta<DocumentoAdmin>>(`${this.apiUrl}/${idPagina}/documentos/admin`, { params });
   }
 

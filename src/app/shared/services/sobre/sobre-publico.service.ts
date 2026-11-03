@@ -41,7 +41,8 @@ export class SobrePublicoService {
           }));
         return {
           texto: ativas.filter((secao) => secao.grupo === 'texto-sobre'),
-          historia: ativas.filter((secao) => secao.grupo === 'historia'),
+          historia: ativas.filter((secao) => secao.grupo === 'historia')
+            .sort((a, b) => Number(a.titulo) - Number(b.titulo) || a.id - b.id),
           carrossel: ativas
             .filter((secao) => secao.grupo === 'carrossel' && secao.imagem)
             .slice(0, 8),

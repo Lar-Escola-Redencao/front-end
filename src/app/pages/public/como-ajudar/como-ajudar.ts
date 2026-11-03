@@ -1,4 +1,5 @@
 import { CurrencyPipe, Location } from '@angular/common';
+import { ActivatedRoute } from '@angular/router';
 import { Clipboard } from '@angular/cdk/clipboard';
 import { Component, computed, DestroyRef, ElementRef, HostListener, inject, OnInit, signal } from '@angular/core';
 import { A11yModule } from '@angular/cdk/a11y';
@@ -21,6 +22,9 @@ import { forkJoin, timer } from 'rxjs';
   styleUrl: './como-ajudar.css',
 })
 export class ComoAjudar implements OnInit {
+  private readonly route = inject(ActivatedRoute);
+  private fragmentoDestino: string | null = null;
+  private frameDestino: number | null = null;
   private readonly prazoSessaoMs = 15 * 60_000;
   private readonly duracaoMinimaGeracaoMs = 500;
   private readonly ilustracoes = [
@@ -73,6 +77,7 @@ export class ComoAjudar implements OnInit {
 
   constructor() {
     this.destroyRef.onDestroy(() => {
+      if (this.frameDestino !== null) cancelAnimationFrame(this.frameDestino);
       clearTimeout(this.copiaChaveTimer);
       clearTimeout(this.copiaCodigoTimer);
     });
@@ -125,7 +130,24 @@ export class ComoAjudar implements OnInit {
   }
 
   ngOnInit(): void {
+    this.route.fragment.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(fragmento => {
+      this.fragmentoDestino = fragmento;
+      this.rolarParaDestino();
+    });
     this.carregarPix();
+  }
+
+  private rolarParaDestino(): void {
+    if (this.frameDestino !== null) cancelAnimationFrame(this.frameDestino);
+    this.frameDestino = null;
+    const destino = this.fragmentoDestino;
+    if (this.carregando() || (destino !== 'pix' && destino !== 'titulo-pix' && destino !== 'titulo-nfp')) return;
+    // O carregamento do Pix pode criar o título ou deslocar a seção da Nota Fiscal.
+    this.frameDestino = requestAnimationFrame(() => {
+      this.frameDestino = null;
+      if (destino === 'pix') this.posicionarPix();
+      else this.elemento.nativeElement.querySelector<HTMLElement>('#' + destino)?.scrollIntoView({ block: 'start' });
+    });
   }
 
   protected carregarPix(): void {
@@ -144,11 +166,13 @@ export class ComoAjudar implements OnInit {
         next: (configuracao) => {
           this.configuracao.set(configuracao);
           this.carregando.set(false);
+          this.rolarParaDestino();
         },
         error: (erro) => {
           this.indisponivel.set(erro.status === 404);
           this.erroCarregamento.set(erro.status !== 404);
           this.carregando.set(false);
+          this.rolarParaDestino();
         },
       });
   }
@@ -265,13 +289,17 @@ export class ComoAjudar implements OnInit {
 
   protected irParaPix(evento: MouseEvent): void {
     if (evento.ctrlKey || evento.metaKey || evento.shiftKey || evento.altKey || evento.button !== 0) return;
+    if (!this.elemento.nativeElement.querySelector('#pix')) return;
+    evento.preventDefault();
+    this.location.go('/como-ajudar#pix', '', this.location.getState());
+    this.posicionarPix();
+  }
+
+  private posicionarPix(): void {
     const secao = this.elemento.nativeElement.querySelector<HTMLElement>('#pix');
     const janela = secao?.ownerDocument.defaultView;
     if (!secao || !janela) return;
 
-    // Atualiza o fragmento sem substituir a posição calculada pela navegação nativa.
-    evento.preventDefault();
-    this.location.go('/como-ajudar#pix', '', this.location.getState());
     const navbar = this.elemento.nativeElement.querySelector<HTMLElement>('app-public-navbar .navbar');
     const alturaNav = navbar?.getBoundingClientRect().bottom ?? 82;
     const topo = secao.getBoundingClientRect().top + janela.scrollY - alturaNav - 8;

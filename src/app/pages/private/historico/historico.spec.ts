@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { OverlayContainer } from '@angular/cdk/overlay';
 import { NgForm } from '@angular/forms';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { BehaviorSubject, Subject, of, throwError } from 'rxjs';
@@ -42,6 +43,41 @@ describe('Histórico de atividades', () => {
   afterEach(() => {
     componente.ngOnDestroy();
     vi.restoreAllMocks();
+  });
+
+  it('mantém o seletor aberto ao rolar e aplica a camada própria abaixo da navbar', async () => {
+    fixture.detectChanges();
+    componente.areaAberta = true; fixture.changeDetectorRef.markForCheck(); fixture.detectChanges();
+    await fixture.whenStable();
+    const overlay = TestBed.inject(OverlayContainer).getContainerElement();
+    const painel = overlay.querySelector('.arvore-areas') as HTMLElement;
+    expect(painel).not.toBeNull();
+    expect(overlay.querySelector('.area-sistema-historico-overlay')).not.toBeNull();
+    painel.dispatchEvent(new Event('scroll')); fixture.detectChanges();
+    expect(componente.areaAberta).toBe(true);
+    document.dispatchEvent(new Event('scroll')); fixture.detectChanges();
+    expect(componente.areaAberta).toBe(true);
+    expect(overlay.querySelector('.arvore-areas')).not.toBeNull();
+  });
+
+  it('não usa a camada nativa de popover mesmo quando o navegador oferece suporte', async () => {
+    const mostrarOriginal = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'showPopover');
+    const ocultarOriginal = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'hidePopover');
+    Object.defineProperty(HTMLElement.prototype, 'showPopover', { configurable: true, value: vi.fn() });
+    Object.defineProperty(HTMLElement.prototype, 'hidePopover', { configurable: true, value: vi.fn() });
+    try {
+      fixture.detectChanges(); componente.areaAberta = true;
+      fixture.changeDetectorRef.markForCheck(); fixture.detectChanges(); await fixture.whenStable();
+      const painel = document.querySelector('.area-sistema-historico-overlay');
+      expect(painel).not.toBeNull();
+      expect(painel?.closest('[popover]')).toBeNull();
+    } finally {
+      fixture.destroy();
+      if (mostrarOriginal) Object.defineProperty(HTMLElement.prototype, 'showPopover', mostrarOriginal);
+      else Reflect.deleteProperty(HTMLElement.prototype, 'showPopover');
+      if (ocultarOriginal) Object.defineProperty(HTMLElement.prototype, 'hidePopover', ocultarOriginal);
+      else Reflect.deleteProperty(HTMLElement.prototype, 'hidePopover');
+    }
   });
 
   it('mostra a falha dentro do campo e do dropdown, sem alerta externo ao campo', async () => {
@@ -144,6 +180,32 @@ describe('Histórico de atividades', () => {
     componente.ngOnInit();
     expect(servico.atividades).toHaveBeenLastCalledWith(null, 0, 10, '', expect.objectContaining({ idUsuario: 12, periodo: 'TODOS' }), undefined);
     expect(componente.temContexto).toBe(true);
+    expect(componente.nomeAreaSelecionada).toBe('Usuários');
+    expect(servico.atividades).toHaveBeenLastCalledWith(null, 0, 10, '', expect.objectContaining({
+      idUsuario: 12, areaSistema: 'USUARIOS_E_ACOMPANHAMENTO'
+    }), undefined);
+  });
+
+  it('permite filtrar entrevistas mantendo o usuário de origem', () => {
+    parametros.next(convertToParamMap({ tipoRegistro: 'TODOS', idUsuario: '12', periodo: 'TODOS' }));
+    componente.ngOnInit();
+    const entrevistas = componente.tiposRegistro.find(tipo => tipo.nome === 'Entrevistas');
+    expect(entrevistas).toBeDefined();
+    componente.trocarTipo(entrevistas!.valor);
+    expect(navegar).toHaveBeenCalledWith([], expect.objectContaining({ queryParams: expect.objectContaining({
+      tipoRegistro: 'ENTREVISTAS', idUsuario: 12, areaSistema: null
+    }) }));
+  });
+
+  it('mantém contatos fora do grupo de usuários, sem perder o contexto ao consultá-los pelo perfil', () => {
+    expect(componente.grupoUsuarios.tipos.map(tipo => tipo.valor)).not.toContain('CONTATOS');
+    expect(componente.grupoUsuarios.tipos.map(tipo => tipo.valor)).toContain('VINCULOS_CONTATOS');
+    expect(componente.gruposAreas[0].tipos.map(tipo => tipo.valor)).toContain('CONTATOS');
+    parametros.next(convertToParamMap({ tipoRegistro: 'TODOS', idUsuario: '12', periodo: 'TODOS' }));
+    componente.ngOnInit(); componente.trocarTipo('CONTATOS');
+    expect(navegar).toHaveBeenCalledWith([], expect.objectContaining({ queryParams: expect.objectContaining({
+      tipoRegistro: 'CONTATOS', idUsuario: 12, areaSistema: null
+    }) }));
   });
 
   it('separa arquivados mantendo busca e contexto na URL', () => {
@@ -154,6 +216,17 @@ describe('Histórico de atividades', () => {
     expect(navegar).toHaveBeenCalledWith([], expect.objectContaining({ queryParams: expect.objectContaining({
       idUsuario: 12, search: 'Maria', periodo: 'ARQUIVADOS', page: null
     }) }));
+  });
+
+  it('substitui a URL ao alterar filtros, busca e paginação sem criar etapas para o botão Voltar', () => {
+    componente.trocarTipo('ENTREVISTAS');
+    componente.buscar('Ana');
+    componente.irParaPagina(1);
+    componente.mudarTamanho(25);
+    componente.trocarPeriodo('ARQUIVADOS');
+    for (const chamada of navegar.mock.calls) {
+      expect(chamada[1]).toEqual(expect.objectContaining({ replaceUrl: true }));
+    }
   });
 
   it('aplica a área diretamente mantendo a busca e os filtros adicionais', () => {

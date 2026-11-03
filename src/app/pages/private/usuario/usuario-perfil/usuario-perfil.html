@@ -113,7 +113,7 @@
               ></app-usuario-perfil-contatos>
             }
             @case ('acompanhamento') {
-              <app-usuario-perfil-aba-placeholder titulo="Acompanhamento" descricao="Os registros de acompanhamento entrarão nesta área."></app-usuario-perfil-aba-placeholder>
+              <app-usuario-perfil-acompanhamento [usuario]="usuario" />
             }
             @case ('matricula') {
               <app-usuario-perfil-matriculas [usuario]="usuario"></app-usuario-perfil-matriculas>

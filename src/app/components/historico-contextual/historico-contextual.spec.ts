@@ -49,6 +49,13 @@ describe('Novidades no histórico contextual', () => {
 
   afterEach(() => componente.ngOnDestroy());
 
+  it('leva o grupo de usuários e o contexto para o histórico completo do perfil', () => {
+    componente.tipo = null; componente.idRegistro = null; componente.idUsuario = 12;
+    expect(componente.parametrosPagina).toEqual(expect.objectContaining({
+      tipoRegistro: 'TODOS', idUsuario: 12, areaSistema: 'USUARIOS_E_ACOMPANHAMENTO'
+    }));
+  });
+
   it('oculta o acesso quando não há registros no contexto', () => {
     servico.consultarLeitura.mockReturnValue(of({ ultimoEvento: 0, ultimoLido: 0, temNovidades: false }));
     atualizacoes.next();

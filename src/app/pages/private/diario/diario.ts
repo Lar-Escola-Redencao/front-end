@@ -12,6 +12,7 @@ import { TurmaService } from 'src/app/shared/services/turma/turma.service';
 import { SessaoService } from 'src/app/shared/services/auth/sessao.service';
 import { DiarioService, FrequenciaUsuarioResponseDTO, OcorrenciaResponseDTO } from 'src/app/shared/services/diario/diario.service';
 import { ModalLayout } from '@components/modal-layout/modal-layout';
+import { AjudaAcompanhamento } from '../usuario/usuario-perfil/components/acompanhamento/compartilhado/ajuda-acompanhamento';
 import { ExportarRelatorio } from './exportar-relatorio/exportar-relatorio';
 
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -31,6 +32,7 @@ type FiltrosDiario = { idUnidade: number | null; idTurma: number | null; data: s
   standalone: true,
   imports: [
     HistoricoContextual,
+    AjudaAcompanhamento,
     EstadoVazio,
     CommonModule, RouterLink, FormsModule, ReactiveFormsModule, ModalLayout, ExportarRelatorio,
     MatFormFieldModule, MatInputModule, MatSelectModule, MatIconModule

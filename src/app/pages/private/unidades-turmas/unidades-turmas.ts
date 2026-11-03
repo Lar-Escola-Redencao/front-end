@@ -4,6 +4,7 @@ import { UnidadeCard } from '@components/unidade-card/unidade-card';
 import { AbasResponsivas } from 'src/app/shared/directives/abas-responsivas';
 import { ChangeDetectorRef, Component, HostListener, NgZone, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import {
   AbstractControl,
   FormBuilder,
@@ -939,13 +940,39 @@ export class UnidadesTurmas implements OnInit, OnDestroy, ComponentComAlteracoes
           this.recarregarUnidades();
           this.toastr.success('Unidade excluída com sucesso.', 'Sucesso');
         },
-        error: () => {
+        error: (erro) => {
           this.isLoading = false;
-          this.toastr.error('Erro ao excluir unidade.', 'Erro');
+          this.notificarErroExclusao(erro, 'unidade');
           this.cdr.detectChanges();
         },
       });
     });
+  }
+
+  abrirSeletorHora(input: HTMLInputElement): void {
+    if (input.disabled || input.readOnly) return;
+    if (typeof input.showPicker === 'function') {
+      try {
+        input.showPicker();
+        return;
+      } catch {
+        // Mantém o campo acessível quando o navegador não permite abrir o seletor.
+      }
+    }
+    input.focus();
+    input.click();
+  }
+
+  private notificarErroExclusao(erro: HttpErrorResponse, tipo: 'unidade' | 'turma'): void {
+    const bloqueado = erro.status === 409;
+    const mensagemApi = erro.error?.message;
+    const mensagem = typeof mensagemApi === 'string' && mensagemApi.trim()
+      ? mensagemApi
+      : bloqueado
+        ? `Não é possível excluir a ${tipo} porque existem registros vinculados a ela.`
+        : `Não foi possível excluir a ${tipo}. Tente novamente.`;
+    if (bloqueado) this.toastr.warning(mensagem, 'Exclusão não permitida');
+    else this.toastr.error(mensagem, 'Erro');
   }
 
   deletarTurma(turma: Turma): void {
@@ -967,9 +994,9 @@ export class UnidadesTurmas implements OnInit, OnDestroy, ComponentComAlteracoes
           this.carregarTurmas();
           this.toastr.success('Turma excluída com sucesso.', 'Sucesso');
         },
-        error: () => {
+        error: (erro) => {
           this.isLoadingTurma = false;
-          this.toastr.error('Erro ao excluir turma.', 'Erro');
+          this.notificarErroExclusao(erro, 'turma');
           this.cdr.detectChanges();
         },
       });

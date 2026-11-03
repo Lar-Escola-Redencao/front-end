@@ -30,21 +30,23 @@ export class PublicFooter implements OnInit {
   socialLinks: SocialLink[] = [];
 
   readonly homeLinks: HomeFooterLink[] = [
-    { label: 'Unidades de atendimento', sectionId: 'unidades' },
+    { label: 'Unidades de Atendimento', sectionId: 'unidades' },
     { label: 'Eventos', sectionId: 'eventos' },
     { label: 'Parceiros', sectionId: 'parceiros' },
+    { label: 'Gráfica Redenção', route: '/grafica' },
     { label: 'Transparência', route: '/transparencia' },
   ];
 
   readonly helpLinks: FooterLink[] = [
     {
-      label: 'Doação de nota fiscal',
-      route: '/como-ajudar',
-      fragment: 'notas-fiscais',
-    },
-    {
       label: 'Doação via Pix',
       route: '/como-ajudar',
+      fragment: 'pix',
+    },
+    {
+      label: 'Doação Nota Fiscal Paulista',
+      route: '/como-ajudar',
+      fragment: 'titulo-nfp',
     },
   ];
 
@@ -55,22 +57,22 @@ export class PublicFooter implements OnInit {
       fragment: 'sobre',
     },
     {
-      label: 'Nossa história',
+      label: 'Nossa História',
       route: '/conheca-a-osc',
       fragment: 'historia',
     },
     {
-      label: 'Lar Escola Redenção em números',
+      label: 'Lar Escola Redenção em Números',
       route: '/conheca-a-osc',
       fragment: 'numeros',
     },
     {
-      label: 'Composição da diretoria',
+      label: 'Composição da Diretoria',
       route: '/conheca-a-osc',
       fragment: 'conheca-osc',
     },
     {
-      label: 'Unidades de atendimento',
+      label: 'Unidades de Atendimento',
       route: '/conheca-a-osc',
       fragment: 'unidades',
     },

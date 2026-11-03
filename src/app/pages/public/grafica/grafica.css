@@ -1,7 +1,8 @@
 :host {
+  --fundo-grafica: var(--branco);
   display: block;
   min-height: 100dvh;
-  background-color: var(--branco);
+  background-color: var(--fundo-grafica);
 }
 
 .grafica-main {
@@ -22,7 +23,19 @@
   font-weight: 700;
   color: var(--preto);
   text-align: center;
-  margin: 0 0 40px;
+  margin: 0 0 8px;
+}
+
+.grafica-cabecalho {
+  margin-bottom: 40px;
+}
+
+.grafica-descricao {
+  margin: 0;
+  color: rgba(30, 30, 30, 0.7);
+  font-size: 1rem;
+  line-height: 1.5;
+  text-align: center;
 }
 
 /* Estado de loading / erro (mesmo padrão da Transparência) */
@@ -74,14 +87,6 @@
   background-color: var(--primary-hover-color);
 }
 
-.mensagem-vazia {
-  text-align: center;
-  font-family: var(--fonte-texto);
-  color: var(--input-color);
-  font-size: 1.1rem;
-  margin: 32px 0;
-}
-
 /* A quantidade de cards acompanha a largura disponível. */
 .carrossel-section {
   position: relative;
@@ -106,12 +111,12 @@
 
 .carrossel-viewport::before {
   left: 0;
-  background: linear-gradient(to right, var(--branco), rgba(255, 255, 255, 0));
+  background: linear-gradient(to right, var(--fundo-grafica), transparent);
 }
 
 .carrossel-viewport::after {
   right: 0;
-  background: linear-gradient(to left, var(--branco), rgba(255, 255, 255, 0));
+  background: linear-gradient(to left, var(--fundo-grafica), transparent);
 }
 
 .carrossel-section:not(.com-navegacao) {
@@ -294,7 +299,7 @@
   .carrossel-viewport::before,
   .carrossel-viewport::after { display: none; }
   .grafica-main { padding-bottom: 48px; }
-  .grafica-titulo { margin-bottom: 28px; }
+  .grafica-cabecalho { margin-bottom: 28px; }
   .carrossel-section {
     margin-bottom: 32px;
     grid-template-columns: 48px minmax(0, 1fr) 48px;
