@@ -15,7 +15,19 @@
         placeholder="Buscar por título, arquivo ou seção..."
         [valor]="busca"
         (buscar)="buscar($event)" />
-      <button type="button" class="btn-primary btn-primary-thick" (click)="abrirModal('documento')">
+      @if (secoesParaSelecao.length > 0) {
+        <mat-form-field appearance="outline" class="filtro-secao">
+          <mat-label>Documentos da seção</mat-label>
+          <mat-select [value]="secaoFiltroId" [canSelectNullableOptions]="true"
+            (selectionChange)="filtrarPorSecao($event.value)">
+            <mat-option [value]="null">Todas as seções</mat-option>
+            @for (secao of secoesParaSelecao; track secao.id) {
+              <mat-option [value]="secao.id">{{ secao.titulo }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      }
+      <button type="button" class="btn-primary btn-primary-thick" [disabled]="carregandoSecoes" (click)="abrirModal('documento')">
         Novo documento
       </button>
     </div>
@@ -91,7 +103,7 @@
             application/vnd.openxmlformats-officedocument.wordprocessingml.document,
             application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" (change)="selecionarDocumento($event)">
 
-      <div class="upload-arquivo" [class.upload-arquivo-erro]="errosDocumento['arquivo']"
+      <div [appAnexoDrop]="inputDocumento" class="upload-arquivo" [class.upload-arquivo-erro]="errosDocumento['arquivo']"
         (click)="inputDocumento.click()">
 
         <span class="material-symbols-outlined upload-arquivo-icone">

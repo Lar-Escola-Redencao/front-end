@@ -1,3 +1,4 @@
+import { HistoricoContextual } from '@components/historico-contextual/historico-contextual';
 import { AbasResponsivas } from 'src/app/shared/directives/abas-responsivas';
 import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, HostListener, NgZone, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
@@ -19,7 +20,7 @@ import { UnidadeService } from 'src/app/shared/services/unidade/unidade.service'
 import { UsuarioService } from 'src/app/shared/services/usuario/usuario.service';
 import { SessaoService } from 'src/app/shared/services/auth/sessao.service';
 import { ModalLayout } from 'src/app/components/modal-layout/modal-layout';
-import { UsuarioPerfilAbaPlaceholder } from './components/aba-placeholder/aba-placeholder';
+import { UsuarioPerfilAcompanhamento } from './components/acompanhamento/acompanhamento';
 import { UsuarioPerfilContatos } from './components/contatos/contatos';
 import { UsuarioPerfilDadosPessoais } from './components/dados-pessoais/dados-pessoais';
 import { UsuarioPerfilDadosSocioeconomicos } from './components/dados-socioeconomicos/dados-socioeconomicos';
@@ -34,6 +35,7 @@ type AbaPerfil = 'acompanhamento' | 'contatos' | 'saude' | 'dados-pessoais' | 'd
   selector: 'app-usuario-perfil',
   standalone: true,
   imports: [
+    HistoricoContextual,
     AbasResponsivas,
     CommonModule,
     ReactiveFormsModule,
@@ -42,7 +44,7 @@ type AbaPerfil = 'acompanhamento' | 'contatos' | 'saude' | 'dados-pessoais' | 'd
     MatInputModule,
     MatSelectModule,
     ModalLayout,
-    UsuarioPerfilAbaPlaceholder,
+    UsuarioPerfilAcompanhamento,
     UsuarioPerfilContatos,
     UsuarioPerfilDadosPessoais,
     UsuarioPerfilDadosSocioeconomicos,
@@ -69,6 +71,7 @@ export class UsuarioPerfil implements OnInit, OnDestroy, ComponentComAlteracoesN
   @ViewChild(UsuarioPerfilDadosSocioeconomicos) private dadosSocioeconomicos?: UsuarioPerfilDadosSocioeconomicos;
   @ViewChild(UsuarioPerfilSaude) private saude?: UsuarioPerfilSaude;
   @ViewChild(UsuarioPerfilContatos) private contatos?: UsuarioPerfilContatos;
+  @ViewChild(UsuarioPerfilAcompanhamento) private acompanhamento?: UsuarioPerfilAcompanhamento;
 
   usuario: UsuarioResponseDTO | null = null;
   carregando = true;
@@ -116,7 +119,8 @@ export class UsuarioPerfil implements OnInit, OnDestroy, ComponentComAlteracoesN
   }
 
   formularioTemAlteracoesNaoSalvas(): boolean {
-    return !!this.contatos?.formularioTemAlteracoesNaoSalvas();
+    return !!this.contatos?.formularioTemAlteracoesNaoSalvas()
+      || !!this.acompanhamento?.formularioTemAlteracoesNaoSalvas();
   }
 
   @HostListener('window:beforeunload', ['$event'])
@@ -174,6 +178,7 @@ export class UsuarioPerfil implements OnInit, OnDestroy, ComponentComAlteracoesN
     if (this.monitor && !this.abasVisiveis.some(item => item.id === aba)) return;
 
     if (aba === this.abaAtiva) return;
+    if (this.acompanhamento?.salvando) return;
 
     const abaAtual = this.obterAbaEditavelAtual();
     if (abaAtual?.temAlteracoes) {
@@ -209,7 +214,8 @@ export class UsuarioPerfil implements OnInit, OnDestroy, ComponentComAlteracoesN
     this.atualizarTela();
   }
 
-  private obterAbaEditavelAtual(): UsuarioPerfilDadosPessoais | UsuarioPerfilDadosSocioeconomicos | UsuarioPerfilSaude | undefined {
+  private obterAbaEditavelAtual(): UsuarioPerfilDadosPessoais | UsuarioPerfilDadosSocioeconomicos | UsuarioPerfilSaude | UsuarioPerfilAcompanhamento | undefined {
+    if (this.abaAtiva === 'acompanhamento') return this.acompanhamento;
     if (this.abaAtiva === 'dados-pessoais') return this.dadosPessoais;
     if (this.abaAtiva === 'dados-socioeconomicos') return this.dadosSocioeconomicos;
     if (this.abaAtiva === 'saude') return this.saude;
@@ -693,4 +699,10 @@ export class UsuarioPerfil implements OnInit, OnDestroy, ComponentComAlteracoesN
     this.cdr.markForCheck();
     this.cdr.detectChanges();
   }
+
+  abrirCalendario(campo: HTMLInputElement): void {
+    campo.focus();
+    if (typeof campo.showPicker === 'function') campo.showPicker();
+  }
+
 }

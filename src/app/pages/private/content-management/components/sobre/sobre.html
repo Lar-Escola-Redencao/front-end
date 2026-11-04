@@ -100,7 +100,7 @@
               (change)="onArquivoSlotSelecionado($event, $index)"
             />
 
-            <div
+            <div [appAnexoDrop]="inputSlot" [anexoDropDesabilitado]="carregandoSlot[$index]"
               class="upload-arquivo upload-arquivo-slot"
               [class.upload-arquivo-erro]="erroSlot[$index]"
               (click)="inputSlot.click()"
@@ -224,7 +224,7 @@
           (change)="onImagemHistoriaSelecionada($event)"
         />
 
-        <div
+        <div [appAnexoDrop]="inputImagemHistoria"
           class="upload-arquivo"
           [class.upload-arquivo-erro]="errosHistoria['imagem']"
           (click)="inputImagemHistoria.click()"
@@ -252,7 +252,7 @@
           Cancelar
         </button>
 
-        <button type="submit" class="btn-primary" [disabled]="isLoadingHistoria || (modoEdicaoHistoria && !temAlteracoesHistoria)">
+        <button type="submit" class="btn-primary" [disabled]="isLoadingHistoria || validandoAnoHistoria || (modoEdicaoHistoria && !temAlteracoesHistoria)">
           <span *ngIf="isLoadingHistoria" class="spinner" aria-hidden="true"></span>
           <span>{{ isLoadingHistoria ? 'Salvando...' : 'Salvar' }}</span>
         </button>

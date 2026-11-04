@@ -1,0 +1,82 @@
+<section aria-labelledby="titulo-ocorrencias">
+  <header class="cabecalho">
+    <div class="titulo-ajuda"><h2 id="titulo-ocorrencias">Ocorrências</h2><app-ajuda-acompanhamento /></div>
+    <button type="button" class="btn-primary" [disabled]="salvando()" (click)="abrir('NOVO')">Nova ocorrência</button>
+  </header>
+  <app-barra-busca placeholder="Buscar por responsável, tipo ou descrição" [valor]="lista.busca()" (buscar)="lista.pesquisar($event)" />
+  <app-tabela-layout class="tabela-ocorrencias" [colunas]="colunas" [dados]="lista.dados()" [acoes]="acoes" [carregando]="lista.carregando()" [erro]="lista.erro()"
+    mensagemVazia="Nenhuma ocorrência encontrada." (tentarNovamente)="lista.carregar()" />
+  <app-paginacao [paginaAtual]="lista.pagina()" [tamanho]="lista.tamanho()" [totalPaginas]="lista.paginas()" [totalElementos]="lista.total()"
+    [carregando]="lista.carregando()" (paginaChange)="lista.mudarPagina($event)" (tamanhoChange)="lista.mudarTamanho($event)" />
+</section>
+
+@if (modal()) {
+  <app-modal-layout [titulo]="modal() === 'NOVO' ? 'Nova ocorrência' : modal() === 'EDITAR' ? 'Editar ocorrência' : 'Detalhes da ocorrência'" (closed)="fechar()">
+    <span modal-title-extra>@if (modal() !== 'VER') { <app-ajuda-acompanhamento /> }</span>
+    @if (selecionada(); as ocorrencia) {
+      <div class="subtitulos-modal">
+        <p>Usuário: {{ usuario.nomeCompleto }}</p>
+        <p>Registrado por {{ ocorrencia.nomeMembro }} em {{ formatarData(ocorrencia.dataCriacao) }}</p>
+      </div>
+    }
+    @if (modal() === 'VER') {
+      <dl class="detalhes">
+        <div><dt>Data e hora da ocorrência</dt><dd>{{ formatarData(selecionada()!.dataOcorrencia) }}</dd></div>
+        <div><dt>Tipo de ocorrência</dt><dd>{{ nomeTipo(selecionada()!.tipoOcorrencia) }}</dd></div>
+        <div><dt>Turma e unidade</dt><dd>{{ selecionada()!.turmaUnidade }}</dd></div>
+        <div><dt>Descrição</dt><dd>{{ selecionada()!.descricao }}</dd></div>
+      </dl>
+    } @else {
+      <form class="formulario" [formGroup]="form" (ngSubmit)="salvar()">
+        @if (modal() === 'NOVO') {
+          <div class="campo-com-erro">
+          <mat-form-field appearance="outline"><mat-label>Matrícula</mat-label>
+            <mat-select formControlName="matricula" required>
+              @for (matricula of matriculas(); track matricula.id) {
+                <mat-option [value]="matricula.id">{{ nomeMatricula(matricula) }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+          @if (form.controls.matricula.touched && form.controls.matricula.invalid) { <span class="error-text" role="alert">{{ form.controls.matricula.getError('regra') || 'Selecione a matrícula.' }}</span> }
+        </div>
+          @if (carregandoMatriculas()) { <p role="status">Carregando matrículas...</p> }
+          @if (erroMatriculas()) {
+            <p class="erro" role="alert">{{ erroMatriculas() }}</p>
+            <button type="button" class="btn-cancelar" (click)="carregarMatriculas()">Tentar novamente</button>
+          } @else if (!carregandoMatriculas() && !matriculas().length) {
+            <p class="erro" role="alert">Nenhuma matrícula disponível para registrar a ocorrência.</p>
+          }
+        }
+        <div class="linha">
+          <div class="campo-com-erro">
+          <mat-form-field appearance="outline"><mat-label>Data da ocorrência</mat-label><input #data matInput type="date" formControlName="data" [attr.min]="dataMinima" [attr.max]="dataMaxima" required>
+            <button type="button" matSuffix class="btn-calendario-data" aria-label="Abrir calendário" [disabled]="form.controls.data.disabled" (click)="abrirCalendario(data)"><mat-icon>calendar_month</mat-icon></button>
+          </mat-form-field>
+          @if (form.controls.data.touched && form.controls.data.invalid) { <span class="error-text" role="alert">{{ form.controls.data.getError('regra') || 'Informe a data.' }}</span> }
+        </div>
+          <div class="campo-com-erro">
+          <mat-form-field appearance="outline" class="campo-hora"><mat-label>Horário</mat-label><input #inputHora matInput type="time" formControlName="horario" required>
+            <button type="button" matSuffix class="botao-seletor-hora" aria-label="Selecionar hora" [disabled]="form.controls.horario.disabled" (click)="abrirSeletorHora(inputHora)"><mat-icon>schedule</mat-icon></button>
+          </mat-form-field>
+          @if (form.controls.horario.touched && form.controls.horario.invalid) { <span class="error-text" role="alert">{{ form.controls.horario.getError('regra') || 'Informe o horário.' }}</span> }
+        </div>
+        </div>
+        <div class="campo-com-erro">
+          <mat-form-field appearance="outline"><mat-label>Tipo de ocorrência</mat-label>
+          <mat-select formControlName="tipoOcorrencia" required>@for (tipo of tipos; track tipo.valor) { <mat-option [value]="tipo.valor">{{ tipo.nome }}</mat-option> }</mat-select>
+        </mat-form-field>
+          @if (form.controls.tipoOcorrencia.touched && form.controls.tipoOcorrencia.invalid) { <span class="error-text" role="alert">Selecione o tipo.</span> }
+        </div>
+        <div class="campo-com-erro">
+          <mat-form-field appearance="outline"><mat-label>Descrição</mat-label><textarea matInput formControlName="descricao" rows="6" required></textarea>
+        </mat-form-field>
+          @if (form.controls.descricao.touched && form.controls.descricao.invalid) { <span class="error-text" role="alert">Informe uma descrição válida.</span> }
+        </div>
+        @if (erro()) { <p class="erro" role="alert">{{ erro() }}</p> }
+        <div class="acoes"><button type="button" class="btn-cancelar" [disabled]="salvando()" (click)="fechar()">Cancelar</button>
+          <button type="submit" class="btn-primary" [disabled]="salvando() || carregandoMatriculas() || (modal() === 'EDITAR' && !temAlteracoes)">{{ salvando() ? 'Salvando...' : 'Salvar' }}</button>
+        </div>
+      </form>
+    }
+  </app-modal-layout>
+}

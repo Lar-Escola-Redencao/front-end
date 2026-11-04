@@ -27,7 +27,10 @@
 
       <mat-form-field appearance="outline">
         <mat-label>Data nascimento*</mat-label>
-        <input matInput type="date" formControlName="dataNascimento">
+        <input #dataNascimento matInput type="date" formControlName="dataNascimento">
+        <button type="button" matSuffix class="btn-calendario-data"
+          aria-label="Abrir calendário da data de nascimento" [disabled]="dataNascimento.disabled"
+          (click)="abrirCalendario(dataNascimento)"><mat-icon>calendar_month</mat-icon></button>
         <mat-error>{{ mensagemErro('dataNascimento') }}</mat-error>
       </mat-form-field>
 
@@ -124,7 +127,7 @@
     </div>
 
     @if (editando) {
-      <div class="upload-foto" [class.upload-foto-selecionada]="!!fotoSelecionada" (click)="inputFoto.click()">
+      <div [appAnexoDrop]="inputFoto" class="upload-foto" [class.upload-foto-selecionada]="!!fotoSelecionada" (click)="inputFoto.click()">
         <span class="upload-foto-icone" aria-hidden="true"><mat-icon>upload_file</mat-icon></span>
         <div class="upload-foto-textos">
           <span class="upload-foto-titulo" [attr.title]="fotoSelecionada?.name || null">{{ fotoSelecionada?.name || 'Selecione a foto de perfil' }}</span>

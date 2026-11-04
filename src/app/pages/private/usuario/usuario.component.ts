@@ -1,4 +1,7 @@
+import { AnexoDrop } from 'src/app/shared/directives/anexo-drop';
+import { HistoricoContextual } from '@components/historico-contextual/historico-contextual';
 import { EstadoVazio } from 'src/app/components/estado-vazio/estado-vazio';
+import { FecharAutocompleteFora } from 'src/app/shared/directives/fechar-autocomplete-fora';
 import { AbasResponsivas } from 'src/app/shared/directives/abas-responsivas';
 import {
   ChangeDetectorRef,
@@ -44,6 +47,7 @@ import { BarraBusca } from '@components/barra-busca/barra-busca';
 import { ComponentComAlteracoesNaoSalvas } from 'src/app/shared/guards/can-deactivate.guard';
 import { UsuarioService } from 'src/app/shared/services/usuario/usuario.service';
 import { CepService } from 'src/app/shared/services/usuario/cep.service';
+import { dependenciasFichaSocioeconomica, preservarCamposNaoEditados } from './usuario-perfil/utils/usuario-atualizacao-dto';
 import { montarEndereco, separarEndereco } from 'src/app/shared/utils/endereco';
 import { ContatoService } from 'src/app/shared/services/usuario/contato.service';
 import { SessaoService } from 'src/app/shared/services/auth/sessao.service';
@@ -77,7 +81,11 @@ import { environment } from 'src/environments/environment';
 @Component({
   selector: 'app-usuario',
   standalone: true,
-  imports: [EstadoVazio,
+  imports: [
+    AnexoDrop,
+    HistoricoContextual,
+    EstadoVazio,
+    FecharAutocompleteFora,
     AbasResponsivas,
     CommonModule,
     RouterLink,
@@ -244,7 +252,9 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
   formUsuario!: FormGroup;
   erros: { [key: string]: string } = {};
   valoresOriginaisDoFormulario: any = null;
+  private usuarioOriginalEdicao: UsuarioResponseDTO | null = null;
 
+  mensagensBuscaContato: string[] = [];
   opcoesAutocomplete: ContatoListagemDTO[][] = [];
   unidadesDisponiveis: any[] = []; // filtradas por acesso do coordenador (cadastro/edição de usuário)
   todasUnidades: any[] = []; // sem filtro — usada em "Novo vínculo" (só a remoção de vínculo é restrita)
@@ -258,8 +268,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
   readonly limiteArquivo = TAMANHO_MAXIMO_ARQUIVO_BYTES;
   readonly etapas = ['Dados pessoais', 'Contatos', 'Dados socioeconômicos', 'Dados complementares', 'Matrícula'];
   readonly periodosEscolares = [
-    { value: 'MANHA', label: 'Manhã' }, { value: 'TARDE', label: 'Tarde' },
-    { value: 'INTEGRAL', label: 'Integral' }, { value: 'OUTRO', label: 'Outro' }
+    { value: 'MANHA', label: 'Manhã' }, { value: 'TARDE', label: 'Tarde' }
   ];
   readonly seriesEscolares = [
     { value: 'PRE_ESCOLA', label: 'Pré-escola' },
@@ -329,6 +338,8 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
       chave: 'nomeCompleto',
       titulo: 'Usuário',
       principalMobile: true,
+      link: usuario => ['/dashboard/usuarios', usuario.id],
+      parametrosLink: () => this.perfilQueryParams,
       ordenavel: true,
       etiqueta: usuario => (usuario.statusMatricula || '').toUpperCase() === 'EGRESSO' ? 'Desligado' : null
     },
@@ -936,6 +947,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
 
   adicionarFamiliar(): void {
     this.familiaresArray.push(this.fb.group({
+      id: [null as number | null],
       nomeCompleto: ['', Validators.required], idade: [null],
       parentescoVinculo: ['', Validators.required], escolaridade: ['', Validators.required],
       renda: [null], beneficios: [null]
@@ -1127,6 +1139,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
           return;
         }
         this.iniciarFormulario();
+        this.usuarioOriginalEdicao = dadosCompletos;
         this.fotoPreviewUrl = dadosCompletos.imagemPerfil || null;
         const usaOutro = !dadosCompletos.cpf && !!dadosCompletos.documentoAuxiliar;
 
@@ -1422,36 +1435,39 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
 
   private configurarAutocomplete(contatoForm: FormGroup, index: number): void {
     this.opcoesAutocomplete[index] = [];
+    this.mensagensBuscaContato[index] = '';
     const sub = contatoForm.get('busca')!.valueChanges.pipe(
-      tap(() => {
-        const indiceAtual = this.contatosArray.controls.indexOf(contatoForm);
-        if (indiceAtual >= 0) this.opcoesAutocomplete[indiceAtual] = [];
-      }),
       tap(termo => {
         const selecionado = this.usuarioSelecionadoParaVinculo;
         if (selecionado && termo === selecionado.nomeCompleto) return;
         this.usuarioSelecionadoParaVinculo = null;
         this.formNovoVinculo.get('idUsuario')?.setValue(null, { emitEvent: false });
       }),
-      debounceTime(400), distinctUntilChanged(),
-      switchMap(termo => contatoForm.get('buscarExistente')?.value && typeof termo === 'string' && termo.trim().length >= 2
-        ? this.contatoService.buscarAutocomplete(termo.trim()).pipe(
-          map(resultados => ({ termo, resultados })),
-          catchError(() => of({ termo, resultados: [] as ContatoListagemDTO[] }))
-        )
-        : of({ termo, resultados: [] as ContatoListagemDTO[] }))
-    ).subscribe(({ termo, resultados }) => {
+      switchMap(termo => {
+        const indiceAtual = this.contatosArray.controls.indexOf(contatoForm);
+        const consultar = contatoForm.get('buscarExistente')?.value
+          && typeof termo === 'string' && termo.trim().length >= 2;
+        if (indiceAtual >= 0) {
+          this.opcoesAutocomplete[indiceAtual] = [];
+          this.mensagensBuscaContato[indiceAtual] = consultar ? 'Carregando...' : '';
+        }
+        return consultar
+          ? timer(400).pipe(switchMap(() => this.contatoService.buscarAutocomplete(termo.trim())),
+              map(resultados => ({ termo, resultados, erro: false })),
+              catchError(() => of({ termo, resultados: [] as ContatoListagemDTO[], erro: true })))
+          : of({ termo, resultados: [] as ContatoListagemDTO[], erro: false });
+      })
+    ).subscribe(({ termo, resultados, erro }) => {
       const indiceAtual = this.contatosArray.controls.indexOf(contatoForm);
-      if (indiceAtual >= 0 && contatoForm.get('buscarExistente')?.value && !contatoForm.get('id')?.value && contatoForm.get('busca')?.value === termo) {
+      if (indiceAtual >= 0 && contatoForm.get('buscarExistente')?.value && !contatoForm.get('id')?.value
+        && contatoForm.get('busca')?.value === termo && typeof termo === 'string' && termo.trim().length >= 2) {
         const idsJaAdicionados = new Set(
-          this.contatosArray.controls
-            .filter((_, i) => i !== indiceAtual)
-            .map(contato => contato.get('id')?.value)
-            .filter((id): id is number => typeof id === 'number')
+          this.contatosArray.controls.filter((_, i) => i !== indiceAtual).map(contato => contato.get('id')?.value)
         );
-        this.opcoesAutocomplete[indiceAtual] = resultados
-          .filter(contato => !idsJaAdicionados.has(contato.id))
-          .filter(contato => this.contatoCorrespondeTipoBusca(contato, contatoForm.get('tipoBusca')?.value, termo));
+        const correspondentes = resultados.filter(contato => this.contatoCorrespondeTipoBusca(contato, contatoForm.get('tipoBusca')?.value, termo));
+        this.opcoesAutocomplete[indiceAtual] = correspondentes.filter(contato => !idsJaAdicionados.has(contato.id));
+        this.mensagensBuscaContato[indiceAtual] = erro ? 'Não foi possível consultar os contatos'
+          : this.opcoesAutocomplete[indiceAtual].length ? '' : correspondentes.length ? 'Contato já vinculado' : 'Contato não encontrado';
       }
       this.atualizarTela();
     });
@@ -1467,7 +1483,11 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
         localTrabalho: ''
       }, { emitEvent: false });
       const indiceAtual = this.contatosArray.controls.indexOf(contatoForm);
-      if (indiceAtual >= 0) this.opcoesAutocomplete[indiceAtual] = [];
+      contatoForm.get('busca')?.setValue('');
+      if (indiceAtual >= 0) {
+        this.opcoesAutocomplete[indiceAtual] = [];
+        this.mensagensBuscaContato[indiceAtual] = '';
+      }
       if (contatoForm.get('buscarExistente')?.value) {
         for (const campo of this.camposCompartilhadosContato) {
           contatoForm.get(campo)?.disable({ emitEvent: false });
@@ -1498,6 +1518,8 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
       grupo.patchValue({ busca: '', tipoBusca: 'Nome' }, { emitEvent: false });
     }
     this.opcoesAutocomplete[index] = [];
+    this.mensagensBuscaContato[index] = '';
+    if (!preservarSelecionado) grupo.get('busca')?.setValue('');
     for (const campo of ['nomeCompleto', 'telefone', 'email', 'endereco', 'cpf', 'localTrabalho']) {
       const controle = grupo.get(campo)!;
       if (buscar && !grupo.get('id')?.value) controle.disable({ emitEvent: false });
@@ -1519,6 +1541,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
       grupo.get(campo)?.disable({ emitEvent: false });
     }
     this.opcoesAutocomplete[index] = [];
+    this.mensagensBuscaContato[index] = '';
     this.validarCpfsContatos();
   }
 
@@ -1597,6 +1620,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
     this.subsPorContato.delete(grupo);
     this.contatosArray.removeAt(index);
     this.opcoesAutocomplete.splice(index, 1);
+    this.mensagensBuscaContato.splice(index, 1);
     this.contatoExpandidoIndex = Math.max(0, this.contatosArray.length - 1);
     this.validarCpfsContatos();
   }
@@ -1622,6 +1646,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
     }, { emitEvent: false });
 
     this.opcoesAutocomplete[index] = [];
+    this.mensagensBuscaContato[index] = '';
     formGroup.get('busca')?.setValue(contato.nomeCompleto, { emitEvent: false });
     this.alternarBuscaContato(index, true, true);
     this.registrarContatoOriginal(formGroup);
@@ -1743,7 +1768,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
     if (usuario.documentoAuxiliar) {
       return `${usuario.documentoAuxiliar} (${usuario.tipoDocumento || 'Outro'})`;
     }
-    return 'Não informado';
+    return '-';
   }
 
   formatarDataNascimento(valor?: string | null): string {
@@ -2015,6 +2040,22 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
 
     if (this.modoEdicao) {
       const dtoEdicao: Partial<CadastroUsuarioCompletoDTO> = { ...dto };
+      if (this.usuarioOriginalEdicao?.fichaSocioeconomica) {
+        dtoEdicao.fichaSocioeconomica = preservarCamposNaoEditados(
+          this.usuarioOriginalEdicao.fichaSocioeconomica,
+          dto.fichaSocioeconomica,
+          { ...this.valoresOriginaisDoFormulario.socioeconomico, ...this.valoresOriginaisDoFormulario.complementares },
+          { ...socio, ...complemento },
+          dependenciasFichaSocioeconomica
+        );
+      }
+      const documentosAlterados = ['cpf', 'documentoAuxiliar', 'tipoDocumento', 'usarOutroDocumento']
+        .some(campo => dados[campo] !== this.valoresOriginaisDoFormulario?.[campo]);
+      if (!documentosAlterados) {
+        dtoEdicao.cpf = dados.cpf?.replace(/\D/g, '') || null;
+        dtoEdicao.documentoAuxiliar = dados.documentoAuxiliar || null;
+        dtoEdicao.tipoDocumento = dados.tipoDocumento || null;
+      }
       this.usuarioService.atualizar(this.usuarioSelecionadoId!, dtoEdicao).subscribe({
         next: () => this.processarUploadFoto(this.usuarioSelecionadoId!, 'Usuário atualizado com sucesso!'),
         error: (err: any) => {

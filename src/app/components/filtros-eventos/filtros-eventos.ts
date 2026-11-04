@@ -4,7 +4,6 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatIconModule } from '@angular/material/icon';
-import { MatButtonModule } from '@angular/material/button';
 import { ModalLayout } from '@components/modal-layout/modal-layout';
 import { TipoEvento } from 'src/app/shared/models/evento.model';
 import { Alertas } from 'src/app/shared/utils/alerts';
@@ -23,7 +22,7 @@ export const filtrosEventosVazios = (): FiltrosEventos => ({
 @Component({
   selector: 'app-filtros-eventos',
   standalone: true,
-  imports: [FormsModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatIconModule, MatButtonModule, ModalLayout],
+  imports: [FormsModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatIconModule, ModalLayout],
   templateUrl: './filtros-eventos.html',
   styleUrl: './filtros-eventos.css'
 })

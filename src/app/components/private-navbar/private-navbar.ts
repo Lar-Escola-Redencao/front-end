@@ -1,3 +1,5 @@
+import { AsyncPipe } from '@angular/common';
+import { HistoricoService } from 'src/app/shared/services/historico/historico.service';
 import { Component, ElementRef, HostListener, OnInit, computed, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { NgClass, NgIf } from '@angular/common';
@@ -13,12 +15,13 @@ import { BloquearScroll } from '../../shared/directives/bloquear-scroll';
 @Component({
   selector: 'app-private-navbar',
   standalone: true,
-  imports: [MatButtonModule, NgClass, NgIf, RouterLink, RouterLinkActive, AlterarSenha, BloquearScroll],
+  imports: [AsyncPipe, MatButtonModule, NgClass, NgIf, RouterLink, RouterLinkActive, AlterarSenha, BloquearScroll],
   templateUrl: './private-navbar.html',
   styleUrl: './private-navbar.css'
 })
 export class PrivateNavbar implements OnInit {
   private readonly auth = inject(Auth);
+  protected readonly temNovidadesHistorico = inject(HistoricoService).novidadesGerais;
   private readonly router = inject(Router);
   private readonly perfilService = inject(PerfilService);
   private readonly elementRef = inject(ElementRef);
@@ -86,7 +89,7 @@ export class PrivateNavbar implements OnInit {
         showCancelButton: true,
         confirmButtonText: 'Sim, sair',
         cancelButtonText: 'Cancelar',
-        confirmButtonColor: '#3682dc',
+        confirmButtonColor: '#e04b3a',
         reverseButtons: false
       });
       if (!resultado.isConfirmed) return;

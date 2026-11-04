@@ -1,6 +1,7 @@
 import { ContatoDTO, ContatoResponseDTO } from './contato.model';
 
 export interface ComposicaoFamiliarDTO {
+  id?: number | null;
   nomeCompleto: string;
   parentescoVinculo: string;
   idade?: number | null;

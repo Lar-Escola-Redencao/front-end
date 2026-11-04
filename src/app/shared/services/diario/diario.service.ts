@@ -1,7 +1,8 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpContext, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
+import { SILENCIAR_TOAST_ACESSO } from '../../interceptors/acesso-toast.context';
 
 export interface OcorrenciaResponseDTO {
   id: number;
@@ -39,6 +40,24 @@ export interface SalvarFrequenciaEmLoteDTO {
   idTurma: number;
   data: string;
   frequencias: FrequenciaDTO[];
+  declaracaoAceita: boolean;
+}
+
+export type FormatoRelatorio = 'PDF' | 'XLSX';
+
+export interface RelatorioPresencasDTO {
+  idTurma: number;
+  dataInicio: string;
+  dataFim: string;
+  formato: FormatoRelatorio;
+  incluirOcorrencias: boolean;
+}
+
+export interface RelatorioResumoDTO {
+  idsTurmas: number[];
+  dataInicio: string;
+  dataFim: string;
+  formato: FormatoRelatorio;
 }
 
 @Injectable({
@@ -58,8 +77,8 @@ export class DiarioService {
     return this.http.post<void>(this.apiUrlFrequencia, dto);
   }
 
-  atualizarFrequencia(id: number, presente: boolean): Observable<FrequenciaUsuarioResponseDTO> {
-    return this.http.put<FrequenciaUsuarioResponseDTO>(`${this.apiUrlFrequencia}/${id}`, { presente });
+  atualizarFrequencia(id: number, presente: boolean, declaracaoAceita: boolean): Observable<FrequenciaUsuarioResponseDTO> {
+    return this.http.put<FrequenciaUsuarioResponseDTO>(`${this.apiUrlFrequencia}/${id}`, { presente, declaracaoAceita });
   }
 
   criarOcorrencia(dto: any): Observable<OcorrenciaResponseDTO> {
@@ -72,5 +91,18 @@ export class DiarioService {
 
   deletarOcorrencia(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrlOcorrencia}/${id}`);
+  }
+
+  // O modal de exportação exibe a mensagem de acesso negado no próprio formulário.
+  exportarPresencas(dto: RelatorioPresencasDTO): Observable<HttpResponse<Blob>> {
+    return this.http.post(`${this.apiUrlFrequencia}/relatorios/presencas`, dto, {
+      responseType: 'blob', observe: 'response', context: new HttpContext().set(SILENCIAR_TOAST_ACESSO, true)
+    });
+  }
+
+  exportarResumo(dto: RelatorioResumoDTO): Observable<HttpResponse<Blob>> {
+    return this.http.post(`${this.apiUrlFrequencia}/relatorios/resumo`, dto, {
+      responseType: 'blob', observe: 'response', context: new HttpContext().set(SILENCIAR_TOAST_ACESSO, true)
+    });
   }
 }

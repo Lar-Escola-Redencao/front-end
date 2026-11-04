@@ -40,6 +40,10 @@
   [titulo]="modoEdicao ? 'Editar evento' : 'Cadastrar novo evento'"
   (closed)="fecharModal()">
 
+  @if (modoEdicao && eventoSelecionadoId) {
+    <app-historico-contextual modal-title-extra tipo="EVENTOS" [idRegistro]="eventoSelecionadoId"
+      titulo="Histórico deste registro" />
+  }
   <form class="form-modal" [formGroup]="formEvento" (ngSubmit)="salvar()">
 
     <div>
@@ -130,7 +134,7 @@
         accept=".jpg,.jpeg,.png,.webp"
         (change)="onImagemSelecionada($event)" />
 
-      <div class="upload-arquivo" [class.upload-arquivo-erro]="erros['imagem']" (click)="inputImagem.click()">
+      <div [appAnexoDrop]="inputImagem" class="upload-arquivo" [class.upload-arquivo-erro]="erros['imagem']" (click)="inputImagem.click()">
         <span class="material-symbols-outlined upload-arquivo-icone">
           upload_file
         </span>
@@ -178,6 +182,10 @@
 
 @if (modalVisualizacaoAberto) {
 <app-modal-layout titulo="Detalhes do evento" (closed)="fecharVisualizacao()">
+  @if (eventoVisualizacao) {
+    <app-historico-contextual modal-title-extra tipo="EVENTOS" [idRegistro]="eventoVisualizacao.id"
+      titulo="Histórico deste evento" />
+  }
   @if (eventoVisualizacao) {
     <app-evento-detalhe [modoPreview]="true" [eventoId]="eventoVisualizacao.id" />
   }

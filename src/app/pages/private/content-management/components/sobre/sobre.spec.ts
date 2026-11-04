@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { provideRouter } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
-import { of } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 import { vi } from 'vitest';
 
 import { Sobre, TITULO_CARROSSEL } from './sobre';
@@ -25,6 +25,45 @@ describe('Sobre', () => {
     error: ReturnType<typeof vi.fn>;
     info: ReturnType<typeof vi.fn>;
   };
+
+  it('valida o ano completo durante a digitação e ignora respostas de anos anteriores', () => {
+    const antiga = new Subject<any>();
+    sobreService.listarSecoesAdmin.mockReturnValueOnce(antiga);
+    const input = document.createElement('input'); input.value = '2026';
+    component.limitarAnoHistoria({ target: input } as unknown as Event);
+    expect(component.validandoAnoHistoria).toBe(true);
+    sobreService.listarSecoesAdmin.mockReturnValue(of({ content: [{ id: 99, titulo: '2027' }], page: { number: 0, totalPages: 1 } }));
+    input.value = '2027'; component.limitarAnoHistoria({ target: input } as unknown as Event);
+    expect(component.errosHistoria['titulo']).toContain('Já existe');
+    expect(component.formHistoria.get('titulo')?.invalid).toBe(true);
+    antiga.next({ content: [], page: { number: 0, totalPages: 1 } }); antiga.complete();
+    expect(component.errosHistoria['titulo']).toContain('Já existe');
+    expect(sobreService.criarSecao).not.toHaveBeenCalled();
+  });
+
+  it('permite manter o próprio ano na edição', () => {
+    component.blocoSelecionadoId = 99;
+    sobreService.listarSecoesAdmin.mockReturnValue(of({ content: [{ id: 99, titulo: '2026' }], page: { number: 0, totalPages: 1 } }));
+    const input = document.createElement('input'); input.value = '2026';
+    component.limitarAnoHistoria({ target: input } as unknown as Event);
+    expect(component.errosHistoria['titulo']).toBeUndefined();
+  });
+
+  it('mostra ano duplicado no campo, preserva no blur e limpa ao corrigir', () => {
+    component.formHistoria.patchValue({ titulo: '2026', conteudo: 'Acontecimento',
+      imagem: new File(['imagem'], 'foto.png', { type: 'image/png' }) });
+    const mensagem = 'Já existe um registro para 2026.';
+    sobreService.criarSecao.mockReturnValue(throwError(() => ({ status: 409, error: { message: mensagem } })));
+    component.salvarHistoria();
+    expect(component.errosHistoria['titulo']).toBe(mensagem);
+    expect(component.formHistoria.get('titulo')?.invalid).toBe(true);
+    expect(toastr.error).not.toHaveBeenCalled();
+    component.verificarErrosHistoria(); expect(component.errosHistoria['titulo']).toBe(mensagem);
+    const input = document.createElement('input'); input.value = '2027';
+    component.limitarAnoHistoria({ target: input } as unknown as Event);
+    expect(component.errosHistoria['titulo']).toBeUndefined();
+    expect(component.formHistoria.get('titulo')?.hasError('custom')).toBe(false);
+  });
 
   beforeEach(async () => {
     sobreService = {

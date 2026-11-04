@@ -1,3 +1,4 @@
+import { AnexoDrop } from 'src/app/shared/directives/anexo-drop';
 import { EstadoVazio } from 'src/app/components/estado-vazio/estado-vazio';
 import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, EventEmitter, Input, NgZone, OnChanges, Output, SimpleChanges, inject } from '@angular/core';
@@ -11,7 +12,12 @@ import { environment } from 'src/environments/environment';
 import { ArquivoSaudeDTO, CadastroUsuarioCompletoDTO, UsuarioResponseDTO } from 'src/app/shared/models/usuario.model';
 import { UsuarioService } from 'src/app/shared/services/usuario/usuario.service';
 import { baixarArquivoComVerificacao, visualizarArquivoComVerificacao } from 'src/app/shared/utils/arquivo-acesso';
-import { montarBaseAtualizacaoUsuario, montarFichaSocioeconomicaBase } from '../../utils/usuario-atualizacao-dto';
+import {
+  dependenciasFichaSocioeconomica,
+  montarBaseAtualizacaoUsuario,
+  montarFichaSocioeconomicaBase,
+  preservarCamposNaoEditados
+} from '../../utils/usuario-atualizacao-dto';
 import {
   TAMANHO_MAXIMO_ARQUIVO_BYTES,
   obterMensagemErro,
@@ -22,7 +28,7 @@ import {
 @Component({
   selector: 'app-usuario-perfil-saude',
   standalone: true,
-  imports: [EstadoVazio,
+  imports: [AnexoDrop, EstadoVazio,
     CommonModule,
     ReactiveFormsModule,
     MatFormFieldModule,
@@ -293,7 +299,7 @@ export class UsuarioPerfilSaude implements OnChanges {
 
     return {
       ...montarBaseAtualizacaoUsuario(this.usuario!),
-      fichaSocioeconomica: {
+      fichaSocioeconomica: preservarCamposNaoEditados(ficha, {
         ...ficha,
         possuiProblemaSaude: !!dados.possuiProblemaSaude,
         descProblemaSaude: dados.possuiProblemaSaude ? dados.descProblemaSaude || '' : '',
@@ -301,7 +307,7 @@ export class UsuarioPerfilSaude implements OnChanges {
         descMedicacao: dados.usaMedicacao ? dados.descMedicacao || '' : '',
         temAlergia: !!dados.temAlergia,
         descAlergia: dados.temAlergia ? dados.descAlergia || '' : ''
-      }
+      }, this.valoresOriginais as Record<string, unknown>, dados, dependenciasFichaSocioeconomica)
     };
   }
 

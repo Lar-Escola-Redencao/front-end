@@ -1,6 +1,8 @@
+import { AnexoDrop } from 'src/app/shared/directives/anexo-drop';
 import { Component, ElementRef, input, output, viewChild } from '@angular/core';
 
 @Component({
+  imports: [AnexoDrop],
   selector: 'app-image-dropzone',
   templateUrl: './image-dropzone.html',
   styleUrl: './image-dropzone.css',

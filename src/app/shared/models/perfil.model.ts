@@ -11,11 +11,13 @@ export interface Perfil {
 }
 
 /**
- * Por ora só nome, endereço e telefone são editáveis pelo próprio usuário.
- * E-mail, cpf, papel e unidades são somente leitura na tela de perfil.
+ * CPF e e-mail são opcionais e editáveis somente pelo próprio administrador.
+ * Papel e unidades não são alteráveis por este contrato.
  */
 export interface AtualizarPerfilDTO {
   nomeCompleto: string;
   endereco: string;
   telefone: string;
+  email?: string;
+  cpf?: string;
 }

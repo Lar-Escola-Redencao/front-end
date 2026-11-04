@@ -1,9 +1,10 @@
+import { AnexoDrop } from 'src/app/shared/directives/anexo-drop';
 import { AbasResponsivas } from 'src/app/shared/directives/abas-responsivas';
 import { Component, OnInit, OnDestroy, ChangeDetectorRef, HostListener, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Observable, of, Subscription, switchMap } from 'rxjs';
+import { EMPTY, Observable, of, Subscription, switchMap, expand, reduce } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
 
 import {
@@ -54,6 +55,7 @@ interface ClassificacaoSecoes {
   selector: 'app-sobre',
   standalone: true,
   imports: [
+    AnexoDrop,
     AbasResponsivas,
     CommonModule,
     ReactiveFormsModule,
@@ -79,6 +81,8 @@ export class Sobre implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalvas
 
   private routeSub?: Subscription;
   private listaSub?: Subscription;
+  private consultaAnoSub?: Subscription;
+  validandoAnoHistoria = false;
 
   /** Termo da barra de busca da aba Nossa História, espelhado em ?search= na URL. */
   busca = '';
@@ -185,6 +189,7 @@ export class Sobre implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalvas
   }
 
   ngOnDestroy(): void {
+    this.consultaAnoSub?.unsubscribe();
     this.routeSub?.unsubscribe();
     this.listaSub?.unsubscribe();
   }
@@ -499,7 +504,7 @@ export class Sobre implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalvas
 
     // tipo HISTORIA faz o back recortar a consulta nos blocos de ano antes de
     // paginar, então content, totalElements e totalPages já vêm só desta aba.
-    this.listaSub = this.sobreService.listarSecoesAdmin(this.pagina, this.tamanho, this.sort, GRUPO_HISTORIA, this.busca || undefined).subscribe({
+    this.listaSub = this.sobreService.listarSecoesAdmin(this.pagina, this.tamanho, this.sort || 'titulo,asc', GRUPO_HISTORIA, this.busca || undefined).subscribe({
       next: (resposta) => {
         this.ngZone.run(() => {
           this.blocosHistoria = resposta.content;
@@ -537,6 +542,8 @@ export class Sobre implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalvas
   }
 
   abrirModalHistoria(bloco?: Secao): void {
+    this.consultaAnoSub?.unsubscribe();
+    this.validandoAnoHistoria = false;
     this.modalHistoriaAberto = true;
     this.isLoadingHistoria = false;
     this.errosHistoria = {};
@@ -625,16 +632,40 @@ export class Sobre implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalvas
 
   verificarErrosHistoria(): void {
     this.errosHistoria = mapearErrosFormulario(this.formHistoria);
+    const erroAno = this.formHistoria.get('titulo')?.getError('custom');
+    if (erroAno) this.errosHistoria['titulo'] = erroAno;
   }
 
   limitarAnoHistoria(event: Event): void {
+    this.consultaAnoSub?.unsubscribe();
+    this.validandoAnoHistoria = false;
     const input = event.target as HTMLInputElement;
     const valorLimitado = input.value.replace(/\D/g, '').slice(0, 4);
     input.value = valorLimitado;
     this.formHistoria.get('titulo')?.setValue(valorLimitado);
-    if (valorLimitado.length < 4) {
-      delete this.errosHistoria['titulo'];
-    }
+    delete this.errosHistoria['titulo'];
+    if (valorLimitado.length !== 4 || this.formHistoria.get('titulo')?.invalid) return;
+    this.validandoAnoHistoria = true;
+    this.consultaAnoSub = this.sobreService.listarSecoesAdmin(0, TAMANHO_PAGINA_MAXIMO, undefined, GRUPO_HISTORIA, valorLimitado).pipe(
+      expand(resposta => resposta.page.number + 1 < resposta.page.totalPages
+        ? this.sobreService.listarSecoesAdmin(resposta.page.number + 1, TAMANHO_PAGINA_MAXIMO, undefined, GRUPO_HISTORIA, valorLimitado)
+        : EMPTY),
+      reduce((duplicado, resposta) => duplicado || resposta.content.some(secao =>
+        secao.titulo?.trim() === valorLimitado && secao.id !== this.blocoSelecionadoId), false)
+    ).subscribe({
+      next: duplicado => {
+        this.validandoAnoHistoria = false;
+        if (duplicado) {
+          const mensagem = 'Já existe um marco histórico para este ano. Edite o registro existente.';
+          const controle = this.formHistoria.get('titulo');
+          controle?.setErrors({ ...controle.errors, custom: mensagem });
+          controle?.markAsTouched();
+          this.errosHistoria['titulo'] = mensagem;
+        }
+        this.cdr.detectChanges();
+      },
+      error: () => { this.validandoAnoHistoria = false; this.cdr.detectChanges(); }
+    });
   }
 
   onImagemHistoriaSelecionada(event: Event): void {
@@ -674,6 +705,7 @@ export class Sobre implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalvas
   }
 
   salvarHistoria(): void {
+    if (this.validandoAnoHistoria) return;
     this.formHistoria.markAllAsTouched();
     this.verificarErrosHistoria();
 
@@ -721,7 +753,15 @@ export class Sobre implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalvas
       error: (err: any) => {
         this.ngZone.run(() => {
           this.isLoadingHistoria = false;
-          this.toastr.error(err.error?.message || 'Erro ao salvar o marco histórico.', 'Erro');
+          if (err.status === 409) {
+            const ano = this.formHistoria.get('titulo');
+            const mensagem = err.error?.message || 'Já existe um marco histórico para este ano.';
+            ano?.setErrors({ ...ano.errors, custom: mensagem });
+            ano?.markAsTouched();
+            this.errosHistoria['titulo'] = mensagem;
+          } else {
+            this.toastr.error(err.error?.message || 'Erro ao salvar o marco histórico.', 'Erro');
+          }
           this.cdr.detectChanges();
         });
       },

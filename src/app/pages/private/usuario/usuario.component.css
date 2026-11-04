@@ -505,22 +505,6 @@ h1 {
   margin: 0 0 24px 0;
 }
 
-.preview-info-row {
-  display: flex;
-  gap: 10px;
-  color: #5f6368;
-  font-size: 1.05rem;
-  margin-bottom: 12px;
-  width: 100%;
-}
-
-.preview-info-row mat-icon {
-  font-size: 20px;
-  width: 20px;
-  height: 20px;
-  color: #1976d2;
-}
-
 .preview-section {
   width: 100%;
   margin-top: 10px;
@@ -949,10 +933,6 @@ h1 {
   background: rgba(0, 0, 0, 0.24);
 }
 
-:host ::ng-deep app-modal-layout.cadastro-modal .modal-header {
-  margin-bottom: 12px;
-}
-
 :host ::ng-deep app-modal-layout.cadastro-modal .modal-header h2 {
   font-size: 1.5rem;
   line-height: 1.25;
@@ -960,7 +940,7 @@ h1 {
 
 :host ::ng-deep app-modal-layout.cadastro-modal .modal-close {
   display: inline-flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   width: 34px;
   height: 34px;
@@ -968,10 +948,6 @@ h1 {
   border-radius: 50%;
   font-size: 1.7rem;
   transition: background 0.2s ease, color 0.2s ease;
-}
-
-:host ::ng-deep app-modal-layout.cadastro-modal .modal-close:hover {
-  background: #f5f5f5;
 }
 
 .stepper-indicador {
@@ -1335,27 +1311,6 @@ h1 {
   text-decoration: underline;
 }
 
-.cadastro-form .btn-calendario-data {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  margin-right: 2px;
-  padding: 0;
-  border: 0;
-  border-radius: 50%;
-  background: transparent;
-  color: var(--input-color);
-  cursor: pointer;
-  transition: background-color 0.2s ease, color 0.2s ease;
-}
-
-.cadastro-form .btn-calendario-data:hover,
-.cadastro-form .btn-calendario-data:focus-visible {
-  background-color: #f0f0f0;
-  color: var(--primary-color);
-}
 
 .busca-contato-error {
   display: block;
@@ -1985,28 +1940,6 @@ h1 {
   font-family: var(--fonte-texto);
 }
 
-.contato-preview-dados {
-  display: flex !important;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.contato-preview-dados div {
-  display: grid !important;
-  grid-template-columns: 28px minmax(0, 1fr);
-  gap: 12px;
-  align-items: center;
-  color: var(--preto);
-  font-family: var(--fonte-texto);
-  font-size: 16px;
-}
-
-.contato-preview-icone {
-  color: var(--primary-color);
-  font-family: 'Material Symbols Outlined';
-  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-}
-
 .contato-preview-status {
   color: #5f6368;
   line-height: 1.5;
@@ -2026,12 +1959,6 @@ h1 {
 .telefone-link:hover {
   color: var(--primary-color);
   text-decoration: underline;
-}
-
-@media (max-width: 600px) {
-  .contato-preview-dados div {
-    font-size: 15px;
-  }
 }
 
 /* A regra global oculta o subscript; estes formulários exibem a validação. */

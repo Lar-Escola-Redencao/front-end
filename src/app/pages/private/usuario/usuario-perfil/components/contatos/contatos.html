@@ -16,6 +16,11 @@
 
 @if (modalAberto) {
   <app-modal-layout class="contato-modal" [titulo]="tituloModal" (closed)="fecharModal()">
+    <span modal-title-extra>
+      @if (contatoSelecionado) {
+        <app-historico-contextual tipo="CONTATOS" [idContato]="contatoSelecionado.id" titulo="Histórico deste contato" />
+      }
+    </span>
     @if (modoModal === 'visualizar' && contatoSelecionado?.principal) {
       <span modal-title-extra class="principal-title ativo" title="Contato principal">
         <img class="principal-star preenchida" src="/icons/kid-star-filled.svg" alt="Contato principal">
@@ -34,36 +39,38 @@
 
     @if (modoModal === 'visualizar' && contatoSelecionado) {
       <div class="contato-preview">
-        <p><b>{{ formatarParentesco(contatoSelecionado.parentesco) }}</b> de {{ usuario?.nomeCompleto }}</p>
+        <p><strong>{{ formatarParentesco(contatoSelecionado.parentesco) }}</strong> de {{ usuario?.nomeCompleto }}</p>
 
-        <div class="contato-preview-dados">
+        <dl class="detalhes-campos">
           <div>
-            <mat-icon class="material-symbols-outlined">call</mat-icon>
+            <dt>Telefone</dt>
+            <dd>
             <a *ngIf="hrefTelefoneContato(contatoSelecionado.telefone); else telefonePerfilContatoIndisponivel"
               class="telefone-link" [href]="hrefTelefoneContato(contatoSelecionado.telefone)">
               {{ formatarTelefoneContato(contatoSelecionado.telefone) }}
             </a>
             <ng-template #telefonePerfilContatoIndisponivel>
-              <span>Telefone não informado</span>
+              <span>-</span>
             </ng-template>
+            </dd>
           </div>
           <div>
-            <mat-icon class="material-symbols-outlined">mail</mat-icon>
-            <span>{{ contatoSelecionado.email || 'E-mail não informado' }}</span>
+            <dt>E-mail</dt>
+            <dd>{{ contatoSelecionado.email || '-' }}</dd>
           </div>
           <div>
-            <mat-icon class="material-symbols-outlined">badge</mat-icon>
-            <span>{{ formatarCpfContato(contatoSelecionado.cpf) }}</span>
+            <dt>CPF</dt>
+            <dd>{{ formatarCpfContato(contatoSelecionado.cpf) }}</dd>
           </div>
           <div>
-            <mat-icon class="material-symbols-outlined">home</mat-icon>
-            <span>{{ contatoSelecionado.endereco || 'Endereço não informado' }}</span>
+            <dt>Endereço</dt>
+            <dd>{{ contatoSelecionado.endereco || '-' }}</dd>
           </div>
           <div>
-            <mat-icon class="material-symbols-outlined">work</mat-icon>
-            <span>{{ contatoSelecionado.localTrabalho || 'Local de trabalho não informado' }}</span>
+            <dt>Local de trabalho</dt>
+            <dd>{{ contatoSelecionado.localTrabalho || '-' }}</dd>
           </div>
-        </div>
+        </dl>
       </div>
     } @else {
       <form class="form-contato" [formGroup]="form" (ngSubmit)="salvar()">
@@ -72,7 +79,7 @@
             <input type="checkbox" formControlName="buscarExistente" (change)="alternarBuscaContato($any($event.target).checked)">
             <span>Buscar por contato existente</span>
           </label>
-          <span class="error-text busca-contato-error" *ngIf="form.touched && !form.get('id')?.value">
+          <span class="error-text busca-contato-error" *ngIf="form.touched && form.get('buscarExistente')?.value && !form.get('id')?.value">
             Selecione um contato existente.
           </span>
 
@@ -87,8 +94,9 @@
 
               <mat-form-field appearance="outline">
                 <mat-label>{{ form.get('tipoBusca')?.value }}*</mat-label>
-                <input matInput formControlName="busca" [matAutocomplete]="autoContato" (input)="onBuscaContatoAlterada($any($event.target).value)">
+                <input matInput appFecharAutocompleteFora formControlName="busca" [matAutocomplete]="autoContato" (input)="onBuscaContatoAlterada($any($event.target).value)">
                 <mat-autocomplete #autoContato="matAutocomplete" [displayWith]="exibirNomeContatoBusca" (optionSelected)="selecionarContatoExistente($event.option.value)">
+                  <mat-option *ngIf="mensagemBuscaContato" disabled>{{ mensagemBuscaContato }}</mat-option>
                   <mat-option *ngFor="let op of opcoesAutocomplete" [value]="op">{{ op.nomeCompleto }} - {{ formatarTelefoneContato(op.telefone) }}</mat-option>
                 </mat-autocomplete>
               </mat-form-field>

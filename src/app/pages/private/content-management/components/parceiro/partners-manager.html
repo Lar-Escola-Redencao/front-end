@@ -21,6 +21,10 @@
 
 @if (modalAberto) {
 <app-modal-layout [titulo]="modoEdicao ? 'Editar parceiro' : 'Cadastrar novo parceiro'" (closed)="fecharModal()">
+  @if (modoEdicao && partnerSelecionadoId) {
+    <app-historico-contextual modal-title-extra tipo="PARCEIROS" [idRegistro]="partnerSelecionadoId"
+      titulo="Histórico deste registro" />
+  }
   <form class="form-modal" [formGroup]="form" (ngSubmit)="salvarParceiro()">
 
     <!-- ================================================= -->
@@ -66,7 +70,7 @@
       <input #inputLogo id="logo" type="file" class="input-arquivo-oculto" accept=".jpg,.jpeg,.png,.webp"
         (change)="selecionarLogo($event)">
     
-      <div class="upload-arquivo" [class.upload-arquivo-erro]="erros['logo']" (click)="inputLogo.click()">
+      <div [appAnexoDrop]="inputLogo" class="upload-arquivo" [class.upload-arquivo-erro]="erros['logo']" (click)="inputLogo.click()">
         <span class="material-symbols-outlined upload-arquivo-icone">
           upload_file
         </span>

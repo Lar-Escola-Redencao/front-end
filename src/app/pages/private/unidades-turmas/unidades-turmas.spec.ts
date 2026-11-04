@@ -4,6 +4,11 @@ import { ActivatedRoute, ParamMap, Router, convertToParamMap } from '@angular/ro
 import { ToastrService } from 'ngx-toastr';
 import { BehaviorSubject, of, throwError } from 'rxjs';
 import { vi } from 'vitest';
+import { Alertas } from 'src/app/shared/utils/alerts';
+import { By } from '@angular/platform-browser';
+import { HistoricoContextual } from '@components/historico-contextual/historico-contextual';
+import { Auth } from 'src/app/shared/services/auth/auth';
+import { HistoricoService } from 'src/app/shared/services/historico/historico.service';
 
 import { UnidadesTurmas } from './unidades-turmas';
 import { UnidadeService } from 'src/app/shared/services/unidade/unidade.service';
@@ -34,6 +39,7 @@ describe('UnidadesTurmas', () => {
   };
 
   let toastr: {
+    warning: ReturnType<typeof vi.fn>;
     success: ReturnType<typeof vi.fn>;
     error: ReturnType<typeof vi.fn>;
     info: ReturnType<typeof vi.fn>;
@@ -114,6 +120,7 @@ describe('UnidadesTurmas', () => {
     };
 
     toastr = {
+      warning: vi.fn(),
       success: vi.fn(),
       error: vi.fn(),
       info: vi.fn(),
@@ -128,6 +135,11 @@ describe('UnidadesTurmas', () => {
       imports: [UnidadesTurmas],
       providers: [
         provideAnimations(),
+        { provide: Auth, useValue: { podeAcessar: () => true } },
+        { provide: HistoricoService, useValue: {
+          atualizacoes: of(undefined),
+          consultarLeitura: vi.fn().mockReturnValue(of({ ultimoEvento: 1, ultimoLido: 1, temNovidades: false }))
+        } },
         { provide: UnidadeService, useValue: unidadeService },
         { provide: TurmaService, useValue: turmaService },
         { provide: ToastrService, useValue: toastr },
@@ -149,8 +161,30 @@ describe('UnidadesTurmas', () => {
     expect(component).toBeTruthy();
   });
 
-  it('abre o preview com um único card público da unidade selecionada', async () => {
+  it.each(['unidade', 'turma'] as const)('mostra o motivo da API quando a exclusão de %s é impedida', async tipo => {
+    vi.spyOn(Alertas, 'confirmarExclusao').mockResolvedValue(true);
+    const mensagem = `Não é possível excluir esta ${tipo}: existem matrículas vinculadas, inclusive de usuários transferidos ou desligados.`;
+    const api = tipo === 'unidade' ? unidadeService : turmaService;
+    api.deletar.mockReturnValue(throwError(() => ({ status: 409, error: { message: mensagem } })));
+    if (tipo === 'unidade') component.deletarUnidade(unidades[0]);
+    else component.deletarTurma(turma);
+    await Promise.resolve();
+    expect(toastr.warning).toHaveBeenCalledWith(mensagem, 'Exclusão não permitida');
+    expect(toastr.error).not.toHaveBeenCalled();
+    expect(component.isLoading).toBe(false); expect(component.isLoadingTurma).toBe(false);
+  });
+
+  it('mantém mensagem de falha quando o erro não é de vínculo', async () => {
+    vi.spyOn(Alertas, 'confirmarExclusao').mockResolvedValue(true);
+    turmaService.deletar.mockReturnValue(throwError(() => ({ status: 503 })));
+    component.deletarTurma(turma); await Promise.resolve();
+    expect(toastr.error).toHaveBeenCalledWith('Não foi possível excluir a turma. Tente novamente.', 'Erro');
+    expect(toastr.warning).not.toHaveBeenCalled();
+  });
+
+  it('preserva o card público e o histórico apenas da unidade selecionada', async () => {
     component.abrirVisualizacao(unidades[0]);
+    fixture.changeDetectorRef.markForCheck();
     fixture.detectChanges();
     await fixture.whenStable();
     fixture.detectChanges();
@@ -160,11 +194,40 @@ describe('UnidadesTurmas', () => {
     expect(modal.querySelector('.card-titulo')?.textContent).toContain('Sede');
     expect(modal.querySelector('.card-corpo')?.textContent).toContain('08h às 18h de Segunda a Sexta');
     expect(modal.querySelector('.card-corpo')?.textContent).toContain('Meninos de 6 a 12 anos');
-    expect(modal.querySelector('.unidades-seta')).toBeNull();
-    expect(modal.querySelector('.unidades-descricao')).toBeNull();
+    expect(modal.querySelector('.detalhes-campos')).toBeNull();
+    const historicos = fixture.debugElement.queryAll(By.directive(HistoricoContextual));
+    expect(historicos).toHaveLength(1);
+    expect(historicos[0].componentInstance.tipo).toBe('UNIDADES');
+    expect(historicos[0].componentInstance.idRegistro).toBe(1);
+    expect(modal.querySelector('.modal-title-area app-historico-contextual')).not.toBeNull();
     component.fecharVisualizacao();
+    fixture.changeDetectorRef.markForCheck();
     fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('app-unidade-card')).toBeNull();
+    expect(fixture.nativeElement.querySelector('app-modal-layout')).toBeNull();
+  });
+
+  it('abre os detalhes da turma selecionada com histórico restrito ao seu ID', async () => {
+    expect(component.acoesTabelaTurmas.some(acao => acao.acao === 'visualizar')).toBe(true);
+    component.executarAcaoTurma({ tipo: 'visualizar', linha: { ...turma, id: 7 } });
+    fixture.changeDetectorRef.markForCheck();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const modal = fixture.nativeElement.querySelector('app-modal-layout');
+    expect(modal.querySelector('.detalhes-campos').textContent).toContain('Manhã');
+    expect(modal.querySelector('.detalhes-campos').textContent).toContain('Sede');
+    const historicos = fixture.debugElement.queryAll(By.directive(HistoricoContextual));
+    expect(historicos).toHaveLength(1);
+    expect(historicos[0].componentInstance.tipo).toBe('TURMAS');
+    expect(historicos[0].componentInstance.idRegistro).toBe(7);
+    modal.querySelector('.modal-close').click();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('app-modal-layout')).toBeNull();
+  });
+
+  it('não oferece histórico geral junto ao título da página', () => {
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.cabecalho-unidades app-historico-contextual')).toBeNull();
   });
 
   it('carrega a lista de turmas ao iniciar (aba padrão)', () => {

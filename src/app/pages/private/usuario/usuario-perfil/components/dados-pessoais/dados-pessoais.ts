@@ -1,3 +1,4 @@
+import { AnexoDrop } from 'src/app/shared/directives/anexo-drop';
 import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -21,6 +22,7 @@ import { montarBaseAtualizacaoUsuario } from '../../utils/usuario-atualizacao-dt
   selector: 'app-usuario-perfil-dados-pessoais',
   standalone: true,
   imports: [
+    AnexoDrop,
     CommonModule,
     ReactiveFormsModule,
     MatFormFieldModule,
@@ -260,7 +262,7 @@ export class UsuarioPerfilDadosPessoais implements OnChanges {
       tipoDocumento: this.usuario?.tipoDocumento ?? 'CERTIDAO_NASCIMENTO',
       documentoAuxiliar: this.usuario?.documentoAuxiliar ?? '',
       cadUnico: this.usuario?.cadUnico ?? '',
-      usarOutroDocumento: !!this.usuario?.documentoAuxiliar,
+      usarOutroDocumento: !this.usuario?.cpf && !!this.usuario?.documentoAuxiliar,
       cep: formatarCep(this.usuario?.cep ?? ''),
       bairro: this.usuario?.bairro ?? '',
       endereco: this.usuario?.endereco ?? '',
@@ -279,12 +281,17 @@ export class UsuarioPerfilDadosPessoais implements OnChanges {
 
   private montarDtoAtualizacao(): Partial<CadastroUsuarioCompletoDTO> {
     const dados = this.form.getRawValue();
+    const documentosAlterados = ['cpf', 'documentoAuxiliar', 'tipoDocumento', 'usarOutroDocumento']
+      .some(campo => this.form.get(campo)?.value !== (this.valoresOriginais as Record<string, unknown>)?.[campo]);
+    const documentos = documentosAlterados ? {
+      cpf: dados.usarOutroDocumento ? null : dados.cpf?.replace(/\D/g, '') || null,
+      documentoAuxiliar: dados.usarOutroDocumento ? dados.documentoAuxiliar || null : null,
+      tipoDocumento: dados.usarOutroDocumento ? dados.tipoDocumento || null : null
+    } : {};
     return montarBaseAtualizacaoUsuario(this.usuario!, {
       nomeCompleto: dados.nomeCompleto || '',
       dataNascimento: dados.dataNascimento || '',
-      cpf: dados.usarOutroDocumento ? null : dados.cpf?.replace(/\D/g, '') || null,
-      documentoAuxiliar: dados.usarOutroDocumento ? dados.documentoAuxiliar || null : null,
-      tipoDocumento: dados.usarOutroDocumento ? dados.tipoDocumento || null : null,
+      ...documentos,
       cadUnico: dados.cadUnico || '',
       cep: dados.cep?.replace(/\D/g, '') || '',
       bairro: dados.bairro || '',
@@ -330,4 +337,10 @@ export class UsuarioPerfilDadosPessoais implements OnChanges {
     };
     imagem.src = url;
   }
+
+  abrirCalendario(campo: HTMLInputElement): void {
+    campo.focus();
+    if (typeof campo.showPicker === 'function') campo.showPicker();
+  }
+
 }

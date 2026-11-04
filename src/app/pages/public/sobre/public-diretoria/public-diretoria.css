@@ -50,11 +50,6 @@
   color: var(--primary-color);
 }
 
-.nav-btn.hidden {
-  visibility: hidden;
-  opacity: 0;
-}
-
 .carousel-track-wrapper {
   flex: 1;
   overflow: hidden;
@@ -70,6 +65,14 @@
 .carousel-track.no-transition,
 .carousel-track.no-transition .diretor-card {
   transition: none !important;
+}
+
+.registro-unico .carousel-track {
+  justify-content: center;
+}
+
+.registro-unico .diretor-card-wrapper {
+  flex: 0 1 320px;
 }
 
 .diretor-card-wrapper {

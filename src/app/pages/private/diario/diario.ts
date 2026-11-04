@@ -1,3 +1,4 @@
+import { HistoricoContextual } from '@components/historico-contextual/historico-contextual';
 import { EstadoVazio } from 'src/app/components/estado-vazio/estado-vazio';
 import { Component, OnInit, OnDestroy, inject, NgZone, ChangeDetectorRef, HostListener, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -11,6 +12,8 @@ import { TurmaService } from 'src/app/shared/services/turma/turma.service';
 import { SessaoService } from 'src/app/shared/services/auth/sessao.service';
 import { DiarioService, FrequenciaUsuarioResponseDTO, OcorrenciaResponseDTO } from 'src/app/shared/services/diario/diario.service';
 import { ModalLayout } from '@components/modal-layout/modal-layout';
+import { AjudaAcompanhamento } from '../usuario/usuario-perfil/components/acompanhamento/compartilhado/ajuda-acompanhamento';
+import { ExportarRelatorio } from './exportar-relatorio/exportar-relatorio';
 
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -27,8 +30,11 @@ type FiltrosDiario = { idUnidade: number | null; idTurma: number | null; data: s
 @Component({
   selector: 'app-diario',
   standalone: true,
-  imports: [EstadoVazio,
-    CommonModule, RouterLink, FormsModule, ReactiveFormsModule, ModalLayout,
+  imports: [
+    HistoricoContextual,
+    AjudaAcompanhamento,
+    EstadoVazio,
+    CommonModule, RouterLink, FormsModule, ReactiveFormsModule, ModalLayout, ExportarRelatorio,
     MatFormFieldModule, MatInputModule, MatSelectModule, MatIconModule
   ],
   templateUrl: './diario.html',
@@ -92,6 +98,7 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
   carregando = false;
   salvando = false;
   declaracaoAceita = false;
+  tentouSalvarDiario = false;
   confirmandoTrocaFiltro = false;
 
   private subs: Subscription = new Subscription();
@@ -103,6 +110,7 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
   private idTurmaInicialPendente: number | null = null;
   private deveAplicarSelecaoInicialTurma = false;
 
+  modalExportarAberto = false;
   modalOcorrenciaAberto = false;
   modoOcorrencia: 'LISTA' | 'NOVO' | 'EDITAR' | 'VER' = 'LISTA';
   modalOcorrenciaDetalheAberto = false;
@@ -181,6 +189,7 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
           this.usuarios = [];
           this.estadoTela = 'VAZIO';
           this.declaracaoAceita = false;
+          this.tentouSalvarDiario = false;
           this.executarFechamentoModal();
           const { idUnidade, idTurma, data } = this.filtroForm.getRawValue();
           if (!idUnidade || !idTurma || !data || !this.turmas.some(t => t.id === idTurma && t.unidade.id === idUnidade)) {
@@ -352,7 +361,7 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
   }
 
   get podeIniciarChamada(): boolean {
-    if (this.dataForaDoPeriodoPermitido) return false;
+    if (this.dataFutura || this.dataForaDoPeriodoPermitido) return false;
     const idTurma = this.filtroForm.get('idTurma')?.value;
     const dataSelecionada = this.filtroForm.get('data')?.value;
     if (!idTurma || !dataSelecionada || this.estadoTela !== 'INICIAL' || this.salvando || !this.usuarios.length) return false;
@@ -360,7 +369,7 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
     const turmaSelecionada = this.turmas.find(t => t.id === idTurma);
     if (!turmaSelecionada) return false;
 
-    return this.perfilEstrategico || (this.isMonitor && Date.now() >= this.inicioDaTurma);
+    return (this.perfilEstrategico || this.isMonitor) && Date.now() >= this.inicioDaTurma;
   }
 
   private get perfilEstrategico(): boolean {
@@ -373,6 +382,7 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
   }
 
   get podeEditarFrequencia(): boolean {
+    if (this.dataFutura || !(Date.now() >= this.inicioDaTurma)) return false;
     if (this.perfilEstrategico) return true;
     const criacao = this.usuarios.find(u => u.dataCriacaoChamada)?.dataCriacaoChamada;
     const decorrido = criacao ? Date.now() - this.instanteBrasilia(criacao) : NaN;
@@ -381,8 +391,9 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
   }
 
   get mensagemBloqueioEdicaoChamada(): string {
+    if (this.dataFutura) return 'Aguarde o horário de início das atividades para registrar a frequência.';
     if (Date.now() < this.inicioDaTurma) {
-      return 'A edição das presenças ficará disponível após o início da aula.';
+      return 'A edição das presenças ficará disponível a partir do horário de início das atividades.';
     }
     if (!this.usuarios.some(u => u.dataCriacaoChamada)) {
       return 'Esta chamada não possui data de cadastro conhecida. Para corrigir presenças, procure a coordenação.';
@@ -391,6 +402,7 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
   }
 
   get podePreencherFrequencia(): boolean {
+    if (this.dataFutura || !(Date.now() >= this.inicioDaTurma)) return false;
     return !this.salvando && this.estadoTela === 'PREENCHENDO'
       && (this.perfilEstrategico || (this.isMonitor && Date.now() >= this.inicioDaTurma
         && (this.usuarios.some(u => u.chamadaRegistrada || u.idFrequencia !== null)
@@ -398,8 +410,9 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
   }
 
   get podeAdicionarOcorrencia(): boolean {
+    if (this.dataFutura) return false;
     if (this.perfilEstrategico) return true;
-    return this.isMonitor && !this.dataForaDoPeriodoPermitido && Date.now() >= this.inicioDaTurma;
+    return this.isMonitor && !this.dataForaDoPeriodoPermitido;
   }
 
   podeEditarExcluirOcorrencia(oc: OcorrenciaResponseDTO): boolean {
@@ -407,6 +420,10 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
     return this.perfilEstrategico || (this.isMonitor && oc.idMembro != null
       && oc.idMembro === this.sessao.membro()?.id && decorrido >= 0
       && decorrido <= 24 * 60 * 60 * 1000);
+  }
+
+  get podeConsultarHistorico(): boolean {
+    return this.sessao.isAdministrador() && this.filtroForm.valid;
   }
 
   get perfilDoDiario(): string {
@@ -417,18 +434,27 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
   get regrasDoDiario(): { acao: string; regra: string }[] {
     if (this.isMonitor) {
       return [
-        { acao: 'Registrar nova chamada', regra: 'Desde o primeiro dia do mês anterior, após o horário de início da turma.' },
+        { acao: 'Registrar nova chamada', regra: 'Desde o primeiro dia do mês anterior, a partir do horário de início das atividades.' },
         { acao: 'Editar presenças lançadas', regra: 'Qualquer monitor com acesso à turma, até 48 horas após o primeiro registro da chamada. A virada do mês não encerra esse prazo.' },
-        { acao: 'Registrar ocorrências', regra: 'Desde o primeiro dia do mês anterior, após o início da turma. O horário do fato deve estar dentro da aula e não pode ser futuro.' },
+        { acao: 'Registrar ocorrências', regra: 'Desde o primeiro dia do mês anterior, inclusive antes do início das atividades. A data e o horário do fato não podem ser futuros.' },
         { acao: 'Editar ou excluir ocorrência lançada', regra: 'Somente as de sua autoria, até 24 horas após o cadastro. Alterações e virada do mês não renovam nem encerram esse prazo.' }
       ];
     }
     return [
-      { acao: 'Registrar nova chamada', regra: 'Sem limite de retroatividade.' },
+      { acao: 'Registrar nova chamada', regra: 'Sem limite de retroatividade, a partir do horário de início das atividades. Datas futuras não são permitidas.' },
       { acao: 'Editar presenças lançadas', regra: 'Sem limite de tempo.' },
-      { acao: 'Registrar ocorrências', regra: 'Sem limite de retroatividade. O horário deve estar dentro do turno da turma.' },
-      { acao: 'Editar ou excluir ocorrência lançada', regra: 'Sem limite de tempo.' }
+      { acao: 'Registrar ocorrências', regra: 'Sem limite de retroatividade, inclusive antes do início das atividades. A data e o horário do fato não podem ser futuros.' },
+      { acao: 'Editar ou excluir ocorrência lançada', regra: 'Sem limite de tempo.' },
+      ...(this.sessao.isAdministrador() ? [{
+        acao: 'Consultar histórico de alterações',
+        regra: 'Sem limite de tempo. Permite ver quem alterou as presenças e ocorrências da turma.'
+      }] : [])
     ];
+  }
+
+  get dataFutura(): boolean {
+    const data = this.filtroForm.get('data')?.value;
+    return !!data && data > this.hojeFormatada();
   }
 
   get dataForaDoPeriodoPermitido(): boolean {
@@ -437,7 +463,7 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
   }
 
   get podeSalvarOcorrencia(): boolean {
-    return !this.salvando && !!this.usuarioSelecionado && (
+    return !this.dataFutura && !this.salvando && !!this.usuarioSelecionado && (
       this.modoOcorrencia === 'NOVO' ? this.podeAdicionarOcorrencia
         : this.modoOcorrencia === 'EDITAR' && !!this.ocorrenciaSelecionada && this.podeEditarExcluirOcorrencia(this.ocorrenciaSelecionada) && this.temAlteracoesNoModalOcorrencia
     );
@@ -446,6 +472,16 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
   get subtituloOcorrencia(): string {
     const nome = this.usuarioSelecionado?.nomeUsuario ?? '';
     return `Usuário: ${nome} em ${this.formatarData(this.filtroForm.get('data')?.value)}`;
+  }
+
+  abrirExportacao(): void {
+    if (this.salvando || !this.unidades.length) return;
+    this.modalExportarAberto = true;
+  }
+
+  fecharExportacao(): void {
+    this.modalExportarAberto = false;
+    this.cdr.markForCheck();
   }
 
   alterarData(dias: number) {
@@ -459,6 +495,7 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
     if (!this.podeIniciarChamada) return;
     this.estadoTela = 'PREENCHENDO';
     this.declaracaoAceita = false;
+    this.tentouSalvarDiario = false;
     this.usuarios.forEach(u => u.presente = true);
   }
 
@@ -467,6 +504,7 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
     this.estadoTela = 'PREENCHENDO';
     this.usuarios.forEach(u => u.presente ??= true);
     this.declaracaoAceita = false;
+    this.tentouSalvarDiario = false;
   }
 
   cancelarPreenchimento() {
@@ -484,13 +522,19 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
   }
 
   salvarDiarioLote() {
-    if (!this.declaracaoAceita || !this.podePreencherFrequencia || !this.usuarios.length) return;
+    if (!this.podePreencherFrequencia || !this.usuarios.length) return;
+    this.tentouSalvarDiario = true;
+    if (!this.declaracaoAceita) {
+      this.cdr.markForCheck();
+      return;
+    }
 
     this.salvando = true;
     this.cdr.markForCheck();
     const dto = {
       idTurma: this.filtroForm.get('idTurma')?.value,
       data: this.filtroForm.get('data')?.value,
+      declaracaoAceita: this.declaracaoAceita,
       frequencias: this.usuarios
         .map(u => ({
           idMatricula: u.idMatricula,
@@ -504,6 +548,7 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
         this.salvando = false;
         this.estadoTela = 'SALVO';
         this.declaracaoAceita = false;
+        this.tentouSalvarDiario = false;
         this.cdr.markForCheck();
         this.recarregar.next();
       },
@@ -646,7 +691,6 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
     if (this.formOcorrencia.invalid) {
       this.errosOcorrencia = mapearErrosFormulario(this.formOcorrencia, {
         horaStr: {
-          horarioForaDaTurma: this.mensagemHorarioForaDaTurma(),
           horarioFuturo: 'O horário da ocorrência não pode estar no futuro.'
         }
       });
@@ -762,45 +806,19 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
 
   private validarHoraOcorrencia(): void {
     const controle = this.formOcorrencia.get('horaStr');
-    const turma = this.turmaSelecionada;
     const hora = controle?.value;
-    if (!controle || !hora || !turma?.horaInicio || !turma?.horaFim) return;
+    if (!controle || !hora) return;
 
-    const inicio = this.normalizarHoraMinuto(turma.horaInicio);
-    const fim = this.normalizarHoraMinuto(turma.horaFim);
-    const selecionada = this.normalizarHoraMinuto(hora);
     const errosAtuais = { ...(controle.errors ?? {}) };
     delete errosAtuais['horarioForaDaTurma'];
     delete errosAtuais['horarioFuturo'];
 
-    if (selecionada < inicio || selecionada > fim) {
-      controle.setErrors({ ...errosAtuais, horarioForaDaTurma: true });
-      return;
-    }
-
-    if (this.isMonitor && this.instanteBrasilia(`${this.filtroForm.get('data')?.value}T${hora}`) > Date.now()) {
+    if (this.instanteBrasilia(`${this.filtroForm.get('data')?.value}T${hora}`) > Date.now()) {
       controle.setErrors({ ...errosAtuais, horarioFuturo: true });
       return;
     }
 
     controle.setErrors(Object.keys(errosAtuais).length ? errosAtuais : null);
-  }
-
-  private mensagemHorarioForaDaTurma(): string {
-    const turma = this.turmaSelecionada;
-    if (!turma?.horaInicio || !turma?.horaFim) {
-      return 'O horário deve estar dentro do horário da turma.';
-    }
-    return `O horário deve estar entre ${this.normalizarHoraMinuto(turma.horaInicio)} e ${this.normalizarHoraMinuto(turma.horaFim)}.`;
-  }
-
-  private get turmaSelecionada(): any | null {
-    const idTurma = this.filtroForm.get('idTurma')?.value;
-    return this.turmas.find(t => t.id === idTurma) ?? null;
-  }
-
-  private normalizarHoraMinuto(valor: string): string {
-    return String(valor).slice(0, 5);
   }
 
   private instanteBrasilia(iso: string): number {

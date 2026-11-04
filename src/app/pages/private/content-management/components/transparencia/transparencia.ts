@@ -1,9 +1,11 @@
+import { AnexoDrop } from 'src/app/shared/directives/anexo-drop';
 import { AbasResponsivas } from 'src/app/shared/directives/abas-responsivas';
 import { Component, OnInit, OnDestroy, ChangeDetectorRef, HostListener, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Subscription } from 'rxjs';
+import { EMPTY, Subscription, expand, firstValueFrom, reduce } from 'rxjs';
+import Swal from 'sweetalert2';
 import { ToastrService } from 'ngx-toastr';
 import {
   mapearErrosFormulario,
@@ -43,6 +45,7 @@ interface DocumentoExibicao extends DocumentoAdmin {
   selector: 'app-transparencia',
   standalone: true,
   imports: [
+    AnexoDrop,
     AbasResponsivas,
     CommonModule,
     ReactiveFormsModule,
@@ -82,6 +85,7 @@ export class Transparencia implements OnInit, OnDestroy, ComponentComAlteracoesN
 
   private routeSub?: Subscription;
   private listaSub?: Subscription;
+  private secoesSub?: Subscription;
 
   /** Termo da barra de busca, espelhado em ?search= na URL. */
   busca = '';
@@ -91,8 +95,11 @@ export class Transparencia implements OnInit, OnDestroy, ComponentComAlteracoesN
   documentosIndisponiveis = new Set<string>();
   private timeoutsDocumentosIndisponiveis = new Map<string, ReturnType<typeof setTimeout>>();
 
-  /** Lista completa de seções (não paginada), usada só pelo <select> do modal de documento. */
+  /** Todas as seções, usadas no filtro e no cadastro de documentos. */
   secoesParaSelecao: Secao[] = [];
+  secaoFiltroId: number | null = null;
+  carregandoSecoes = false;
+  private secoesCarregadas = false;
 
   colunasDocumentos: TabelaColuna<DocumentoExibicao>[] = [
     { chave: 'titulo', titulo: 'Documento', principalMobile: true, ordenavel: true },
@@ -185,6 +192,8 @@ export class Transparencia implements OnInit, OnDestroy, ComponentComAlteracoesN
       this.ordenacao = analisarOrdenacao(sort);
       this.abaAtiva = params.get('aba') === 'secoes' ? 'secoes' : 'documentos';
       this.busca = params.get('search') ?? '';
+      const secaoId = Number(params.get('secao'));
+      this.secaoFiltroId = Number.isSafeInteger(secaoId) && secaoId > 0 ? secaoId : null;
 
       this.carregarListaAtiva();
     });
@@ -193,6 +202,7 @@ export class Transparencia implements OnInit, OnDestroy, ComponentComAlteracoesN
   ngOnDestroy(): void {
     this.routeSub?.unsubscribe();
     this.listaSub?.unsubscribe();
+    this.secoesSub?.unsubscribe();
   }
 
   mudarAba(aba: 'documentos' | 'secoes'): void {
@@ -208,6 +218,10 @@ export class Transparencia implements OnInit, OnDestroy, ComponentComAlteracoesN
     this.navegar({ page: 0, search: termo || null });
   }
 
+  filtrarPorSecao(secaoId: number | null): void {
+    this.navegar({ secao: secaoId, page: 0 });
+  }
+
   get mensagemVazia(): string {
     if (this.busca) {
       return this.abaAtiva === 'documentos'
@@ -215,7 +229,7 @@ export class Transparencia implements OnInit, OnDestroy, ComponentComAlteracoesN
         : `Nenhuma seção encontrada para "${this.busca}".`;
     }
     return this.abaAtiva === 'documentos'
-      ? 'Nenhum documento cadastrado.'
+      ? (this.secaoFiltroId ? 'Nenhum documento cadastrado nesta seção.' : 'Nenhum documento cadastrado.')
       : 'Nenhuma seção cadastrada.';
   }
 
@@ -239,7 +253,7 @@ export class Transparencia implements OnInit, OnDestroy, ComponentComAlteracoesN
     this.carregandoLista = true;
     this.erroLista = false;
 
-    this.listaSub = this.transparenciaService.listarDocumentosAdmin(this.pagina, this.tamanho, this.sort, this.busca || undefined).subscribe({
+    this.listaSub = this.transparenciaService.listarDocumentosAdmin(this.pagina, this.tamanho, this.sort, this.busca || undefined, this.secaoFiltroId ?? undefined).subscribe({
       next: (resposta) => {
         this.documentos = resposta.content.map(doc => this.mapearDocumento(doc));
         this.totalElementos = resposta.page.totalElements;
@@ -291,15 +305,28 @@ export class Transparencia implements OnInit, OnDestroy, ComponentComAlteracoesN
     });
   }
 
-  /** Lista completa (uma única página grande), pro <select> do modal de documento. */
-  carregarSecoesParaSelecao(): void {
-    this.transparenciaService.listarSecoesAdmin(0, TAMANHO_PAGINA_MAXIMO).subscribe({
-      next: (resposta) => {
-        this.secoesParaSelecao = resposta.content;
+  /** Percorre todas as páginas para não limitar os seletores às primeiras seções. */
+  carregarSecoesParaSelecao(aoCarregar?: () => void): void {
+    this.secoesSub?.unsubscribe();
+    this.carregandoSecoes = true;
+    this.secoesCarregadas = false;
+    this.secoesSub = this.transparenciaService.listarSecoesAdmin(0, TAMANHO_PAGINA_MAXIMO).pipe(
+      expand(resposta => resposta.page.number + 1 < resposta.page.totalPages
+        ? this.transparenciaService.listarSecoesAdmin(resposta.page.number + 1, TAMANHO_PAGINA_MAXIMO)
+        : EMPTY),
+      reduce((secoes, resposta) => [...secoes, ...resposta.content], [] as Secao[])
+    ).subscribe({
+      next: (secoes) => {
+        this.secoesParaSelecao = secoes;
+        this.carregandoSecoes = false;
+        this.secoesCarregadas = true;
+        aoCarregar?.();
         this.cdr.detectChanges();
       },
       error: () => {
+        this.carregandoSecoes = false;
         this.toastr.error('Erro ao carregar seções.', 'Erro');
+        this.cdr.detectChanges();
       }
     });
   }
@@ -357,8 +384,8 @@ export class Transparencia implements OnInit, OnDestroy, ComponentComAlteracoesN
     this.navegar({ page: 0, sort: alternarOrdenacao(this.ordenacao, campo) });
   }
 
-  private navegar(queryParams: Record<string, any>): void {
-    this.router.navigate([], {
+  private navegar(queryParams: Record<string, any>): Promise<boolean> {
+    return this.router.navigate([], {
       relativeTo: this.route,
       queryParams,
       queryParamsHandling: 'merge'
@@ -366,7 +393,29 @@ export class Transparencia implements OnInit, OnDestroy, ComponentComAlteracoesN
   }
 
   // --- CONTROLE DE MODAL, GUARDS E ALERTAS ---
-  abrirModal(tipo: 'documento' | 'secao', itemEdicao?: any) {
+  async abrirModal(tipo: 'documento' | 'secao', itemEdicao?: any): Promise<void> {
+    if (tipo === 'documento' && !itemEdicao) {
+      if (this.carregandoSecoes) return;
+      if (!this.secoesCarregadas) {
+        this.carregarSecoesParaSelecao(() => { void this.abrirModal('documento'); });
+        return;
+      }
+      if (this.secoesParaSelecao.length === 0) {
+        this.modalAberto = null;
+        const resultado = await Swal.fire({
+          title: 'Cadastre uma seção primeiro',
+          text: 'Os documentos precisam estar vinculados a uma seção. Deseja cadastrar uma agora?',
+          icon: 'info', showCancelButton: true,
+          confirmButtonText: 'Cadastrar seção', cancelButtonText: 'Depois'
+        });
+        if (resultado.isConfirmed && await this.navegar({ aba: 'secoes', page: 0, sort: null, search: null, secao: null })) {
+          this.abaAtiva = 'secoes';
+          await this.abrirModal('secao');
+          this.cdr.detectChanges();
+        }
+        return;
+      }
+    }
     this.modalAberto = tipo;
     this.isLoading = false;
 
@@ -638,34 +687,50 @@ export class Transparencia implements OnInit, OnDestroy, ComponentComAlteracoesN
   }
 
   // --- MÉTODOS DE AÇÃO DA TABELA (EDITAR / EXCLUIR) ---
-  executarAcao(evento: { tipo: string; linha: any; }) {
+  async executarAcao(evento: { tipo: string; linha: any; }): Promise<void> {
     const isSecao = this.abaAtiva === 'secoes';
 
     if (evento.tipo === 'editar') {
-      this.abrirModal(isSecao ? 'secao' : 'documento', evento.linha);
+      await this.abrirModal(isSecao ? 'secao' : 'documento', evento.linha);
     }
 
     if (evento.tipo === 'excluir') {
-      Alertas.confirmarExclusao().then((confirmado) => {
-        if (!confirmado) return;
-
-        const request = isSecao
-          ? this.transparenciaService.deletarSecao(evento.linha.id)
-          : this.transparenciaService.deletarDocumento(evento.linha.id);
-
-        request.subscribe({
-          next: () => {
-            this.toastr.success('Item excluído com sucesso!', 'Sucesso');
-            this.carregarListaAtiva();
-            if (isSecao) {
-              this.carregarSecoesParaSelecao();
-            }
-          },
-          error: () => {
-            this.toastr.error('Erro ao excluir item.', 'Erro');
-          }
-        });
-      });
+      await this.excluirItem(evento.linha.id, isSecao);
     }
+  }
+
+  private async excluirItem(id: number, isSecao: boolean): Promise<void> {
+    if (isSecao) {
+      try {
+        const documentos = await firstValueFrom(this.transparenciaService.listarDocumentosAdmin(0, 1, undefined, undefined, id));
+        if (documentos.page.totalElements > 0) {
+          this.toastr.warning('Exclua os documentos vinculados a esta seção antes de excluí-la.', 'Seção com documentos');
+          return;
+        }
+      } catch {
+        this.toastr.error('Não foi possível verificar os documentos vinculados à seção. Tente novamente.', 'Erro');
+        return;
+      }
+    }
+
+    if (!await Alertas.confirmarExclusao()) return;
+    const request = isSecao
+      ? this.transparenciaService.deletarSecao(id)
+      : this.transparenciaService.deletarDocumento(id);
+    request.subscribe({
+      next: () => {
+        this.toastr.success('Item excluído com sucesso!', 'Sucesso');
+        if (isSecao) {
+          if (this.secaoFiltroId === id) this.navegar({ secao: null, page: 0 });
+          this.carregarSecoesParaSelecao();
+        }
+        this.carregarListaAtiva();
+      },
+      error: err => {
+        const mensagem = err.error?.message || 'Erro ao excluir item.';
+        if (isSecao && err.status === 409) this.toastr.warning(mensagem, 'Seção com documentos');
+        else this.toastr.error(mensagem, 'Erro');
+      }
+    });
   }
 }

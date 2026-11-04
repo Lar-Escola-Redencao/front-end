@@ -30,27 +30,6 @@
   width: 100%;
 }
 
-.form-modal .btn-calendario-data {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  margin-right: 2px;
-  padding: 0;
-  border: 0;
-  border-radius: 50%;
-  background: transparent;
-  color: var(--input-color);
-  cursor: pointer;
-  transition: background-color 0.2s ease, color 0.2s ease;
-}
-
-.form-modal .btn-calendario-data:hover,
-.form-modal .btn-calendario-data:focus-visible {
-  background-color: #f0f0f0;
-  color: var(--primary-color);
-}
 
 .form-row {
   display: grid;

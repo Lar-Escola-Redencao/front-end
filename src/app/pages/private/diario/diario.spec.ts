@@ -59,6 +59,40 @@ describe('Diário de turma', () => {
     component.filtroForm.get('idTurma')!.setValue(2);
   });
 
+  it('permite tentar salvar e indica a declaração obrigatória sem enviar dados', () => {
+    component.iniciarChamada();
+    fixture.changeDetectorRef.markForCheck();
+    fixture.detectChanges();
+    const botao = fixture.nativeElement.querySelector('.rodape-diario .btn-primary') as HTMLButtonElement;
+    expect(botao.disabled).toBe(false);
+    expect(fixture.nativeElement.querySelector('#erro-declaracao')).toBeNull();
+    botao.click();
+    fixture.detectChanges();
+    expect(api.salvarEmLote).not.toHaveBeenCalled();
+    expect(fixture.nativeElement.querySelector('#erro-declaracao')?.textContent).toContain('Marque a caixa');
+    const checkbox = fixture.nativeElement.querySelector('.checkbox-declaracao input') as HTMLInputElement;
+    expect(checkbox.getAttribute('aria-invalid')).toBe('true');
+    checkbox.click();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('#erro-declaracao')).toBeNull();
+    botao.click();
+    expect(api.salvarEmLote).toHaveBeenCalledTimes(1);
+    expect(api.salvarEmLote).toHaveBeenCalledWith(expect.objectContaining({ declaracaoAceita: true }));
+  });
+
+  it('remove o erro da declaração ao iniciar um novo preenchimento', () => {
+    component.iniciarChamada();
+    component.salvarDiarioLote();
+    fixture.changeDetectorRef.markForCheck();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('#erro-declaracao')).not.toBeNull();
+    component.estadoTela = 'INICIAL';
+    component.iniciarChamada();
+    fixture.changeDetectorRef.markForCheck();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('#erro-declaracao')).toBeNull();
+  });
+
   it('usa a criação do servidor para a janela e a hora do fato para editar', () => {
     const registro = {
       ...ocorrencia('2026-10-06T11:00:00'),
@@ -73,6 +107,66 @@ describe('Diário de turma', () => {
   });
 
   afterEach(() => { fixture.destroy(); vi.useRealTimers(); vi.restoreAllMocks(); });
+
+  it.each(['MONITOR', 'ADMINISTRADOR', 'COORDENADOR'])('aplica início e futuro antes das exceções de %s', perfil => {
+    papel = perfil;
+    for (const [hora, permitido] of [['07:59:59', false], ['08:00:00', true], ['13:00:00', true]] as const) {
+      vi.setSystemTime(new Date(`2026-10-06T${hora}-03:00`));
+      component.estadoTela = 'INICIAL';
+      expect(component.podeIniciarChamada).toBe(permitido);
+      expect(component.podeAdicionarOcorrencia).toBe(true);
+      component.usuarios = [{ ...aluno(), chamadaRegistrada: true, idFrequencia: 1, dataCriacaoChamada: '2026-10-06T07:00:00' }];
+      expect(component.podeEditarFrequencia).toBe(permitido);
+      component.estadoTela = 'PREENCHENDO';
+      expect(component.podePreencherFrequencia).toBe(permitido);
+    }
+    component.filtroForm.get('data')!.setValue('2026-10-07', { emitEvent: false });
+    component.estadoTela = 'INICIAL';
+    expect(component.podeIniciarChamada).toBe(false);
+    expect(component.podeAdicionarOcorrencia).toBe(false);
+    expect(component.podeEditarFrequencia).toBe(false);
+    component.estadoTela = 'PREENCHENDO';
+    expect(component.podePreencherFrequencia).toBe(false);
+  });
+
+  it.each(['MONITOR', 'ADMINISTRADOR', 'COORDENADOR'])('permite chegada antes da aula e rejeita hora futura para %s', perfil => {
+    papel = perfil;
+    vi.setSystemTime(new Date('2026-10-06T07:30:00-03:00'));
+    component.usuarioSelecionado = aluno();
+    component.abrirFormOcorrencia(null, 'NOVO');
+    component.formOcorrencia.setValue({ horaStr: '07:00', descricao: 'Chegada', tipoOcorrencia: 'SAUDE' });
+    component.salvarOcorrencia();
+    expect(api.criarOcorrencia).toHaveBeenCalledOnce();
+    api.criarOcorrencia.mockClear();
+    component.usuarioSelecionado = aluno();
+    component.abrirFormOcorrencia(null, 'NOVO');
+    component.formOcorrencia.setValue({ horaStr: '07:31', descricao: 'Futuro', tipoOcorrencia: 'SAUDE' });
+    component.salvarOcorrencia();
+    expect(component.errosOcorrencia['horaStr']).toContain('futuro');
+    expect(api.criarOcorrencia).not.toHaveBeenCalled();
+  });
+
+  it('usa o dia de São Paulo ao bloquear amanhã antes da meia-noite local', () => {
+    papel = 'ADMINISTRADOR';
+    vi.setSystemTime(new Date('2026-10-07T01:00:00Z'));
+    component.filtroForm.get('data')!.setValue('2026-10-07');
+    expect(component.podeAdicionarOcorrencia).toBe(false);
+  });
+
+  it('mantém a correção antiga sem limite para administradores e coordenadores', () => {
+    component.filtroForm.get('data')!.setValue('2020-01-01', { emitEvent: false });
+    component.usuarios = [{ ...aluno(), idFrequencia: 1, chamadaRegistrada: true, dataCriacaoChamada: null }];
+    for (const perfil of ['ADMINISTRADOR', 'COORDENADOR']) {
+      papel = perfil;
+      expect(component.podeEditarFrequencia).toBe(true);
+      component.estadoTela = 'PREENCHENDO';
+      expect(component.podePreencherFrequencia).toBe(true);
+      expect(component.podeAdicionarOcorrencia).toBe(true);
+    }
+    papel = 'MONITOR';
+    expect(component.podeEditarFrequencia).toBe(false);
+    expect(component.podeAdicionarOcorrencia).toBe(false);
+  });
 
   it('não oferece edição ou exclusão de ocorrência de outro autor', async () => {
     const registro = { ...ocorrencia('2026-10-06T11:00:00'), idMembro: 8 };
@@ -115,9 +209,9 @@ describe('Diário de turma', () => {
     expect(component.podePreencherFrequencia).toBe(false);
   });
 
-  it('bloqueia ocorrência antes do início da aula e horário do fato futuro', () => {
+  it('permite ocorrência antes do início da aula e bloqueia horário do fato futuro', () => {
     vi.setSystemTime(new Date('2026-10-06T07:59:59-03:00'));
-    expect(component.podeAdicionarOcorrencia).toBe(false);
+    expect(component.podeAdicionarOcorrencia).toBe(true);
     vi.setSystemTime(new Date('2026-10-06T08:00:00-03:00'));
     expect(component.podeAdicionarOcorrencia).toBe(true);
     component.usuarioSelecionado = aluno();
@@ -229,16 +323,17 @@ describe('Diário de turma', () => {
     ]);
   });
 
-  it('desabilita salvar sem declaração e oculta iniciar/salvar após sucesso', () => {
+  it('permite tentar salvar sem declaração e oculta iniciar/salvar após sucesso', () => {
     component.iniciarChamada(); fixture.detectChanges();
     const salvar = () => Array.from(fixture.nativeElement.querySelectorAll('button')).find((b: any) => b.textContent.trim() === 'Salvar') as HTMLButtonElement;
-    expect(salvar().disabled).toBe(true);
+    expect(salvar().disabled).toBe(false);
     component.declaracaoAceita = true;
     api.listarFrequencia.mockReturnValue(of([{ ...aluno(), idFrequencia: 20, presente: true }]));
     component.salvarDiarioLote(); fixture.detectChanges();
     expect(component.estadoTela).toBe('SALVO');
     expect(salvar()).toBeUndefined();
-    expect(fixture.nativeElement.textContent).not.toContain('Registrar frequências');
+    expect(Array.from(fixture.nativeElement.querySelectorAll('button')).some((botao: any) =>
+      botao.textContent.trim() === 'Registrar frequências')).toBe(false);
     expect(fixture.nativeElement.querySelector('.toggle-fp').disabled).toBe(true);
   });
 
@@ -311,15 +406,14 @@ describe('Diário de turma', () => {
     });
   });
 
-  it('bloqueia ocorrência fora do horário da turma da matrícula', () => {
+  it('permite ocorrência depois do turno quando o fato já aconteceu', () => {
+    vi.setSystemTime(new Date('2026-10-06T13:00:00-03:00'));
     component.abrirGerenciadorOcorrencias(component.usuarios[0]);
     component.formOcorrencia.setValue({ horaStr: '12:01', descricao: 'Descrição', tipoOcorrencia: 'SAUDE' });
 
     component.salvarOcorrencia();
 
-    expect(api.criarOcorrencia).not.toHaveBeenCalled();
-    expect(component.errosOcorrencia['horaStr']).toContain('08:00');
-    expect(component.errosOcorrencia['horaStr']).toContain('12:00');
+    expect(api.criarOcorrencia).toHaveBeenCalled();
   });
 
   it('mantém salvar habilitado para exibir erros dos campos obrigatórios', () => {
@@ -363,6 +457,23 @@ describe('Diário de turma', () => {
     expect(component.modalOcorrenciaAberto).toBe(true);
     expect(component.modalOcorrenciaDetalheAberto).toBe(false);
     expect(component.usuarioSelecionado).toBe(usuario);
+  });
+
+  it('exibe a dica na lista, no cadastro e na edição, mas não nos detalhes', () => {
+    const usuario = { ...aluno(), ocorrencias: [ocorrencia('2026-10-06T09:15:00')] };
+    component.abrirGerenciadorOcorrencias(usuario); fixture.changeDetectorRef.markForCheck(); fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('app-modal-layout .modal-title-area app-ajuda-acompanhamento')).not.toBeNull();
+
+    component.abrirFormOcorrencia(usuario.ocorrencias[0], 'VER'); fixture.changeDetectorRef.markForCheck(); fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.modal-sobreposto .modal-title-area app-ajuda-acompanhamento')).toBeNull();
+
+    component.fecharModalOcorrenciaDetalhe();
+    component.abrirFormOcorrencia(usuario.ocorrencias[0], 'EDITAR'); fixture.changeDetectorRef.markForCheck(); fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.modal-sobreposto .modal-title-area app-ajuda-acompanhamento')).not.toBeNull();
+
+    component.fecharModalOcorrenciaDetalhe();
+    component.abrirFormOcorrencia(null, 'NOVO'); fixture.changeDetectorRef.markForCheck(); fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.modal-sobreposto .modal-title-area app-ajuda-acompanhamento')).not.toBeNull();
   });
 
   it('exibe apenas a hora do fato na lista e mensagem quando não há ocorrências', () => {

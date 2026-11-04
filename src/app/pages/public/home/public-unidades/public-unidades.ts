@@ -1,5 +1,5 @@
 import { EstadoVazio } from '@components/estado-vazio/estado-vazio';
-import { ChangeDetectorRef, Component, HostListener, OnInit, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, HostListener, OnInit, Output, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Unidade } from 'src/app/shared/models/unidade.model';
 import { PublicContentService } from 'src/app/shared/services/public-content/public-content.service';
@@ -13,6 +13,7 @@ import { UnidadeCard } from 'src/app/components/unidade-card/unidade-card';
   styleUrl: './public-unidades.css'
 })
 export class PublicUnidadesComponent implements OnInit {
+  @Output() carregado = new EventEmitter<void>();
   private readonly publicContentService = inject(PublicContentService);
   private readonly cdr = inject(ChangeDetectorRef);
 
@@ -28,11 +29,13 @@ export class PublicUnidadesComponent implements OnInit {
         this.indiceAtual = unidades.length;
         this.carregando = false;
         this.cdr.detectChanges();
+        this.carregado.emit();
       },
       error: () => {
         this.unidades = [];
         this.carregando = false;
         this.cdr.detectChanges();
+        this.carregado.emit();
       }
     });
   }

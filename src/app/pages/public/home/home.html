@@ -6,11 +6,11 @@
   </section>
 
   <section id="unidades" class="home-section">
-    <app-public-unidades></app-public-unidades>
+    <app-public-unidades (carregado)="aoCarregarSecao('unidades')"></app-public-unidades>
   </section>
 
   <section id="eventos" class="home-section">
-    <app-public-eventos></app-public-eventos>
+    <app-public-eventos (carregado)="aoCarregarSecao('eventos')"></app-public-eventos>
   </section>
 
   <section id="parceiros" class="home-section">

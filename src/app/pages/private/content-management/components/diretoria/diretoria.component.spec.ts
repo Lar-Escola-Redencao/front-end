@@ -1,4 +1,7 @@
-import { ComponentFixture, TestBed, fakeAsync, flushMicrotasks, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideRouter } from '@angular/router';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { ToastrService } from 'ngx-toastr';
 import { of, throwError } from 'rxjs';
@@ -35,7 +38,9 @@ describe('DiretoriaComponent', () => {
 
   beforeEach(async () => {
     diretoriaService = {
-      listarTodos: vi.fn().mockReturnValue(of([])),
+      listarTodos: vi.fn().mockReturnValue(of({
+        content: [], page: { size: 10, number: 0, totalElements: 0, totalPages: 0 }
+      })),
       buscarPorId: vi.fn(),
       criar: vi.fn(),
       atualizar: vi.fn(),
@@ -53,6 +58,9 @@ describe('DiretoriaComponent', () => {
       imports: [DiretoriaComponent],
       providers: [
         provideAnimations(),
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
         { provide: DiretoriaService, useValue: diretoriaService },
         { provide: ToastrService, useValue: toastr }
       ]
@@ -81,34 +89,32 @@ describe('DiretoriaComponent', () => {
     );
   });
 
-  it('deve confirmar antes de excluir membro da diretoria', fakeAsync(() => {
+  it('deve confirmar antes de excluir membro da diretoria', async () => {
     vi.spyOn(Alertas, 'confirmarExclusao').mockResolvedValue(true);
     diretoriaService.delete.mockReturnValue(of(void 0));
 
     component.executarAcao({ tipo: 'excluir', linha: membro });
-    flushMicrotasks();
-    tick();
+    await fixture.whenStable();
 
     expect(Alertas.confirmarExclusao).toHaveBeenCalled();
     expect(diretoriaService.delete).toHaveBeenCalledWith(membro.id);
-  }));
+  });
 
-  it('nao deve chamar API quando exclusao for cancelada', fakeAsync(() => {
+  it('nao deve chamar API quando exclusao for cancelada', async () => {
     vi.spyOn(Alertas, 'confirmarExclusao').mockResolvedValue(false);
 
     component.excluirDiretoria(membro);
-    flushMicrotasks();
+    await fixture.whenStable();
 
     expect(diretoriaService.delete).not.toHaveBeenCalled();
-  }));
+  });
 
-  it('deve recarregar lista e exibir sucesso ao excluir', fakeAsync(() => {
+  it('deve recarregar lista e exibir sucesso ao excluir', async () => {
     vi.spyOn(Alertas, 'confirmarExclusao').mockResolvedValue(true);
     diretoriaService.delete.mockReturnValue(of(void 0));
 
     component.excluirDiretoria(membro);
-    flushMicrotasks();
-    tick();
+    await fixture.whenStable();
 
     expect(component.isLoading).toBeFalsy();
     expect(diretoriaService.listarTodos).toHaveBeenCalled();
@@ -116,9 +122,9 @@ describe('DiretoriaComponent', () => {
       'Membro da diretoria excluido com sucesso.',
       'Sucesso'
     );
-  }));
+  });
 
-  it('deve exibir erro quando exclusao falhar', fakeAsync(() => {
+  it('deve exibir erro quando exclusao falhar', async () => {
     vi.spyOn(Alertas, 'confirmarExclusao').mockResolvedValue(true);
     diretoriaService.delete.mockReturnValue(
       throwError(() => ({
@@ -127,13 +133,12 @@ describe('DiretoriaComponent', () => {
     );
 
     component.excluirDiretoria(membro);
-    flushMicrotasks();
-    tick();
+    await fixture.whenStable();
 
     expect(component.isLoading).toBeFalsy();
     expect(toastr.error).toHaveBeenCalledWith(
       'Nao foi possivel excluir.',
       'Erro'
     );
-  }));
+  });
 });

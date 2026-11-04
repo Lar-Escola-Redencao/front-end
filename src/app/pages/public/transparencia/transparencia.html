@@ -17,9 +17,8 @@
       <button type="button" class="btn-retry" (click)="carregar()">Tentar novamente</button>
     </div>
   } @else if (secoes().length === 0) {
-    <div class="state-box">
-      <p>Nenhum documento de transparência foi publicado até o momento.</p>
-    </div>
+    <app-estado-vazio icone="contract" fontSet="material-symbols-outlined"
+      mensagem="Nenhum documento publicado." />
   } @else {
     <div class="secoes">
       @for (secao of secoes(); track secao.id) {

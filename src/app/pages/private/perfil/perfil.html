@@ -56,10 +56,10 @@
             </span>
 
             <div class="acoes-form">
-              <button type="button" class="link-alterar-senha" (click)="modalSenhaAberto = true">Alterar senha</button>
+              <button type="button" class="link-alterar-senha" [disabled]="salvando || salvandoConta" (click)="modalSenhaAberto = true">Alterar senha</button>
               <div class="acoes-edicao-perfil form-acoes">
                 @if (!modoEdicao) {
-                  <button type="button" class="btn-primary" (click)="habilitarEdicao()">
+                  <button type="button" class="btn-primary" [disabled]="modoEdicaoConta || salvandoConta" (click)="habilitarEdicao()">
                     Editar
                   </button>
                 } @else {
@@ -80,39 +80,79 @@
         </div>
       </div>
 
-            <!-- Dados somente leitura -->
+      <!-- Identificadores editáveis pelo administrador; permissões somente leitura. -->
       <div class="cartao">
         <div class="cartao-cabecalho">
           <h2>Informações da conta</h2>
-          <p class="hint-text">
-            @if (perfil?.nomePapel === 'ADMINISTRADOR') {
-              Esses dados só podem ser alterados por um administrador através do módulo <a class="link-colaboradores" routerLink="/dashboard/colaboradores">Colaboradores</a>.
-            } @else if (perfil?.nomePapel === 'COORDENADOR') {
+          @if (!podeEditarConta) {
+            <p class="hint-text">
+            @if (perfil?.nomePapel === 'COORDENADOR') {
               Esses dados só podem ser alterados por um administrador.
             } @else {
               Esses dados só podem ser alterados por um administrador ou coordenador.
             }
-          </p>
+            </p>
+          }
         </div>
         <div class="cartao-corpo">
-          <div class="somente-leitura">
+          <form class="form-perfil" [formGroup]="formConta" (ngSubmit)="salvarConta()">
+          @if (podeEditarConta) {
+            <mat-form-field appearance="outline">
+              <mat-label>E-mail</mat-label>
+              <input matInput type="email" formControlName="email" maxlength="100" (blur)="verificarErrosConta()" />
+            </mat-form-field>
+            @if (errosConta['email']) {
+              <span class="error-text">{{ errosConta['email'] }}</span>
+            }
+            <mat-form-field appearance="outline">
+              <mat-label>CPF</mat-label>
+              <input matInput formControlName="cpf" inputmode="numeric" maxlength="14"
+                (input)="aplicarMascaraCpf($event)" (blur)="verificarErrosConta()" />
+            </mat-form-field>
+            @if (errosConta['cpf']) {
+              <span class="error-text">{{ errosConta['cpf'] }}</span>
+            }
+          } @else {
+            <div class="somente-leitura">
             <div>
               <span class="rotulo">E-mail</span>
               <span class="valor">{{ perfil?.email }}</span>
             </div>
             <div>
               <span class="rotulo">CPF</span>
-              <span class="valor">{{ perfil?.cpf }}</span>
+              <span class="valor">{{ cpfFormatado }}</span>
             </div>
+            </div>
+          }
+          <div class="somente-leitura">
             <div>
               <span class="rotulo">Papel de acesso</span>
               <span class="valor">{{ nomePapelFormatado }}</span>
             </div>
             <div>
               <span class="rotulo">Unidades</span>
-              <span class="valor">{{ nomesUnidades || '—' }}</span>
+              <span class="valor">{{ podeEditarConta ? 'Todas as unidades' : (nomesUnidades || '—') }}</span>
             </div>
           </div>
+          @if (podeEditarConta) {
+            <div class="acoes-form">
+              <div class="acoes-edicao-perfil form-acoes">
+                @if (!modoEdicaoConta) {
+                  <button type="button" class="btn-primary" [disabled]="modoEdicao || salvando" (click)="habilitarEdicaoConta()">Editar</button>
+                } @else {
+                  <button type="button" class="btn-cancelar" [disabled]="salvandoConta" (click)="cancelarEdicaoConta()">Cancelar</button>
+                  <button type="submit" class="btn-primary" [disabled]="salvandoConta || !temAlteracoesConta">
+                    @if (salvandoConta) {
+                      <span class="spinner"></span> Salvando...
+                    } @else {
+                      Salvar
+                    }
+                  </button>
+                }
+              </div>
+            </div>
+          }
+          </form>
         </div>
       </div>
     </div>

@@ -2,10 +2,10 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideRouter } from '@angular/router';
-import { provideToastr } from 'ngx-toastr';
+import { provideToastr, ToastrService } from 'ngx-toastr';
 import { ColaboradorComponent } from './colaborador.component';
 import { vi } from 'vitest';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { Auth } from 'src/app/shared/services/auth/auth';
 import { SessaoService } from 'src/app/shared/services/auth/sessao.service';
 import { UnidadeService } from 'src/app/shared/services/colaborador/unidade.service';
@@ -40,6 +40,19 @@ describe('ColaboradorComponent', () => {
     expect(component).toBeTruthy();
   });
 
+  it('mostra o motivo da API quando registros vinculados impedem excluir o colaborador', async () => {
+    configurarPerfil('ADMINISTRADOR');
+    vi.spyOn(Alertas, 'confirmarExclusao').mockResolvedValue(true);
+    const mensagem = 'Não é possível excluir este colaborador porque existem registros vinculados a ele.';
+    vi.spyOn(TestBed.inject(ColaboradorService), 'deletar').mockReturnValue(throwError(() => ({ status: 409, error: { message: mensagem } })));
+    const toast = TestBed.inject(ToastrService);
+    const aviso = vi.spyOn(toast, 'warning').mockReturnValue({} as ReturnType<ToastrService['warning']>);
+    const erro = vi.spyOn(toast, 'error').mockReturnValue({} as ReturnType<ToastrService['error']>);
+    component.deletarColaborador(monitor([1])); await Promise.resolve();
+    expect(aviso).toHaveBeenCalledWith(mensagem, 'Exclusão não permitida');
+    expect(erro).not.toHaveBeenCalled(); expect(component.isLoading).toBe(false);
+  });
+
   afterEach(() => vi.restoreAllMocks());
 
   function configurarPerfil(papel: string, idsUnidades = [1]): void {
@@ -55,6 +68,15 @@ describe('ColaboradorComponent', () => {
       endereco: 'Rua A', telefone: '11999999999', idPapel: 3, nomePapel,
       unidades: idsUnidades.map(id => ({ id, nome: `Unidade ${id}` })) };
   }
+
+  it('exibe CPF com máscara no modal de detalhes', () => {
+    component.colaboradorPreview = monitor([1]);
+    fixture.changeDetectorRef.markForCheck();
+    fixture.detectChanges();
+    const rotulo = Array.from(fixture.nativeElement.querySelectorAll('.detalhes-campos dt'))
+      .find((campo: any) => campo.textContent.trim() === 'CPF') as HTMLElement;
+    expect(rotulo.nextElementSibling?.textContent?.trim()).toBe('123.456.789-00');
+  });
 
   for (const ids of [[2], [1, 2]]) {
     it(`oculta editar e excluir quando o monitor tem unidade não permitida: ${ids}`, () => {
@@ -148,5 +170,16 @@ describe('ColaboradorComponent', () => {
       expect(fixture.nativeElement.querySelector('.unidades-box')).not.toBeNull();
       expect(component.formColaborador.get('idsUnidades')!.hasError('required')).toBe(true);
     }
+  });
+
+  it('oculta editar e excluir a própria conta e oferece Meu perfil', () => {
+    configurarPerfil('ADMINISTRADOR');
+    const propriaConta = { ...monitor([1], 'ADMINISTRADOR'), id: 10 };
+    const acoes = component.acoesTabela.filter(acao => !acao.visivel || acao.visivel(propriaConta));
+
+    expect(acoes.map(acao => acao.acao)).toEqual(['visualizar', 'meu-perfil']);
+    component.abrirEdicao(propriaConta);
+    expect(component.modalAberto).toBe(false);
+    expect(component.podeGerenciarColaborador(monitor([1]))).toBe(true);
   });
 });
