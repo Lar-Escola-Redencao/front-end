@@ -55,14 +55,15 @@
                 }
             </div>
 
+            @if (tempoEspera() === 0) {
+            <app-captcha-pix class="captcha-codigo" acao="recuperacao_senha" identificador="recuperacao_senha"
+                (tokenAlterado)="captchaToken.set($event)" />
+            }
+
             <button type="button" class="btn-primary btn-continuar" (click)="avancarParaSenha()" [disabled]="!codigoCompleto() || loading()">
                 {{ loading() ? 'Validando...' : 'Continuar' }}
             </button>
 
-            @if (tempoEspera() === 0) {
-            <app-captcha-pix acao="recuperacao_senha" identificador="recuperacao_senha"
-                (tokenAlterado)="captchaToken.set($event)" />
-            }
             <div class="resend-container">
                 <button type="button" class="link-button" (click)="voltarParaEmail()">
                     Errou o e-mail? Trocar endereço

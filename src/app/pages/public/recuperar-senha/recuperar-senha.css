@@ -52,6 +52,8 @@
 
 app-captcha-pix { margin: 0 0 12px; }
 
+app-captcha-pix.captcha-codigo { margin-bottom: 16px; }
+
 .form-card h1 {
   font-family: var(--fonte-titulo);
   font-size: 2rem;
