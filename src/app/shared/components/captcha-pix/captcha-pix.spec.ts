@@ -1,0 +1,89 @@
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { vi } from 'vitest';
+import { environment } from 'src/environments/environment';
+import { CaptchaPix } from './captcha-pix';
+
+describe('CaptchaPix — ciclo de verificação', () => {
+  let fixture: ComponentFixture<CaptchaPix>;
+  let opcoes: Record<string, any>;
+  let largura: number;
+  let redimensionar: () => void;
+  const chaveOriginal = environment.turnstileSiteKey;
+  const render = vi.fn();
+  const remove = vi.fn();
+  const reset = vi.fn();
+  let tokens: string[];
+
+  beforeEach(async () => {
+    largura = 320;
+    tokens = [];
+    vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockImplementation(() => largura);
+    vi.stubGlobal('ResizeObserver', class {
+      constructor(callback: () => void) { redimensionar = callback; }
+      observe() {}
+      disconnect() {}
+    });
+    environment.turnstileSiteKey = 'sitekey-unitaria';
+    render.mockImplementation((_container, configuracao) => { opcoes = configuracao; return 'widget'; });
+    window.turnstile = { render, remove, reset };
+    await TestBed.configureTestingModule({ imports: [CaptchaPix] }).compileComponents();
+    fixture = TestBed.createComponent(CaptchaPix);
+    fixture.componentRef.setInput('identificador', 'LER123');
+    fixture.componentInstance.tokenAlterado.subscribe(token => tokens.push(token));
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+  });
+
+  afterEach(() => {
+    fixture.destroy();
+    delete window.turnstile;
+    environment.turnstileSiteKey = chaveOriginal;
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
+  });
+
+  it('vincula o token à doação e usa largura flexível sem repetir sucesso visualmente', () => {
+    expect(opcoes).toMatchObject({ action: 'agradecimento_pix', cData: 'LER123', size: 'flexible' });
+    opcoes['callback']('token-real-do-provedor');
+    fixture.detectChanges();
+    expect(tokens).toEqual(['token-real-do-provedor']);
+    expect(fixture.nativeElement.querySelector('p').classList.contains('somente-leitor')).toBe(true);
+  });
+
+  it('descarta o token expirado e oferece nova verificação', () => {
+    opcoes['callback']('token');
+    opcoes['expired-callback']();
+    fixture.detectChanges();
+    expect(tokens).toEqual(['token', '']);
+    expect(fixture.nativeElement.textContent).toContain('expirou');
+    fixture.nativeElement.querySelector('button').click();
+    expect(reset).toHaveBeenCalledWith('widget');
+  });
+
+  it.each(['error-callback', 'timeout-callback'])('preserva uma tentativa controlada após %s', callback => {
+    opcoes[callback]();
+    fixture.detectChanges();
+    expect(tokens.at(-1)).toBe('');
+    expect(fixture.nativeElement.querySelector('button').textContent).toContain('Tentar verificação novamente');
+    expect(fixture.nativeElement.querySelector('p').classList.contains('somente-leitor')).toBe(false);
+  });
+
+  it('troca para compacto em espaço estreito invalidando a verificação anterior', async () => {
+    opcoes['callback']('token-anterior');
+    largura = 280;
+    redimensionar();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(remove).toHaveBeenCalledWith('widget');
+    expect(opcoes['size']).toBe('compact');
+    expect(tokens.at(-1)).toBe('');
+    expect(fixture.nativeElement.querySelector('.compacto')).not.toBeNull();
+  });
+
+  it('remove o widget ao sair da etapa', () => {
+    fixture.destroy();
+    expect(remove).toHaveBeenCalledWith('widget');
+  });
+});
