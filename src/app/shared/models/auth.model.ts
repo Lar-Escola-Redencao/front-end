@@ -1,6 +1,7 @@
 export interface LoginRequest {
   identifier: string;
   password: string;
+  captchaToken?: string;
 }
 
 /**
@@ -11,6 +12,7 @@ export interface LoginRequestDto {
   identificador: string;
   senha: string;
   lembrarMe: boolean;
+  captchaToken?: string;
 }
 
 export interface LoginResponse {

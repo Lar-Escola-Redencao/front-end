@@ -56,7 +56,13 @@
           <a routerLink="/recuperar-senha" class="link-button">Esqueci a senha</a>
         </div>
 
-        <button type="submit" class="btn-primary" [disabled]="loading()">
+        @if (captchaObrigatorio()) {
+          <app-captcha-pix acao="login" identificador="login" (tokenAlterado)="captchaToken.set($event)" />
+        }
+        @if (tempoEspera() > 0) {
+          <p role="status">Tente novamente em {{ tempoEspera() }} segundos.</p>
+        }
+        <button type="submit" class="btn-primary" [disabled]="loading() || tempoEspera() > 0 || (captchaObrigatorio() && !captchaToken())">
           {{ loading() ? 'Entrando...' : 'Entrar' }}
         </button>
                 @if (errorMessage()) {
