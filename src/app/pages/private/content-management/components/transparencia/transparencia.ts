@@ -1,9 +1,9 @@
 import { AnexoDrop } from 'src/app/shared/directives/anexo-drop';
 import { AbasResponsivas } from 'src/app/shared/directives/abas-responsivas';
-import { Component, OnInit, OnDestroy, ChangeDetectorRef, HostListener, NgZone } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef, ElementRef, HostListener, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { EMPTY, Subscription, expand, firstValueFrom, reduce } from 'rxjs';
 import Swal from 'sweetalert2';
 import { ToastrService } from 'ngx-toastr';
@@ -60,7 +60,7 @@ interface DocumentoExibicao extends DocumentoAdmin {
     MatSlideToggleModule
   ],
   templateUrl: './transparencia.html',
-  styleUrl: './transparencia.css',
+  styleUrls: ['./transparencia.css', '../../../../../shared/styles/badge-status.css'],
 })
 export class Transparencia implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalvas {
 
@@ -117,6 +117,7 @@ export class Transparencia implements OnInit, OnDestroy, ComponentComAlteracoesN
   ];
 
   colunasSecoes: TabelaColuna<Secao>[] = [
+    { chave: 'ordem', titulo: 'Ordem', ordenavel: true },
     { chave: 'titulo', titulo: 'Nome da Seção', principalMobile: true, ordenavel: true },
     { chave: 'conteudo', titulo: 'Descrição', formatar: (valor) => String(valor || '').trim() || '-'},
     { chave: 'ativo', titulo: 'Exibição', tipo: 'status', ordenavel: true }
@@ -141,6 +142,124 @@ export class Transparencia implements OnInit, OnDestroy, ComponentComAlteracoesN
   valoresOriginaisSecao: any = null;
   errosSecao: { [key: string]: string } = {};
 
+  reordenando = false;
+  carregandoOrdem = false;
+  salvandoOrdem = false;
+  secoesOrdenacao: Secao[] = [];
+  private ordemSalva: Secao[] = [];
+  private ordemSub?: Subscription;
+  private parametrosPendentes: ParamMap | null = null;
+  private animacoesOrdem = new Set<Animation>();
+  anuncioOrdem = '';
+
+  get temAlteracoesOrdem(): boolean {
+    return this.reordenando && this.secoesOrdenacao.some((secao, indice) => secao.id !== this.ordemSalva[indice]?.id);
+  }
+
+  iniciarReordenacao(): void {
+    if (this.reordenando || this.carregandoOrdem || this.abaAtiva !== 'secoes') return;
+    this.carregandoOrdem = true;
+    this.ordemSub = this.transparenciaService.listarSecoesParaOrdenacao().subscribe({
+      next: secoes => {
+        this.ordemSalva = secoes.map(secao => ({ ...secao }));
+        this.secoesOrdenacao = secoes.map(secao => ({ ...secao }));
+        this.reordenando = true;
+        this.carregandoOrdem = false;
+        this.anuncioOrdem = 'Modo de reordenação. Todas as seções estão disponíveis.';
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.carregandoOrdem = false;
+        this.aplicarParametrosPendentes();
+        this.toastr.error('Não foi possível carregar a ordem das seções. Tente novamente.', 'Erro');
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  moverSecao(indice: number, direcao: -1 | 1, evento?: Event): void {
+    const destino = indice + direcao;
+    if (!this.reordenando || this.salvandoOrdem || destino < 0 || destino >= this.secoesOrdenacao.length) return;
+    this.encerrarAnimacoesOrdem();
+    const reduzirMovimento = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+    const linhas = reduzirMovimento ? [] : Array.from(
+      this.elemento.nativeElement.querySelectorAll<HTMLElement>('.linha-ordenacao')
+    );
+    // FLIP: mede apenas as duas linhas antes/depois da troca; os frames usam só transform.
+    const posicoes = [linhas[indice], linhas[destino]]
+      .filter((linha): linha is HTMLElement => !!linha && typeof linha.animate === 'function')
+      .map(linha => ({ linha, topo: linha.getBoundingClientRect().top }));
+    const secoes = [...this.secoesOrdenacao];
+    [secoes[indice], secoes[destino]] = [secoes[destino], secoes[indice]];
+    this.secoesOrdenacao = secoes;
+    this.anuncioOrdem = `${secoes[destino].titulo}: posição ${destino + 1} de ${secoes.length}.`;
+    const botao = evento?.currentTarget as HTMLButtonElement | undefined;
+    this.cdr.detectChanges();
+    this.ngZone.runOutsideAngular(() => {
+      for (const { linha, topo } of posicoes) {
+        const deslocamento = topo - linha.getBoundingClientRect().top;
+        if (!deslocamento) continue;
+        const animacao = linha.animate([
+          { transform: `translateY(${deslocamento}px)` },
+          { transform: 'translateY(0)' },
+        ], { duration: 240, easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)' });
+        this.animacoesOrdem.add(animacao);
+        animacao.onfinish = () => {
+          animacao.onfinish = null;
+          animacao.cancel();
+          this.animacoesOrdem.delete(animacao);
+        };
+      }
+    });
+    // Ao chegar a um limite, mantém o foco na mesma seção, na seta ainda disponível.
+    if (botao) {
+      const proximo = botao.disabled
+        ? botao.parentElement?.querySelector<HTMLButtonElement>('button:not(:disabled)') : botao;
+      proximo?.focus();
+    }
+  }
+
+  private encerrarAnimacoesOrdem(): void {
+    for (const animacao of this.animacoesOrdem) {
+      animacao.onfinish = null;
+      animacao.cancel();
+    }
+    this.animacoesOrdem.clear();
+  }
+
+  cancelarReordenacao(): void {
+    if (this.salvandoOrdem) return;
+    this.encerrarAnimacoesOrdem();
+    this.reordenando = false;
+    this.secoesOrdenacao = [];
+    this.ordemSalva = [];
+    this.anuncioOrdem = '';
+    this.aplicarParametrosPendentes();
+  }
+
+  salvarOrdem(): void {
+    if (!this.temAlteracoesOrdem || this.salvandoOrdem) return;
+    this.salvandoOrdem = true;
+    const ordem = this.secoesOrdenacao.map((secao, indice) => ({ id: secao.id, ordem: indice + 1 }));
+    this.ordemSub = this.transparenciaService.reordenarSecoes(ordem).subscribe({
+      next: () => {
+        this.salvandoOrdem = false;
+        this.cancelarReordenacao();
+        this.toastr.success('Ordem das seções salva com sucesso.', 'Sucesso');
+        this.carregarListaAtiva();
+        this.carregarSecoesParaSelecao();
+        this.cdr.detectChanges();
+      },
+      error: erro => {
+        this.salvandoOrdem = false;
+        this.secoesOrdenacao = this.ordemSalva.map(secao => ({ ...secao }));
+        this.anuncioOrdem = 'Falha ao salvar. A última ordem salva foi restaurada.';
+        this.toastr.error(erro.error?.message || 'Não foi possível salvar. A última ordem salva foi restaurada. Tente novamente.', 'Erro');
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
 
   constructor(
     private fb: FormBuilder,
@@ -148,6 +267,7 @@ export class Transparencia implements OnInit, OnDestroy, ComponentComAlteracoesN
     private toastr: ToastrService,
     private cdr: ChangeDetectorRef,
     private ngZone: NgZone,
+    private elemento: ElementRef<HTMLElement>,
     private route: ActivatedRoute,
     private router: Router
   ) {
@@ -185,27 +305,44 @@ export class Transparencia implements OnInit, OnDestroy, ComponentComAlteracoesN
     this.carregarSecoesParaSelecao();
 
     this.routeSub = this.route.queryParamMap.subscribe(params => {
-      const { pagina, tamanho, sort } = lerParametrosPagina(params);
-      this.pagina = pagina;
-      this.tamanho = tamanho;
-      this.sort = sort;
-      this.ordenacao = analisarOrdenacao(sort);
-      this.abaAtiva = params.get('aba') === 'secoes' ? 'secoes' : 'documentos';
-      this.busca = params.get('search') ?? '';
-      const secaoId = Number(params.get('secao'));
-      this.secaoFiltroId = Number.isSafeInteger(secaoId) && secaoId > 0 ? secaoId : null;
-
-      this.carregarListaAtiva();
+      if (this.reordenando || this.carregandoOrdem) {
+        this.parametrosPendentes = params;
+        return;
+      }
+      this.aplicarParametrosLista(params);
     });
   }
 
+  private aplicarParametrosPendentes(): void {
+    if (!this.parametrosPendentes) return;
+    const params = this.parametrosPendentes;
+    this.parametrosPendentes = null;
+    this.aplicarParametrosLista(params);
+  }
+
+  private aplicarParametrosLista(params: ParamMap): void {
+    const { pagina, tamanho, sort } = lerParametrosPagina(params);
+    this.pagina = pagina;
+    this.tamanho = tamanho;
+    this.abaAtiva = params.get('aba') === 'secoes' ? 'secoes' : 'documentos';
+    this.sort = sort ?? (this.abaAtiva === 'secoes' ? 'ordem,asc' : undefined);
+    this.ordenacao = analisarOrdenacao(this.sort);
+    this.busca = params.get('search') ?? '';
+    const secaoId = Number(params.get('secao'));
+    this.secaoFiltroId = Number.isSafeInteger(secaoId) && secaoId > 0 ? secaoId : null;
+    this.carregarListaAtiva();
+  }
+
   ngOnDestroy(): void {
+    this.encerrarAnimacoesOrdem();
     this.routeSub?.unsubscribe();
     this.listaSub?.unsubscribe();
     this.secoesSub?.unsubscribe();
+    this.ordemSub?.unsubscribe();
   }
 
   mudarAba(aba: 'documentos' | 'secoes'): void {
+    if (this.reordenando || this.carregandoOrdem) return;
     if (aba === this.abaAtiva) {
       return;
     }
@@ -215,6 +352,7 @@ export class Transparencia implements OnInit, OnDestroy, ComponentComAlteracoesN
 
   /** Atualiza a URL (?search=termo); o queryParamMap.subscribe refaz o GET sem recarregar a página. */
   buscar(termo: string): void {
+    if (this.reordenando || this.carregandoOrdem) return;
     this.navegar({ page: 0, search: termo || null });
   }
 
@@ -534,6 +672,7 @@ export class Transparencia implements OnInit, OnDestroy, ComponentComAlteracoesN
   }
 
   formularioTemAlteracoesNaoSalvas(): boolean {
+    if (this.temAlteracoesOrdem || this.salvandoOrdem) return true;
     if (!this.modalAberto) return false;
     if (this.modalAberto === 'secao') return this.temAlteracoesSecao;
     if (this.modalAberto === 'documento') return this.temAlteracoesDocumento;

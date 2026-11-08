@@ -8,6 +8,27 @@
   width: 100%;
 }
 
+:host ::ng-deep .barra-busca.mat-form-field-disabled .mat-mdc-text-field-wrapper {
+  background-color: #eeeeee !important;
+}
+
+:host ::ng-deep .barra-busca.mat-form-field-disabled .mat-mdc-input-element {
+  color: var(--input-color) !important;
+  -webkit-text-fill-color: var(--input-color) !important;
+  cursor: not-allowed;
+}
+
+:host ::ng-deep .barra-busca.mat-form-field-disabled .mat-mdc-input-element::placeholder {
+  color: var(--input-color);
+  opacity: 1;
+}
+
+:host ::ng-deep .barra-busca.mat-form-field-disabled .barra-busca-icone,
+.barra-busca-limpar:disabled {
+  color: var(--input-color);
+  cursor: not-allowed;
+}
+
 /*
  * O styles.css global desloca o input para baixo (margin-top/top/padding do infix)
  * para abrir espaço ao label flutuante. A barra de busca não tem label, então
@@ -69,7 +90,7 @@
   cursor: pointer;
 }
 
-.barra-busca-limpar:hover {
+.barra-busca-limpar:hover:not(:disabled) {
   color: var(--primary-color);
 }
 

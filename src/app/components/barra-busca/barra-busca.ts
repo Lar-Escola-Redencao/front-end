@@ -43,6 +43,11 @@ export class BarraBusca implements OnInit, OnDestroy {
 
   @Output() buscar = new EventEmitter<string>();
 
+  @Input() set desabilitada(valor: boolean) {
+    if (valor) this.controle.disable({ emitEvent: false });
+    else this.controle.enable({ emitEvent: false });
+  }
+
   readonly controle = new FormControl('', { nonNullable: true });
 
   private ultimoTermo = '';
@@ -52,6 +57,7 @@ export class BarraBusca implements OnInit, OnDestroy {
     this.sub = this.controle.valueChanges
       .pipe(
         debounceTime(DEBOUNCE_BUSCA_MS),
+        filter(() => !this.controle.disabled),
         map(valor => valor.trim()),
         // Compara com o último termo conhecido (inclusive o vindo da URL), não só com a última emissão.
         filter(termo => termo !== this.ultimoTermo)
