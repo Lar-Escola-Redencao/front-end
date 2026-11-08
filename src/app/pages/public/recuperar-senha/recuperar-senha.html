@@ -26,18 +26,23 @@
                 <p class="field-error">Informe um e-mail válido.</p>
                 }
 
-                <button type="submit" class="btn-primary" [disabled]="loading()">
+                <app-captcha-pix acao="recuperacao_senha" identificador="recuperacao_senha"
+                    (tokenAlterado)="captchaToken.set($event)" />
+                @if (tempoEspera() > 0) {
+                <p role="status">Aguarde {{ formatarTempo() }} para tentar novamente.</p>
+                }
+                <button type="submit" class="btn-primary" [disabled]="loading() || !captchaToken() || tempoEspera() > 0">
                     {{ loading() ? 'Enviando...' : 'Enviar código' }}
                 </button>
             </form>
             }
 
             @if (step() === 2) {
-            <p class="subtitle">Digite o código de 6 caracteres que enviamos.</p>
+            <p class="subtitle">Se o e-mail estiver cadastrado, você receberá um código de 6 caracteres. Digite-o abaixo.</p>
 
             @if (avisoCodigoPendente()) {
             <div class="info-box" role="status">
-                Você ainda tem um código não expirado. Por favor, verifique seu e-mail. Caso tenha
+                Você já solicitou um código. Por favor, verifique seu e-mail. Caso tenha
                 perdido o código, aguarde o tempo e clique em reenviar.
             </div>
             }
@@ -54,16 +59,20 @@
                 {{ loading() ? 'Validando...' : 'Continuar' }}
             </button>
 
+            @if (tempoEspera() === 0) {
+            <app-captcha-pix acao="recuperacao_senha" identificador="recuperacao_senha"
+                (tokenAlterado)="captchaToken.set($event)" />
+            }
             <div class="resend-container">
                 <button type="button" class="link-button" (click)="voltarParaEmail()">
                     Errou o e-mail? Trocar endereço
                 </button>
                 <button type="button" class="link-button" (click)="reenviarCodigo()"
-                    [disabled]="tempoEspera() > 0 || loading()">
+                    [disabled]="tempoEspera() > 0 || loading() || !captchaToken()">
                     Reenviar código
                 </button>
                 @if (tempoEspera() > 0) {
-                <span class="timer-text">Aguarde {{ formatarTempo() }}</span>
+                <span class="timer-text" role="status">Aguarde {{ formatarTempo() }}</span>
                 }
             </div>
             }
@@ -117,6 +126,9 @@
             </div>
             }
 
+            @if (erroEnvio() && (step() === 1 || step() === 2)) {
+            <p class="field-error" role="alert">{{ erroEnvio() }}</p>
+            }
         </div>
     </main>
 </div>

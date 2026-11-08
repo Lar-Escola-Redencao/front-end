@@ -8,8 +8,8 @@ export class RecuperacaoSenhaService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = `${environment.apiUrl}/auth`;
 
-  solicitarRecuperacao(email: string): Promise<void> {
-    return firstValueFrom(this.http.post<void>(`${this.baseUrl}/esqueci-minha-senha`, { email }));
+  solicitarRecuperacao(email: string, captchaToken: string): Promise<void> {
+    return firstValueFrom(this.http.post<void>(`${this.baseUrl}/esqueci-minha-senha`, { email, captchaToken }));
   }
 
   validarCodigo(token: string): Promise<void> {
