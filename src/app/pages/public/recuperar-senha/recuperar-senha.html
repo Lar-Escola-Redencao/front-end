@@ -38,11 +38,11 @@
             }
 
             @if (step() === 2) {
-            <p class="subtitle">Se o e-mail estiver cadastrado, você receberá um código de 6 caracteres. Digite-o abaixo.</p>
+            <p class="subtitle">Digite o código de 6 caracteres que enviamos.</p>
 
             @if (avisoCodigoPendente()) {
             <div class="info-box" role="status">
-                Você já solicitou um código. Por favor, verifique seu e-mail. Caso tenha
+                Você ainda tem um código não expirado. Por favor, verifique seu e-mail. Caso tenha
                 perdido o código, aguarde o tempo e clique em reenviar.
             </div>
             }
