@@ -234,7 +234,7 @@
 
 
 @if (modalAberto()) {
-  <app-modal-layout [titulo]="agradecimentoEnviado() ? '' : etapaEmail() ? 'Receber agradecimento' : 'Doação via Pix'" (closed)="fecharModal()"
+  <app-modal-layout [class.pix-modal-email]="etapaEmail() && !agradecimentoEnviado()" [titulo]="agradecimentoEnviado() ? '' : etapaEmail() ? 'Receber agradecimento' : 'Doação via Pix'" (closed)="fecharModal()"
     role="dialog" aria-modal="true" [attr.aria-label]="agradecimentoEnviado() ? 'Agradecemos por sua doação!' : etapaEmail() ? 'Receber agradecimento' : 'Doação via Pix'"
     [cdkTrapFocus]="true" [cdkTrapFocusAutoCapture]="true">
     <div class="pix-modal-conteudo" [attr.aria-busy]="gerando() || enviandoEmail()">
@@ -255,7 +255,7 @@
         <button type="button" class="pix-voltar" [disabled]="enviandoEmail()" (click)="etapaEmail.set(false)">
           <span class="material-symbols-outlined" aria-hidden="true">arrow_back</span> Voltar
         </button>
-        <p class="pix-email-descricao">Se quiser, informe seu e-mail para receber uma mensagem de agradecimento.</p>
+        <p class="pix-email-descricao">Se quiser, receba um agradecimento pela doação que você informou. O e-mail não confirma o recebimento do Pix.</p>
           <form class="pix-form-agradecimento" (ngSubmit)="informarPagamento()" novalidate>
             <mat-form-field appearance="outline" subscriptSizing="dynamic">
               <mat-label>E-mail (opcional)</mat-label>
@@ -266,7 +266,11 @@
             @if (erroEmail()) {
               <p id="erro-email" class="erro" role="alert">{{ erroEmail() }}</p>
             }
-            <button type="submit" class="btn-primary" [disabled]="enviandoEmail()">
+            <app-captcha-pix [identificador]="codigo()!.identificador" (tokenAlterado)="captchaToken.set($event)" />
+            @if (esperaEmail() > 0) {
+              <p role="status" aria-live="polite">Aguarde {{ esperaEmail() }} segundos para solicitar novamente.</p>
+            }
+            <button type="submit" class="btn-primary" [disabled]="enviandoEmail() || !captchaToken() || esperaEmail() > 0 || segundosRestantes() === 0">
               @if (enviandoEmail()) {
                 <span class="indicador-carregamento pequeno" aria-hidden="true"></span>
               }
