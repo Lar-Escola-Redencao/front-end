@@ -274,3 +274,10 @@
     min-height: 128px;
   }
 }
+
+.texto-paragrafos, textarea[formControlName="relato"], .form-texto textarea {
+  white-space: pre-wrap;
+  text-align: justify;
+  overflow-wrap: anywhere;
+  hyphens: auto;
+}

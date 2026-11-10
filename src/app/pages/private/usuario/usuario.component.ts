@@ -199,6 +199,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
   contatoExpandidoIndex = 0;
   familiarExpandidoIndex = -1;
   usuarioSelecionadoId: number | null = null;
+  removerFotoPerfil = false;
   fotoSelecionada: File | null = null;
 
   // Modal Rápido de Contato
@@ -402,11 +403,13 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
         event.target.value = '';
         return;
       }
+      this.removerFotoPerfil = false;
       this.fotoSelecionada = file;
       delete this.erros['foto'];
 
       const reader = new FileReader();
       reader.onload = e => {
+        if (this.fotoSelecionada !== file) return;
         this.fotoPreviewUrl = reader.result;
         this.atualizarTela();
       };
@@ -1099,6 +1102,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
     this.arquivosSaude = [];
     this.arquivosSaudeSalvos = [];
     this.arquivosSaudeCarregados = false;
+    this.removerFotoPerfil = false;
     this.fotoSelecionada = null;
     this.fotoPreviewUrl = null;
     this.adicionarContato(true);
@@ -1125,6 +1129,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
     this.isLoading = false;
     this.isCarregandoEdicao = true;
     this.iniciarFormulario();
+    this.removerFotoPerfil = false;
     this.fotoSelecionada = null;
     this.arquivosSaude = [];
     this.arquivosSaudeSalvos = [];
@@ -1326,6 +1331,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
     this.contatosArray.clear();
     this.familiaresArray.clear();
     this.familiarExpandidoIndex = -1;
+    this.removerFotoPerfil = false;
     this.fotoSelecionada = null;
     this.arquivosSaude = [];
     this.arquivosSaudeSalvos = [];
@@ -1879,6 +1885,14 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
     }
   }
 
+  removerFoto(): void {
+    if (this.isLoading) return;
+    this.fotoSelecionada = null;
+    this.fotoPreviewUrl = null;
+    this.removerFotoPerfil = this.modoEdicao && !!this.usuarioOriginalEdicao?.imagemPerfil;
+    delete this.erros['foto'];
+  }
+
   fotoValida(): boolean {
     return !!this.fotoSelecionada || !!this.fotoPreviewUrl;
   }
@@ -1941,7 +1955,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
   }
 
   get temAlteracoes(): boolean {
-    if (this.fotoSelecionada || this.arquivosSaude.length > 0) return true;
+    if (this.removerFotoPerfil || this.fotoSelecionada || this.arquivosSaude.length > 0) return true;
     if (!this.modoEdicao) return this.formUsuario.dirty;
     return JSON.stringify(this.formUsuario.getRawValue()) !== JSON.stringify(this.valoresOriginaisDoFormulario);
   }
@@ -2039,7 +2053,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
     };
 
     if (this.modoEdicao) {
-      const dtoEdicao: Partial<CadastroUsuarioCompletoDTO> = { ...dto };
+      const dtoEdicao: Partial<CadastroUsuarioCompletoDTO> = { ...dto, removerFotoPerfil: this.removerFotoPerfil };
       if (this.usuarioOriginalEdicao?.fichaSocioeconomica) {
         dtoEdicao.fichaSocioeconomica = preservarCamposNaoEditados(
           this.usuarioOriginalEdicao.fichaSocioeconomica,

@@ -943,3 +943,29 @@ input::-ms-clear {
   line-height: 1.5;
   text-align: left;
 }
+
+/* Reserva o espaço e evita exibir os nomes das ligaturas antes das fontes. */
+html:not(.material-icons-prontos) .material-icons,
+html:not(.material-icons-prontos) .mat-icon.mat-ligature-font:not(.material-symbols-outlined):not([data-mat-icon-type="svg"]),
+html:not(.material-symbols-prontos) .material-symbols-outlined {
+  visibility: hidden;
+}
+.btn-remover-foto {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+  width: auto;
+  min-height: 36px;
+  padding: 6px 12px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--error-color, #c62828);
+  font: 400 14px var(--fonte-texto);
+  cursor: pointer;
+  transition: background-color .15s ease;
+}
+.btn-remover-foto:hover:not(:disabled) { background: rgba(198, 40, 40, .07); }
+.btn-remover-foto:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+.btn-remover-foto:disabled { opacity: .5; cursor: default; }

@@ -22,7 +22,7 @@
       @for (secao of conteudo().texto; track secao.id) {
         <article class="sobre-texto container">
           <h2>{{ secao.titulo || 'Sobre o Lar Escola Redenção' }}</h2>
-          <div class="texto-institucional" [innerHTML]="secao.conteudo || ''"></div>
+          <div class="texto-institucional" [innerHTML]="textoParaExibicao(secao.conteudo || '')"></div>
         </article>
       } @empty {
         <div class="sobre-texto container">

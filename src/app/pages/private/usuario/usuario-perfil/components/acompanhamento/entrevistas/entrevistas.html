@@ -22,7 +22,7 @@
     @if (modal() === 'VER') {
       <dl class="detalhes">
         <div><dt>Data e hora da entrevista</dt><dd>{{ formatarData(selecionada()!.dataEntrevista) }}</dd></div>
-        <div><dt>Descrição</dt><dd>{{ selecionada()!.relato }}</dd></div>
+        <div><dt>Descrição</dt><dd class="texto-paragrafos">{{ selecionada()!.relato }}</dd></div>
       </dl>
     } @else {
       <form class="formulario" [formGroup]="form" (ngSubmit)="salvar()">

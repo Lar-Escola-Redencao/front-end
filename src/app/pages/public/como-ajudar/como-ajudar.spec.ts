@@ -422,9 +422,9 @@ describe('ComoAjudar — geração local de Pix', () => {
     await aguardarGeracao();
   });
 
-  it('recusa valor zero sem chamar o back-end', async () => {
+  it.each(['0', '0,01', '0,99'])('recusa valor inferior a um real (%s) sem chamar o back-end', async valor => {
     await carregar();
-    await digitar('0');
+    await digitar(valor);
     enviar();
     fixture.detectChanges();
     expect(elemento.querySelector('#erro-valor')).not.toBeNull();

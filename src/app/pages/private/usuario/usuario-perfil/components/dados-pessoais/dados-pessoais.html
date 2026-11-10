@@ -140,11 +140,17 @@
       <span class="error-text" *ngIf="erroFoto">{{ erroFoto }}</span>
     }
 
+    @if (removerFotoPerfil) {
+      <p role="status">A foto será removida ao salvar as alterações.</p>
+    }
     @if (fotoPreview) {
       <div class="preview-foto">
         <h3>Foto de perfil</h3>
         <img [src]="fotoPreview" class="avatar-preview-inferior" alt="Prévia da foto de perfil" (error)="onErroFotoPreview()">
       </div>
+    }
+    @if (editando && !removerFotoPerfil && (usuario?.imagemPerfil || fotoSelecionada)) {
+      <button type="button" class="btn-remover-foto" [disabled]="salvando" (click)="removerFoto()">Remover foto</button>
     }
   </form>
 </section>

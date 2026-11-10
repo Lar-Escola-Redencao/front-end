@@ -212,9 +212,11 @@
           (change)="onFotoSelecionada($event)">
       </div>
       <span class="error-text" *ngIf="erros['foto']">{{ erros['foto'] }}</span>
+      <p *ngIf="removerFotoPerfil" role="status">A foto será removida ao salvar as alterações.</p>
       <div class="preview-foto" *ngIf="fotoPreviewUrl">
         <h3>Foto de perfil</h3>
         <img [src]="fotoPreviewUrl" class="avatar-preview-inferior" alt="Prévia da foto de perfil">
+        <button type="button" class="btn-remover-foto" [disabled]="isLoading" (click)="removerFoto()">Remover foto</button>
       </div>
     </div>
 

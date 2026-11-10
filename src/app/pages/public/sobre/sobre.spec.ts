@@ -4,6 +4,7 @@ import { ActivatedRoute } from '@angular/router';
 import { Subject, of } from 'rxjs';
 import { vi } from 'vitest';
 import { Sobre } from './sobre';
+import { EstadoVazio } from 'src/app/components/estado-vazio/estado-vazio';
 import {
   ConteudoSobre,
   SobrePublicoService,
@@ -70,7 +71,7 @@ describe('Sobre', () => {
       ],
     })
       .overrideComponent(Sobre, {
-        set: { imports: [NavbarTeste, FooterTeste, DiretoriaTeste, UnidadesTeste] },
+        set: { imports: [NavbarTeste, FooterTeste, DiretoriaTeste, UnidadesTeste, EstadoVazio] },
       })
       .compileComponents();
     fixture = TestBed.createComponent(Sobre);
@@ -109,8 +110,15 @@ describe('Sobre', () => {
     fixture = TestBed.createComponent(Sobre);
     fixture.detectChanges();
     const pagina = carregar();
-    expect(pagina.querySelector('.numero-atendidos strong')?.textContent).toBe('97');
+    expect(pagina.querySelector('.numero-atendidos strong')?.textContent).toBe('+97');
     expect(pagina.querySelector('.numero-anos strong')?.textContent).toBe(idade);
+  });
+
+  it('exibe parágrafos comuns como texto e mantém o conteúdo seguro', () => {
+    const pagina = carregar({ ...dados, texto: [{ ...dados.texto[0], conteudo: 'Primeiro.\n\nSegundo <script>alert(1)</script>' }] });
+    const texto = pagina.querySelector('.texto-institucional')!;
+    expect(texto.textContent).toBe('Primeiro.\n\nSegundo <script>alert(1)</script>');
+    expect(texto.querySelector('script')).toBeNull();
   });
 
   it('renderiza textos, imagens e o total de unidades recebidos', () => {

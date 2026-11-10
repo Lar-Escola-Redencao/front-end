@@ -39,6 +39,9 @@ h2 {
   text-align: right;
 }
 .texto-institucional {
+  white-space: pre-wrap;
+  text-align: justify;
+  hyphens: auto;
   font-size: 15px;
   line-height: 1.65;
   overflow-wrap: anywhere;

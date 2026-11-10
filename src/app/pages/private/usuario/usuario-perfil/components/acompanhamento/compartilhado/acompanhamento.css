@@ -42,3 +42,10 @@ dd { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
   .cabecalho > button { width: 100%; }
   .acoes > button { flex: 1 1 120px; }
 }
+
+.texto-paragrafos, textarea[formControlName="relato"], .form-texto textarea {
+  white-space: pre-wrap;
+  text-align: justify;
+  overflow-wrap: anywhere;
+  hyphens: auto;
+}

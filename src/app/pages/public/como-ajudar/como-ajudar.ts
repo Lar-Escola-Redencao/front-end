@@ -208,7 +208,7 @@ export class ComoAjudar implements OnInit {
     const texto = this.valorDigitado.trim();
     if (!/^\d{1,6}(?:[.,]\d{1,2})?$/.test(texto)) return null;
     const valor = Number(texto.replace(',', '.'));
-    return valor >= 0.01 && valor <= 999999.99 ? valor : null;
+    return valor >= 1 && valor <= 999999.99 ? valor : null;
   }
 
   protected gerarPix(): void {
@@ -216,7 +216,7 @@ export class ComoAjudar implements OnInit {
     const valor = this.lerValor();
     if (valor === null) {
       this.erroValor.set(
-        'Informe um valor entre R$ 0,01 e R$ 999.999,99, com até duas casas decimais.',
+        'Informe um valor entre R$ 1,00 e R$ 999.999,99, com até duas casas decimais.',
       );
       return;
     }

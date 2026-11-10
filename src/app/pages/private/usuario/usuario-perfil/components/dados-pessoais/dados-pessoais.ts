@@ -49,6 +49,7 @@ export class UsuarioPerfilDadosPessoais implements OnChanges {
   salvando = false;
   consultandoCep = false;
   avisoCep = '';
+  removerFotoPerfil = false;
   fotoSelecionada: File | null = null;
   fotoPreviewUrl: string | null = null;
   fotoPerfilValidadaUrl: string | null = null;
@@ -136,7 +137,7 @@ export class UsuarioPerfilDadosPessoais implements OnChanges {
   }
 
   get temAlteracoes(): boolean {
-    return JSON.stringify(this.form.getRawValue()) !== JSON.stringify(this.valoresOriginais) || !!this.fotoSelecionada;
+    return JSON.stringify(this.form.getRawValue()) !== JSON.stringify(this.valoresOriginais) || !!this.fotoSelecionada || this.removerFotoPerfil;
   }
 
   get usaOutroDocumento(): boolean {
@@ -144,7 +145,15 @@ export class UsuarioPerfilDadosPessoais implements OnChanges {
   }
 
   get fotoPreview(): string | null {
-    return this.fotoPreviewUrl || this.fotoPerfilValidadaUrl;
+    return this.removerFotoPerfil ? null : this.fotoPreviewUrl || this.fotoPerfilValidadaUrl;
+  }
+
+  removerFoto(): void {
+    if (!this.editando || this.salvando || this.somenteLeitura) return;
+    this.fotoSelecionada = null;
+    this.fotoPreviewUrl = null;
+    this.removerFotoPerfil = !!this.usuario?.imagemPerfil;
+    this.erroFoto = '';
   }
 
   onErroFotoPreview(): void {
@@ -218,10 +227,13 @@ export class UsuarioPerfilDadosPessoais implements OnChanges {
       return;
     }
 
+    this.removerFotoPerfil = false;
     this.fotoSelecionada = arquivo;
     const reader = new FileReader();
     reader.onload = () => {
+      if (this.fotoSelecionada !== arquivo) return;
       this.fotoPreviewUrl = String(reader.result);
+      this.changeDetectorRef.detectChanges();
     };
     reader.readAsDataURL(arquivo);
     input.value = '';
@@ -255,6 +267,9 @@ export class UsuarioPerfilDadosPessoais implements OnChanges {
     this.avisoCep = '';
     this.editando = false;
     this.fotoPerfilValidadaUrl = null;
+    this.removerFotoPerfil = false;
+    this.fotoSelecionada = null;
+    this.fotoPreviewUrl = null;
     this.form.reset({
       nomeCompleto: this.usuario?.nomeCompleto ?? '',
       dataNascimento: this.normalizarData(this.usuario?.dataNascimento),
@@ -289,6 +304,7 @@ export class UsuarioPerfilDadosPessoais implements OnChanges {
       tipoDocumento: dados.usarOutroDocumento ? dados.tipoDocumento || null : null
     } : {};
     return montarBaseAtualizacaoUsuario(this.usuario!, {
+      removerFotoPerfil: this.removerFotoPerfil,
       nomeCompleto: dados.nomeCompleto || '',
       dataNascimento: dados.dataNascimento || '',
       ...documentos,

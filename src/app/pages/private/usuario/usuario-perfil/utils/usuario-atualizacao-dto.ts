@@ -25,6 +25,7 @@ export function montarBaseAtualizacaoUsuario(
   }
 
   return {
+    removerFotoPerfil: dados.removerFotoPerfil,
     nomeCompleto: obrigatorio(dados.nomeCompleto ?? usuario.nomeCompleto, 'nome completo'),
     dataNascimento: obrigatorio(dados.dataNascimento ?? usuario.dataNascimento, 'data de nascimento').split('T')[0],
     cpf: cpf || null,

@@ -39,6 +39,8 @@ import { environment } from 'src/environments/environment';
 /** Título fixo que identifica as seções do carrossel — nunca aparece na UI. */
 export const TITULO_CARROSSEL = 'Imagem Carrossel';
 
+import { textoParaEdicao } from 'src/app/shared/utils/texto-paragrafos';
+
 const GRUPO_TEXTO_SOBRE = 'texto-sobre';
 const GRUPO_HISTORIA = 'historia';
 const GRUPO_CARROSSEL = 'carrossel';
@@ -287,7 +289,7 @@ export class Sobre implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalvas
 
   private preencherFormTexto(): void {
     this.formTexto.reset({
-      conteudo: this.secaoTexto?.conteudo ?? '',
+      conteudo: textoParaEdicao(this.secaoTexto?.conteudo ?? ''),
     });
     this.formTexto.markAsPristine();
     this.valoresOriginaisTexto = this.formTexto.getRawValue();

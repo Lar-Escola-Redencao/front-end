@@ -41,6 +41,7 @@ export interface FichaSocioeconomicaDTO {
 }
 
 export interface CadastroUsuarioCompletoDTO {
+  removerFotoPerfil?: boolean;
   nomeCompleto: string;
   dataNascimento: string;
   cpf?: string | null;

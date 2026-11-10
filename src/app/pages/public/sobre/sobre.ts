@@ -9,6 +9,7 @@ import {
   signal,
   viewChildren,
 } from '@angular/core';
+import { textoParaExibicao } from 'src/app/shared/utils/texto-paragrafos';
 import { ActivatedRoute } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { PublicFooter } from '@components/public-footer/public-footer';
@@ -30,6 +31,7 @@ import {
   host: { '(window:resize)': 'atualizarLargura()' },
 })
 export class Sobre {
+  protected readonly textoParaExibicao = textoParaExibicao;
   private readonly sobrePublicoService = inject(SobrePublicoService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly injector = inject(Injector);
