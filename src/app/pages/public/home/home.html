@@ -1,21 +1,28 @@
 <app-public-navbar></app-public-navbar>
 
-<main class="home-main">
-  <section id="inicio" class="home-section">
-    <p>Seção Início</p>
-  </section>
+<main class="home-main" [attr.aria-busy]="carregando()">
+  @if (carregando()) {
+    <div class="carregamento-secao home-carregamento" role="status" aria-label="Carregando página inicial">
+      <span class="spinner-carregamento" aria-hidden="true"></span>
+    </div>
+  }
+  <div class="home-conteudo" [hidden]="carregando()">
+    <section id="inicio" class="home-section">
+      <p>Seção Início</p>
+    </section>
 
-  <section id="unidades" class="home-section">
-    <app-public-unidades (carregado)="aoCarregarSecao('unidades')"></app-public-unidades>
-  </section>
+    <section id="unidades" class="home-section">
+      <app-public-unidades (carregado)="aoCarregarSecao('unidades')"></app-public-unidades>
+    </section>
 
-  <section id="eventos" class="home-section">
-    <app-public-eventos (carregado)="aoCarregarSecao('eventos')"></app-public-eventos>
-  </section>
+    <section id="eventos" class="home-section">
+      <app-public-eventos (carregado)="aoCarregarSecao('eventos')"></app-public-eventos>
+    </section>
 
-  <section id="parceiros" class="home-section">
-    <app-public-parceiros></app-public-parceiros>
-  </section>
+    <section id="parceiros" class="home-section">
+      <app-public-parceiros (carregado)="aoCarregarSecao('parceiros')"></app-public-parceiros>
+    </section>
+  </div>
 </main>
 
 <app-public-footer></app-public-footer>

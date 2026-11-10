@@ -23,7 +23,7 @@
           }
         </mat-select>
       </mat-form-field>
-      @if (carregandoMatriculas()) { <p class="nota-campo" role="status">Carregando matrículas...</p> }
+      @if (carregandoMatriculas()) { <p class="nota-campo" role="status" aria-label="Carregando matrículas"><span class="spinner-carregamento" aria-hidden="true"></span></p> }
       @if (erroMatriculas()) {
         <div class="erro-campo" role="alert">{{ erroMatriculas() }}
           <button type="button" class="repetir-matriculas" (click)="carregarMatriculas()">Tentar novamente</button>
@@ -56,7 +56,7 @@
 
   <div class="conteudo" [attr.aria-busy]="carregando()">
     @if (carregando()) {
-      <div class="estado" role="status"><span class="spinner" aria-hidden="true"></span><span class="sr-only">Carregando frequência...</span></div>
+      <div class="estado" role="status"><span role="status" aria-label="Carregando" class="spinner-carregamento"></span><span class="sr-only">Carregando frequência...</span></div>
     } @else if (erro()) {
       <div class="estado" role="alert">
         <p class="erro">{{ erro() }}</p>

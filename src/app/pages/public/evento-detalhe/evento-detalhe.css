@@ -369,6 +369,10 @@
 }
 
 .evento-parceiro-logo {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  cursor: zoom-in;
   width: 78px;
   max-width: 100%;
   height: 78px;
@@ -376,6 +380,9 @@
   align-items: center;
   justify-content: center;
 }
+
+.evento-parceiro-logo:disabled { cursor: default; }
+.evento-parceiro-logo:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 2px; }
 
 .evento-parceiro-logo img {
   max-width: 100%;
@@ -411,7 +418,9 @@
   align-items: center;
   justify-content: center;
   width: 44px;
-  height: 44px;
+  min-height: 44px;
+  height: auto;
+  align-self: stretch;
   border: 0;
   background: var(--branco);
   color: var(--preto);

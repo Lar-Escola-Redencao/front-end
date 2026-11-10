@@ -36,6 +36,7 @@ export class RecuperarSenha implements OnInit, OnDestroy {
 
     step = signal<1 | 2 | 3 | 4>(1);
     loading = signal(false);
+    reenviando = signal(false);
     email = signal('');
     tempoEspera = signal(0);
     codigo = signal<string[]>(['', '', '', '', '', '']);
@@ -204,6 +205,7 @@ export class RecuperarSenha implements OnInit, OnDestroy {
         const emailDigitado = this.email();
         if (this.cooldownRestante(emailDigitado) > 0 || this.loading()) return;
 
+        this.reenviando.set(isReenvio);
         this.loading.set(true);
 
         this.recuperacaoService.solicitarRecuperacao(emailDigitado)
@@ -222,7 +224,10 @@ export class RecuperarSenha implements OnInit, OnDestroy {
                 }
                 this.concluirProcessamentoEnvio(isReenvio, emailDigitado);
             })
-            .finally(() => this.loading.set(false));
+            .finally(() => {
+                this.loading.set(false);
+                this.reenviando.set(false);
+            });
     }
 
     private concluirProcessamentoEnvio(isReenvio: boolean, email: string): void {

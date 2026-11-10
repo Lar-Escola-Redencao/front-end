@@ -56,8 +56,9 @@
           <a routerLink="/recuperar-senha" class="link-button">Esqueci a senha</a>
         </div>
 
-        <button type="submit" class="btn-primary" [disabled]="loading()">
-          {{ loading() ? 'Entrando...' : 'Entrar' }}
+        <button type="submit" class="btn-primary" [disabled]="loading()" [attr.aria-busy]="loading()">
+          {{ loading() ? 'Entrando' : 'Entrar' }}
+          @if (loading()) { <span class="spinner-carregamento" aria-hidden="true"></span> }
         </button>
                 @if (errorMessage()) {
           <p class="error-text" role="alert">{{ errorMessage() }}</p>

@@ -11,8 +11,8 @@
 
     @if (carregando) {
     <div class="vinculo-estado">
-      <span class="spinner spinner-escuro" aria-hidden="true"></span>
-      <p>Carregando redes sociais...</p>
+      <span role="status" aria-label="Carregando" class="spinner-carregamento"></span>
+
     </div>
     } @else if (erroCarregamento) {
     <div class="vinculo-estado vinculo-estado-erro">
@@ -74,7 +74,7 @@
           <td class="coluna-acoes">
             <div class="acoes">
               @if (linha.salvando) {
-              <span class="spinner spinner-escuro" aria-hidden="true"></span>
+              <span role="status" aria-label="Carregando" class="spinner-carregamento"></span>
               } @else if (!linha.vinculada) {
               <button type="button" class="botao-acao" title="Vincular ao evento" (click)="salvar(linha)">
                 <mat-icon>add_link</mat-icon>

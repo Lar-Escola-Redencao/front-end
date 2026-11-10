@@ -1,4 +1,5 @@
-import { Component } from '@angular/core';
+import { Component, EventEmitter, Output } from '@angular/core';
+import { By } from '@angular/platform-browser';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { Subject, of } from 'rxjs';
@@ -15,9 +16,9 @@ class NavbarTeste {}
 @Component({ selector: 'app-public-footer', template: '' })
 class FooterTeste {}
 @Component({ selector: 'app-public-diretoria', template: '' })
-class DiretoriaTeste {}
+class DiretoriaTeste { @Output() carregado = new EventEmitter<void>(); }
 @Component({ selector: 'app-public-unidades', template: '' })
-class UnidadesTeste {}
+class UnidadesTeste { @Output() carregado = new EventEmitter<void>(); }
 
 describe('Sobre', () => {
   let fixture: ComponentFixture<Sobre>;
@@ -88,15 +89,53 @@ describe('Sobre', () => {
     resposta.next(conteudo);
     resposta.complete();
     fixture.detectChanges();
+    fixture.debugElement.query(By.directive(DiretoriaTeste)).componentInstance.carregado.emit();
+    fixture.debugElement.query(By.directive(UnidadesTeste)).componentInstance.carregado.emit();
+    fixture.detectChanges();
     return fixture.nativeElement;
   }
 
   it('exibe o carregamento enquanto aguarda o CMS', () => {
     const pagina: HTMLElement = fixture.nativeElement;
-    expect(pagina.querySelector('[role="status"]')?.textContent).toContain('Carregando');
+    expect(pagina.querySelector('[role="status"] .spinner-carregamento')).not.toBeNull();
     expect(pagina.querySelector('main')?.getAttribute('aria-busy')).toBe('true');
-    expect(pagina.querySelector('app-public-unidades')).toBeNull();
-    expect(pagina.querySelector('app-public-diretoria')).toBeNull();
+    expect(pagina.querySelector<HTMLElement>('.sobre-conteudo')?.hidden).toBe(true);
+    expect(pagina.querySelector('.carregamento-pagina')).not.toBeNull();
+  });
+
+  it('aguarda também diretoria e unidades com um único spinner de página', () => {
+    resposta.next(dados);
+    resposta.complete();
+    fixture.detectChanges();
+    const pagina: HTMLElement = fixture.nativeElement;
+    expect(pagina.querySelector('main')?.getAttribute('aria-busy')).toBe('true');
+    fixture.debugElement.query(By.directive(DiretoriaTeste)).componentInstance.carregado.emit();
+    fixture.detectChanges();
+    expect(pagina.querySelector('.carregamento-pagina')).not.toBeNull();
+    fixture.debugElement.query(By.directive(UnidadesTeste)).componentInstance.carregado.emit();
+    fixture.detectChanges();
+    expect(pagina.querySelector('.carregamento-pagina')).toBeNull();
+    expect(pagina.querySelector<HTMLElement>('.sobre-conteudo')?.hidden).toBe(false);
+  });
+
+  it.each([false, true])('aguarda os indicadores e conclui também em caso de falha (%s)', falha => {
+    fixture.destroy();
+    const indicadores = new Subject<{ totalMeninos: number; dataFundacao: string }>();
+    service.obterIndicadores.mockReturnValue(indicadores.asObservable());
+    fixture = TestBed.createComponent(Sobre);
+    fixture.detectChanges();
+    const pagina = carregar();
+    expect(pagina.querySelector('.carregamento-pagina')).not.toBeNull();
+
+    if (falha) {
+      indicadores.error(new Error('Indicadores indisponíveis'));
+    } else {
+      indicadores.next({ totalMeninos: 97, dataFundacao: '1978-08-29' });
+      indicadores.complete();
+    }
+    fixture.detectChanges();
+    expect(pagina.querySelector('.carregamento-pagina')).toBeNull();
+    expect(pagina.querySelector<HTMLElement>('.sobre-conteudo')?.hidden).toBe(false);
   });
 
   it.each([
@@ -208,8 +247,7 @@ describe('Sobre', () => {
     fixture.detectChanges();
     const pagina: HTMLElement = fixture.nativeElement;
     expect(pagina.querySelector('[role="alert"]')?.textContent).toContain('Não foi possível');
-    expect(pagina.querySelector('app-public-unidades')).toBeNull();
-    expect(pagina.querySelector('app-public-diretoria')).toBeNull();
+    expect(pagina.querySelector<HTMLElement>('.sobre-conteudo')?.hidden).toBe(true);
     resposta = new Subject<ConteudoSobre>();
     service.obterConteudo.mockReturnValue(resposta.asObservable());
     pagina.querySelector<HTMLButtonElement>('.estado-pagina button')!.click();

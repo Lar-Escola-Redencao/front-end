@@ -106,6 +106,8 @@ export class Login {
   }
 
   protected submit(): void {
+    if (this.loading()) return;
+
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;

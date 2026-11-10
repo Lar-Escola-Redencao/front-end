@@ -42,7 +42,7 @@
     }
     @if (carregando) {
       <div class="carregando-historico" role="status" aria-label="Carregando histórico">
-        <span class="spinner-historico" aria-hidden="true"></span>
+        <span role="status" aria-label="Carregando" class="spinner-carregamento"></span>
       </div>
     } @else if (erro) {
       <div class="erro-historico">

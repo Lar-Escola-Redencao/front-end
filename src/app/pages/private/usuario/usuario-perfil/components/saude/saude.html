@@ -7,9 +7,10 @@
       } @else {
         <div class="acoes-edicao form-acoes">
           <button type="button" class="btn-cancelar" [disabled]="salvando" (click)="cancelar()">Cancelar</button>
-          <button type="submit" class="btn-primary" [disabled]="salvando || !temAlteracoes">
-            <span *ngIf="salvando" class="spinner" aria-hidden="true"></span>
-            <span>{{ salvando ? 'Salvando...' : 'Salvar' }}</span>
+          <button type="submit" class="btn-primary" [disabled]="salvando || !temAlteracoes" [attr.aria-busy]="salvando">
+
+            <span>{{ salvando ? 'Salvando' : 'Salvar' }}</span>
+            @if (salvando) { <span class="spinner-carregamento" aria-hidden="true"></span> }
           </button>
         </div>
       }
@@ -66,7 +67,7 @@
 
     @if (carregandoArquivos) {
       <div class="estado-anexos estado-anexos-carregando">
-        <span class="spinner-primario" aria-hidden="true"></span>
+        <span role="status" aria-label="Carregando" class="spinner-carregamento"></span>
       </div>
     } @else if (erroCarregarArquivos) {
       <div class="estado-anexos estado-anexos-erro">

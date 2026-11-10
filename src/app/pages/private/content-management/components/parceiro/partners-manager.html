@@ -119,11 +119,12 @@
         Cancelar
       </button>
 
-      <button type="submit" class="btn-primary" [disabled]="isLoading || (modoEdicao && !temAlteracoes)">
-        <span *ngIf="isLoading" class="spinner" aria-hidden="true"></span>
+      <button type="submit" class="btn-primary" [disabled]="isLoading || (modoEdicao && !temAlteracoes)" [attr.aria-busy]="isLoading">
+
         <span>
-          {{ isLoading ? 'Salvando...' : 'Salvar' }}
+          {{ isLoading ? 'Salvando' : 'Salvar' }}
         </span>
+        @if (isLoading) { <span class="spinner-carregamento" aria-hidden="true"></span> }
       </button>
     </div>
   </form>

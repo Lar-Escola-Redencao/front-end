@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnDestroy, inject } from '@angular/core';
+import { Component, ElementRef, OnDestroy, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { PublicNavbar } from '@components/public-navbar/public-navbar';
 import { PublicFooter } from '@components/public-footer/public-footer';
@@ -16,21 +16,25 @@ import { PublicUnidadesComponent } from './public-unidades/public-unidades';
 export class Home implements OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly element: ElementRef<HTMLElement> = inject(ElementRef);
-  private eventosRestaurados = false;
-  private readonly secoesCarregadas = new Set<'unidades' | 'eventos'>();
+  readonly carregando = signal(true);
+  private fragmentoRestaurado = false;
+  private readonly secoesCarregadas = new Set<'unidades' | 'eventos' | 'parceiros'>();
   private frameScroll: number | null = null;
 
-  aoCarregarSecao(secao: 'unidades' | 'eventos'): void {
+  aoCarregarSecao(secao: 'unidades' | 'eventos' | 'parceiros'): void {
     this.secoesCarregadas.add(secao);
-    if (this.eventosRestaurados || this.frameScroll !== null || this.route.snapshot.fragment !== 'eventos') return;
-    if (this.secoesCarregadas.size < 2) return;
-    // Aguarda a próxima pintura, com a altura das duas seções já definida.
+    if (this.secoesCarregadas.size < 3) return;
+    this.carregando.set(false);
+    const fragmento = this.route.snapshot.fragment;
+    if (this.fragmentoRestaurado || this.frameScroll !== null || !fragmento ||
+        !['inicio', 'unidades', 'eventos', 'parceiros'].includes(fragmento)) return;
+    // Aguarda a próxima pintura, com todas as seções visíveis.
     this.frameScroll = requestAnimationFrame(() => {
       this.frameScroll = null;
-      const secao = this.element.nativeElement.querySelector<HTMLElement>('#eventos');
+      const secao = this.element.nativeElement.querySelector<HTMLElement>(`#${fragmento}`);
       if (!secao) return;
       secao.scrollIntoView({ block: 'start' });
-      this.eventosRestaurados = true;
+      this.fragmentoRestaurado = true;
     });
   }
 

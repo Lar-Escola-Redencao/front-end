@@ -48,7 +48,9 @@
         </div>
         @if (erro()) { <p class="erro" role="alert">{{ erro() }}</p> }
         <div class="acoes"><button type="button" class="btn-cancelar" [disabled]="salvando()" (click)="fechar()">Cancelar</button>
-          <button type="submit" class="btn-primary" [disabled]="salvando() || (modal() === 'EDITAR' && !temAlteracoes)">{{ salvando() ? 'Salvando...' : 'Salvar' }}</button>
+          <button type="submit" class="btn-primary" [disabled]="salvando() || (modal() === 'EDITAR' && !temAlteracoes)" [attr.aria-busy]="salvando()">{{ salvando() ? 'Salvando' : 'Salvar' }}
+            @if (salvando()) { <span class="spinner-carregamento" aria-hidden="true"></span> }
+          </button>
         </div>
       </form>
     }

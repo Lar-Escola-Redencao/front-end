@@ -51,7 +51,7 @@ export class PublicNavbar {
     const rotaAtual = this.router.url.split('?')[0].split('#')[0];
 
     if (rotaAtual !== '/') {
-      this.router.navigate(['/']).then(() => {
+      this.router.navigate(['/'], { fragment: sectionId }).then(() => {
         setTimeout(() => this.executarScroll(sectionId), 100);
       });
     } else {

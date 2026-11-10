@@ -3,15 +3,12 @@
     <span class="badge-numero" [style.background-color]="unidade.corHex">
       {{ numero }}
     </span>
-    <img
-      *ngIf="imagemUrl && !imagemIndisponivel"
-      class="card-imagem"
-      [src]="imagemUrl"
-      (error)="imagemIndisponivel = true"
-      [alt]="unidade.nome"
-      loading="lazy"
-    />
-    <div *ngIf="!imagemUrl || imagemIndisponivel" class="card-imagem card-imagem-fallback">
+    <button *ngIf="podeAmpliar" type="button" class="card-imagem-botao"
+      [attr.aria-label]="'Ampliar imagem de ' + unidade.nome" (click)="abrirImagem()">
+      <img class="card-imagem" [src]="imagemUrl" (error)="imagemIndisponivel = true"
+        [alt]="unidade.nome" loading="lazy" />
+    </button>
+    <div *ngIf="!podeAmpliar" class="card-imagem card-imagem-fallback">
       <span class="material-symbols-outlined">apartment</span>
     </div>
   </div>
@@ -41,7 +38,23 @@
 
     <p class="card-linha">
       <span class="material-symbols-outlined">call</span>
-      {{ unidade.telefone }}
+      @if (hrefTelefone; as telefone) {
+        <a class="telefone-link" [href]="telefone">{{ unidade.telefone }}</a>
+      } @else {
+        {{ unidade.telefone }}
+      }
     </p>
   </div>
 </div>
+
+<dialog #lightbox class="lightbox" [attr.aria-label]="unidade.nome"
+  (click)="fecharAoClicarFora($event)" (close)="imagemAmpliada = false">
+  @if (imagemAmpliada) {
+    <div appBloquearScroll class="lightbox-conteudo">
+      <button type="button" class="lightbox-fechar" (click)="fecharImagem()" aria-label="Fechar imagem ampliada" autofocus>
+        <span class="material-symbols-outlined">close</span>
+      </button>
+      <img class="lightbox-imagem" [src]="imagemUrl" [alt]="unidade.nome">
+    </div>
+  }
+</dialog>

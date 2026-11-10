@@ -19,8 +19,8 @@
   @if (abaAtiva === 'texto') {
     @if (carregandoPagina) {
       <div class="estado-pagina">
-        <span class="spinner spinner-escuro" aria-hidden="true"></span>
-        <span>Carregando...</span>
+        <span role="status" aria-label="Carregando" class="spinner-carregamento"></span>
+
       </div>
     } @else if (erroPagina) {
       <div class="estado-pagina estado-pagina-erro">
@@ -59,9 +59,10 @@
               type="submit"
               class="btn-primary"
               [disabled]="isLoadingTexto || (!!secaoTexto && !temAlteracoesTexto)"
-            >
-              <span *ngIf="isLoadingTexto" class="spinner" aria-hidden="true"></span>
-              <span>{{ isLoadingTexto ? 'Salvando...' : 'Salvar' }}</span>
+             [attr.aria-busy]="isLoadingTexto">
+
+              <span>{{ isLoadingTexto ? 'Salvando' : 'Salvar' }}</span>
+              @if (isLoadingTexto) { <span class="spinner-carregamento" aria-hidden="true"></span> }
             </button>
           }
         </div>
@@ -76,8 +77,8 @@
   @if (abaAtiva === 'carrossel') {
     @if (carregandoPagina) {
       <div class="estado-pagina">
-        <span class="spinner spinner-escuro" aria-hidden="true"></span>
-        <span>Carregando...</span>
+        <span role="status" aria-label="Carregando" class="spinner-carregamento"></span>
+
       </div>
     } @else if (erroPagina) {
       <div class="estado-pagina estado-pagina-erro">
@@ -114,11 +115,9 @@
             </div>
 
             @if (imagemSlot($index)) {
-              <button type="button" class="btn-primary slot-carrossel-botao" (click)="inputSlot.click()">
-                @if (carregandoSlot[$index]) {
-                  <span class="spinner" aria-hidden="true"></span>
-                }
-                <span>{{ carregandoSlot[$index] ? 'Enviando...' : 'Substituir' }}</span>
+              <button type="button" class="btn-primary slot-carrossel-botao" (click)="inputSlot.click()" [attr.aria-busy]="carregandoSlot[$index]" [disabled]="carregandoSlot[$index]">
+                <span>{{ carregandoSlot[$index] ? 'Enviando' : 'Substituir' }}</span>
+                @if (carregandoSlot[$index]) { <span class="spinner-carregamento" aria-hidden="true"></span> }
               </button>
             }
 
@@ -253,9 +252,10 @@
           Cancelar
         </button>
 
-        <button type="submit" class="btn-primary" [disabled]="isLoadingHistoria || validandoAnoHistoria || (modoEdicaoHistoria && !temAlteracoesHistoria)">
-          <span *ngIf="isLoadingHistoria" class="spinner" aria-hidden="true"></span>
-          <span>{{ isLoadingHistoria ? 'Salvando...' : 'Salvar' }}</span>
+        <button type="submit" class="btn-primary" [disabled]="isLoadingHistoria || validandoAnoHistoria || (modoEdicaoHistoria && !temAlteracoesHistoria)" [attr.aria-busy]="isLoadingHistoria">
+
+          <span>{{ isLoadingHistoria ? 'Salvando' : 'Salvar' }}</span>
+          @if (isLoadingHistoria) { <span class="spinner-carregamento" aria-hidden="true"></span> }
         </button>
       </div>
     </form>

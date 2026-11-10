@@ -78,8 +78,8 @@
 
     @else if (carregando) {
       <div class="state-box">
-        <span class="spinner spinner-escuro"></span>
-        <p>Carregando usuários...</p>
+        <span role="status" aria-label="Carregando" class="spinner-carregamento"></span>
+
       </div>
     } 
     @else if (usuarios.length === 0 && filtroForm.valid) {
@@ -203,8 +203,8 @@
           <div class="acoes form-acoes">
             <ng-container *ngTemplateOutlet="historicoDiario" />
             <button type="button" class="btn-cancelar" [disabled]="salvando" (click)="cancelarPreenchimento()">Cancelar</button>
-            <button type="button" class="btn-primary" [disabled]="!podePreencherFrequencia" (click)="salvarDiarioLote()">
-               <span *ngIf="salvando" class="spinner"></span> Salvar
+            <button type="button" class="btn-primary" [disabled]="(!podePreencherFrequencia) || salvando" (click)="salvarDiarioLote()" [attr.aria-busy]="salvando">{{ salvando ? 'Salvando' : 'Salvar' }}
+              @if (salvando) { <span class="spinner-carregamento" aria-hidden="true"></span> }
             </button>
           </div>
         </div>
@@ -390,8 +390,8 @@
           <button type="button" class="btn-cancelar" [disabled]="salvando" (click)="fecharModalOcorrenciaDetalhe()">Cancelar</button>
           
           @if (modoOcorrencia !== 'VER') {
-            <button type="submit" class="btn-primary" [disabled]="!podeSalvarOcorrencia">
-              <span *ngIf="salvando" class="spinner"></span> {{ modoOcorrencia === 'NOVO' ? 'Salvar' : 'Salvar alterações' }}
+            <button type="submit" class="btn-primary" [disabled]="(!podeSalvarOcorrencia) || salvando" [attr.aria-busy]="salvando">{{ salvando ? 'Salvando' : (modoOcorrencia === 'NOVO' ? 'Salvar' : 'Salvar alterações') }}
+              @if (salvando) { <span class="spinner-carregamento" aria-hidden="true"></span> }
             </button>
           }
         </div>

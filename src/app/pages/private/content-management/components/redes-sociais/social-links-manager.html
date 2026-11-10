@@ -99,16 +99,13 @@
         type="submit"
         class="btn-primary"
         [disabled]="isSalvando || (modoEdicao && !temAlteracoes)"
-      >
-        <span
-          *ngIf="isSalvando"
-          class="spinner"
-          aria-hidden="true"
-        ></span>
+       [attr.aria-busy]="isSalvando">
+
 
         <span>
-          {{ isSalvando ? 'Salvando...' : 'Salvar' }}
+          {{ isSalvando ? 'Salvando' : 'Salvar' }}
         </span>
+        @if (isSalvando) { <span class="spinner-carregamento" aria-hidden="true"></span> }
       </button>
 
     </div>

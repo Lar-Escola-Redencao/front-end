@@ -1,3 +1,8 @@
+@if (carregando) {
+  <div class="carregamento-secao" role="status" aria-label="Carregando parceiros">
+    <span class="spinner-carregamento" aria-hidden="true"></span>
+  </div>
+}
 <section class="public-parceiros-section" *ngIf="!carregando">
   <div class="container">
     
@@ -23,20 +28,21 @@
         <div class="carousel-track" [class.no-transition]="!isTransitioning" [style.transform]="trackTransform">
           
           <div class="parceiro-card" *ngFor="let parceiro of parceirosCarousel" [style.min-width]="(100 / itemsPerPage) + '%'">
-            <div class="logo-wrapper">
+            <button type="button" class="logo-wrapper" (click)="abrirImagem(parceiro)"
+              [disabled]="!podeAmpliar(parceiro)" [attr.aria-label]="'Ampliar imagem de ' + parceiro.nome">
               <img
-                *ngIf="obterUrlImagem(parceiro.logo)"
+                *ngIf="podeAmpliar(parceiro)"
                 [src]="obterUrlImagem(parceiro.logo)"
-                (error)="onImageError($event)"
+                (error)="onImageError(parceiro)"
                 [alt]="parceiro.nome"
                 loading="lazy" />
               <span
                 class="material-symbols-outlined imagem-fallback"
-                [class.imagem-fallback-hidden]="obterUrlImagem(parceiro.logo)"
+                [class.imagem-fallback-hidden]="podeAmpliar(parceiro)"
                 aria-hidden="true">
                 volunteer_activism
               </span>
-            </div>
+            </button>
             <span class="parceiro-nome">{{ parceiro.nome }}</span>
           </div>
 
@@ -58,3 +64,15 @@
 
   </div>
 </section>
+
+<dialog #lightbox class="lightbox" [attr.aria-label]="parceiroAmpliado?.nome || 'Imagem do parceiro'"
+  (click)="fecharAoClicarFora($event)" (close)="aoFecharImagem()">
+  @if (parceiroAmpliado; as parceiro) {
+    <div appBloquearScroll class="lightbox-conteudo">
+      <button type="button" class="lightbox-fechar" (click)="fecharImagem()" aria-label="Fechar imagem ampliada" autofocus>
+        <span class="material-symbols-outlined">close</span>
+      </button>
+      <img class="lightbox-imagem" [src]="obterUrlImagem(parceiro.logo)" [alt]="parceiro.nome">
+    </div>
+  }
+</dialog>

@@ -11,7 +11,7 @@
   }
 
   @if (carregando) {
-    <p class="mensagem-estado">Carregando evento...</p>
+    <p class="mensagem-estado" role="status" aria-label="Carregando evento"><span class="spinner-carregamento" aria-hidden="true"></span></p>
   } @else if (naoEncontrado || !evento) {
     <p class="mensagem-estado">Evento não encontrado.</p>
   } @else {
@@ -120,22 +120,23 @@
                       [style.flex-basis.%]="possuiCarrosselParceiros ? 100 / parceirosPorPagina : null"
                       [style.min-width.%]="possuiCarrosselParceiros ? 100 / parceirosPorPagina : null"
                     >
-                      <div class="evento-parceiro-logo">
+                      <button type="button" class="evento-parceiro-logo" (click)="abrirImagemParceiro(parceiro)"
+                        [disabled]="!podeAmpliarParceiro(parceiro)" [attr.aria-label]="'Ampliar imagem de ' + parceiro.nome">
                         <img
-                          *ngIf="obterUrlImagem(parceiro.logo)"
+                          *ngIf="podeAmpliarParceiro(parceiro)"
                           [src]="obterUrlImagem(parceiro.logo)"
                           [alt]="parceiro.nome"
                           loading="lazy"
-                          (error)="onParceiroImageError($event)"
+                          (error)="onParceiroImageError(parceiro)"
                         />
                         <span
                           class="material-symbols-outlined imagem-fallback"
-                          [class.imagem-fallback-hidden]="obterUrlImagem(parceiro.logo)"
+                          [class.imagem-fallback-hidden]="podeAmpliarParceiro(parceiro)"
                           aria-hidden="true"
                         >
                           volunteer_activism
                         </span>
-                      </div>
+                      </button>
                       <span class="evento-parceiro-nome">{{ parceiro.nome }}</span>
                     </div>
                   }
@@ -161,13 +162,15 @@
   }
 </main>
 
-@if (lightboxAberto && imagemPrincipal && evento) {
-  <div class="lightbox" (click)="fecharLightbox()">
+@if (lightboxAberto && evento) {
+  <div class="lightbox" (click)="fecharLightbox()" role="dialog" aria-modal="true"
+    [attr.aria-label]="parceiroAmpliado?.nome || evento.titulo" [cdkTrapFocus]="true" [cdkTrapFocusAutoCapture]="true">
     <button type="button" class="lightbox-fechar" (click)="fecharLightbox()" aria-label="Fechar imagem ampliada">
       <span class="material-symbols-outlined">close</span>
     </button>
 
-    <img class="lightbox-imagem" [src]="imagemPrincipal" [alt]="evento.titulo" (click)="$event.stopPropagation()" />
+    <img class="lightbox-imagem" [src]="parceiroAmpliado ? obterUrlImagem(parceiroAmpliado.logo) : imagemPrincipal"
+      [alt]="parceiroAmpliado?.nome || evento.titulo" (click)="$event.stopPropagation()" />
   </div>
 }
 

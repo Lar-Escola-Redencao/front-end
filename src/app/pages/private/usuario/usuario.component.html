@@ -112,8 +112,8 @@
 
   <form class="form-modal cadastro-form" [formGroup]="formUsuario" (ngSubmit)="salvar()">
     @if (isCarregandoEdicao) {
-    <div class="form-carregando"><span class="spinner spinner-escuro"></span>
-      <p>Carregando dados...</p>
+    <div class="form-carregando"><span role="status" aria-label="Carregando" class="spinner-carregamento"></span>
+
     </div>
     } @else {
     <button *ngIf="etapaModal > 1" type="button" class="btn-voltar-etapa cadastro-voltar"
@@ -256,7 +256,13 @@
                 (input)="onBuscaContatoAlterada(i, $any($event.target).value)"><mat-autocomplete
                 #autoContato="matAutocomplete" [displayWith]="exibirNomeContatoBusca"
                 (optionSelected)="selecionarContatoExistente(i, $event.option.value)">
-                <mat-option *ngIf="mensagensBuscaContato[i]" disabled>{{ mensagensBuscaContato[i] }}</mat-option><mat-option
+                <mat-option *ngIf="mensagensBuscaContato[i]" disabled>
+                  @if (mensagensBuscaContato[i] === 'Carregando...') {
+                    <span class="spinner-carregamento" role="status" aria-label="Carregando contatos"></span>
+                  } @else {
+                    {{ mensagensBuscaContato[i] }}
+                  }
+                </mat-option><mat-option
                   *ngFor="let op of opcoesAutocomplete[i]" [value]="op">{{ op.nomeCompleto }} - {{ formatarTelefoneContato(op.telefone)
                   }}</mat-option></mat-autocomplete></mat-form-field>
             <mat-form-field appearance="outline"><mat-label>Parentesco*</mat-label><mat-select
@@ -469,8 +475,10 @@
       <span class="acoes-espaco"></span>
       <button type="button" class="btn-cancelar" (click)="fecharModal()" [disabled]="isLoading">Cancelar</button>
       <button *ngIf="etapaModal < 5" type="button" class="btn-primary" (click)="proximaEtapa()" [disabled]="consultandoCep">Próximo</button>
-      <button *ngIf="etapaModal === 5" type="submit" class="btn-primary" [disabled]="isLoading || isCarregandoEdicao || consultandoCep || (modoEdicao && !temAlteracoes)">{{ isLoading ?
-        'Finalizando...' : 'Finalizar' }}</button>
+      <button *ngIf="etapaModal === 5" type="submit" class="btn-primary" [disabled]="isLoading || isCarregandoEdicao || consultandoCep || (modoEdicao && !temAlteracoes)" [attr.aria-busy]="isLoading">{{ isLoading ?
+        'Finalizando' : 'Finalizar' }}
+        @if (isLoading) { <span class="spinner-carregamento" aria-hidden="true"></span> }
+      </button>
     </div>
     }
   </form>
@@ -528,9 +536,10 @@
 
     <div class="acoes-modal form-acoes">
       <button type="button" class="btn-cancelar" (click)="fecharModalContato()" [disabled]="isLoading">Cancelar</button>
-      <button type="submit" class="btn-primary" [disabled]="isLoading || !contatoTemAlteracoes()">
-        <span *ngIf="isLoading" class="spinner" aria-hidden="true"></span>
-        <span>{{ isLoading ? 'Salvando...' : 'Salvar' }}</span>
+      <button type="submit" class="btn-primary" [disabled]="isLoading || !contatoTemAlteracoes()" [attr.aria-busy]="isLoading">
+
+        <span>{{ isLoading ? 'Salvando' : 'Salvar' }}</span>
+        @if (isLoading) { <span class="spinner-carregamento" aria-hidden="true"></span> }
       </button>
     </div>
 
@@ -609,7 +618,7 @@
     <ng-container *ngTemplateOutlet="historicoContato.botao" />
   </span>
   <div class="contato-preview" *ngIf="contatoPreview as contato" [attr.aria-busy]="carregandoPreviewContato">
-    <p class="contato-preview-status" role="status" *ngIf="carregandoPreviewContato">Carregando dados completos...</p>
+    <p class="contato-preview-status" *ngIf="carregandoPreviewContato" role="status" aria-label="Carregando dados completos"><span class="spinner-carregamento" aria-hidden="true"></span></p>
     <div class="contato-preview-erro" role="alert" *ngIf="erroPreviewContato">
       <p>{{ erroPreviewContato }}</p><button type="button" class="btn-cancelar"
         (click)="abrirPreviewContato(contato)">Tentar novamente</button>
@@ -667,8 +676,8 @@
 
     @if (carregandoVinculos) {
     <div style="display:flex; flex-direction:column; align-items:center; padding: 32px 0;">
-      <span class="spinner spinner-escuro" aria-hidden="true"></span>
-      <p style="margin-top:10px; color: var(--input-color); font-family: var(--fonte-texto);">Carregando vínculos...</p>
+      <span role="status" aria-label="Carregando" class="spinner-carregamento"></span>
+
     </div>
     } @else if (!vinculosDoContato.length) {
     <app-estado-vazio mensagem="Nenhum usuário vinculado a este contato." icone="group_off" [compacto]="true"></app-estado-vazio>
@@ -770,9 +779,10 @@
     <div class="acoes-modal form-acoes">
       <button type="button" class="btn-cancelar" (click)="fecharNovoVinculo()"
         [disabled]="isSalvandoVinculo">Cancelar</button>
-      <button type="submit" class="btn-primary" [disabled]="isSalvandoVinculo">
-        <span *ngIf="isSalvandoVinculo" class="spinner" aria-hidden="true"></span>
-        <span>{{ isSalvandoVinculo ? 'Salvando...' : 'Salvar' }}</span>
+      <button type="submit" class="btn-primary" [disabled]="isSalvandoVinculo" [attr.aria-busy]="isSalvandoVinculo">
+
+        <span>{{ isSalvandoVinculo ? 'Salvando' : 'Salvar' }}</span>
+        @if (isSalvandoVinculo) { <span class="spinner-carregamento" aria-hidden="true"></span> }
       </button>
     </div>
   </form>

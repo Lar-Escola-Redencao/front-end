@@ -8,9 +8,8 @@
 
   @if (isLoading()) {
     <div class="container">
-      <div class="state-box" role="status" aria-live="polite">
-        <span class="spinner" aria-hidden="true"></span>
-        <p>Carregando produtos...</p>
+      <div class="carregamento-secao" role="status" aria-label="Carregando produtos" aria-live="polite">
+        <span class="spinner-carregamento" aria-hidden="true"></span>
       </div>
     </div>
   } @else if (errorMessage()) {

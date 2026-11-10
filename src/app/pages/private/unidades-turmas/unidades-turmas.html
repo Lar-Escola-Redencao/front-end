@@ -307,11 +307,12 @@
           type="submit"
           class="btn-primary"
           [disabled]="isLoading || (modoEdicao && !temAlteracoes)"
-        >
-          <span *ngIf="isLoading" class="spinner" aria-hidden="true"> </span>
+         [attr.aria-busy]="isLoading">
+
           <span>
-            {{ isLoading ? 'Salvando...' : 'Salvar' }}
+            {{ isLoading ? 'Salvando' : 'Salvar' }}
           </span>
+          @if (isLoading) { <span class="spinner-carregamento" aria-hidden="true"></span> }
         </button>
       </div>
     </form>
@@ -387,7 +388,7 @@
           <mat-label>Unidade</mat-label>
 
           @if (carregandoUnidades) {
-            <mat-select disabled placeholder="Carregando unidades..."></mat-select>
+            <mat-select disabled aria-label="Carregando unidades"></mat-select>
           } @else {
             <mat-select
               formControlName="unidadeId"
@@ -403,7 +404,7 @@
         </mat-form-field>
 
         @if (carregandoUnidades) {
-          <span class="spinner" aria-hidden="true"></span>
+          <span role="status" aria-label="Carregando" class="spinner-carregamento"></span>
         }
       </div>
 
@@ -443,11 +444,12 @@
             isLoadingTurma ||
             (modoEdicaoTurma && !temAlteracoesTurma)
           "
-        >
-          <span *ngIf="isLoadingTurma" class="spinner" aria-hidden="true"> </span>
+         [attr.aria-busy]="isLoadingTurma">
+
           <span>
-            {{ isLoadingTurma ? 'Salvando...' : 'Salvar' }}
+            {{ isLoadingTurma ? 'Salvando' : 'Salvar' }}
           </span>
+          @if (isLoadingTurma) { <span class="spinner-carregamento" aria-hidden="true"></span> }
         </button>
       </div>
     </form>

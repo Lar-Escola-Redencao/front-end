@@ -1,6 +1,6 @@
 <section class="perfil-page">
   @if (carregando) {
-    <p class="estado-info">Carregando seus dados...</p>
+    <p class="estado-info" role="status" aria-label="Carregando seus dados"><span class="spinner-carregamento" aria-hidden="true"></span></p>
   } @else if (erroCarregar) {
     <div class="estado-erro">
       <p>Não foi possível carregar seu perfil.</p>
@@ -66,12 +66,9 @@
                   <button type="button" class="btn-cancelar" [disabled]="salvando" (click)="cancelarEdicao()">
                     Cancelar
                   </button>
-                  <button type="submit" class="btn-primary" [disabled]="salvando || !temAlteracoes">
-                    @if (salvando) {
-                      <span class="spinner"></span> Salvando...
-                    } @else {
-                      Salvar
-                    }
+                  <button type="submit" class="btn-primary" [disabled]="salvando || !temAlteracoes" [attr.aria-busy]="salvando">
+                    {{ salvando ? 'Salvando' : 'Salvar' }}
+                    @if (salvando) { <span class="spinner-carregamento" aria-hidden="true"></span> }
                   </button>
                 }
               </div>
@@ -141,12 +138,9 @@
                   <button type="button" class="btn-primary" [disabled]="modoEdicao || salvando" (click)="habilitarEdicaoConta()">Editar</button>
                 } @else {
                   <button type="button" class="btn-cancelar" [disabled]="salvandoConta" (click)="cancelarEdicaoConta()">Cancelar</button>
-                  <button type="submit" class="btn-primary" [disabled]="salvandoConta || !temAlteracoesConta">
-                    @if (salvandoConta) {
-                      <span class="spinner"></span> Salvando...
-                    } @else {
-                      Salvar
-                    }
+                  <button type="submit" class="btn-primary" [disabled]="salvandoConta || !temAlteracoesConta" [attr.aria-busy]="salvandoConta">
+                    {{ salvandoConta ? 'Salvando' : 'Salvar' }}
+                    @if (salvandoConta) { <span class="spinner-carregamento" aria-hidden="true"></span> }
                   </button>
                 }
               </div>

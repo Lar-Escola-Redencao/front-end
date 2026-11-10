@@ -86,7 +86,7 @@
               }
             }
           </mat-select>
-          @if (carregandoTurmas()) { <mat-hint>Carregando turmas...</mat-hint> }
+          @if (carregandoTurmas()) { <mat-hint role="status" aria-label="Carregando turmas"><span class="spinner-carregamento" aria-hidden="true"></span></mat-hint> }
         </mat-form-field>
         @if (erroCampo('idsTurmas'); as mensagem) { <p class="erro-campo" role="alert">{{ mensagem }}</p> }
       </div>
@@ -151,7 +151,8 @@
     <div class="acoes-modal form-acoes">
       <button type="button" class="btn-cancelar" (click)="cancelar()">Cancelar</button>
       <button type="submit" class="btn-primary" [disabled]="gerando()" [attr.aria-busy]="gerando()">
-        @if (gerando()) { <span class="spinner"></span> Gerando... } @else { {{ erro() ? 'Tentar novamente' : 'Baixar relatório' }} }
+        @if (gerando()) {  Gerando } @else { {{ erro() ? 'Tentar novamente' : 'Baixar relatório' }} }
+        @if (gerando()) { <span class="spinner-carregamento" aria-hidden="true"></span> }
       </button>
     </div>
   </form>

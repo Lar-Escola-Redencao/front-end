@@ -1,12 +1,11 @@
 <app-public-navbar></app-public-navbar>
 
-<main class="sobre-main" [attr.aria-busy]="carregando()">
+<main class="sobre-main" [attr.aria-busy]="carregandoPagina()">
   <h1 class="sr-only">Conheça a OSC — Lar Escola Redenção</h1>
 
-  @if (carregando()) {
-    <div class="estado-pagina" role="status" aria-live="polite">
-      <span class="spinner" aria-hidden="true"></span>
-      <p>Carregando a história do Lar Escola Redenção…</p>
+  @if (carregandoPagina()) {
+    <div class="carregamento-secao carregamento-pagina" role="status" aria-label="Carregando Conheça a OSC">
+      <span class="spinner-carregamento" aria-hidden="true"></span>
     </div>
   } @else if (erro()) {
     <div class="estado-pagina" role="alert">
@@ -17,7 +16,8 @@
         Tentar novamente
       </button>
     </div>
-  } @else {
+  }
+  <div class="sobre-conteudo" [hidden]="carregandoPagina() || erro()">
     <section id="sobre" class="sobre-section" aria-label="Sobre o Lar Escola Redenção">
       @for (secao of conteudo().texto; track secao.id) {
         <article class="sobre-texto container">
@@ -163,12 +163,12 @@
     </section>
 
     <section id="conheca-osc" aria-label="Composição da Diretoria">
-      <app-public-diretoria></app-public-diretoria>
+      <app-public-diretoria (carregado)="aoCarregarSecao('diretoria')"></app-public-diretoria>
     </section>
     <section id="unidades" aria-label="Unidades de Atendimento">
-      <app-public-unidades></app-public-unidades>
+      <app-public-unidades (carregado)="aoCarregarSecao('unidades')"></app-public-unidades>
     </section>
-  }
+  </div>
 </main>
 
 <app-public-footer></app-public-footer>

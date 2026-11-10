@@ -4,7 +4,7 @@
 }
 
 .container {
-  max-width: 1000px;
+  max-width: 1040px;
   margin: 0 auto;
 }
 
@@ -25,40 +25,51 @@
   align-items: center;
   justify-content: center;
   position: relative;
-  gap: 16px;
 }
 
 .nav-btn {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 44px;
+  min-height: 44px;
+  height: auto;
   background: transparent;
   border: none;
-  color: var(--preto);
+  color: #d0d0d0;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 8px;
-  transition: color 0.2s ease, opacity 0.2s ease;
+  padding: 0;
+  transition: color 0.2s ease;
   z-index: 3;
 }
 
+.prev-btn { left: -60px; }
+.next-btn { right: -60px; }
+
 .nav-btn .material-symbols-outlined {
-  font-size: 2.2rem;
+  font-size: 34px;
   font-weight: 300;
 }
 
-.nav-btn:hover:not(:disabled) {
+.nav-btn:hover:not(:disabled),
+.nav-btn:focus-visible {
   color: var(--primary-color);
+  outline: none;
 }
 
 .carousel-track-wrapper {
   flex: 1;
+  min-width: 0;
   overflow: hidden;
   padding: 40px 0; 
 }
 
 .carousel-track {
   display: flex;
-  align-items: center;
+  align-items: stretch;
   transition: transform 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
@@ -71,13 +82,13 @@
   justify-content: center;
 }
 
-.registro-unico .diretor-card-wrapper {
-  flex: 0 1 320px;
-}
-
 .diretor-card-wrapper {
+  display: flex;
+  justify-content: center;
+  flex-shrink: 0;
+  min-width: 0;
   box-sizing: border-box;
-  padding: 0 14px;
+  padding: 0 12px;
 }
 
 .diretor-card {
@@ -87,16 +98,18 @@
   border-radius: 12px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
   overflow: hidden;
-  height: 100%;
-  transition: transform 0.5s ease, filter 0.5s ease, opacity 0.5s ease, box-shadow 0.5s ease;
-  transform: scale(1);
-  filter: blur(0);
-  opacity: 1;
+  width: 320px;
+  max-width: 100%;
+  height: 400px;
+  flex-shrink: 0;
+  transition: transform 0.5s ease, filter 0.5s ease, opacity 0.5s ease;
 }
 
 .foto-wrapper {
   width: 100%;
-  height: 260px;
+  height: 280px;
+  flex: 0 0 280px;
+  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -119,10 +132,13 @@
 }
 
 .info-wrapper {
-  padding: 24px 16px;
+  padding: 16px;
   text-align: center;
   display: flex;
   flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  justify-content: center;
   gap: 8px;
   background: var(--branco);
 }
@@ -141,19 +157,30 @@
   color: var(--input-color);
 }
 
+.nome,
+.cargo {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  line-height: 1.25;
+}
+
 @media (min-width: 900px) {
   .center-card {
-    transform: scale(1.12);
-    z-index: 2;
     position: relative;
+    z-index: 2;
+    transform: scale(1);
     filter: blur(0);
+    opacity: 1;
   }
 
   .side-card {
+    z-index: 1;
     transform: scale(0.82);
     filter: blur(2px);
     opacity: 0.6;
-    z-index: 1;
   }
 
   .out-of-view-card {
@@ -163,8 +190,16 @@
   }
 }
 
-@media (max-width: 899px) {
-  .nav-btn .material-symbols-outlined {
-    font-size: 1.8rem;
+@media (max-width: 1160px) {
+  .prev-btn { left: -22px; }
+  .next-btn { right: -22px; }
+}
+
+@media (max-width: 600px) {
+  .public-diretoria-section {
+    padding: 48px 16px;
   }
+
+  .prev-btn { left: -16px; }
+  .next-btn { right: -16px; }
 }

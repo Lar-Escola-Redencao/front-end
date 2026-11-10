@@ -2,6 +2,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { ToastrService } from 'ngx-toastr';
 
 import { environment } from 'src/environments/environment';
 import { Secao } from 'src/app/shared/models/transparencia.model';
@@ -30,7 +31,10 @@ describe('Transparencia', () => {
   function setup(): void {
     TestBed.configureTestingModule({
       imports: [Transparencia],
-      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+      providers: [
+        provideHttpClient(), provideHttpClientTesting(), provideRouter([]),
+        { provide: ToastrService, useValue: { error: vi.fn() } },
+      ],
     });
 
     fixture = TestBed.createComponent(Transparencia);
@@ -38,6 +42,8 @@ describe('Transparencia', () => {
   }
 
   afterEach(() => {
+    httpMock.match(`${environment.apiUrl}/rede-social/todas`)
+      .forEach((request) => request.flush([]));
     httpMock.verify();
   });
 
@@ -45,9 +51,14 @@ describe('Transparencia', () => {
     setup();
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.querySelector('.spinner')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.spinner-carregamento')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.spinner-carregamento').closest('.state-box')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.secoes')).toBeNull();
 
     httpMock.expectOne(`${environment.apiUrl}/paginas/1/secoes`).flush(secoesMock);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.spinner-carregamento')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.secoes')).not.toBeNull();
   });
 
   it('renders only sections with documents and keeps them closed once loaded', () => {

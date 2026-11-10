@@ -144,9 +144,10 @@
       <button type="button" class="btn-cancelar" [disabled]="isLoading" (click)="fecharModal()">
         Cancelar
       </button>
-      <button type="submit" class="btn-primary" [disabled]="isLoading || (modoEdicao && !temAlteracoesDocumento)">
-        <span *ngIf="isLoading" class="spinner" aria-hidden="true"></span>
-        <span>{{ isLoading ? 'Salvando...' : 'Salvar' }}</span>
+      <button type="submit" class="btn-primary" [disabled]="isLoading || (modoEdicao && !temAlteracoesDocumento)" [attr.aria-busy]="isLoading">
+
+        <span>{{ isLoading ? 'Salvando' : 'Salvar' }}</span>
+        @if (isLoading) { <span class="spinner-carregamento" aria-hidden="true"></span> }
       </button>
     </div>
 
@@ -201,9 +202,10 @@
         Cancelar
       </button>
 
-      <button type="submit" class="btn-primary" [disabled]="isLoading || (modoEdicao && !temAlteracoesSecao)">
-        <span *ngIf="isLoading" class="spinner" aria-hidden="true"></span>
-        <span>{{ isLoading ? 'Salvando...' : 'Salvar' }}</span>
+      <button type="submit" class="btn-primary" [disabled]="isLoading || (modoEdicao && !temAlteracoesSecao)" [attr.aria-busy]="isLoading">
+
+        <span>{{ isLoading ? 'Salvando' : 'Salvar' }}</span>
+        @if (isLoading) { <span class="spinner-carregamento" aria-hidden="true"></span> }
       </button>
     </div>
 

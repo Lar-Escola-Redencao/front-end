@@ -5,6 +5,10 @@
   flex-direction: column;
 }
 
+.home-carregamento {
+  min-height: calc(100vh - 82px);
+}
+
 .home-section {
   scroll-margin-top: 82px;
   

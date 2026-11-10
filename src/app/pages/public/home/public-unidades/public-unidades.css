@@ -66,18 +66,19 @@
 
 .unidades-seta {
   position: absolute;
-  top: 50%;
+  top: 0;
+  bottom: 0;
   z-index: 3;
   display: flex;
   width: 44px;
-  height: 44px;
+  min-height: 44px;
+  height: auto;
   align-items: center;
   justify-content: center;
   border: 0;
   background: transparent;
   color: #d0d0d0;
   cursor: pointer;
-  transform: translateY(-50%);
   transition: color 0.2s ease;
 }
 

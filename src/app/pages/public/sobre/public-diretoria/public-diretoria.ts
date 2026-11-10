@@ -1,5 +1,5 @@
 import { EstadoVazio } from '@components/estado-vazio/estado-vazio';
-import { Component, OnInit, OnDestroy, HostListener, inject, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, Output, EventEmitter, HostListener, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Diretoria } from 'src/app/shared/models/diretoria.model';
 import { PublicContentService } from 'src/app/shared/services/public-content/public-content.service';
@@ -12,6 +12,7 @@ import { PublicContentService } from 'src/app/shared/services/public-content/pub
   styleUrl: './public-diretoria.css'
 })
 export class PublicDiretoriaComponent implements OnInit, OnDestroy {
+  @Output() carregado = new EventEmitter<void>();
   private readonly publicContentService = inject(PublicContentService);
   private readonly cdr = inject(ChangeDetectorRef);
   
@@ -41,10 +42,12 @@ export class PublicDiretoriaComponent implements OnInit, OnDestroy {
         this.carregando = false;
         this.cdr.detectChanges();
         this.startAutoPlay();
+        this.carregado.emit();
       },
       error: () => {
         this.carregando = false;
         this.cdr.detectChanges();
+        this.carregado.emit();
       }
     });
   }
@@ -160,4 +163,5 @@ export class PublicDiretoriaComponent implements OnInit, OnDestroy {
     if (this.itemsPerPage === 1) return index !== this.currentIndex;
     return !this.isCenter(index) && !this.isSide(index);
   }
+
 }

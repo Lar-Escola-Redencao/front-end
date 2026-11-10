@@ -41,8 +41,9 @@
         <button type="button" class="btn-cancelar" [disabled]="carregando()" (click)="fechar()">
           Cancelar
         </button>
-        <button type="submit" class="btn-primary" [disabled]="carregando()">
-          {{ carregando() ? 'Confirmando...' : 'Continuar' }}
+        <button type="submit" class="btn-primary" [disabled]="carregando()" [attr.aria-busy]="carregando()">
+          {{ carregando() ? 'Confirmando' : 'Continuar' }}
+          @if (carregando()) { <span class="spinner-carregamento" aria-hidden="true"></span> }
         </button>
       </div>
     </form>
@@ -105,8 +106,9 @@
         >
           Voltar
         </button>
-        <button type="submit" class="btn-primary" [disabled]="carregando()">
-          {{ carregando() ? 'Salvando...' : 'Salvar senha' }}
+        <button type="submit" class="btn-primary" [disabled]="carregando()" [attr.aria-busy]="carregando()">
+          {{ carregando() ? 'Salvando' : 'Salvar senha' }}
+          @if (carregando()) { <span class="spinner-carregamento" aria-hidden="true"></span> }
         </button>
       </div>
     </form>

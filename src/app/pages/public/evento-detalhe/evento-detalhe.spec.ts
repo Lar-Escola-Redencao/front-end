@@ -68,6 +68,42 @@ describe('EventoDetalhe', () => {
     elemento = fixture.nativeElement;
   }
 
+  describe('ampliação das imagens dos parceiros', () => {
+    it('amplia o parceiro mesmo em um evento sem imagem principal e fecha com Escape', async () => {
+      await montar(criarEvento({ imagem: '', parceiros: [{ id: 1, nome: 'Parceiro', logo: '/logo.png' }] }));
+      elemento.querySelector<HTMLButtonElement>('.evento-parceiro-logo')!.click();
+      fixture.detectChanges();
+      expect(elemento.querySelector<HTMLImageElement>('.lightbox-imagem')?.getAttribute('src')).toBe('/logo.png');
+      expect(elemento.querySelector<HTMLImageElement>('.lightbox-imagem')?.alt).toBe('Parceiro');
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+      fixture.detectChanges();
+      expect(elemento.querySelector('.lightbox')).toBeNull();
+      expect(component.parceiroAmpliado).toBeNull();
+    });
+
+    it('preserva a imagem principal após ampliar e fechar o parceiro', async () => {
+      await montar(criarEvento({ parceiros: [{ id: 1, nome: 'Parceiro', logo: '/logo.png' }] }));
+      elemento.querySelector<HTMLButtonElement>('.evento-parceiro-logo')!.click();
+      fixture.detectChanges();
+      elemento.querySelector<HTMLButtonElement>('.lightbox-fechar')!.click();
+      fixture.detectChanges();
+      elemento.querySelector<HTMLElement>('.imagem-principal-wrapper')!.click();
+      fixture.detectChanges();
+      expect(elemento.querySelector<HTMLImageElement>('.lightbox-imagem')?.getAttribute('src')).toBe('foto-principal.jpg');
+      elemento.querySelector<HTMLButtonElement>('.lightbox-fechar')!.click();
+    });
+
+    it('bloqueia a ampliação do parceiro quando a imagem falha', async () => {
+      await montar(criarEvento({ parceiros: [{ id: 1, nome: 'Parceiro', logo: '/logo.png' }] }));
+      const botao = elemento.querySelector<HTMLButtonElement>('.evento-parceiro-logo')!;
+      botao.querySelector('img')!.dispatchEvent(new Event('error'));
+      fixture.detectChanges();
+      expect(botao.disabled).toBe(true);
+      botao.click();
+      expect(component.lightboxAberto).toBe(false);
+    });
+  });
+
   describe('parceiros em telas estreitas', () => {
     const parceiros = [
       { id: 1, nome: 'Lupo', logo: 'lupo.png' },
@@ -190,7 +226,7 @@ describe('EventoDetalhe', () => {
       expect(elemento.querySelector('.imagem-principal')?.getAttribute('src')).toBe('foto-principal.jpg');
       expect(overlay).toBeTruthy();
       expect(overlay?.querySelector('.imagem-overlay-texto')?.textContent?.trim()).toBe(
-        'Acompanhe o que aconteceu através das nossas redes'
+        'Acompanhe o que aconteceu através das nossas redes sociais'
       );
     });
 

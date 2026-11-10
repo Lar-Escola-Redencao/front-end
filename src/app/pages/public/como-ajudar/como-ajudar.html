@@ -1,233 +1,232 @@
 <app-public-navbar></app-public-navbar>
 
-<main class="como-ajudar">
-  <header class="abertura container">
-    <div class="abertura-conteudo">
-      <p class="sobretitulo">Como ajudar?</p>
-
-      <h1>
-        Grandes caminhos
-        <span>se constroem juntos</span>
-      </h1>
-
-      <p class="abertura-descricao">
-        Cada pessoa que apoia o Lar Escola Redenção ajuda a dar continuidade a um trabalho
-        construído por muitas mãos. Sua doação contribui para o cuidado, acolhimento e
-        oportunidades para o crescimento de nossos meninos. Faça parte dessa caminhada com a gente.
-      </p>
-
-      @if (configuracao()) {
-        <a class="btn-primary abertura-botao" href="/como-ajudar#pix" (click)="irParaPix($event)">
-          Quero contribuir
-        </a>
-      }
+<main class="como-ajudar" [attr.aria-busy]="carregando()">
+  @if (carregando()) {
+    <div class="carregamento-secao carregamento-pagina" role="status" aria-label="Carregando formas de ajudar">
+      <span class="spinner-carregamento" aria-hidden="true"></span>
     </div>
+  } @else {
+    <header class="abertura container">
+      <div class="abertura-conteudo">
+        <p class="sobretitulo">Como ajudar?</p>
 
-    <figure class="abertura-ilustracao">
-      <img
-        [src]="ilustracao"
-        alt=""
-        width="2000"
-        height="2000"
-        fetchpriority="high"
-      />
-      <figcaption>
-        <a href="https://storyset.com/" target="_blank" rel="noopener noreferrer">Ilustração por Storyset</a>
-      </figcaption>
-    </figure>
-  </header>
+        <h1>
+          Grandes caminhos
+          <span>se constroem juntos</span>
+        </h1>
 
-  <div class="formas-ajuda container">
-    @if (carregando()) {
-      <div class="estado-carregamento" role="status" aria-live="polite">
-        <span class="indicador-carregamento" aria-hidden="true"></span>
-        <p>Carregando informações de doação...</p>
+        <p class="abertura-descricao">
+          Cada pessoa que apoia o Lar Escola Redenção ajuda a dar continuidade a um trabalho
+          construído por muitas mãos. Sua doação contribui para o cuidado, acolhimento e
+          oportunidades para o crescimento de nossos meninos. Faça parte dessa caminhada com a gente.
+        </p>
+
+        @if (configuracao()) {
+          <a class="btn-primary abertura-botao" href="/como-ajudar#pix" (click)="irParaPix($event)">
+            Quero contribuir
+          </a>
+        }
       </div>
-    } @else if (erroCarregamento()) {
-      <div class="estado-erro" role="alert">
-        <p>Não foi possível carregar as informações de doação.</p>
 
-        <button
-          type="button"
-          class="btn-primary botao-tentar-novamente"
-          (click)="carregarPix()"
+      <figure class="abertura-ilustracao">
+        <img
+          [src]="ilustracao"
+          alt=""
+          width="2000"
+          height="2000"
+          fetchpriority="high"
+        />
+        <figcaption>
+          <a href="https://storyset.com/" target="_blank" rel="noopener noreferrer">Ilustração por Storyset</a>
+        </figcaption>
+      </figure>
+    </header>
+
+    <div class="formas-ajuda container">
+      @if (erroCarregamento()) {
+        <div class="estado-erro" role="alert">
+          <p>Não foi possível carregar as informações de doação.</p>
+
+          <button
+            type="button"
+            class="btn-primary botao-tentar-novamente"
+            (click)="carregarPix()"
+          >
+            Tentar novamente
+          </button>
+        </div>
+      } @else if (configuracao(); as config) {
+        <section
+          id="pix"
+          class="secao-pix"
+          aria-labelledby="titulo-pix"
         >
-          Tentar novamente
-        </button>
-      </div>
-    } @else if (configuracao(); as config) {
-      <section
-        id="pix"
-        class="secao-pix"
-        aria-labelledby="titulo-pix"
-      >
-        <div class="pix-informacoes">
-          <div class="pix-marca">
-            <img src="/images/logo_pix.png" alt="Pix" />
+          <div class="pix-informacoes">
+            <div class="pix-marca">
+              <img src="/images/logo_pix.png" alt="Pix" />
+            </div>
+
+            <h2 id="titulo-pix">
+              Um jeito simples de apoiar
+            </h2>
+
+            <p class="pix-descricao">
+              Faça sua doação usando a chave Pix ou gere um QR Code com o valor que escolher.
+            </p>
+
+            <ol class="pix-passos">
+              <li>Escolha o valor da doação e gere seu QR Code.</li>
+              <li>No aplicativo do banco, escaneie o QR Code ou use o Pix Copia e Cola.</li>
+              <li>Confira os dados antes de confirmar.</li>
+            </ol>
+
+
+            <form class="pix-form-valor" (ngSubmit)="gerarPix()" novalidate>
+              <fieldset [disabled]="gerando()">
+                <legend>Valor da doação</legend>
+                <p class="orientacao-valor">{{ orientacaoCodigoPix }}</p>
+                <div class="valores-sugeridos" role="group" aria-label="Valores sugeridos">
+                  @for (valor of config.valoresSugeridos; track valor) {
+                    <button
+                      type="button"
+                      [class.selecionado]="valorSelecionado(valor)"
+                      [attr.aria-pressed]="valorSelecionado(valor)"
+                      (click)="escolherValor(valor)"
+                    >
+                      {{ valor | currency: 'BRL' : 'symbol' : '1.0-0' : 'pt-BR' }}
+                    </button>
+                  }
+                </div>
+                <mat-form-field appearance="outline" class="campo-valor" subscriptSizing="dynamic">
+                  <mat-label>Outro valor</mat-label>
+                  @if (valorEmFoco || valorDigitado) {
+                    <span matTextPrefix class="prefixo-moeda">R$</span>
+                  }
+                  <input
+                    matInput
+                    id="valor-doacao"
+                    name="valor"
+                    type="text"
+                    inputmode="decimal"
+                    autocomplete="off"
+                    maxlength="9"
+                    #campoValor
+                    [ngModel]="valorDigitado"
+                    (ngModelChange)="digitarValor($event, campoValor)"
+                    (focus)="valorEmFoco = true"
+                    (blur)="valorEmFoco = false"
+                    [attr.aria-invalid]="!!erroValor()"
+                    [attr.aria-describedby]="erroValor() ? 'erro-valor' : null"
+                  />
+                </mat-form-field>
+                @if (erroValor()) {
+                  <p id="erro-valor" class="erro" role="alert">{{ erroValor() }}</p>
+                }
+                <button type="submit" class="btn-primary gerar-pix" [attr.aria-busy]="gerando()" [disabled]="gerando()">
+                  {{ gerando() ? 'Gerando QR Code' : 'Gerar QR Code' }}
+                  @if (gerando()) { <span class="spinner-carregamento" aria-hidden="true"></span> }
+                </button>
+              </fieldset>
+            </form>
+            @if (erroGeracao()) {
+              <p class="erro" role="alert">{{ erroGeracao() }}</p>
+            }
           </div>
 
-          <h2 id="titulo-pix">
-            Um jeito simples de apoiar
-          </h2>
-
-          <p class="pix-descricao">
-            Faça sua doação usando a chave Pix ou gere um QR Code com o valor que escolher.
-          </p>
-
-          <ol class="pix-passos">
-            <li>Escolha o valor da doação e gere seu QR Code.</li>
-            <li>No aplicativo do banco, escaneie o QR Code ou use o Pix Copia e Cola.</li>
-            <li>Confira os dados antes de confirmar.</li>
-          </ol>
-
-
-          <form class="pix-form-valor" (ngSubmit)="gerarPix()" novalidate>
-            <fieldset [disabled]="gerando()">
-              <legend>Valor da doação</legend>
-              <p class="orientacao-valor">{{ orientacaoCodigoPix }}</p>
-              <div class="valores-sugeridos" role="group" aria-label="Valores sugeridos">
-                @for (valor of config.valoresSugeridos; track valor) {
-                  <button
-                    type="button"
-                    [class.selecionado]="valorSelecionado(valor)"
-                    [attr.aria-pressed]="valorSelecionado(valor)"
-                    (click)="escolherValor(valor)"
-                  >
-                    {{ valor | currency: 'BRL' : 'symbol' : '1.0-0' : 'pt-BR' }}
+          <div class="pix-imagem">
+            @if (config.nomeRecebedor?.trim()) {
+              <div class="pix-recebedor">
+                <span class="chave-pix-rotulo">Recebedor</span>
+                <strong>{{ config.nomeRecebedor }}</strong>
+              </div>
+            }
+            <div class="chave-pix">
+              <span class="chave-pix-rotulo">Chave Pix</span>
+              <button type="button" class="chave-pix-copiar" aria-live="polite" [disabled]="chaveCopiada()" (click)="copiarChavePix()"
+                [attr.aria-label]="chaveCopiada() ? 'Chave Pix copiada' : 'Copiar chave Pix: ' + config.chave"
+                title="Copiar chave Pix">
+                <span class="chave-pix-valor">{{ chaveCopiada() ? 'Chave Pix copiada!' : config.chave }}</span>
+                <span class="material-symbols-outlined" aria-hidden="true">{{ chaveCopiada() ? 'check' : 'content_copy' }}</span>
+              </button>
+              @if (feedbackChave()) {
+                <span class="erro" role="alert">{{ feedbackChave() }}</span>
+              }
+            </div>
+            <span class="pix-separador">OU</span>
+            <span class="chave-pix-rotulo">QR Code</span>
+            @if (pixEmAberto(); as pendente) {
+              <div class="resultado-cabecalho">
+                <span>Valor da doação</span>
+                <strong>{{ pendente.valor | currency: 'BRL' : 'symbol' : '1.2-2' : 'pt-BR' }}</strong>
+              </div>
+              <p class="pix-tempo">Código disponível por <strong>{{ tempoRestanteDoCodigo(pendente) }}</strong></p>
+              <img class="qr-code" [src]="pendente.qrCode" width="240" height="240"
+                alt="QR Code para sua doação" />
+              <div class="codigo-texto">
+                  <button type="button" class="copiar-pix" aria-live="polite"
+                    [disabled]="codigoCopiado() === pendente.identificador" (click)="copiarCodigo(pendente)">
+                    <span>{{ codigoCopiado() === pendente.identificador ? 'Pix copiado!' : 'Copiar Pix Copia e Cola' }}</span>
+                    <span class="material-symbols-outlined" aria-hidden="true">{{ codigoCopiado() === pendente.identificador ? 'check' : 'content_copy' }}</span>
                   </button>
+                  <button type="button" class="expandir-codigo-pix" [attr.aria-expanded]="codigoPaginaExpandido()"
+                    aria-controls="pix-copia-cola-pagina" [attr.aria-label]="codigoPaginaExpandido() ? 'Ocultar código Pix completo' : 'Ver código Pix completo'"
+                    (click)="codigoPaginaExpandido.set(!codigoPaginaExpandido())">
+                    <span>{{ codigoPaginaExpandido() ? 'Ocultar Pix Copia e Cola' : 'Ver Pix Copia e Cola' }}</span>
+                  </button>
+                @if (codigoPaginaExpandido()) {
+                  <div id="pix-copia-cola-pagina" class="valor-codigo-pix" role="textbox" aria-readonly="true" aria-multiline="true"
+                    aria-label="Pix Copia e Cola" tabindex="0" [textContent]="pendente.copiaECola"></div>
                 }
               </div>
-              <mat-form-field appearance="outline" class="campo-valor" subscriptSizing="dynamic">
-                <mat-label>Outro valor</mat-label>
-                @if (valorEmFoco || valorDigitado) {
-                  <span matTextPrefix class="prefixo-moeda">R$</span>
-                }
-                <input
-                  matInput
-                  id="valor-doacao"
-                  name="valor"
-                  type="text"
-                  inputmode="decimal"
-                  autocomplete="off"
-                  maxlength="9"
-                  #campoValor
-                  [ngModel]="valorDigitado"
-                  (ngModelChange)="digitarValor($event, campoValor)"
-                  (focus)="valorEmFoco = true"
-                  (blur)="valorEmFoco = false"
-                  [attr.aria-invalid]="!!erroValor()"
-                  [attr.aria-describedby]="erroValor() ? 'erro-valor' : null"
-                />
-              </mat-form-field>
-              @if (erroValor()) {
-                <p id="erro-valor" class="erro" role="alert">{{ erroValor() }}</p>
+              @if (feedbackCopia()) {
+                <span class="feedback" role="status">{{ feedbackCopia() }}</span>
               }
-              <button type="submit" class="btn-primary gerar-pix">
-                @if (gerando()) {
-                  <span class="indicador-carregamento pequeno" aria-hidden="true"></span>
-                }
-                {{ gerando() ? 'Gerando QR Code...' : 'Gerar QR Code' }}
-              </button>
-            </fieldset>
-          </form>
-          @if (erroGeracao()) {
-            <p class="erro" role="alert">{{ erroGeracao() }}</p>
-          }
-        </div>
-
-        <div class="pix-imagem">
-          @if (config.nomeRecebedor?.trim()) {
-            <div class="pix-recebedor">
-              <span class="chave-pix-rotulo">Recebedor</span>
-              <strong>{{ config.nomeRecebedor }}</strong>
-            </div>
-          }
-          <div class="chave-pix">
-            <span class="chave-pix-rotulo">Chave Pix</span>
-            <button type="button" class="chave-pix-copiar" aria-live="polite" [disabled]="chaveCopiada()" (click)="copiarChavePix()"
-              [attr.aria-label]="chaveCopiada() ? 'Chave Pix copiada' : 'Copiar chave Pix: ' + config.chave"
-              title="Copiar chave Pix">
-              <span class="chave-pix-valor">{{ chaveCopiada() ? 'Chave Pix copiada!' : config.chave }}</span>
-              <span class="material-symbols-outlined" aria-hidden="true">{{ chaveCopiada() ? 'check' : 'content_copy' }}</span>
-            </button>
-            @if (feedbackChave()) {
-              <span class="erro" role="alert">{{ feedbackChave() }}</span>
+              <button type="button" class="btn-primary pix-informar" (click)="abrirEmail(pendente)">Já fiz o pagamento</button>
+            } @else {
+              <div class="pix-aguardando-codigo">
+                <p>O QR Code será gerado após a escolha do valor e o clique em Gerar QR Code.</p>
+              </div>
             }
           </div>
-          <span class="pix-separador">OU</span>
-          <span class="chave-pix-rotulo">QR Code</span>
-          @if (pixEmAberto(); as pendente) {
-            <div class="resultado-cabecalho">
-              <span>Valor da doação</span>
-              <strong>{{ pendente.valor | currency: 'BRL' : 'symbol' : '1.2-2' : 'pt-BR' }}</strong>
-            </div>
-            <p class="pix-tempo">Código disponível por <strong>{{ tempoRestanteDoCodigo(pendente) }}</strong></p>
-            <img class="qr-code" [src]="pendente.qrCode" width="240" height="240"
-              alt="QR Code para sua doação" />
-            <div class="codigo-texto">
-                <button type="button" class="copiar-pix" aria-live="polite"
-                  [disabled]="codigoCopiado() === pendente.identificador" (click)="copiarCodigo(pendente)">
-                  <span>{{ codigoCopiado() === pendente.identificador ? 'Pix copiado!' : 'Copiar Pix Copia e Cola' }}</span>
-                  <span class="material-symbols-outlined" aria-hidden="true">{{ codigoCopiado() === pendente.identificador ? 'check' : 'content_copy' }}</span>
-                </button>
-                <button type="button" class="expandir-codigo-pix" [attr.aria-expanded]="codigoPaginaExpandido()"
-                  aria-controls="pix-copia-cola-pagina" [attr.aria-label]="codigoPaginaExpandido() ? 'Ocultar código Pix completo' : 'Ver código Pix completo'"
-                  (click)="codigoPaginaExpandido.set(!codigoPaginaExpandido())">
-                  <span>{{ codigoPaginaExpandido() ? 'Ocultar Pix Copia e Cola' : 'Ver Pix Copia e Cola' }}</span>
-                </button>
-              @if (codigoPaginaExpandido()) {
-                <div id="pix-copia-cola-pagina" class="valor-codigo-pix" role="textbox" aria-readonly="true" aria-multiline="true"
-                  aria-label="Pix Copia e Cola" tabindex="0" [textContent]="pendente.copiaECola"></div>
-              }
-            </div>
-            @if (feedbackCopia()) {
-              <span class="feedback" role="status">{{ feedbackCopia() }}</span>
-            }
-            <button type="button" class="btn-primary pix-informar" (click)="abrirEmail(pendente)">Já fiz o pagamento</button>
-          } @else {
-            <div class="pix-aguardando-codigo">
-              <p>O QR Code será gerado após a escolha do valor e o clique em Gerar QR Code.</p>
-            </div>
-          }
+        </section>
+      } @else if (indisponivel()) {
+        <div class="estado-carregamento"><p>As doações via Pix estão indisponíveis no momento.</p></div>
+      }
+
+      <section id="notas-fiscais" class="secao-nfp" aria-labelledby="titulo-nfp">
+        <header class="nfp-cabecalho">
+          <h2 id="titulo-nfp">Nota Fiscal Paulista</h2>
+          <p>Escolha o Lar Escola Redenção para receber suas doações automáticas de cupons com CPF.</p>
+        </header>
+        <div class="nfp-conteudo">
+          <figure class="nfp-ilustracao">
+            <img src="/images/nota-fiscal.png" alt="Ilustração de uma pessoa segurando um cupom fiscal" width="2000" height="2000" loading="lazy" />
+            <figcaption><a href="https://storyset.com/" target="_blank" rel="noopener noreferrer">Ilustração por Storyset</a></figcaption>
+          </figure>
+          <div class="nfp-tutorial">
+            <ol class="pix-passos nfp-passos" aria-label="Como cadastrar a doação automática">
+              <li><span>Acesse o <a href="https://www.nfp.fazenda.sp.gov.br/Principal.aspx" target="_blank" rel="noopener noreferrer">site da Nota Fiscal Paulista</a> e clique em <strong>Entrar com gov.br</strong>.</span></li>
+              <li><span>Se for seu primeiro acesso, siga as orientações para concluir o cadastro.</span></li>
+              <li><span>No menu, acesse <strong>Entidades &gt; Doação de Cupons com CPF (Automática)</strong>.</span></li>
+              <li><span>Leia as informações sobre o início e validade da doação, depois clique em <strong>Pesquisar</strong>.</span></li>
+              <li><span>Selecione a busca <strong>Por CNPJ</strong>, informe <strong>50.400.951/0001-26</strong> e clique em <strong>Pesquisar</strong>.</span></li>
+              <li><span>Localize o <strong>Lar Escola Redenção</strong>, selecione a instituição e clique em <strong>Avançar</strong>.</span></li>
+              <li><span>Confira os dados e clique em <strong>Confirmar Doação Automática</strong>.</span></li>
+              <li><span>Aguarde a mensagem de confirmação do cadastro da doação.</span></li>
+            </ol>
+            <p class="nfp-orientacao">Pronto! Um gesto simples que nos ajuda a continuar o trabalho. Nas compras presenciais ou online em estabelecimentos paulistas, lembre-se de informar <strong>seu próprio CPF na nota</strong>, conforme as regras da Nota Fiscal Paulista. O CNPJ do Lar é usado apenas para localizar a instituição durante o cadastro.</p>
+            <p class="nfp-orientacao">Prefere doar cupons individualmente? Também é possível doar <strong>cupons sem CPF</strong> pelo aplicativo da Nota Fiscal Paulista, usando o QR Code. <a href="https://portal.fazenda.sp.gov.br/servicos/nfp/paginas/guia-doacao_aplicativo.aspx" target="_blank" rel="noopener noreferrer">Veja como no guia oficial</a>. Em caso de dúvidas, consulte o <a href="https://portal.fazenda.sp.gov.br/servicos/nfp/Paginas/Guia-doacao_automatica.aspx" target="_blank" rel="noopener noreferrer">passo a passo oficial da Nota Fiscal Paulista</a>.</p>
+          </div>
+
         </div>
       </section>
-    } @else if (indisponivel()) {
-      <div class="estado-carregamento"><p>As doações via Pix estão indisponíveis no momento.</p></div>
-    }
 
-    <section id="notas-fiscais" class="secao-nfp" aria-labelledby="titulo-nfp">
-      <header class="nfp-cabecalho">
-        <h2 id="titulo-nfp">Nota Fiscal Paulista</h2>
-        <p>Escolha o Lar Escola Redenção para receber suas doações automáticas de cupons com CPF.</p>
-      </header>
-      <div class="nfp-conteudo">
-        <figure class="nfp-ilustracao">
-          <img src="/images/nota-fiscal.png" alt="Ilustração de uma pessoa segurando um cupom fiscal" width="2000" height="2000" loading="lazy" />
-          <figcaption><a href="https://storyset.com/" target="_blank" rel="noopener noreferrer">Ilustração por Storyset</a></figcaption>
-        </figure>
-        <div class="nfp-tutorial">
-          <ol class="pix-passos nfp-passos" aria-label="Como cadastrar a doação automática">
-            <li><span>Acesse o <a href="https://www.nfp.fazenda.sp.gov.br/Principal.aspx" target="_blank" rel="noopener noreferrer">site da Nota Fiscal Paulista</a> e clique em <strong>Entrar com gov.br</strong>.</span></li>
-            <li><span>Se for seu primeiro acesso, siga as orientações para concluir o cadastro.</span></li>
-            <li><span>No menu, acesse <strong>Entidades &gt; Doação de Cupons com CPF (Automática)</strong>.</span></li>
-            <li><span>Leia as informações sobre o início e validade da doação, depois clique em <strong>Pesquisar</strong>.</span></li>
-            <li><span>Selecione a busca <strong>Por CNPJ</strong>, informe <strong>50.400.951/0001-26</strong> e clique em <strong>Pesquisar</strong>.</span></li>
-            <li><span>Localize o <strong>Lar Escola Redenção</strong>, selecione a instituição e clique em <strong>Avançar</strong>.</span></li>
-            <li><span>Confira os dados e clique em <strong>Confirmar Doação Automática</strong>.</span></li>
-            <li><span>Aguarde a mensagem de confirmação do cadastro da doação.</span></li>
-          </ol>
-          <p class="nfp-orientacao">Pronto! Um gesto simples que nos ajuda a continuar o trabalho. Nas compras presenciais ou online em estabelecimentos paulistas, lembre-se de informar <strong>seu próprio CPF na nota</strong>, conforme as regras da Nota Fiscal Paulista. O CNPJ do Lar é usado apenas para localizar a instituição durante o cadastro.</p>
-          <p class="nfp-orientacao">Prefere doar cupons individualmente? Também é possível doar <strong>cupons sem CPF</strong> pelo aplicativo da Nota Fiscal Paulista, usando o QR Code. <a href="https://portal.fazenda.sp.gov.br/servicos/nfp/paginas/guia-doacao_aplicativo.aspx" target="_blank" rel="noopener noreferrer">Veja como no guia oficial</a>. Em caso de dúvidas, consulte o <a href="https://portal.fazenda.sp.gov.br/servicos/nfp/Paginas/Guia-doacao_automatica.aspx" target="_blank" rel="noopener noreferrer">passo a passo oficial da Nota Fiscal Paulista</a>.</p>
-        </div>
-
-      </div>
-    </section>
-
-    <p class="mensagem-final">
-      Cada gesto importa
-      <span>Agradecemos por fazer parte dessa história.</span>
-    </p>
-  </div>
+      <p class="mensagem-final">
+        Cada gesto importa
+        <span>Agradecemos por fazer parte dessa história.</span>
+      </p>
+    </div>
+  }
 </main>
 
 <app-public-footer></app-public-footer>
@@ -240,8 +239,7 @@
     <div class="pix-modal-conteudo" [attr.aria-busy]="gerando() || enviandoEmail()">
       @if (gerando()) {
         <div class="estado-carregamento" role="status">
-          <span class="indicador-carregamento" aria-hidden="true"></span>
-          <p>Gerando seu QR Code...</p>
+          <span role="status" aria-label="Gerando seu QR Code" class="spinner-carregamento"></span>
         </div>
       } @else if (agradecimentoEnviado()) {
         <div class="pix-agradecimento" role="status">
@@ -266,11 +264,9 @@
             @if (erroEmail()) {
               <p id="erro-email" class="erro" role="alert">{{ erroEmail() }}</p>
             }
-            <button type="submit" class="btn-primary" [disabled]="enviandoEmail()">
-              @if (enviandoEmail()) {
-                <span class="indicador-carregamento pequeno" aria-hidden="true"></span>
-              }
-              {{ enviandoEmail() ? 'Enviando...' : 'Receber por e-mail' }}
+            <button type="submit" class="btn-primary" [disabled]="enviandoEmail()" [attr.aria-busy]="enviandoEmail()">
+              {{ enviandoEmail() ? 'Enviando' : 'Receber por e-mail' }}
+              @if (enviandoEmail()) { <span class="spinner-carregamento" aria-hidden="true"></span> }
             </button>
           </form>
         <button type="button" class="pix-sem-email" [disabled]="enviandoEmail()" (click)="continuarSemEmail()">Continuar sem e-mail</button>

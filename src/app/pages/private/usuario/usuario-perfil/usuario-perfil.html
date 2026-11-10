@@ -1,7 +1,7 @@
 <section class="usuario-perfil">
   @if (carregando) {
     <div class="estado estado-carregando">
-      <span class="spinner-primario" aria-hidden="true"></span>
+      <span role="status" aria-label="Carregando" class="spinner-carregamento"></span>
     </div>
   } @else if (erro) {
     <div class="estado estado-erro">
@@ -182,8 +182,9 @@
 
         <div class="perfil-modal-acoes form-acoes">
           <button type="button" class="btn-cancelar-modal" (click)="fecharModalDesligamento()" [disabled]="salvandoDesligamento">Cancelar</button>
-          <button type="button" class="btn-primary" (click)="confirmarDesligamento()" [disabled]="salvandoDesligamento">
-            {{ salvandoDesligamento ? 'Enviando...' : 'Confirmar' }}
+          <button type="button" class="btn-primary" (click)="confirmarDesligamento()" [disabled]="salvandoDesligamento" [attr.aria-busy]="salvandoDesligamento">
+            {{ salvandoDesligamento ? 'Enviando' : 'Confirmar' }}
+            @if (salvandoDesligamento) { <span class="spinner-carregamento" aria-hidden="true"></span> }
           </button>
         </div>
       </app-modal-layout>
@@ -237,7 +238,7 @@
           }
 
           @if (carregandoUnidadesTransferencia || carregandoTurmasTransferencia) {
-            <span class="perfil-modal-info">Carregando opções...</span>
+            <span class="perfil-modal-info" role="status" aria-label="Carregando opções"><span class="spinner-carregamento" aria-hidden="true"></span></span>
           }
 
           @if (!carregandoTurmasTransferencia && formTransferencia.get('idUnidade')?.value && !turmasDisponiveisTransferencia.length) {
@@ -251,8 +252,9 @@
 
         <div class="perfil-modal-acoes form-acoes">
           <button type="button" class="btn-cancelar-modal" (click)="fecharModalTransferencia()" [disabled]="salvandoTransferencia">Cancelar</button>
-          <button type="button" class="btn-primary" (click)="confirmarSelecaoTurma()" [disabled]="salvandoTransferencia">
-            {{ salvandoTransferencia ? 'Enviando...' : (modoSelecaoTurma === 'rematricula' ? 'Matricular' : 'Confirmar') }}
+          <button type="button" class="btn-primary" (click)="confirmarSelecaoTurma()" [disabled]="salvandoTransferencia" [attr.aria-busy]="salvandoTransferencia">
+            {{ salvandoTransferencia ? 'Enviando' : (modoSelecaoTurma === 'rematricula' ? 'Matricular' : 'Confirmar') }}
+            @if (salvandoTransferencia) { <span class="spinner-carregamento" aria-hidden="true"></span> }
           </button>
         </div>
       </app-modal-layout>

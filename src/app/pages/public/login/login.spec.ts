@@ -37,11 +37,44 @@ describe('Login', () => {
     fixture = TestBed.createComponent(Login);
     fixture.detectChanges();
     TestBed.flushEffects();
+    TestBed.inject(HttpTestingController)
+      .match(`${environment.apiUrl}/rede-social/todas`)
+      .forEach((request) => request.flush([]));
   }
 
   it('does not show a session warning on a plain login visit', () => {
     setup();
     expect(toastr.warning).not.toHaveBeenCalled();
+  });
+
+  it('exibe o spinner à direita, bloqueia novos envios e libera o botão após falha', () => {
+    setup();
+    const httpMock = TestBed.inject(HttpTestingController);
+    const identifier: HTMLInputElement = fixture.nativeElement.querySelector('#identifier');
+    identifier.value = 'user@example.com';
+    identifier.dispatchEvent(new Event('input'));
+    const password: HTMLInputElement = fixture.nativeElement.querySelector('#password');
+    password.value = 'secret';
+    password.dispatchEvent(new Event('input'));
+    const form: HTMLFormElement = fixture.nativeElement.querySelector('form');
+    form.dispatchEvent(new Event('submit'));
+    fixture.detectChanges();
+
+    const button: HTMLButtonElement = form.querySelector('button[type="submit"]')!;
+    expect(button.disabled).toBe(true);
+    expect(button.getAttribute('aria-busy')).toBe('true');
+    expect(button.textContent?.trim()).toBe('Entrando');
+    expect(button.lastElementChild?.classList.contains('spinner-carregamento')).toBe(true);
+
+    form.dispatchEvent(new Event('submit'));
+    const request = httpMock.expectOne(`${environment.apiUrl}/auth/login`);
+    request.flush({}, { status: 500, statusText: 'Erro' });
+    fixture.detectChanges();
+
+    expect(button.disabled).toBe(false);
+    expect(button.querySelector('.spinner-carregamento')).toBeNull();
+    expect(button.textContent?.trim()).toBe('Entrar');
+    httpMock.verify();
   });
 
   it('uses the standard yellow toast at the top right for expired sessions', () => {

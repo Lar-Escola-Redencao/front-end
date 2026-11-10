@@ -59,8 +59,8 @@
   @if (ehContato) {
     @if (carregando) {
       <div class="estado-pagina">
-        <span class="spinner spinner-escuro" aria-hidden="true"></span>
-        <span>Carregando...</span>
+        <span role="status" aria-label="Carregando" class="spinner-carregamento"></span>
+
       </div>
     } @else {
       @if (erroCarregamento) {
@@ -109,9 +109,10 @@
               Cancelar
             </button>
 
-            <button type="submit" class="btn-primary" [disabled]="salvando || (!!secaoContato && !temAlteracoes)">
-              <span *ngIf="salvando" class="spinner" aria-hidden="true"></span>
-              <span>{{ salvando ? 'Salvando...' : 'Salvar' }}</span>
+            <button type="submit" class="btn-primary" [disabled]="salvando || (!!secaoContato && !temAlteracoes)" [attr.aria-busy]="salvando">
+
+              <span>{{ salvando ? 'Salvando' : 'Salvar' }}</span>
+              @if (salvando) { <span class="spinner-carregamento" aria-hidden="true"></span> }
             </button>
           }
         </div>
@@ -213,9 +214,10 @@
           Cancelar
         </button>
 
-        <button type="submit" class="btn-primary" [disabled]="salvando || (modoEdicao && !temAlteracoes)">
-          <span *ngIf="salvando" class="spinner" aria-hidden="true"></span>
-          <span>{{ salvando ? 'Salvando...' : 'Salvar' }}</span>
+        <button type="submit" class="btn-primary" [disabled]="salvando || (modoEdicao && !temAlteracoes)" [attr.aria-busy]="salvando">
+
+          <span>{{ salvando ? 'Salvando' : 'Salvar' }}</span>
+          @if (salvando) { <span class="spinner-carregamento" aria-hidden="true"></span> }
         </button>
       </div>
     </form>

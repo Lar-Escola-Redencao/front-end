@@ -1,3 +1,8 @@
+@if (carregando) {
+  <div class="carregamento-secao" role="status" aria-label="Carregando unidades">
+    <span class="spinner-carregamento" aria-hidden="true"></span>
+  </div>
+}
 <section class="public-unidades-section" *ngIf="!carregando">
   <div class="container">
     <div class="unidades-header">

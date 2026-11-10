@@ -1,3 +1,8 @@
+@if (carregando) {
+  <div class="carregamento-secao" role="status" aria-label="Carregando diretoria">
+    <span class="spinner-carregamento" aria-hidden="true"></span>
+  </div>
+}
 <section class="public-diretoria-section" *ngIf="!carregando">
   <div class="container">
     
@@ -22,12 +27,11 @@
           
           <div 
             class="diretor-card-wrapper" 
-            *ngFor="let membro of diretoresCarousel; let i = index" 
-            [style.min-width]="diretoresOriginal.length === 1 ? '0' : (100 / itemsPerPage) + '%'">
+            *ngFor="let membro of diretoresCarousel; let i = index"
+            [style.width]="diretoresOriginal.length === 1 ? '100%' : (100 / itemsPerPage) + '%'">
             
-            <div 
-              class="diretor-card" 
-              [class.center-card]="isCenter(i)" 
+            <div class="diretor-card"
+              [class.center-card]="isCenter(i)"
               [class.side-card]="isSide(i)"
               [class.out-of-view-card]="isOutOfView(i)">
               
@@ -46,8 +50,8 @@
                 </span>
               </div>
               <div class="info-wrapper">
-                <h3 class="nome">{{ membro.nome }}</h3>
-                <span class="cargo">{{ membro.cargo }}</span>
+                <h3 class="nome" [title]="membro.nome">{{ membro.nome }}</h3>
+                <span class="cargo" [title]="membro.cargo">{{ membro.cargo }}</span>
               </div>
               
             </div>

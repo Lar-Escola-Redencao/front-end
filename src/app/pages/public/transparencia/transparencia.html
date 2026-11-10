@@ -7,9 +7,8 @@
   </header>
 
   @if (isLoading()) {
-    <div class="state-box" role="status" aria-live="polite">
-      <span class="spinner" aria-hidden="true"></span>
-      <p>Carregando documentos...</p>
+    <div class="carregamento-secao" role="status" aria-label="Carregando documentos" aria-live="polite">
+      <span class="spinner-carregamento" aria-hidden="true"></span>
     </div>
   } @else if (errorMessage()) {
     <div class="state-box state-error" role="alert">

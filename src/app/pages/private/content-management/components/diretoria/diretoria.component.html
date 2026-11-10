@@ -133,8 +133,8 @@
 
     } @else {
     <div class="form-carregando">
-      <span class="spinner spinner-escuro" aria-hidden="true"></span>
-      <p>Carregando dados...</p>
+      <span role="status" aria-label="Carregando" class="spinner-carregamento"></span>
+
     </div>
     }
 
@@ -143,9 +143,10 @@
         Cancelar
       </button>
 
-      <button type="submit" class="btn-primary" [disabled]="isLoading || isCarregandoEdicao || (modoEdicao && !temAlteracoes)">
-        <span *ngIf="isLoading" class="spinner" aria-hidden="true"></span>
-        <span>{{ isLoading ? 'Salvando...' : 'Salvar' }}</span>
+      <button type="submit" class="btn-primary" [disabled]="isLoading || isCarregandoEdicao || (modoEdicao && !temAlteracoes)" [attr.aria-busy]="isLoading">
+
+        <span>{{ isLoading ? 'Salvando' : 'Salvar' }}</span>
+        @if (isLoading) { <span class="spinner-carregamento" aria-hidden="true"></span> }
       </button>
     </div>
   </form>

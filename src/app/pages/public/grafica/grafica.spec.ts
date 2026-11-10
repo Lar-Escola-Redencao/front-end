@@ -70,6 +70,18 @@ describe('Grafica', () => {
     return fixture.componentInstance as any;
   }
 
+  it('exibe o spinner sem card branco e apresenta os produtos após carregar', () => {
+    const spinner = fixture.nativeElement.querySelector('.spinner-carregamento');
+    expect(spinner).not.toBeNull();
+    expect(spinner.closest('.state-box')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.carrossel-section')).toBeNull();
+
+    carregarProdutos(1);
+
+    expect(fixture.nativeElement.querySelector('.spinner-carregamento')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.carrossel-section')).not.toBeNull();
+  });
+
   it('exibe as setas com cinco produtos e repete a sequência nos dois sentidos', () => {
     const component = carregarProdutos(5);
     const section = fixture.nativeElement.querySelector('.carrossel-section');

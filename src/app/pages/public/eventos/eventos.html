@@ -9,7 +9,7 @@
   </div>
 
   @if (carregando) {
-    <p class="mensagem-estado">Carregando eventos...</p>
+    <p class="mensagem-estado" role="status" aria-label="Carregando eventos"><span class="spinner-carregamento" aria-hidden="true"></span></p>
   } @else if (eventosFiltrados.length === 0) {
     <app-estado-vazio icone="event" [mensagem]="mensagemVazia" />
   } @else {

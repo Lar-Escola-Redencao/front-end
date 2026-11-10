@@ -356,7 +356,7 @@ describe('Diário de turma', () => {
     expect(fixture.nativeElement.querySelector('.diario-header').hasAttribute('inert')).toBe(true);
     salvar.next(); salvar.complete(); await vi.advanceTimersByTimeAsync(100);
     expect(fixture.nativeElement.querySelector('.diario-header').hasAttribute('inert')).toBe(false);
-    expect(fixture.nativeElement.textContent).toContain('Carregando usuários');
+    expect(fixture.nativeElement.querySelector('.state-box .spinner-carregamento')).not.toBeNull();
     recarga.next([{ ...aluno(), idFrequencia: 10, presente: true }]); recarga.complete();
     await vi.advanceTimersByTimeAsync(100); expect(component.estadoTela).toBe('SALVO');
   });

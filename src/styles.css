@@ -1002,3 +1002,45 @@ html:not(.material-symbols-prontos) .material-symbols-outlined {
 }
 
 .anexo-drop[aria-disabled="true"] { opacity: .6; cursor: wait; }
+
+/* Indicador comum para páginas, seções e operações em botões. */
+.spinner-carregamento {
+  display: inline-block;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border: 3px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  color: var(--primary-color);
+  vertical-align: middle;
+  animation: girar-carregamento .8s linear infinite;
+}
+button .spinner-carregamento {
+  width: 16px;
+  height: 16px;
+  border-width: 2px;
+  color: currentColor;
+}
+@keyframes girar-carregamento { to { transform: rotate(360deg); } }
+
+button:has(> .spinner-carregamento) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  column-gap: 8px;
+}
+.carregamento-secao {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 96px;
+  padding: 24px;
+}
+.carregamento-pagina {
+  box-sizing: border-box;
+  min-height: calc(100dvh - 82px);
+}
+mat-hint .spinner-carregamento,
+mat-option .spinner-carregamento { width: 16px; height: 16px; border-width: 2px; }
