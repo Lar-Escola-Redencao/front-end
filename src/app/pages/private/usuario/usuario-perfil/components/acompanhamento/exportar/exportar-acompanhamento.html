@@ -1,0 +1,86 @@
+<app-modal-layout titulo="Exportar relatório" (closed)="cancelar()">
+  <p id="instrucao-tipo" class="instrucao-tipo">Escolha o tipo de relatório que deseja exportar:</p>
+  <div class="tipos-relatorio" role="radiogroup" aria-labelledby="instrucao-tipo">
+    <label class="tipo-card ativo">
+      <input type="radio" name="tipoRelatorio" checked>
+      <mat-icon class="tipo-icone" aria-hidden="true">assignment</mat-icon>
+      <span class="tipo-titulo">Dados de acompanhamento</span>
+    </label>
+  </div>
+  <p class="nota">
+    O relatório contém frequências e ocorrências{{ incluiEntrevistas ? ' e entrevistas' : '' }} do período.
+  </p>
+
+  <form class="form-exportar" [formGroup]="form" (ngSubmit)="gerar()" novalidate>
+    <div class="campos-2">
+      <div class="campo">
+        <mat-form-field appearance="outline">
+          <mat-label>Período</mat-label>
+          <mat-select formControlName="periodo" (selectionChange)="alterarPeriodo()">
+            @for (periodo of periodos; track periodo.valor) {
+              <mat-option [value]="periodo.valor">{{ periodo.rotulo }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </div>
+      <div class="campo">
+        <mat-form-field appearance="outline">
+          <mat-label>Matrícula</mat-label>
+          <mat-select formControlName="matricula" aria-describedby="nota-matricula">
+            <mat-option [value]="0">Todas as matrículas</mat-option>
+            @for (matricula of matriculas(); track matricula.id) {
+              <mat-option [value]="matricula.id" [title]="rotuloMatricula(matricula)">{{ rotuloMatricula(matricula) }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        @if (carregandoMatriculas()) { <p class="nota-campo" role="status">Carregando matrículas...</p> }
+        @if (erroMatriculas()) {
+          <div class="erro-campo" role="alert">{{ erroMatriculas() }}
+            <button type="button" class="repetir" (click)="carregarMatriculas()">Tentar novamente</button>
+          </div>
+        }
+      </div>
+    </div>
+
+    @if (form.controls.periodo.value === 'PERSONALIZADO') {
+      <div class="campos-2">
+        <div class="campo">
+          <mat-form-field appearance="outline">
+            <mat-label>Data inicial</mat-label>
+            <input matInput type="date" formControlName="dataInicio" #inicio aria-describedby="erro-periodo-exportacao">
+            <button matSuffix type="button" class="btn-calendario" aria-label="Abrir calendário da data inicial"
+              (click)="inicio.showPicker()"><mat-icon aria-hidden="true">calendar_month</mat-icon></button>
+          </mat-form-field>
+        </div>
+        <div class="campo">
+          <mat-form-field appearance="outline">
+            <mat-label>Data final</mat-label>
+            <input matInput type="date" formControlName="dataFim" #fim aria-describedby="erro-periodo-exportacao">
+            <button matSuffix type="button" class="btn-calendario" aria-label="Abrir calendário da data final"
+              (click)="fim.showPicker()"><mat-icon aria-hidden="true">calendar_month</mat-icon></button>
+          </mat-form-field>
+          @if (erroPeriodo()) { <p id="erro-periodo-exportacao" class="erro-campo" role="alert">{{ erroPeriodo() }}</p> }
+        </div>
+      </div>
+    }
+
+    <p id="nota-matricula" class="nota">
+      A matrícula filtra as frequências e as ocorrências.
+      @if (incluiEntrevistas) { As entrevistas são consultadas pelo usuário e pelo período, independentemente da matrícula. }
+    </p>
+
+    <fieldset class="formato">
+      <legend>Formato</legend>
+      <label class="opcao-formato"><input type="radio" checked name="formato"><span>PDF</span></label>
+    </fieldset>
+
+    @if (erro()) { <div class="erro-geracao" role="alert"><span>{{ erro() }}</span></div> }
+
+    <div class="acoes-modal form-acoes">
+      <button type="button" class="btn-cancelar" (click)="cancelar()">Cancelar</button>
+      <button type="submit" class="btn-primary" [disabled]="gerando()" [attr.aria-busy]="gerando()">
+        @if (gerando()) { <span class="spinner"></span> Gerando... } @else { {{ erro() ? 'Tentar novamente' : 'Baixar' }} }
+      </button>
+    </div>
+  </form>
+</app-modal-layout>

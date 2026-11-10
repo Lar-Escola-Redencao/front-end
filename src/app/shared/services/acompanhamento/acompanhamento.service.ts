@@ -1,4 +1,6 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpContext, HttpResponse } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { SILENCIAR_TOAST_ACESSO } from '../../interceptors/acesso-toast.context';
 import { Injectable, inject } from '@angular/core';
 import { environment } from 'src/environments/environment';
 import { PaginaResposta } from '../../models/pagina.model';
@@ -38,6 +40,15 @@ export class AcompanhamentoService {
     const params: Record<string, string> = { inicio: filtros.inicio, fim: filtros.fim };
     if (filtros.matricula != null) params['matricula'] = String(filtros.matricula);
     return this.http.get<ResumoFrequencia>(`${this.url(usuario)}/frequencias`, { params });
+  }
+
+  // O modal de exportação exibe a mensagem de acesso negado no próprio formulário.
+  exportarRelatorio(usuario: number, filtros: FiltrosFrequencia): Observable<HttpResponse<Blob>> {
+    const params: Record<string, string> = { inicio: filtros.inicio, fim: filtros.fim };
+    if (filtros.matricula != null) params['matricula'] = String(filtros.matricula);
+    return this.http.get(`${this.url(usuario)}/frequencias/relatorio`, {
+      params, responseType: 'blob', observe: 'response', context: new HttpContext().set(SILENCIAR_TOAST_ACESSO, true),
+    });
   }
 
   matriculasFrequencia(usuario: number) {
