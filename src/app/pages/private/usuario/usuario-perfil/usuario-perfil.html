@@ -59,16 +59,10 @@
         </article>
 
         @if (!monitor) {
-        <div class="acoes-principais" [class.acoes-principais--desligado]="desligado">
-          @if (desligado) {
-            <button type="button" class="btn-primary" (click)="abrirModalRematricula()">Rematrícula após desligamento</button>
-          } @else {
-            <button type="button" class="btn-primary" (click)="abrirModalDesligamento()">Desligamento</button>
-            <button type="button" class="btn-primary" (click)="abrirModalTransferencia()">Transferência</button>
-          }
-        </div>
-
-        <button type="button" class="btn-cancelar excluir-usuario" (click)="excluirUsuario()">Excluir usuário</button>
+        <button type="button" class="btn-primary btn-mais-acoes" aria-haspopup="dialog"
+          (click)="abrirMaisAcoes()" [disabled]="salvandoDesligamento || salvandoTransferencia">
+          <span>Ações do usuário</span>
+        </button>
         }
       </aside>
 
@@ -123,6 +117,43 @@
       </main>
       </div>
     </div>
+
+    @if (modalMaisAcoesAberto && !monitor) {
+      <app-modal-layout class="perfil-modal" titulo="Ações do usuário" (closed)="fecharMaisAcoes()"
+        role="dialog" aria-modal="true" aria-label="Ações do usuário"
+        cdkTrapFocus [cdkTrapFocusAutoCapture]="true" (keydown.escape)="fecharMaisAcoes(); $event.stopPropagation()">
+        <p class="mais-acoes-instrucao">Escolha o que deseja fazer com o cadastro de {{ usuario.nomeCompleto }}.</p>
+        <div class="mais-acoes-opcoes">
+          @if (desligado) {
+            <button type="button" class="acao-card" (click)="abrirModalRematricula()">
+              <mat-icon aria-hidden="true">person_add</mat-icon>
+              <span class="acao-card-textos">
+                <span class="acao-card-titulo">Matricular novamente</span>
+                <span class="acao-card-descricao">Registrar o retorno às atividades em uma unidade e turma.</span>
+              </span>
+            </button>
+          } @else {
+            <button type="button" class="acao-card" (click)="abrirModalTransferencia()">
+              <mat-icon aria-hidden="true">swap_horiz</mat-icon>
+              <span class="acao-card-textos">
+                <span class="acao-card-titulo">Transferir</span>
+                <span class="acao-card-descricao">Mover para outra unidade ou turma.</span>
+              </span>
+            </button>
+            <button type="button" class="acao-card" (click)="abrirModalDesligamento()">
+              <mat-icon aria-hidden="true">person_remove</mat-icon>
+              <span class="acao-card-textos">
+                <span class="acao-card-titulo">Registrar desligamento</span>
+                <span class="acao-card-descricao">Encerrar a participação nas atividades, preservando o histórico.</span>
+              </span>
+            </button>
+          }
+        </div>
+        <div class="mais-acoes-rodape">
+          <button type="button" class="acao-excluir" (click)="excluirUsuario()">Excluir cadastro</button>
+        </div>
+      </app-modal-layout>
+    }
 
     @if (modalDesligamentoAberto) {
       <app-modal-layout class="perfil-modal" titulo="Desligamento" (closed)="fecharModalDesligamento()">

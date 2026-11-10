@@ -181,34 +181,55 @@
   overflow-wrap: anywhere;
 }
 
-.acoes-principais {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+.btn-mais-acoes {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   gap: 8px;
-}
-
-.acoes-principais--desligado {
-  grid-template-columns: 1fr;
-}
-
-.acoes-principais .btn-primary {
+  width: 100%;
   min-height: 48px;
-  padding: 10px;
+}
+.mais-acoes-instrucao {
+  margin: 0 0 16px;
+  color: var(--input-color);
+  font: 400 14px/1.5 var(--fonte-texto);
+}
+.mais-acoes-opcoes { display: grid; gap: 10px; }
+.acao-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 16px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: #f7f7f7;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color .2s ease, background-color .2s ease;
+}
+.acao-card mat-icon { flex-shrink: 0; color: var(--input-color); }
+.acao-card-textos { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.acao-card-titulo { color: var(--preto); font: 400 15px/1.4 var(--fonte-texto); }
+.acao-card-descricao { color: var(--input-color); font: 400 13px/1.5 var(--fonte-texto); }
+.acao-card:hover { border-color: var(--primary-color); background: #f3f8fe; }
+.acao-card:hover mat-icon { color: var(--primary-color); }
+.acao-card:focus-visible, .acao-excluir:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 3px;
+}
+.mais-acoes-rodape { display: flex; justify-content: center; margin-top: 16px; }
+.acao-excluir {
+  border: 0;
   border-radius: 6px;
-  font-size: 14px;
+  padding: 10px 16px;
+  min-height: 44px;
+  background: transparent;
+  color: var(--error-color, #c62828);
+  font: 400 14px var(--fonte-texto);
+  cursor: pointer;
 }
-
-.acoes-principais .btn-rematricular {
-  min-height: 54px;
-  font-size: 20px;
-  font-weight: 800;
-}
-
-.excluir-usuario {
-  align-self: center;
-  min-height: 48px;
-  font-size: 14px;
-}
+.acao-excluir:hover { background: rgba(198, 40, 40, .06); }
 
 .perfil-dados {
   overflow: hidden;
@@ -478,14 +499,6 @@
 @media (max-width: 520px) {
   .aba-painel {
     padding: 22px 16px;
-  }
-
-  .acoes-principais {
-    grid-template-columns: 1fr;
-  }
-
-  .excluir-usuario {
-    width: 100%;
   }
 
   .perfil-modal-acoes {

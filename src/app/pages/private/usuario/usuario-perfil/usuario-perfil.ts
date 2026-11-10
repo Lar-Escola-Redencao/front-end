@@ -1,5 +1,6 @@
 import { HistoricoContextual } from '@components/historico-contextual/historico-contextual';
 import { AbasResponsivas } from 'src/app/shared/directives/abas-responsivas';
+import { CdkTrapFocus } from '@angular/cdk/a11y';
 import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, HostListener, NgZone, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -38,6 +39,7 @@ type AbaPerfil = 'acompanhamento' | 'contatos' | 'saude' | 'dados-pessoais' | 'd
     HistoricoContextual,
     AbasResponsivas,
     CommonModule,
+    CdkTrapFocus,
     ReactiveFormsModule,
     MatFormFieldModule,
     MatIconModule,
@@ -77,6 +79,7 @@ export class UsuarioPerfil implements OnInit, OnDestroy, ComponentComAlteracoesN
   carregando = true;
   erro = '';
   abaAtiva: AbaPerfil = 'acompanhamento';
+  modalMaisAcoesAberto = false;
   modalDesligamentoAberto = false;
   modalTransferenciaAberto = false;
   modoSelecaoTurma: 'transferencia' | 'rematricula' = 'transferencia';
@@ -263,15 +266,28 @@ export class UsuarioPerfil implements OnInit, OnDestroy, ComponentComAlteracoesN
     return this.abas.filter(aba => ['acompanhamento', 'contatos', 'saude'].includes(aba.id));
   }
 
+  abrirMaisAcoes(): void {
+    if (!this.usuario?.id || this.monitor || this.salvandoDesligamento || this.salvandoTransferencia) return;
+    this.modalMaisAcoesAberto = true;
+  }
+
+  fecharMaisAcoes(): void {
+    this.modalMaisAcoesAberto = false;
+  }
+
   abrirModalDesligamento(): void {
     if (!this.usuario?.id || this.desligado || this.monitor) return;
+    this.fecharMaisAcoes();
     this.formDesligamento.reset({ dataDesligamento: this.dataHoje(), justificativa: '' });
     this.modalDesligamentoAberto = true;
   }
 
-  fecharModalDesligamento(): void {
+  async fecharModalDesligamento(): Promise<void> {
     if (this.salvandoDesligamento) return;
+    if (this.formDesligamento.dirty && !(await Alertas.confirmarDescarte())) return;
     this.modalDesligamentoAberto = false;
+    this.abrirMaisAcoes();
+    this.atualizarTela();
   }
 
   async confirmarDesligamento(): Promise<void> {
@@ -322,6 +338,7 @@ export class UsuarioPerfil implements OnInit, OnDestroy, ComponentComAlteracoesN
   abrirModalTransferencia(): void {
     if (!this.usuario?.id || this.desligado || this.monitor) return;
 
+    this.fecharMaisAcoes();
     this.modoSelecaoTurma = 'transferencia';
     this.formTransferencia.reset({
       idUnidade: this.usuario.idUnidade || null,
@@ -340,6 +357,7 @@ export class UsuarioPerfil implements OnInit, OnDestroy, ComponentComAlteracoesN
 
   abrirModalRematricula(): void {
     if (!this.usuario?.id || !this.desligado || this.monitor) return;
+    this.fecharMaisAcoes();
     this.modoSelecaoTurma = 'rematricula';
     this.formTransferencia.reset({ idUnidade: null, idTurmaNova: null, dataTransferencia: this.dataHoje() });
     this.formTransferencia.get('idTurmaNova')?.disable();
@@ -348,9 +366,12 @@ export class UsuarioPerfil implements OnInit, OnDestroy, ComponentComAlteracoesN
     this.carregarUnidadesTransferencia();
   }
 
-  fecharModalTransferencia(): void {
+  async fecharModalTransferencia(): Promise<void> {
     if (this.salvandoTransferencia) return;
+    if (this.formTransferencia.dirty && !(await Alertas.confirmarDescarte())) return;
     this.modalTransferenciaAberto = false;
+    this.abrirMaisAcoes();
+    this.atualizarTela();
   }
 
   onUnidadeTransferenciaChange(idUnidade: number | null): void {
@@ -527,15 +548,20 @@ export class UsuarioPerfil implements OnInit, OnDestroy, ComponentComAlteracoesN
       return;
     }
 
+    this.fecharMaisAcoes();
     const confirmado = await this.confirmarAcaoCritica(
       'Confirmar exclusão?',
-      'Este usuário e seus dados serão excluídos permanentemente.',
+      'Todo o cadastro deste usuário e seus dados serão excluídos permanentemente, incluindo suas matrículas.',
       'excluir-usuario',
       'Excluir usuário',
       'warning',
       '#e04b3a'
     );
-    if (!confirmado) return;
+    if (!confirmado) {
+      this.abrirMaisAcoes();
+      this.atualizarTela();
+      return;
+    }
 
     this.usuarioService.deletar(usuario.id).subscribe({
       next: () => this.ngZone.run(() => {
