@@ -127,14 +127,14 @@
     </div>
 
     @if (editando) {
-      <div [appAnexoDrop]="inputFoto" class="upload-foto" [class.upload-foto-selecionada]="!!fotoSelecionada" (click)="inputFoto.click()">
+      <div [appAnexoDrop]="inputFoto" [anexoDropDesabilitado]="salvando" class="upload-foto" [class.upload-foto-selecionada]="!!fotoSelecionada" (click)="inputFoto.click()">
         <span class="upload-foto-icone" aria-hidden="true"><mat-icon>upload_file</mat-icon></span>
         <div class="upload-foto-textos">
-          <span class="upload-foto-titulo" [attr.title]="fotoSelecionada?.name || null">{{ fotoSelecionada?.name || 'Selecione a foto de perfil' }}</span>
+          <span class="upload-foto-titulo" [attr.title]="fotoSelecionada?.name || null">{{ fotoSelecionada?.name || 'Selecione ou arraste uma foto' }}</span>
           <span class="upload-foto-formatos">PNG, JPEG, JPG</span>
         </div>
         <button type="button" class="btn-procurar" (click)="$event.stopPropagation(); inputFoto.click()">Procurar</button>
-        <input #inputFoto type="file" class="upload-foto-input" accept="image/png,image/jpeg" tabindex="-1"
+        <input [disabled]="salvando" #inputFoto type="file" class="upload-foto-input" accept="image/png,image/jpeg" tabindex="-1"
           (click)="$event.stopPropagation()" (change)="onFotoSelecionada($event)">
       </div>
       <span class="error-text" *ngIf="erroFoto">{{ erroFoto }}</span>

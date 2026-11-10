@@ -1,17 +1,18 @@
-<div [appAnexoDrop]="fileInput" class="dropzone" [class.dropzone--invalid]="invalid()">
+<div [appAnexoDrop]="fileInput" [anexoDropDesabilitado]="disabled()" class="dropzone" [class.dropzone--invalid]="invalid()">
   @if (imageUrl()) {
     <img [src]="imageUrl()" alt="Pré-visualização da imagem" class="dropzone__preview" />
   } @else {
-    <span class="dropzone__label">Nenhuma imagem selecionada</span>
+    <span class="dropzone__label">Selecione ou arraste uma imagem</span>
   }
 
-  <button type="button" class="btn btn-secondary" (click)="openFilePicker()">
+  <button type="button" [disabled]="disabled()" class="btn btn-secondary" (click)="openFilePicker()">
     Escolher arquivo
   </button>
 
   <input
     #fileInput
     type="file"
+    [disabled]="disabled()"
     accept="image/jpeg,image/png,image/webp"
     class="dropzone__input"
     (change)="onFileInputChange($event)"

@@ -98,12 +98,12 @@
     <!-- Container do Upload -->
     <div class="form-group">
 
-      <input #inputDocumento id="arquivo" type="file" class="input-arquivo-oculto" accept=".pdf,.docx,.xlsx,
+      <input [disabled]="isLoading" #inputDocumento id="arquivo" type="file" class="input-arquivo-oculto" accept=".pdf,.docx,.xlsx,
             application/pdf,
             application/vnd.openxmlformats-officedocument.wordprocessingml.document,
             application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" (change)="selecionarDocumento($event)">
 
-      <div [appAnexoDrop]="inputDocumento" class="upload-arquivo" [class.upload-arquivo-erro]="errosDocumento['arquivo']"
+      <div [appAnexoDrop]="inputDocumento" [anexoDropDesabilitado]="isLoading" class="upload-arquivo" [class.upload-arquivo-erro]="errosDocumento['arquivo']"
         (click)="inputDocumento.click()">
 
         <span class="material-symbols-outlined upload-arquivo-icone">
@@ -116,7 +116,7 @@
             {{
             nomeDocumentoSelecionado
             ? nomeDocumentoSelecionado
-            : 'Selecione um documento'
+            : 'Selecione ou arraste um documento'
             }}
           </strong>
 

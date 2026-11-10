@@ -126,7 +126,7 @@
     </div>
 
     <div class="form-group">
-      <input
+      <input [disabled]="isLoading"
         #inputImagem
         id="imagem"
         type="file"
@@ -134,7 +134,7 @@
         accept=".jpg,.jpeg,.png,.webp"
         (change)="onImagemSelecionada($event)" />
 
-      <div [appAnexoDrop]="inputImagem" class="upload-arquivo" [class.upload-arquivo-erro]="erros['imagem']" (click)="inputImagem.click()">
+      <div [appAnexoDrop]="inputImagem" [anexoDropDesabilitado]="isLoading" class="upload-arquivo" [class.upload-arquivo-erro]="erros['imagem']" (click)="inputImagem.click()">
         <span class="material-symbols-outlined upload-arquivo-icone">
           upload_file
         </span>
@@ -144,7 +144,7 @@
             {{
               nomeArquivoSelecionado
                 ? nomeArquivoSelecionado
-                : 'Selecione a capa do evento'
+                : 'Selecione ou arraste a capa do evento'
             }}
           </strong>
           <span>PNG, JPEG, JPG ou WEBP</span>

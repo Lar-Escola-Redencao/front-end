@@ -256,7 +256,7 @@
     </div>
 
       <div class="form-group">
-        <input
+        <input [disabled]="isLoading"
           #inputImagem
           id="imagemUnidade"
           type="file"
@@ -265,7 +265,7 @@
           (change)="onImagemSelecionada($event)"
         />
 
-        <div [appAnexoDrop]="inputImagem"
+        <div [appAnexoDrop]="inputImagem" [anexoDropDesabilitado]="isLoading"
           class="upload-arquivo"
           [class.upload-arquivo-erro]="erros['imagem']"
           (click)="inputImagem.click()"
@@ -277,7 +277,7 @@
               {{
                 nomeArquivoSelecionado
                   ? nomeArquivoSelecionado
-                  : 'Selecione uma imagem para a unidade'
+                  : 'Selecione ou arraste uma imagem da unidade'
               }}
             </strong>
             <span>PNG, JPEG, JPG ou WEBP</span>

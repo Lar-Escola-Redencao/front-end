@@ -49,16 +49,16 @@
     <h3>Laudos, exames e receitas</h3>
 
     @if (editando) {
-      <div [appAnexoDrop]="inputSaude" class="upload-foto" (click)="inputSaude.click()">
+      <div [appAnexoDrop]="inputSaude" [anexoDropDesabilitado]="salvando" class="upload-foto" (click)="inputSaude.click()">
         <span class="upload-foto-icone" aria-hidden="true"><mat-icon>upload_file</mat-icon></span>
         <div class="upload-foto-textos">
           <span class="upload-foto-titulo">
-            {{ arquivosSaude.length ? (arquivosSaude.length === 1 ? '1 arquivo selecionado' : arquivosSaude.length + ' arquivos selecionados') : 'Anexe laudos, exames e receitas' }}
+            {{ arquivosSaude.length ? (arquivosSaude.length === 1 ? '1 arquivo selecionado' : arquivosSaude.length + ' arquivos selecionados') : 'Selecione ou arraste os arquivos' }}
           </span>
           <span class="upload-foto-formatos">PDF, JPG, PNG · até 4 arquivos de 10 MB cada</span>
         </div>
         <button type="button" class="btn-procurar" (click)="$event.stopPropagation(); inputSaude.click()">Anexar</button>
-        <input #inputSaude type="file" class="upload-foto-input" multiple accept=".pdf,.jpg,.jpeg,.png" tabindex="-1"
+        <input [disabled]="salvando" #inputSaude type="file" class="upload-foto-input" multiple accept=".pdf,.jpg,.jpeg,.png" tabindex="-1"
           (click)="$event.stopPropagation()" (change)="selecionarArquivosSaude($event)">
       </div>
       <span class="error-text" *ngIf="erroArquivos">{{ erroArquivos }}</span>

@@ -169,7 +169,7 @@
 
       @if (grupoAtivo.imagem; as imagem) {
         <div class="form-group">
-          <input
+          <input [disabled]="salvando"
             #inputImagem
             type="file"
             class="input-arquivo-oculto"
@@ -177,7 +177,7 @@
             (change)="selecionarArquivo($event)"
           />
 
-          <div [appAnexoDrop]="inputImagem"
+          <div [appAnexoDrop]="inputImagem" [anexoDropDesabilitado]="salvando"
             class="upload-arquivo"
             [class.upload-arquivo-erro]="erros[CONTROLE_IMAGEM]"
             (click)="inputImagem.click()"
@@ -185,7 +185,7 @@
             <span class="material-symbols-outlined upload-arquivo-icone">upload_file</span>
 
             <div class="upload-arquivo-texto">
-              <strong>{{ arquivoSelecionado?.name || imagem.rotulo }}</strong>
+              <strong>{{ arquivoSelecionado?.name || ('Selecione ou arraste ' + imagem.rotulo.toLowerCase()) }}</strong>
               <span>PNG, JPEG, JPG ou WEBP</span>
             </div>
 

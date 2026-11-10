@@ -67,10 +67,10 @@
     <!-- ================================================= -->
     
     <div class="form-group">
-      <input #inputLogo id="logo" type="file" class="input-arquivo-oculto" accept=".jpg,.jpeg,.png,.webp"
+      <input [disabled]="isLoading" #inputLogo id="logo" type="file" class="input-arquivo-oculto" accept=".jpg,.jpeg,.png,.webp"
         (change)="selecionarLogo($event)">
     
-      <div [appAnexoDrop]="inputLogo" class="upload-arquivo" [class.upload-arquivo-erro]="erros['logo']" (click)="inputLogo.click()">
+      <div [appAnexoDrop]="inputLogo" [anexoDropDesabilitado]="isLoading" class="upload-arquivo" [class.upload-arquivo-erro]="erros['logo']" (click)="inputLogo.click()">
         <span class="material-symbols-outlined upload-arquivo-icone">
           upload_file
         </span>
@@ -80,7 +80,7 @@
             {{
             nomeLogoSelecionada
             ? nomeLogoSelecionada
-            : 'Selecione a logo do parceiro'
+            : 'Selecione ou arraste a logo do parceiro'
             }}
           </strong>
     

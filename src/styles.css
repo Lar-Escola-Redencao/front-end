@@ -924,10 +924,34 @@ input::-ms-clear {
   cursor: default;
 }
 
-[appAnexoDrop].anexo-arrastando {
-  outline: 2px dashed var(--primary-color);
-  outline-offset: -2px;
-  background-color: #3682dc14;
+.anexo-drop {
+  position: relative;
+}
+.anexo-drop.anexo-arrastando {
+  box-shadow: 0 0 0 2px rgba(54, 130, 220, .05);
+}
+.anexo-drop.anexo-arrastando::after {
+  content: attr(data-anexo-soltar);
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  padding: 12px;
+  box-sizing: border-box;
+  border: 1px dashed #8bb8ed;
+  border-radius: inherit;
+  background: #f5f9ff;
+  color: var(--primary-color);
+  font: 500 15px/1.4 var(--fonte-texto);
+  text-align: center;
+  pointer-events: none;
+}
+.slot-carrossel-dica {
+  font: 400 12px/1.4 var(--fonte-texto);
+  color: var(--input-color);
+  text-align: center;
+  padding: 0 8px;
 }
 
 .mat-mdc-tooltip.ajuda-arquivados .mdc-tooltip__surface {
@@ -969,3 +993,12 @@ html:not(.material-symbols-prontos) .material-symbols-outlined {
 .btn-remover-foto:hover:not(:disabled) { background: rgba(198, 40, 40, .07); }
 .btn-remover-foto:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
 .btn-remover-foto:disabled { opacity: .5; cursor: default; }
+
+.anexo-drop-erro:not([hidden]) {
+  display: block;
+  color: var(--error-color, #d32f2f);
+  font: 400 12px/1.4 var(--fonte-texto);
+  margin-top: 6px;
+}
+
+.anexo-drop[aria-disabled="true"] { opacity: .6; cursor: wait; }

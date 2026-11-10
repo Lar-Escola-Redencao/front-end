@@ -83,7 +83,7 @@
     }
 
     <div class="form-group">
-      <input
+      <input [disabled]="isLoading || isCarregandoEdicao"
         #inputFoto
         id="foto"
         type="file"
@@ -92,7 +92,7 @@
         (change)="selecionarFoto($event)"
       >
 
-      <div [appAnexoDrop]="inputFoto"
+      <div [appAnexoDrop]="inputFoto" [anexoDropDesabilitado]="isLoading || isCarregandoEdicao"
         class="upload-arquivo"
         [class.upload-arquivo-erro]="erros['foto']"
         (click)="inputFoto.click()"
@@ -106,7 +106,7 @@
             {{
               nomeArquivoSelecionado
                 ? nomeArquivoSelecionado
-                : 'Selecione a foto do membro'
+                : 'Selecione ou arraste a foto do membro'
             }}
           </strong>
 

@@ -92,7 +92,7 @@
           <div class="slot-carrossel" [class.slot-carrossel-carregando]="carregandoSlot[$index]">
             <span class="slot-carrossel-titulo">Imagem {{ $index + 1 }}</span>
 
-            <input
+            <input [disabled]="carregandoSlot[$index]"
               #inputSlot
               type="file"
               class="input-arquivo-oculto"
@@ -109,6 +109,7 @@
                 <img class="slot-carrossel-imagem" [src]="imagemSlot($index)" [alt]="'Imagem ' + ($index + 1)" />
               } @else {
                 <span class="material-symbols-outlined upload-arquivo-icone">upload_file</span>
+                <span class="slot-carrossel-dica">Selecione ou arraste uma imagem</span>
               }
             </div>
 
@@ -216,7 +217,7 @@
       <span class="error-text" *ngIf="errosHistoria['conteudo']">{{ errosHistoria['conteudo'] }}</span>
 
       <div class="form-group">
-        <input
+        <input [disabled]="isLoadingHistoria"
           #inputImagemHistoria
           type="file"
           class="input-arquivo-oculto"
@@ -224,7 +225,7 @@
           (change)="onImagemHistoriaSelecionada($event)"
         />
 
-        <div [appAnexoDrop]="inputImagemHistoria"
+        <div [appAnexoDrop]="inputImagemHistoria" [anexoDropDesabilitado]="isLoadingHistoria"
           class="upload-arquivo"
           [class.upload-arquivo-erro]="errosHistoria['imagem']"
           (click)="inputImagemHistoria.click()"
@@ -232,7 +233,7 @@
           <span class="material-symbols-outlined upload-arquivo-icone">upload_file</span>
 
           <div class="upload-arquivo-texto">
-            <strong>{{ nomeArquivoHistoria ? nomeArquivoHistoria : 'Selecione uma imagem (opcional)' }}</strong>
+            <strong>{{ nomeArquivoHistoria ? nomeArquivoHistoria : 'Selecione ou arraste uma imagem (opcional)' }}</strong>
             <span>PNG, JPEG, JPG ou WEBP</span>
           </div>
 
