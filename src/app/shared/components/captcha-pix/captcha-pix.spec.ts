@@ -6,8 +6,6 @@ import { CaptchaPix } from './captcha-pix';
 describe('CaptchaPix — ciclo de verificação', () => {
   let fixture: ComponentFixture<CaptchaPix>;
   let opcoes: Record<string, any>;
-  let largura: number;
-  let redimensionar: () => void;
   const chaveOriginal = environment.turnstileSiteKey;
   const render = vi.fn();
   const remove = vi.fn();
@@ -15,14 +13,7 @@ describe('CaptchaPix — ciclo de verificação', () => {
   let tokens: string[];
 
   beforeEach(async () => {
-    largura = 320;
     tokens = [];
-    vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockImplementation(() => largura);
-    vi.stubGlobal('ResizeObserver', class {
-      constructor(callback: () => void) { redimensionar = callback; }
-      observe() {}
-      disconnect() {}
-    });
     environment.turnstileSiteKey = 'sitekey-unitaria';
     render.mockImplementation((_container, configuracao) => { opcoes = configuracao; return 'widget'; });
     window.turnstile = { render, remove, reset };
@@ -70,16 +61,12 @@ describe('CaptchaPix — ciclo de verificação', () => {
     expect(fixture.nativeElement.querySelector('p').classList.contains('somente-leitor')).toBe(false);
   });
 
-  it('troca para compacto em espaço estreito invalidando a verificação anterior', async () => {
-    opcoes['callback']('token-anterior');
-    largura = 280;
-    redimensionar();
-    await fixture.whenStable();
+  it('usa largura flexível e destaca a solicitação de nova verificação em vermelho', () => {
+    expect(opcoes['size']).toBe('flexible');
+    fixture.componentInstance.resetar();
     fixture.detectChanges();
-    expect(remove).toHaveBeenCalledWith('widget');
-    expect(opcoes['size']).toBe('compact');
-    expect(tokens.at(-1)).toBe('');
-    expect(fixture.nativeElement.querySelector('.compacto')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('p').classList.contains('mensagem-erro')).toBe(true);
+    expect(fixture.nativeElement.querySelector('.compacto')).toBeNull();
   });
 
   it('remove o widget ao sair da etapa', () => {

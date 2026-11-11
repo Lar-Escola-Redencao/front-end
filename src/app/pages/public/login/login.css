@@ -226,3 +226,11 @@ form{
 .link-button{
   text-decoration: none;
 }
+
+@media (max-width: 380px) {
+  .form-panel { padding-inline: 10px; }
+}
+
+@media (max-width: 340px) {
+  .form-panel { padding-inline: 0; }
+}
