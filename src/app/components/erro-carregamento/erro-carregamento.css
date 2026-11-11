@@ -54,7 +54,7 @@ figcaption {
   color: rgba(30, 30, 30, 0.28);
   font-family: var(--fonte-texto);
   font-size: 0.95rem;
-  text-align: right;
+  text-align: center;
 }
 
 figcaption a {
