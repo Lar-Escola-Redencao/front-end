@@ -223,6 +223,32 @@ describe('Proteção de alterações não salvas em Meu perfil', () => {
 describe('Formulários de Meu perfil', () => {
   afterEach(() => vi.restoreAllMocks());
 
+  it('mostra a mensagem padrão sem cartão e tenta carregar novamente', () => {
+    const perfil = { id: 1, nomeCompleto: 'Administrador', email: 'admin@exemplo.com', cpf: '52998224725',
+      endereco: 'Rua A', telefone: '11999999999', idPapel: 1, nomePapel: 'ADMINISTRADOR', unidades: [] };
+    const buscarMeuPerfil = vi.fn()
+      .mockReturnValueOnce(throwError(() => ({ status: 0 })))
+      .mockReturnValueOnce(of(perfil));
+    TestBed.configureTestingModule({ imports: [Perfil], providers: [
+      provideRouter([]),
+      { provide: PerfilService, useValue: { buscarMeuPerfil } },
+      { provide: Auth, useValue: { logout: vi.fn() } },
+      { provide: ToastrService, useValue: { success: vi.fn(), error: vi.fn() } },
+    ] });
+    const fixture = TestBed.createComponent(Perfil);
+    fixture.detectChanges();
+    const painel = fixture.nativeElement.querySelector('.estado-erro') as HTMLElement;
+    expect(painel.textContent).toContain('Não foi possível carregar os dados. Tente novamente.');
+    expect(fixture.nativeElement.querySelector('.perfil-page-erro')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.cartao')).toBeNull();
+    painel.querySelector('button')!.click();
+    fixture.detectChanges();
+    expect(buscarMeuPerfil).toHaveBeenCalledTimes(2);
+    expect(fixture.nativeElement.querySelector('.estado-erro')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.conteudo')).not.toBeNull();
+  });
+
+
   it('impede abrir alteração de senha enquanto salva os identificadores da conta', async () => {
     const perfil = { id: 1, nomeCompleto: 'Administrador', email: 'admin@exemplo.com', cpf: '52998224725',
       endereco: 'Rua A', telefone: '11999999999', idPapel: 1, nomePapel: 'ADMINISTRADOR', unidades: [] };

@@ -51,13 +51,34 @@ describe('Carregamento da página inicial', () => {
     expect(elemento.querySelector('.spinner-carregamento')).toBeNull();
   });
 
-  it('encerra o carregamento também quando uma consulta falha', () => {
+  it('exibe erro de comunicação após uma consulta falhar', () => {
     unidades.next([]);
     eventos.next([]);
     parceiros.error(new Error('Falha na consulta'));
     fixture.detectChanges();
     const elemento: HTMLElement = fixture.nativeElement;
     expect(elemento.querySelector('main')?.getAttribute('aria-busy')).toBe('false');
+    expect(elemento.querySelector<HTMLElement>('.home-conteudo')?.hidden).toBe(true);
+    expect(elemento.querySelector('app-erro-carregamento')).not.toBeNull();
+  });
+
+  it('refaz as consultas pelo botão de nova tentativa e mostra o conteúdo após sucesso', () => {
+    unidades.error(new Error('Servidor indisponível'));
+    eventos.next([]);
+    parceiros.next([]);
+    fixture.detectChanges();
+    const elemento: HTMLElement = fixture.nativeElement;
+    unidades = new Subject();
+    eventos = new Subject();
+    parceiros = new Subject();
+    elemento.querySelector<HTMLButtonElement>('app-erro-carregamento button')!.click();
+    fixture.detectChanges();
+    expect(elemento.querySelector('.home-carregamento')).not.toBeNull();
+    unidades.next([]);
+    eventos.next([]);
+    parceiros.next([]);
+    fixture.detectChanges();
+    expect(elemento.querySelector('app-erro-carregamento')).toBeNull();
     expect(elemento.querySelector<HTMLElement>('.home-conteudo')?.hidden).toBe(false);
   });
 });

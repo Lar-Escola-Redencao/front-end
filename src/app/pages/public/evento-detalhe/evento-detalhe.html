@@ -12,8 +12,10 @@
 
   @if (carregando) {
     <p class="mensagem-estado" role="status" aria-label="Carregando evento"><span class="spinner-carregamento" aria-hidden="true"></span></p>
+  } @else if (erroCarregamento) {
+    <app-erro-carregamento (tentarNovamente)="carregarEvento()" />
   } @else if (naoEncontrado || !evento) {
-    <p class="mensagem-estado">Evento não encontrado.</p>
+    <app-estado-vazio icone="event_busy" mensagem="Evento não encontrado." />
   } @else {
     <div class="evento-conteudo">
       <div class="evento-galeria">

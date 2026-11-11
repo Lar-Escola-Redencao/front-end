@@ -5,6 +5,12 @@
   min-height: 100vh;
 }
 
+.eventos-page.pagina-erro,
+.eventos-page.pagina-carregando {
+  min-height: 100dvh;
+  padding-block: 82px 0;
+}
+
 .titulo-pagina {
   font-family: var(--fonte-titulo);
   font-size: 2rem;

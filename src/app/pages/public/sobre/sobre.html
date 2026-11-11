@@ -1,6 +1,6 @@
 <app-public-navbar></app-public-navbar>
 
-<main class="sobre-main" [attr.aria-busy]="carregandoPagina()">
+<main class="sobre-main" [class.pagina-erro]="erro() && !carregandoPagina()" [attr.aria-busy]="carregandoPagina()">
   <h1 class="sr-only">Conheça a OSC — Lar Escola Redenção</h1>
 
   @if (carregandoPagina()) {
@@ -8,14 +8,7 @@
       <span class="spinner-carregamento" aria-hidden="true"></span>
     </div>
   } @else if (erro()) {
-    <div class="estado-pagina" role="alert">
-      <span class="material-symbols-outlined estado-icone" aria-hidden="true">cloud_off</span>
-      <h2>Não foi possível carregar estas informações.</h2>
-      <p>Tente novamente em alguns instantes.</p>
-      <button type="button" class="btn-primary" (click)="carregarConteudo()">
-        Tentar novamente
-      </button>
-    </div>
+    <app-erro-carregamento (tentarNovamente)="carregarConteudo()" />
   }
   <div class="sobre-conteudo" [hidden]="carregandoPagina() || erro()">
     <section id="sobre" class="sobre-section" aria-label="Sobre o Lar Escola Redenção">
@@ -163,10 +156,10 @@
     </section>
 
     <section id="conheca-osc" aria-label="Composição da Diretoria">
-      <app-public-diretoria (carregado)="aoCarregarSecao('diretoria')"></app-public-diretoria>
+      <app-public-diretoria (carregado)="aoCarregarSecao('diretoria', $event)"></app-public-diretoria>
     </section>
     <section id="unidades" aria-label="Unidades de Atendimento">
-      <app-public-unidades (carregado)="aoCarregarSecao('unidades')"></app-public-unidades>
+      <app-public-unidades (carregado)="aoCarregarSecao('unidades', $event)"></app-public-unidades>
     </section>
   </div>
 </main>

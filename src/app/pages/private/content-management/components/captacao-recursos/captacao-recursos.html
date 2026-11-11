@@ -38,7 +38,6 @@
       [acoes]="acoesTabela"
       [carregando]="carregando"
       [erro]="erroCarregamento"
-      [mensagemErro]="'Não foi possível carregar a lista de ' + grupoAtivo.rotuloAba + '.'"
       [mensagemVazia]="mensagemVazia"
       (acao)="executarAcao($event)"
       (tentarNovamente)="carregarTabela()"
@@ -62,16 +61,14 @@
         <span role="status" aria-label="Carregando" class="spinner-carregamento"></span>
 
       </div>
+    } @else if (erroCarregamento) {
+      <div class="aviso-carregamento" role="alert">
+        <p>Não foi possível carregar os dados. Tente novamente.</p>
+        <button type="button" class="botao-tentar-novamente" (click)="carregarContato()">
+          Tentar novamente
+        </button>
+      </div>
     } @else {
-      @if (erroCarregamento) {
-        <div class="aviso-carregamento">
-          <p>Não foi possível carregar os dados salvos. Você ainda pode preencher e salvar o formulário.</p>
-          <button type="button" class="botao-tentar-novamente" (click)="carregarContato()">
-            Tentar novamente
-          </button>
-        </div>
-      }
-
       <form
         class="form-modal form-contato"
         [class.form-contato-disabled]="!editandoContato"

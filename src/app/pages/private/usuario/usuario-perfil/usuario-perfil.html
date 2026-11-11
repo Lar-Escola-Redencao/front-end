@@ -1,12 +1,12 @@
-<section class="usuario-perfil">
+<section class="usuario-perfil" [class.usuario-perfil-erro]="!!erro && !carregando" [class.usuario-perfil-carregando]="carregando">
   @if (carregando) {
     <div class="estado estado-carregando">
       <span role="status" aria-label="Carregando" class="spinner-carregamento"></span>
     </div>
   } @else if (erro) {
-    <div class="estado estado-erro">
+    <div class="estado estado-erro" role="alert">
       <p>{{ erro }}</p>
-      <button type="button" class="btn-tentar-novamente" (click)="voltar()">Voltar</button>
+      <button type="button" class="btn-tentar-novamente" (click)="carregarPerfil()">Tentar novamente</button>
     </div>
   } @else if (usuario) {
     <div class="perfil-layout">

@@ -272,7 +272,6 @@ export class Sobre implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalvas
         this.ngZone.run(() => {
           this.carregandoPagina = false;
           this.erroPagina = true;
-          this.toastr.error('Não foi possível carregar a página Sobre.', 'Erro');
           this.cdr.detectChanges();
         });
       },

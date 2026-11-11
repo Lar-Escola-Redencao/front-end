@@ -5,6 +5,7 @@ import { ActivatedRoute } from '@angular/router';
 import { Subject, of } from 'rxjs';
 import { vi } from 'vitest';
 import { Sobre } from './sobre';
+import { ErroCarregamento } from '@components/erro-carregamento/erro-carregamento';
 import { EstadoVazio } from 'src/app/components/estado-vazio/estado-vazio';
 import {
   ConteudoSobre,
@@ -16,9 +17,9 @@ class NavbarTeste {}
 @Component({ selector: 'app-public-footer', template: '' })
 class FooterTeste {}
 @Component({ selector: 'app-public-diretoria', template: '' })
-class DiretoriaTeste { @Output() carregado = new EventEmitter<void>(); }
+class DiretoriaTeste { @Output() carregado = new EventEmitter<boolean>(); }
 @Component({ selector: 'app-public-unidades', template: '' })
-class UnidadesTeste { @Output() carregado = new EventEmitter<void>(); }
+class UnidadesTeste { @Output() carregado = new EventEmitter<boolean>(); }
 
 describe('Sobre', () => {
   let fixture: ComponentFixture<Sobre>;
@@ -72,7 +73,7 @@ describe('Sobre', () => {
       ],
     })
       .overrideComponent(Sobre, {
-        set: { imports: [NavbarTeste, FooterTeste, DiretoriaTeste, UnidadesTeste, EstadoVazio] },
+        set: { imports: [NavbarTeste, FooterTeste, DiretoriaTeste, UnidadesTeste, EstadoVazio, ErroCarregamento] },
       })
       .compileComponents();
     fixture = TestBed.createComponent(Sobre);
@@ -89,8 +90,8 @@ describe('Sobre', () => {
     resposta.next(conteudo);
     resposta.complete();
     fixture.detectChanges();
-    fixture.debugElement.query(By.directive(DiretoriaTeste)).componentInstance.carregado.emit();
-    fixture.debugElement.query(By.directive(UnidadesTeste)).componentInstance.carregado.emit();
+    fixture.debugElement.query(By.directive(DiretoriaTeste)).componentInstance.carregado.emit(true);
+    fixture.debugElement.query(By.directive(UnidadesTeste)).componentInstance.carregado.emit(true);
     fixture.detectChanges();
     return fixture.nativeElement;
   }
@@ -109,10 +110,10 @@ describe('Sobre', () => {
     fixture.detectChanges();
     const pagina: HTMLElement = fixture.nativeElement;
     expect(pagina.querySelector('main')?.getAttribute('aria-busy')).toBe('true');
-    fixture.debugElement.query(By.directive(DiretoriaTeste)).componentInstance.carregado.emit();
+    fixture.debugElement.query(By.directive(DiretoriaTeste)).componentInstance.carregado.emit(true);
     fixture.detectChanges();
     expect(pagina.querySelector('.carregamento-pagina')).not.toBeNull();
-    fixture.debugElement.query(By.directive(UnidadesTeste)).componentInstance.carregado.emit();
+    fixture.debugElement.query(By.directive(UnidadesTeste)).componentInstance.carregado.emit(true);
     fixture.detectChanges();
     expect(pagina.querySelector('.carregamento-pagina')).toBeNull();
     expect(pagina.querySelector<HTMLElement>('.sobre-conteudo')?.hidden).toBe(false);
@@ -243,6 +244,8 @@ describe('Sobre', () => {
   });
 
   it('mostra mensagem amigável e permite tentar novamente após uma falha', () => {
+    fixture.debugElement.query(By.directive(DiretoriaTeste)).componentInstance.carregado.emit(true);
+    fixture.debugElement.query(By.directive(UnidadesTeste)).componentInstance.carregado.emit(true);
     resposta.error(new Error('Falha HTTP'));
     fixture.detectChanges();
     const pagina: HTMLElement = fixture.nativeElement;
@@ -250,7 +253,7 @@ describe('Sobre', () => {
     expect(pagina.querySelector<HTMLElement>('.sobre-conteudo')?.hidden).toBe(true);
     resposta = new Subject<ConteudoSobre>();
     service.obterConteudo.mockReturnValue(resposta.asObservable());
-    pagina.querySelector<HTMLButtonElement>('.estado-pagina button')!.click();
+    pagina.querySelector<HTMLButtonElement>('app-erro-carregamento button')!.click();
     fixture.detectChanges();
     expect(service.obterConteudo).toHaveBeenCalledTimes(2);
     expect(pagina.querySelector('[role="status"]')).not.toBeNull();

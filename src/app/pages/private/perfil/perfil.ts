@@ -172,7 +172,6 @@ export class Perfil implements OnInit, ComponentComAlteracoesNaoSalvas {
         this.ngZone.run(() => {
           this.erroCarregar = true;
           this.carregando = false;
-          this.toastr.error('Não foi possível carregar seu perfil.');
           this.cdr.detectChanges();
         });
       }

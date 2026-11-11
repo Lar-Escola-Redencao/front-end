@@ -10,7 +10,6 @@ describe('PublicEventosComponent', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       providers: [
-        PublicEventosComponent,
         {
           provide: EventoPublicoService,
           useValue: {
@@ -20,7 +19,7 @@ describe('PublicEventosComponent', () => {
       ]
     });
 
-    component = TestBed.inject(PublicEventosComponent);
+    component = TestBed.createComponent(PublicEventosComponent).componentInstance;
   });
 
   it('usa a imagem ja normalizada pela listagem publica', () => {

@@ -2,12 +2,10 @@
 .cabecalho { margin-bottom: 18px; }
 .titulo-ajuda { display: flex; align-items: center; gap: 4px; margin-bottom: 8px; }
 h2 { margin: 0; font: 700 1.3rem var(--fonte-titulo); }
-.cabecalho p, .periodo-aplicado, .nota-campo { color: var(--input-color); font-size: .9rem; line-height: 1.5; }
+.cabecalho p, .periodo-aplicado { color: var(--input-color); font-size: .9rem; line-height: 1.5; }
 .filtros { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: 12px; }
 .campo, mat-form-field { min-width: 0; width: 100%; }
 .erro-campo { margin: 6px 4px 0; color: var(--error-color); font-size: .85rem; line-height: 1.4; }
-.nota-campo { margin: 6px 4px 0; }
-.repetir-matriculas { border: 0; padding: 4px; background: transparent; color: var(--primary-color); cursor: pointer; font: inherit; text-decoration: underline; }
 .acoes-filtros { grid-column: 1 / -1; display: flex; justify-content: flex-end; }
 .calendario { border: 0; border-radius: 50%; background: transparent; color: var(--input-color); width: 40px; height: 40px; margin-right: 4px; display: inline-flex; justify-content: center; align-items: center; cursor: pointer; }
 .calendario:hover { background: #f5f5f5; color: var(--primary-color); }
@@ -39,11 +37,19 @@ h3 { margin: 0 0 16px; font-size: 1rem; font-weight: 600; }
 .totais > div > span:last-child { text-align: right; color: #666; }
 .estado { min-height: 150px; padding: 24px 16px; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 12px; text-align: center; }
 .spinner { display: inline-block; width: 28px; height: 28px; border: 3px solid rgba(0, 0, 0, .1); border-top-color: var(--primary-color); border-radius: 50%; animation: girar .8s linear infinite; }
-.btn-outline { padding: 8px 16px; border: 1px solid var(--primary-color); border-radius: 6px; background: transparent; color: var(--primary-color); font: inherit; cursor: pointer; }
+.estado-erro {
+  margin-top: 16px;
+  min-height: 0;
+  padding: 40px 24px;
+  background: var(--branco);
+  border-radius: 12px;
+  box-shadow: var(--sombra-padrao);
+}
+.btn-outline { padding: 8px 16px; border: 1px solid var(--primary-color); border-radius: 6px; background: transparent; color: var(--primary-color); font-family: var(--fonte-texto); cursor: pointer; }
 .btn-outline:hover { background: var(--primary-color); color: var(--branco); }
 .btn-outline:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 2px; }
 @keyframes girar { to { transform: rotate(360deg); } }
-.erro { color: var(--error-color); }
+.erro { margin: 0; color: rgb(182, 43, 43); }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 .grafico-barras:focus-visible, .calendario:focus-visible { outline: 2px solid var(--primary-color); outline-offset: 2px; }
 @media (max-width: 1100px) { .graficos { grid-template-columns: minmax(0, 1fr); } }

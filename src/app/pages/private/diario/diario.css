@@ -1003,3 +1003,35 @@
   min-height: 44px;
   flex-shrink: 0;
 }
+
+.diario-erro {
+  padding: 40px 24px;
+  background: var(--branco);
+  border-radius: 12px;
+  box-shadow: var(--sombra-padrao);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+}
+
+.diario-erro p {
+  margin: 0;
+  color: rgb(182, 43, 43);
+}
+
+.botao-tentar-novamente {
+  border: 1px solid var(--primary-color);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--primary-color);
+  padding: 8px 16px;
+  cursor: pointer;
+  font-family: var(--fonte-texto);
+}
+
+.botao-tentar-novamente:hover {
+  background: var(--primary-color);
+  color: var(--branco);
+}

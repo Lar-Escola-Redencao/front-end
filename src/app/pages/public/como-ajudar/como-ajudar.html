@@ -44,17 +44,7 @@
 
     <div class="formas-ajuda container">
       @if (erroCarregamento()) {
-        <div class="estado-erro" role="alert">
-          <p>Não foi possível carregar as informações de doação.</p>
-
-          <button
-            type="button"
-            class="btn-primary botao-tentar-novamente"
-            (click)="carregarPix()"
-          >
-            Tentar novamente
-          </button>
-        </div>
+        <app-erro-carregamento class="compacto" (tentarNovamente)="carregarPix()" />
       } @else if (configuracao(); as config) {
         <section
           id="pix"

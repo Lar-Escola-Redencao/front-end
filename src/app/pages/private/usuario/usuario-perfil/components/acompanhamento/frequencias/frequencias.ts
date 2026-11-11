@@ -74,6 +74,12 @@ export class AcompanhamentoFrequencias implements OnChanges, OnDestroy {
     });
   }
 
+  tentarNovamente(): void {
+    if (this.carregando() || this.carregandoMatriculas()) return;
+    if (this.erroMatriculas()) this.carregarMatriculas();
+    if (this.erro()) this.aplicar();
+  }
+
   alterarPeriodo(): void {
     this.erroPeriodo.set(null);
     const periodo = this.form.controls.periodo.value;
@@ -93,7 +99,7 @@ export class AcompanhamentoFrequencias implements OnChanges, OnDestroy {
     }).subscribe({
       next: dados => { this.resumo.set(dados); this.carregando.set(false); },
       error: () => {
-        this.erro.set('Não foi possível carregar a frequência. Tente novamente.'); this.carregando.set(false);
+        this.erro.set('Não foi possível carregar os dados. Tente novamente.'); this.carregando.set(false);
       },
     });
   }

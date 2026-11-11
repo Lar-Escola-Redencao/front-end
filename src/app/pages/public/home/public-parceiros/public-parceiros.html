@@ -3,7 +3,10 @@
     <span class="spinner-carregamento" aria-hidden="true"></span>
   </div>
 }
-<section class="public-parceiros-section" *ngIf="!carregando">
+@if (!carregando && erroCarregamento) {
+  <app-erro-carregamento (tentarNovamente)="carregar()" />
+}
+<section class="public-parceiros-section" *ngIf="!carregando && !erroCarregamento">
   <div class="container">
     
     <div class="parceiros-header">

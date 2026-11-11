@@ -1,3 +1,4 @@
+import { ErroCarregamento } from '@components/erro-carregamento/erro-carregamento';
 import { EstadoVazio } from '@components/estado-vazio/estado-vazio';
 import { ChangeDetectorRef, Component, EventEmitter, HostListener, OnInit, Output, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -8,34 +9,43 @@ import { UnidadeCard } from 'src/app/components/unidade-card/unidade-card';
 @Component({
   selector: 'app-public-unidades',
   standalone: true,
-  imports: [EstadoVazio, CommonModule, UnidadeCard],
+  imports: [ErroCarregamento, EstadoVazio, CommonModule, UnidadeCard],
   templateUrl: './public-unidades.html',
   styleUrl: './public-unidades.css'
 })
 export class PublicUnidadesComponent implements OnInit {
-  @Output() carregado = new EventEmitter<void>();
+  @Output() carregado = new EventEmitter<boolean>();
   private readonly publicContentService = inject(PublicContentService);
   private readonly cdr = inject(ChangeDetectorRef);
 
   unidades: Unidade[] = [];
-  carregando = true;
+  carregando = false;
+  erroCarregamento = false;
   indiceAtual = 0;
   emTransicao = true;
 
   ngOnInit(): void {
+    this.carregar();
+  }
+
+  carregar(): void {
+    if (this.carregando) return;
+    this.carregando = true;
+    this.erroCarregamento = false;
     this.publicContentService.getUnidades().subscribe({
       next: (unidades) => {
         this.unidades = unidades;
         this.indiceAtual = unidades.length;
         this.carregando = false;
         this.cdr.detectChanges();
-        this.carregado.emit();
+        this.carregado.emit(true);
       },
       error: () => {
+        this.erroCarregamento = true;
         this.unidades = [];
         this.carregando = false;
         this.cdr.detectChanges();
-        this.carregado.emit();
+        this.carregado.emit(false);
       }
     });
   }

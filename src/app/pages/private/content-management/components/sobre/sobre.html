@@ -23,8 +23,8 @@
 
       </div>
     } @else if (erroPagina) {
-      <div class="estado-pagina estado-pagina-erro">
-        <p>Não foi possível carregar a página Sobre.</p>
+      <div class="estado-pagina estado-pagina-erro" role="alert">
+        <p>Não foi possível carregar os dados. Tente novamente.</p>
         <button type="button" class="botao-tentar-novamente" (click)="tentarNovamentePagina()">
           Tentar novamente
         </button>
@@ -81,8 +81,8 @@
 
       </div>
     } @else if (erroPagina) {
-      <div class="estado-pagina estado-pagina-erro">
-        <p>Não foi possível carregar a página Sobre.</p>
+      <div class="estado-pagina estado-pagina-erro" role="alert">
+        <p>Não foi possível carregar os dados. Tente novamente.</p>
         <button type="button" class="botao-tentar-novamente" (click)="tentarNovamentePagina()">
           Tentar novamente
         </button>

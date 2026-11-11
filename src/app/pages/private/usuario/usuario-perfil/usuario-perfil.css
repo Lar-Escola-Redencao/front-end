@@ -325,7 +325,7 @@
 }
 
 .estado-carregando {
-  display: flex;
+  padding: 0;  display: flex;
   justify-content: center;
   border: 0;
   background: transparent;
@@ -337,11 +337,19 @@
   flex-direction: column;
   align-items: center;
   gap: 12px;
-  color: var(--error-color, #b3261e);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
-.estado-erro p {
-  margin: 0;
+.usuario-perfil.usuario-perfil-erro,
+.usuario-perfil.usuario-perfil-carregando {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100dvh - 110px);
+  padding-block: 0;
 }
 
 .spinner-primario {
@@ -519,4 +527,9 @@
   position: absolute;
   top: 8px;
   right: 8px;
+}
+
+.estado-erro p {
+  margin: 0;
+  color: rgb(182, 43, 43);
 }

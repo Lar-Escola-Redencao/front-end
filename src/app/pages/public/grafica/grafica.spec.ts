@@ -73,6 +73,7 @@ describe('Grafica', () => {
   it('exibe o spinner sem card branco e apresenta os produtos após carregar', () => {
     const spinner = fixture.nativeElement.querySelector('.spinner-carregamento');
     expect(spinner).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.grafica-cabecalho')).toBeNull();
     expect(spinner.closest('.state-box')).toBeNull();
     expect(fixture.nativeElement.querySelector('.carrossel-section')).toBeNull();
 
@@ -80,6 +81,7 @@ describe('Grafica', () => {
 
     expect(fixture.nativeElement.querySelector('.spinner-carregamento')).toBeNull();
     expect(fixture.nativeElement.querySelector('.carrossel-section')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.grafica-cabecalho')).not.toBeNull();
   });
 
   it('exibe as setas com cinco produtos e repete a sequência nos dois sentidos', () => {

@@ -1,3 +1,4 @@
+import { ErroCarregamento } from '@components/erro-carregamento/erro-carregamento';
 import {
   ChangeDetectorRef,
   Component,
@@ -20,6 +21,7 @@ type FiltroValor = 'todos' | 'gratuito' | 'pago';
   selector: 'app-eventos',
   standalone: true,
   imports: [
+    ErroCarregamento,
     CommonModule,
     RouterLink,
     FormsModule,
@@ -37,6 +39,7 @@ export class Eventos implements OnInit {
   eventosFiltrados: Evento[] = [];
   eventosPaginados: Evento[] = [];
   carregando = false;
+  erroCarregamento = false;
 
   filtroTitulo = '';
   filtroDataInicial = '';
@@ -60,7 +63,9 @@ export class Eventos implements OnInit {
   }
 
   carregarEventos(): void {
+    if (this.carregando) return;
     this.carregando = true;
+    this.erroCarregamento = false;
     this.eventoPublicoService.listarPublicos().subscribe({
       next: (dados) => {
         this.eventos = [...dados].sort(
@@ -72,6 +77,7 @@ export class Eventos implements OnInit {
         this.cdr.detectChanges();
       },
       error: () => {
+        this.erroCarregamento = true;
         this.carregando = false;
         this.cdr.detectChanges();
       }

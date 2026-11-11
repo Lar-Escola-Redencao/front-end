@@ -1042,5 +1042,12 @@ button:has(> .spinner-carregamento) {
   box-sizing: border-box;
   min-height: calc(100dvh - 82px);
 }
+
+.pagina-erro,
+.pagina-carregando {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
 mat-hint .spinner-carregamento,
 mat-option .spinner-carregamento { width: 16px; height: 16px; border-width: 2px; }

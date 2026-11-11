@@ -1,10 +1,10 @@
-<section class="perfil-page">
+<section class="perfil-page" [class.perfil-page-erro]="erroCarregar && !carregando" [class.perfil-page-carregando]="carregando">
   @if (carregando) {
     <p class="estado-info" role="status" aria-label="Carregando seus dados"><span class="spinner-carregamento" aria-hidden="true"></span></p>
   } @else if (erroCarregar) {
-    <div class="estado-erro">
-      <p>Não foi possível carregar seu perfil.</p>
-      <button type="button" class="btn-primary" (click)="carregarPerfil()">Tentar novamente</button>
+    <div class="estado-erro" role="alert">
+      <p>Não foi possível carregar os dados. Tente novamente.</p>
+      <button type="button" class="botao-tentar-novamente" (click)="carregarPerfil()">Tentar novamente</button>
     </div>
   } @else {
     <div class="conteudo">

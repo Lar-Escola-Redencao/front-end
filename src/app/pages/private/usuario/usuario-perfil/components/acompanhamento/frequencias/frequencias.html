@@ -23,12 +23,6 @@
           }
         </mat-select>
       </mat-form-field>
-      @if (carregandoMatriculas()) { <p class="nota-campo" role="status" aria-label="Carregando matrículas"><span class="spinner-carregamento" aria-hidden="true"></span></p> }
-      @if (erroMatriculas()) {
-        <div class="erro-campo" role="alert">{{ erroMatriculas() }}
-          <button type="button" class="repetir-matriculas" (click)="carregarMatriculas()">Tentar novamente</button>
-        </div>
-      }
     </div>
     @if (form.controls.periodo.value === 'PERSONALIZADO') {
       <div class="campo">
@@ -54,13 +48,13 @@
     }
   </form>
 
-  <div class="conteudo" [attr.aria-busy]="carregando()">
-    @if (carregando()) {
+  <div class="conteudo" [attr.aria-busy]="carregando() || carregandoMatriculas()">
+    @if (carregando() || carregandoMatriculas()) {
       <div class="estado" role="status"><span role="status" aria-label="Carregando" class="spinner-carregamento"></span><span class="sr-only">Carregando frequência...</span></div>
-    } @else if (erro()) {
-      <div class="estado" role="alert">
-        <p class="erro">{{ erro() }}</p>
-        <button type="button" class="btn-outline" (click)="aplicar()">Tentar novamente</button>
+    } @else if (erro() || erroMatriculas()) {
+      <div class="estado estado-erro" role="alert">
+        <p class="erro">Não foi possível carregar os dados. Tente novamente.</p>
+        <button type="button" class="btn-outline" (click)="tentarNovamente()">Tentar novamente</button>
       </div>
     } @else if (resumo(); as dados) {
       <p class="periodo-aplicado">{{ dataLegivel(dados.dataInicio) }} a {{ dataLegivel(dados.dataFim) }} · {{ dados.totalRegistros }} {{ dados.totalRegistros === 1 ? 'registro' : 'registros' }}</p>

@@ -1,6 +1,9 @@
+import { ErroCarregamento } from '@components/erro-carregamento/erro-carregamento';
 import { ChangeDetectorRef, Component, DestroyRef, ElementRef, HostListener, Input, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
+import { EstadoVazio } from '@components/estado-vazio/estado-vazio';
 import { CdkTrapFocus } from '@angular/cdk/a11y';
 import { ActivatedRoute, Router } from '@angular/router';
 import { PublicNavbar } from '@components/public-navbar/public-navbar';
@@ -11,7 +14,7 @@ import { EventoPublicoService } from 'src/app/shared/services/evento-publico/eve
 @Component({
   selector: 'app-evento-detalhe',
   standalone: true,
-  imports: [CommonModule, PublicNavbar, PublicFooter, CdkTrapFocus],
+  imports: [ErroCarregamento, EstadoVazio, CommonModule, PublicNavbar, PublicFooter, CdkTrapFocus],
   templateUrl: './evento-detalhe.html',
   styleUrl: './evento-detalhe.css'
 })
@@ -31,7 +34,8 @@ export class EventoDetalhe implements OnInit, OnDestroy {
   };
 
   evento: Evento | null = null;
-  carregando = true;
+  carregando = false;
+  erroCarregamento = false;
   naoEncontrado = false;
 
   imagemPrincipalIndisponivel = false;
@@ -82,6 +86,14 @@ export class EventoDetalhe implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.returnUrl = this.modoPreview ? null : this.obterReturnUrl();
+    this.carregarEvento();
+  }
+
+  carregarEvento(): void {
+    if (this.carregando) return;
+    this.carregando = true;
+    this.erroCarregamento = false;
+    this.naoEncontrado = false;
     const id = this.modoPreview ? this.eventoId : Number(this.route.snapshot.paramMap.get('id'));
 
     if (!id) {
@@ -97,9 +109,10 @@ export class EventoDetalhe implements OnInit, OnDestroy {
         this.carregando = false;
         this.atualizarTela();
       },
-      error: () => {
+      error: (erro: HttpErrorResponse) => {
         this.carregando = false;
-        this.naoEncontrado = true;
+        this.naoEncontrado = erro.status === 404;
+        this.erroCarregamento = !this.naoEncontrado;
         this.atualizarTela();
       }
     });

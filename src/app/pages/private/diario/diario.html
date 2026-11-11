@@ -72,16 +72,21 @@
 
   <div class="diario-conteudo">
     
-    @if (estadoTela === 'VAZIO' && !carregando) {
+    @if (carregandoDados) {
+      <div class="state-box" role="status" aria-label="Carregando diário">
+        <span class="spinner-carregamento" aria-hidden="true"></span>
+      </div>
+    }
+    @else if (erroCarregamento) {
+      <div class="diario-erro" role="alert">
+        <p>Não foi possível carregar os dados. Tente novamente.</p>
+        <button type="button" class="botao-tentar-novamente" (click)="tentarNovamente()">Tentar novamente</button>
+      </div>
+    }
+    @else if (estadoTela === 'VAZIO') {
       <app-estado-vazio icone="rule" mensagem="Selecione a unidade e a turma acima para carregar o diário."></app-estado-vazio>
     }
 
-    @else if (carregando) {
-      <div class="state-box">
-        <span role="status" aria-label="Carregando" class="spinner-carregamento"></span>
-
-      </div>
-    } 
     @else if (usuarios.length === 0 && filtroForm.valid) {
       <app-estado-vazio icone="person_off" mensagem="Nenhum usuário matriculado nesta turma para a data selecionada."></app-estado-vazio>
     }

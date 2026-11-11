@@ -42,6 +42,22 @@ describe('Gráficos do acompanhamento', () => {
     c.form.patchValue({ dataFim: '2026-03-02' }); c.aplicar();
     expect(api.frequencias).toHaveBeenLastCalledWith(10, { inicio: '2026-03-02', fim: '2026-03-02', matricula: 2 });
   });
+  it.each([false, true])('unifica o erro de matrículas no aviso central, com falha de frequência = %s', falhaFrequencia => {
+    api.matriculasFrequencia.mockReturnValueOnce(throwError(() => new Error('falha')));
+    if (falhaFrequencia) api.frequencias.mockReturnValueOnce(throwError(() => new Error('falha')));
+    const fixture = criar();
+    expect(fixture.nativeElement.querySelectorAll('[role="alert"]')).toHaveLength(1);
+    expect(fixture.nativeElement.textContent).not.toContain('Não foi possível carregar as matrículas');
+    expect(fixture.componentInstance.form.controls.matricula.disabled).toBe(true);
+    (fixture.nativeElement.querySelector('[role="alert"] button') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(api.matriculasFrequencia).toHaveBeenCalledTimes(2);
+    expect(api.frequencias).toHaveBeenCalledTimes(falhaFrequencia ? 2 : 1);
+    expect(fixture.componentInstance.form.controls.matricula.enabled).toBe(true);
+    expect(fixture.nativeElement.querySelector('[role="alert"]')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.graficos')).not.toBeNull();
+  });
+
   it('ignora a resposta antiga quando os filtros mudam', () => {
     const antiga = new Subject<ResumoFrequencia>(); const atual = new Subject<ResumoFrequencia>();
     api.frequencias.mockReturnValueOnce(antiga).mockReturnValueOnce(atual);

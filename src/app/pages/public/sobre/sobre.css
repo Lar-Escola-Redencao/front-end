@@ -5,6 +5,8 @@
   padding-top: 82px;
   min-height: 100vh;
 }
+
+.sobre-main.pagina-erro { min-height: 100dvh; }
 .container {
   max-width: 1040px;
   margin-inline: auto;

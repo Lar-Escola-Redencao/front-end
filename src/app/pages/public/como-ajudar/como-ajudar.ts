@@ -1,3 +1,4 @@
+import { ErroCarregamento } from '@components/erro-carregamento/erro-carregamento';
 import { CurrencyPipe, Location } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { Clipboard } from '@angular/cdk/clipboard';
@@ -17,7 +18,7 @@ import { forkJoin, timer } from 'rxjs';
 @Component({
   selector: 'app-como-ajudar',
   standalone: true,
-  imports: [PublicNavbar, PublicFooter, FormsModule, CurrencyPipe, ModalLayout, A11yModule, MatFormFieldModule, MatInputModule],
+  imports: [ErroCarregamento, PublicNavbar, PublicFooter, FormsModule, CurrencyPipe, ModalLayout, A11yModule, MatFormFieldModule, MatInputModule],
   templateUrl: './como-ajudar.html',
   styleUrl: './como-ajudar.css',
 })
@@ -41,7 +42,7 @@ export class ComoAjudar implements OnInit {
   private copiaChaveTimer?: ReturnType<typeof setTimeout>;
   protected readonly historico = inject(HistoricoPixService);
   protected readonly configuracao = signal<ConfiguracaoPix | null>(null);
-  protected readonly carregando = signal(true);
+  protected readonly carregando = signal(false);
   protected readonly erroCarregamento = signal(false);
   protected readonly indisponivel = signal(false);
   protected readonly gerando = signal(false);
@@ -151,6 +152,7 @@ export class ComoAjudar implements OnInit {
   }
 
   protected carregarPix(): void {
+    if (this.carregando()) return;
     clearTimeout(this.copiaChaveTimer);
     this.chaveCopiada.set(false);
     this.feedbackChave.set('');

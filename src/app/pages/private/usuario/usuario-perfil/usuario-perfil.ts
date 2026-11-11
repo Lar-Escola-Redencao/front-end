@@ -169,7 +169,7 @@ export class UsuarioPerfil implements OnInit, OnDestroy, ComponentComAlteracoesN
             this.voltarAposAcessoNegado('O usuário informado não foi encontrado.');
             return;
           }
-          this.erro = 'Não foi possível carregar o perfil do usuário.';
+          this.erro = 'Não foi possível carregar os dados. Tente novamente.';
           this.carregando = false;
           this.atualizarTela();
         });

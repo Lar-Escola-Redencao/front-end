@@ -1,10 +1,12 @@
 <app-public-navbar></app-public-navbar>
 
-<main class="grafica-main">
+<main class="grafica-main" [class.pagina-erro]="!!errorMessage()" [class.pagina-carregando]="isLoading()" aria-label="Gráfica Redenção">
+  @if (!isLoading() && !errorMessage()) {
   <header class="container grafica-cabecalho">
     <h1 class="grafica-titulo">Gráfica Redenção</h1>
     <p class="grafica-descricao">Conheça nossos produtos, serviços de impressão e solicite um orçamento.</p>
   </header>
+  }
 
   @if (isLoading()) {
     <div class="container">
@@ -14,10 +16,7 @@
     </div>
   } @else if (errorMessage()) {
     <div class="container">
-      <div class="state-box state-error" role="alert">
-        <p>{{ errorMessage() }}</p>
-        <button type="button" class="btn-retry" (click)="carregar()">Tentar novamente</button>
-      </div>
+      <app-erro-carregamento (tentarNovamente)="carregar()" />
     </div>
   } @else {
     @if (produtos().length > 0) {

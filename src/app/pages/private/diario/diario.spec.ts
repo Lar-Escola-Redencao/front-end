@@ -282,6 +282,102 @@ describe('Diário de turma', () => {
     expect(component.carregando).toBe(false);
   });
 
+  it('mantém os filtros na falha e repete a consulta do diário com a mesma seleção', () => {
+    api.listarFrequencia.mockReturnValueOnce(throwError(() => new Error('HTTP')));
+    component.filtroForm.get('data')!.setValue('2026-10-03');
+    fixture.detectChanges();
+    const painel = fixture.nativeElement.querySelector('.diario-erro') as HTMLElement;
+    expect(painel.textContent).toContain('Não foi possível carregar os dados. Tente novamente.');
+    expect(fixture.nativeElement.querySelector('.diario-header')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('app-estado-vazio')).toBeNull();
+    const resposta = new Subject<any[]>();
+    api.listarFrequencia.mockReturnValueOnce(resposta);
+    painel.querySelector('button')!.click();
+    component.tentarNovamente();
+    fixture.detectChanges();
+    expect(api.listarFrequencia).toHaveBeenLastCalledWith(2, '2026-10-03');
+    expect(fixture.nativeElement.querySelector('.spinner-carregamento')).not.toBeNull();
+    resposta.next([aluno()]); resposta.complete();
+    fixture.detectChanges();
+    expect(component.erroCarregamento).toBeNull();
+    expect(fixture.nativeElement.querySelector('.diario-header')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.diario-erro')).toBeNull();
+  });
+
+  it('mantém o cabeçalho e mostra o spinner abaixo enquanto carrega unidades, turmas e diário', () => {
+    fixture.destroy();
+    const unidadesPendentes = new Subject<any[]>();
+    const turmasPendentes = new Subject<any[]>();
+    const diarioPendente = new Subject<any[]>();
+    vi.spyOn(TestBed.inject(UnidadeService), 'listarTodas').mockReturnValueOnce(unidadesPendentes);
+    turmas.listar.mockReturnValueOnce(turmasPendentes);
+    api.listarFrequencia.mockReturnValueOnce(diarioPendente);
+    fixture = TestBed.createComponent(Diario);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    const conferirCarregamento = () => {
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('.spinner-carregamento')).not.toBeNull();
+      expect(fixture.nativeElement.querySelector('.diario-header')).not.toBeNull();
+      expect(fixture.nativeElement.querySelector('.diario-erro')).toBeNull();
+      expect(fixture.nativeElement.querySelector('app-estado-vazio')).toBeNull();
+    };
+    conferirCarregamento();
+    expect(component.filtroForm.get('idUnidade')!.disabled).toBe(true);
+    expect(component.filtroForm.get('idTurma')!.disabled).toBe(true);
+    unidadesPendentes.next([{ id: 1, nome: 'Unidade' }]); unidadesPendentes.complete();
+    conferirCarregamento();
+    expect(component.filtroForm.get('idUnidade')!.enabled).toBe(true);
+    expect(component.filtroForm.get('idTurma')!.disabled).toBe(true);
+    turmasPendentes.next([{ id: 2, unidade: { id: 1 }, horaInicio: '08:00', horaFim: '12:00', periodo: 'MANHA' }]);
+    turmasPendentes.complete();
+    conferirCarregamento();
+    expect(component.filtroForm.get('idTurma')!.enabled).toBe(true);
+    diarioPendente.error(new Error('HTTP'));
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.diario-erro')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.diario-header')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.spinner-carregamento')).toBeNull();
+    component.tentarNovamente();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.diario-erro')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.diario-header')).not.toBeNull();
+  });
+
+  it('repete a consulta de unidades quando o carregamento inicial falha', () => {
+    fixture.destroy();
+    const unidades = TestBed.inject(UnidadeService);
+    const listar = vi.spyOn(unidades, 'listarTodas')
+      .mockReturnValueOnce(throwError(() => new Error('HTTP')));
+    fixture = TestBed.createComponent(Diario);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+    expect(component.erroCarregamento).toBe('unidades');
+    expect(fixture.nativeElement.querySelector('.diario-header')).not.toBeNull();
+    (fixture.nativeElement.querySelector('.diario-erro button') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(listar).toHaveBeenCalledTimes(2);
+    expect(component.erroCarregamento).toBeNull();
+    expect(component.unidades).toHaveLength(1);
+  });
+
+  it('repete a consulta de turmas e preserva a seleção inicial após falha', () => {
+    fixture.destroy();
+    turmas.listar.mockReturnValueOnce(throwError(() => new Error('HTTP')));
+    fixture = TestBed.createComponent(Diario);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+    expect(component.erroCarregamento).toBe('turmas');
+    expect(component.filtroForm.get('idTurma')!.disabled).toBe(true);
+    component.tentarNovamente();
+    fixture.detectChanges();
+    expect(component.erroCarregamento).toBeNull();
+    expect(component.filtroForm.get('idUnidade')!.value).toBe(1);
+    expect(component.filtroForm.get('idTurma')!.value).toBe(2);
+    expect(component.usuarios).toHaveLength(1);
+  });
+
   it('mantém listeners após falha HTTP e cancela resposta obsoleta', () => {
     api.listarFrequencia.mockReturnValueOnce(throwError(() => new Error('HTTP')));
     component.filtroForm.get('data')!.setValue('2026-10-03');
@@ -355,10 +451,11 @@ describe('Diário de turma', () => {
     component.salvarDiarioLote(); await vi.advanceTimersByTimeAsync(100);
     expect(fixture.nativeElement.querySelector('.diario-header').hasAttribute('inert')).toBe(true);
     salvar.next(); salvar.complete(); await vi.advanceTimersByTimeAsync(100);
-    expect(fixture.nativeElement.querySelector('.diario-header').hasAttribute('inert')).toBe(false);
+    expect(fixture.nativeElement.querySelector('.diario-header')).not.toBeNull();
     expect(fixture.nativeElement.querySelector('.state-box .spinner-carregamento')).not.toBeNull();
     recarga.next([{ ...aluno(), idFrequencia: 10, presente: true }]); recarga.complete();
     await vi.advanceTimersByTimeAsync(100); expect(component.estadoTela).toBe('SALVO');
+    expect(fixture.nativeElement.querySelector('.diario-header').hasAttribute('inert')).toBe(false);
   });
 
   it('conta 48h desde o primeiro registro, permitindo o limite exato', () => {

@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
 
 import { EventoDetalhe } from './evento-detalhe';
 import { EventoPublicoService } from 'src/app/shared/services/evento-publico/evento-publico.service';
@@ -67,6 +68,28 @@ describe('EventoDetalhe', () => {
     fixture.detectChanges();
     elemento = fixture.nativeElement;
   }
+
+  it('diferencia evento inexistente de falha de comunicação e permite repetir a consulta', async () => {
+    const evento = criarEvento();
+    await montar(evento);
+    const buscar = vi.mocked(TestBed.inject(EventoPublicoService).buscarPorId);
+    buscar.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 0 })));
+    component.carregarEvento();
+    fixture.detectChanges();
+    expect(elemento.querySelector('app-erro-carregamento')).not.toBeNull();
+    expect(elemento.querySelector('app-estado-vazio')).toBeNull();
+    buscar.mockReturnValueOnce(of(evento));
+    elemento.querySelector<HTMLButtonElement>('app-erro-carregamento button')!.click();
+    fixture.detectChanges();
+    expect(elemento.querySelector('app-erro-carregamento')).toBeNull();
+    expect(elemento.querySelector('h1')?.textContent).toBe(evento.titulo);
+
+    buscar.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 404 })));
+    component.carregarEvento();
+    fixture.detectChanges();
+    expect(elemento.querySelector('app-erro-carregamento')).toBeNull();
+    expect(elemento.querySelector('app-estado-vazio')?.textContent).toContain('Evento não encontrado.');
+  });
 
   describe('ampliação das imagens dos parceiros', () => {
     it('amplia o parceiro mesmo em um evento sem imagem principal e fecha com Escape', async () => {

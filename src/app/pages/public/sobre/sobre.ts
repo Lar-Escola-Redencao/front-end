@@ -1,3 +1,4 @@
+import { ErroCarregamento } from '@components/erro-carregamento/erro-carregamento';
 import {
   Component,
   DestroyRef,
@@ -8,6 +9,7 @@ import {
   inject,
   signal,
   viewChildren,
+  ViewChild,
 } from '@angular/core';
 import { catchError, forkJoin, of } from 'rxjs';
 import { textoParaExibicao } from 'src/app/shared/utils/texto-paragrafos';
@@ -26,7 +28,7 @@ import {
 
 @Component({
   selector: 'app-sobre',
-  imports: [PublicNavbar, PublicFooter, PublicDiretoriaComponent, PublicUnidadesComponent, EstadoVazio],
+  imports: [ErroCarregamento, PublicNavbar, PublicFooter, PublicDiretoriaComponent, PublicUnidadesComponent, EstadoVazio],
   templateUrl: './sobre.html',
   styleUrl: './sobre.css',
   host: { '(window:resize)': 'atualizarLargura()' },
@@ -44,8 +46,10 @@ export class Sobre {
   private readonly carregandoSecoes = signal(true);
   private readonly secoesCarregadas = new Set<'diretoria' | 'unidades'>();
   protected readonly carregandoPagina = computed(
-    () => this.carregando() || (!this.erro() && this.carregandoSecoes()),
+    () => this.carregando() || this.carregandoSecoes(),
   );
+  @ViewChild(PublicDiretoriaComponent) private diretoria?: PublicDiretoriaComponent;
+  @ViewChild(PublicUnidadesComponent) private unidades?: PublicUnidadesComponent;
   protected readonly conteudo = signal<ConteudoSobre>({ texto: [], historia: [], carrossel: [] });
   protected readonly indiceHistoria = signal(0);
   protected readonly historiaSelecionada = computed(
@@ -92,6 +96,10 @@ export class Sobre {
     if (this.carregando()) return;
     this.carregando.set(true);
     this.erro.set(false);
+    this.secoesCarregadas.clear();
+    this.carregandoSecoes.set(true);
+    this.diretoria?.carregar();
+    this.unidades?.carregar();
     this.totalUnidades.set(null);
     this.indicadores.set(null);
     forkJoin({
@@ -117,8 +125,9 @@ export class Sobre {
       });
   }
 
-  protected aoCarregarSecao(secao: 'diretoria' | 'unidades'): void {
+  protected aoCarregarSecao(secao: 'diretoria' | 'unidades', sucesso = true): void {
     if (this.secoesCarregadas.has(secao)) return;
+    if (!sucesso) this.erro.set(true);
     this.secoesCarregadas.add(secao);
     if (this.secoesCarregadas.size < 2) return;
     this.carregandoSecoes.set(false);

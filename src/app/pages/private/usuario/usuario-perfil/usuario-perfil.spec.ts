@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { vi } from 'vitest';
 
 import { UsuarioPerfil } from './usuario-perfil';
@@ -108,6 +108,24 @@ describe('UsuarioPerfil', () => {
     fixture = TestBed.createComponent(UsuarioPerfil);
     component = fixture.componentInstance;
     await fixture.whenStable();
+  });
+
+  it('mostra o erro padrão e recarrega o mesmo usuário ao tentar novamente', () => {
+    const usuario = component.usuario!;
+    usuarioService.buscarPorId.mockReturnValueOnce(throwError(() => ({ status: 0 })));
+    component.carregarPerfil();
+    fixture.detectChanges();
+    const painel = fixture.nativeElement.querySelector('.estado-erro') as HTMLElement;
+    expect(painel.textContent).toContain('Não foi possível carregar os dados. Tente novamente.');
+    expect(fixture.nativeElement.querySelector('.usuario-perfil-erro')).not.toBeNull();
+    const botao = painel.querySelector('button')!;
+    expect(botao.textContent).toBe('Tentar novamente');
+    usuarioService.buscarPorId.mockReturnValueOnce(of(usuario));
+    botao.click();
+    fixture.detectChanges();
+    expect(usuarioService.buscarPorId).toHaveBeenLastCalledWith(7, true);
+    expect(fixture.nativeElement.querySelector('.estado-erro')).toBeNull();
+    expect(component.usuario).toEqual(usuario);
   });
 
   function abrirMaisAcoes(): HTMLElement {

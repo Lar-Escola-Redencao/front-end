@@ -417,7 +417,6 @@ export class CaptacaoRecursos implements OnInit, OnDestroy, ComponentComAlteraco
       error: () => {
         this.carregando = false;
         this.erroCarregamento = true;
-        this.toastr.error(`Não foi possível carregar a lista de ${this.grupoAtivo.rotuloAba}.`, 'Erro');
         this.cdr.detectChanges();
       },
     });
@@ -438,7 +437,6 @@ export class CaptacaoRecursos implements OnInit, OnDestroy, ComponentComAlteraco
       error: () => {
         this.carregando = false;
         this.erroCarregamento = true;
-        this.toastr.error(`Não foi possível carregar os dados de ${this.grupoAtivo.rotuloAba}.`, 'Erro');
         this.cdr.detectChanges();
       },
     });
