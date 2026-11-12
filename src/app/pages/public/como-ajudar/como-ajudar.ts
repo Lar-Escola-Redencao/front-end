@@ -1,7 +1,8 @@
 import { CurrencyPipe, Location } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { Clipboard } from '@angular/cdk/clipboard';
-import { Component, computed, DestroyRef, ElementRef, HostListener, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, DestroyRef, ElementRef, HostListener, inject, OnInit, signal, ViewChild } from '@angular/core';
+import { CaptchaPix } from 'src/app/shared/components/captcha-pix/captcha-pix';
 import { A11yModule } from '@angular/cdk/a11y';
 import { ModalLayout } from '@components/modal-layout/modal-layout';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -17,7 +18,7 @@ import { forkJoin, timer } from 'rxjs';
 @Component({
   selector: 'app-como-ajudar',
   standalone: true,
-  imports: [PublicNavbar, PublicFooter, FormsModule, CurrencyPipe, ModalLayout, A11yModule, MatFormFieldModule, MatInputModule],
+  imports: [PublicNavbar, PublicFooter, FormsModule, CurrencyPipe, ModalLayout, A11yModule, MatFormFieldModule, MatInputModule, CaptchaPix],
   templateUrl: './como-ajudar.html',
   styleUrl: './como-ajudar.css',
 })
@@ -56,6 +57,10 @@ export class ComoAjudar implements OnInit {
   protected readonly enviandoEmail = signal(false);
   protected readonly agradecimentoEnviado = signal(false);
   protected readonly erroEmail = signal('');
+  @ViewChild(CaptchaPix) private captcha?: CaptchaPix;
+  protected readonly captchaToken = signal('');
+  private readonly bloqueadoAte = signal(0);
+  protected readonly esperaEmail = computed(() => Math.max(0, Math.ceil((this.bloqueadoAte() - this.agora()) / 1000)));
   protected readonly codigoCopiado = signal<string | null>(null);
   private copiaCodigoTimer?: ReturnType<typeof setTimeout>;
   protected readonly pixEmAberto = computed(() => this.historico.codigos()
@@ -127,6 +132,7 @@ export class ComoAjudar implements OnInit {
     this.agradecimentoEnviado.set(false);
     this.emailDigitado = '';
     this.erroEmail.set('');
+    this.captchaToken.set('');
   }
 
   ngOnInit(): void {
@@ -319,6 +325,7 @@ export class ComoAjudar implements OnInit {
   protected abrirEmail(codigo: CodigoPix | null = this.codigo()): void {
     if (!codigo || this.enviandoEmail() || this.prazoEncerrado(codigo)) return;
     if (!this.modalAberto()) this.reabrirCodigo(codigo);
+    this.captchaToken.set('');
     this.etapaEmail.set(true);
   }
 
@@ -331,7 +338,7 @@ export class ComoAjudar implements OnInit {
   protected informarPagamento(): void {
     const codigo = this.codigo();
     this.atualizarHorario();
-    if (!codigo || this.prazoEncerrado(codigo) || this.enviandoEmail() || this.agradecimentoEnviado()) return;
+    if (!codigo || this.prazoEncerrado(codigo) || this.enviandoEmail() || this.agradecimentoEnviado() || this.esperaEmail() > 0) return;
     this.erroEmail.set('');
     const email = this.emailDigitado.trim();
     if (!email) {
@@ -342,8 +349,14 @@ export class ComoAjudar implements OnInit {
       this.erroEmail.set('Informe um e-mail válido ou deixe o campo vazio.');
       return;
     }
+    const token = this.captchaToken();
+    if (!token) {
+      this.erroEmail.set('Conclua a verificação de segurança ou continue sem e-mail.');
+      return;
+    }
     this.enviandoEmail.set(true);
-    this.pixService.enviarAgradecimento(codigo.identificador, email)
+    this.captchaToken.set('');
+    this.pixService.enviarAgradecimento(codigo.identificador, email, token)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {
@@ -352,7 +365,15 @@ export class ComoAjudar implements OnInit {
         },
         error: (erro) => {
           this.enviandoEmail.set(false);
+          this.atualizarHorario();
+          const espera = Number(erro.error?.retryAfterSeconds ?? erro.headers?.get('Retry-After'));
+          if (Number.isFinite(espera) && espera > 0) this.bloqueadoAte.set(Date.now() + Math.ceil(espera) * 1000);
+          if (erro.status === 409) {
+            this.concluirAgradecimento(codigo);
+            return;
+          }
           this.erroEmail.set(erro.error?.message ?? 'Não foi possível enviar o agradecimento. Tente novamente.');
+          this.captcha?.resetar();
         },
       });
   }

@@ -1,16 +1,17 @@
-import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit, ViewChild, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { PublicFooter } from '../../../components/public-footer/public-footer';
 import { PublicNavbar } from '../../../components/public-navbar/public-navbar';
-import { RecuperacaoSenhaService } from '../../../shared/services/auth/recuperacao-senha.service';
+import { RecuperacaoSenhaService, RecuperacaoSenhaResposta } from '../../../shared/services/auth/recuperacao-senha.service';
+import { CaptchaPix } from '../../../shared/components/captcha-pix/captcha-pix';
 
 const PENALIDADES_SEGUNDOS = [30, 60, 90, 180, 600, 1800, 3600];
+const TEMPO_RESET_TENTATIVAS_MS = 2 * 60 * 60 * 1000;
+const TEMPO_PERDAO_MS = 2 * 60 * 1000;
 const STORAGE_KEY = 'ler_recovery_session';
 const CODIGO_VALIDADE_MS = 15 * 60 * 1000;
-const TEMPO_RESET_TENTATIVAS_MS = 2 * 60 * 60 * 1000;
-const TEMPO_PERDAO_MS = 2 * 60 * 1000; 
 
 interface EmailCooldown {
     solicitadoEm: number;
@@ -26,7 +27,7 @@ interface RecoveryStorage {
 @Component({
     selector: 'app-recuperar-senha',
     standalone: true,
-    imports: [RouterLink, ReactiveFormsModule, PublicNavbar, PublicFooter],
+    imports: [RouterLink, ReactiveFormsModule, PublicNavbar, PublicFooter, CaptchaPix],
     templateUrl: './recuperar-senha.html',
     styleUrl: './recuperar-senha.css'
 })
@@ -40,6 +41,10 @@ export class RecuperarSenha implements OnInit, OnDestroy {
     tempoEspera = signal(0);
     codigo = signal<string[]>(['', '', '', '', '', '']);
     avisoCodigoPendente = signal(false);
+    captchaToken = signal('');
+    erroEnvio = signal('');
+    @ViewChild(CaptchaPix) private captcha?: CaptchaPix;
+    private bloqueadoAte = 0;
 
     private intervaloTimer: ReturnType<typeof setInterval> | undefined;
 
@@ -161,6 +166,7 @@ export class RecuperarSenha implements OnInit, OnDestroy {
     }
 
     solicitarCodigo(): void {
+        if (this.loading()) return;
         if (this.formEmail.invalid) {
             this.formEmail.markAllAsTouched();
             return;
@@ -189,9 +195,13 @@ export class RecuperarSenha implements OnInit, OnDestroy {
     }
 
     voltarParaEmail(): void {
+        if (this.loading()) return;
         this.formEmail.controls.email.setValue(this.email());
         this.avisoCodigoPendente.set(false);
+        this.captchaToken.set('');
+        this.erroEnvio.set('');
         if (this.intervaloTimer) clearInterval(this.intervaloTimer);
+        this.bloqueadoAte = 0;
         this.tempoEspera.set(0);
         this.step.set(1);
     }
@@ -202,58 +212,68 @@ export class RecuperarSenha implements OnInit, OnDestroy {
 
     private processarEnvio(isReenvio: boolean): void {
         const emailDigitado = this.email();
-        if (this.cooldownRestante(emailDigitado) > 0 || this.loading()) return;
+        if (this.cooldownRestante(emailDigitado) > 0 || this.tempoEspera() > 0 || this.loading()) return;
+        const token = this.captchaToken();
+        if (!token) {
+            this.erroEnvio.set('Conclua a verificação de segurança para solicitar o código.');
+            return;
+        }
 
         this.loading.set(true);
+        this.erroEnvio.set('');
+        this.captchaToken.set('');
 
-        this.recuperacaoService.solicitarRecuperacao(emailDigitado)
-            .then(() => this.concluirProcessamentoEnvio(isReenvio, emailDigitado))
+        this.recuperacaoService.solicitarRecuperacao(emailDigitado, token)
+            .then(resposta => this.concluirProcessamentoEnvio(isReenvio, emailDigitado, resposta))
             .catch((err: any) => {
+                const segundos = Number(err?.error?.retryAfterSeconds ?? err?.headers?.get('Retry-After'));
+                if (Number.isFinite(segundos) && segundos > 0) {
+                    this.registrarBloqueio(emailDigitado, segundos);
+                }
+                this.erroEnvio.set(err?.status === 0
+                    ? 'Não foi possível conectar ao servidor. Tente novamente.'
+                    : typeof err?.error?.message === 'string' ? err.error.message
+                    : 'Não foi possível solicitar o código. Faça uma nova verificação e tente novamente.');
                 if (err?.status === 429) {
                     this.toastr.warning('Aguarde um momento antes de solicitar um novo código.', 'Aviso');
                     this.avisoCodigoPendente.set(true);
                     this.step.set(2);
-                    this.registrarPedido(emailDigitado);
-                    return;
+                } else {
+                    this.toastr.error(this.erroEnvio(), 'Erro');
                 }
-                if (err?.status === 0) {
-                    this.toastr.error('Não foi possível conectar ao servidor. Tente novamente.', 'Erro');
-                    return;
-                }
-                this.concluirProcessamentoEnvio(isReenvio, emailDigitado);
             })
-            .finally(() => this.loading.set(false));
+            .finally(() => {
+                this.loading.set(false);
+                this.captcha?.resetar();
+            });
     }
 
-    private concluirProcessamentoEnvio(isReenvio: boolean, email: string): void {
+    private concluirProcessamentoEnvio(isReenvio: boolean, email: string, resposta?: RecuperacaoSenhaResposta): void {
         this.avisoCodigoPendente.set(false);
         this.step.set(2);
         this.toastr.success(
-            isReenvio
-                ? 'Código reenviado com sucesso.'
+            isReenvio ? 'Código reenviado com sucesso.'
                 : 'Se o e-mail constar na base, você receberá as instruções em breve.',
             'Sucesso'
         );
-        this.registrarPedido(email);
+        this.registrarPedido(email, resposta);
     }
 
-    private registrarPedido(email: string): void {
+    private registrarPedido(email: string, resposta?: RecuperacaoSenhaResposta): void {
         const storage = this.lerStorage();
         const chaveCodificada = this.codificarDado(email);
-        const historicoAnterior = storage.historico[chaveCodificada];
-
-        let tentativas = 0;
         const agora = Date.now();
-
+        const historicoAnterior = storage.historico[chaveCodificada];
+        let tentativas = 0;
         if (historicoAnterior) {
             const tempoDesdeFimDoCooldown = agora - historicoAnterior.proximoEnvioLiberadoEm;
             const continuaMesmoCiclo = tempoDesdeFimDoCooldown < TEMPO_RESET_TENTATIVAS_MS;
             const envioImediato = tempoDesdeFimDoCooldown < TEMPO_PERDAO_MS;
-
-            tentativas = (continuaMesmoCiclo && envioImediato) ? historicoAnterior.tentativas + 1 : 0;
+            tentativas = continuaMesmoCiclo && envioImediato ? historicoAnterior.tentativas + 1 : 0;
         }
-
-        const penalidade = PENALIDADES_SEGUNDOS[Math.min(tentativas, PENALIDADES_SEGUNDOS.length - 1)];
+        if (resposta) tentativas = resposta.tentativas;
+        const penalidade = resposta?.retryAfterSeconds
+            ?? PENALIDADES_SEGUNDOS[Math.min(tentativas, PENALIDADES_SEGUNDOS.length - 1)];
 
         storage.emailAtivo = chaveCodificada;
         storage.historico[chaveCodificada] = {
@@ -267,12 +287,29 @@ export class RecuperarSenha implements OnInit, OnDestroy {
         this.iniciarContagem();
     }
 
+    private registrarBloqueio(email: string, segundos: number): void {
+        const storage = this.lerStorage();
+        const chave = this.codificarDado(email);
+        const anterior = storage.historico[chave];
+        storage.emailAtivo = chave;
+        storage.historico[chave] = {
+            solicitadoEm: anterior?.solicitadoEm ?? 0,
+            tentativas: anterior?.tentativas ?? 0,
+            proximoEnvioLiberadoEm: Date.now() + segundos * 1000
+        };
+        this.salvarStorage(storage);
+        this.tempoEspera.set(segundos);
+        this.iniciarContagem();
+    }
+
     async avancarParaSenha(): Promise<void> {
+        if (this.loading() || !this.codigoCompleto()) return;
         this.loading.set(true);
         const tokenCompleto = this.codigo().join('');
 
         try {
             await this.recuperacaoService.validarCodigo(tokenCompleto);
+            this.captchaToken.set('');
             this.step.set(3);
         } catch (err: any) {
             this.toastr.error('Código inválido ou expirado.', 'Erro');
@@ -284,6 +321,7 @@ export class RecuperarSenha implements OnInit, OnDestroy {
     }
 
     redefinirSenha(): void {
+        if (this.loading()) return;
         if (this.formSenha.invalid) {
             this.formSenha.markAllAsTouched();
             return;
@@ -323,10 +361,14 @@ export class RecuperarSenha implements OnInit, OnDestroy {
 
     private iniciarContagem(): void {
         if (this.intervaloTimer) clearInterval(this.intervaloTimer);
-        this.intervaloTimer = setInterval(() => {
-            this.tempoEspera.update(t => t - 1);
-            if (this.tempoEspera() <= 0) clearInterval(this.intervaloTimer);
-        }, 1000);
+        this.bloqueadoAte = Date.now() + this.tempoEspera() * 1000;
+        this.intervaloTimer = setInterval(() => this.atualizarContagem(), 1000);
+    }
+
+    @HostListener('window:focus')
+    atualizarContagem(): void {
+        this.tempoEspera.set(Math.max(0, Math.ceil((this.bloqueadoAte - Date.now()) / 1000)));
+        if (!this.tempoEspera()) clearInterval(this.intervaloTimer);
     }
 
     formatarTempo(): string {
