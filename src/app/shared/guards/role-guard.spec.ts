@@ -3,17 +3,23 @@ import { ActivatedRouteSnapshot, Router, UrlTree } from '@angular/router';
 
 import { Modulo } from '../models/permissao.model';
 import { Auth } from '../services/auth/auth';
-import { roleGuard } from './role-guard';
+import { MENSAGEM_PAGINA_NAO_PERMITIDA, roleGuard } from './role-guard';
+import { ToastrService } from 'ngx-toastr';
 
 describe('roleGuard', () => {
   let authStub: { podeAcessar: ReturnType<typeof vi.fn> };
+  let toastr: { warning: ReturnType<typeof vi.fn> };
   let router: Router;
 
   beforeEach(() => {
     authStub = { podeAcessar: vi.fn() };
+    toastr = { warning: vi.fn() };
 
     TestBed.configureTestingModule({
-      providers: [{ provide: Auth, useValue: authStub }],
+      providers: [
+        { provide: Auth, useValue: authStub },
+        { provide: ToastrService, useValue: toastr },
+      ],
     });
     router = TestBed.inject(Router);
   });
@@ -27,6 +33,7 @@ describe('roleGuard', () => {
     authStub.podeAcessar.mockReturnValue(true);
 
     expect(runGuard('colaboradores')).toBe(true);
+    expect(toastr.warning).not.toHaveBeenCalled();
     expect(authStub.podeAcessar).toHaveBeenCalledWith('colaboradores');
   });
 
@@ -37,6 +44,7 @@ describe('roleGuard', () => {
 
     expect(result instanceof UrlTree).toBe(true);
     expect(router.serializeUrl(result)).toBe('/dashboard');
+    expect(toastr.warning).toHaveBeenCalledWith(MENSAGEM_PAGINA_NAO_PERMITIDA, 'Acesso negado');
   });
 
   it('permite rotas que não declaram módulo', () => {

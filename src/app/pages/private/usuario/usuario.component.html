@@ -214,7 +214,7 @@
       <span class="error-text" *ngIf="erros['foto']">{{ erros['foto'] }}</span>
       <div class="preview-foto" *ngIf="fotoPreviewUrl">
         <h3>Foto de perfil</h3>
-        <img [src]="fotoPreviewUrl" class="avatar-preview-inferior" alt="Prévia da foto de perfil">
+        <app-foto-usuario [caminho]="$any(fotoPreviewUrl)" classeImagem="avatar-preview-inferior" alt="Prévia da foto de perfil" />
       </div>
     </div>
 
@@ -552,13 +552,11 @@
     </div>
 
     <div class="preview-avatar-container">
-      <img *ngIf="usuarioPreview.imagemPerfil; else semFoto" [src]="usuarioPreview.imagemPerfil" alt="Foto de perfil"
-        class="preview-avatar">
-      <ng-template #semFoto>
+      <app-foto-usuario [caminho]="usuarioPreview.imagemPerfil" classeImagem="preview-avatar" alt="Foto de perfil">
         <div class="preview-avatar placeholder">
           <mat-icon>person</mat-icon>
         </div>
-      </ng-template>
+      </app-foto-usuario>
     </div>
 
     <h2 class="preview-title">{{ usuarioPreview.nomeCompleto }}</h2>
@@ -673,11 +671,9 @@
     } @else {
     <div class="vinculo-card" *ngFor="let vinculo of vinculosDoContato">
       <div class="vinculo-avatar-linha">
-        <img *ngIf="vinculo.imagemPerfil; else semFotoVinculo" [src]="vinculo.imagemPerfil" class="vinculo-avatar"
-          alt="Foto de perfil" (error)="onErroImagemVinculo(vinculo)">
-        <ng-template #semFotoVinculo>
+        <app-foto-usuario [caminho]="vinculo.imagemPerfil" classeImagem="vinculo-avatar" alt="Foto de perfil">
           <div class="vinculo-avatar placeholder"><mat-icon class="material-symbols-outlined">sentiment_excited</mat-icon></div>
-        </ng-template>
+        </app-foto-usuario>
         <div class="vinculo-textos">
           <span class="vinculo-nome-detalhe">
             <a class="vinculo-nome-texto usuario-perfil-link" [routerLink]="['/dashboard/usuarios', idUsuarioVinculo(vinculo)]" [queryParams]="perfilQueryParams">{{ nomeVinculo(vinculo) }}</a>

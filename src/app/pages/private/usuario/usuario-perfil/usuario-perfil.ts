@@ -1,3 +1,4 @@
+import { FotoUsuario } from 'src/app/shared/ui/foto-usuario/foto-usuario';
 import { HistoricoContextual } from '@components/historico-contextual/historico-contextual';
 import { AbasResponsivas } from 'src/app/shared/directives/abas-responsivas';
 import { CommonModule } from '@angular/common';
@@ -11,7 +12,6 @@ import { MatSelectModule } from '@angular/material/select';
 import { Subscription, switchMap } from 'rxjs';
 import Swal from 'sweetalert2';
 import { ToastrService } from 'ngx-toastr';
-import { environment } from 'src/environments/environment';
 import { Turma } from 'src/app/shared/models/turma.model';
 import { Unidade } from 'src/app/shared/models/unidade.model';
 import { UsuarioResponseDTO } from 'src/app/shared/models/usuario.model';
@@ -35,6 +35,7 @@ type AbaPerfil = 'acompanhamento' | 'contatos' | 'saude' | 'dados-pessoais' | 'd
   selector: 'app-usuario-perfil',
   standalone: true,
   imports: [
+    FotoUsuario,
     HistoricoContextual,
     AbasResponsivas,
     CommonModule,
@@ -86,7 +87,6 @@ export class UsuarioPerfil implements OnInit, OnDestroy, ComponentComAlteracoesN
   carregandoTurmasTransferencia = false;
   unidadesTransferencia: Unidade[] = [];
   turmasTransferencia: Turma[] = [];
-  fotoPerfilIndisponivel = false;
   private returnUrl: string | null = null;
 
   readonly formDesligamento = this.fb.group({
@@ -144,7 +144,6 @@ export class UsuarioPerfil implements OnInit, OnDestroy, ComponentComAlteracoesN
       next: usuario => {
         this.ngZone.run(() => {
           this.usuario = usuario;
-          this.fotoPerfilIndisponivel = false;
           this.carregando = false;
           this.atualizarTela();
         });
@@ -192,7 +191,6 @@ export class UsuarioPerfil implements OnInit, OnDestroy, ComponentComAlteracoesN
 
   atualizarUsuario(usuario: UsuarioResponseDTO): void {
     this.usuario = usuario;
-    this.fotoPerfilIndisponivel = false;
   }
 
   voltar(): void {
@@ -228,11 +226,6 @@ export class UsuarioPerfil implements OnInit, OnDestroy, ComponentComAlteracoesN
     return valor?.startsWith('/dashboard/') ? valor : null;
   }
 
-  get fotoPerfil(): string | null {
-    return this.fotoPerfilIndisponivel ? null : this.obterUrlArquivo(this.usuario?.imagemPerfil);
-  }
-
-  onErroFotoPerfil(): void { this.fotoPerfilIndisponivel = true; }
 
   get idade(): string {
     const anos = this.calcularIdade(this.usuario?.dataNascimento);
@@ -685,14 +678,6 @@ export class UsuarioPerfil implements OnInit, OnDestroy, ComponentComAlteracoesN
 
   private erroJaExibidoPeloInterceptor(erro: { status?: number }): boolean {
     return erro.status === 401 || erro.status === 403;
-  }
-
-  private obterUrlArquivo(valor?: string | null): string | null {
-    if (!valor) return null;
-    if (valor.startsWith('http://') || valor.startsWith('https://') || valor.startsWith('data:') || valor.startsWith('/images/')) {
-      return valor;
-    }
-    return `${environment.apiUrl}${valor}`;
   }
 
   private atualizarTela(): void {

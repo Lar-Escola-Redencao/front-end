@@ -1,8 +1,8 @@
 import { AnexoDrop } from 'src/app/shared/directives/anexo-drop';
 import { CommonModule } from '@angular/common';
-import { ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, DestroyRef, EventEmitter, Input, OnChanges, Output, SimpleChanges, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { Subject, catchError, distinctUntilChanged, map, of, switchMap, takeUntil, timer } from 'rxjs';
+import { Subject, Subscription, catchError, distinctUntilChanged, map, of, switchMap, takeUntil, timer } from 'rxjs';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
@@ -15,7 +15,7 @@ import { CepService } from 'src/app/shared/services/usuario/cep.service';
 import { montarEndereco, separarEndereco } from 'src/app/shared/utils/endereco';
 import { obterMensagemErro, validarArquivo, validarExtensaoArquivo } from 'src/app/shared/utils/form-validations';
 import { formatarCep, formatarCpf } from 'src/app/shared/utils/masks';
-import { environment } from 'src/environments/environment';
+import { FotoUsuarioService } from 'src/app/shared/services/usuario/foto-usuario.service';
 import { montarBaseAtualizacaoUsuario } from '../../utils/usuario-atualizacao-dto';
 
 @Component({
@@ -40,6 +40,8 @@ export class UsuarioPerfilDadosPessoais implements OnChanges {
   private readonly cancelarConsultaCep = new Subject<void>();
   private readonly toastr = inject(ToastrService);
   private readonly changeDetectorRef = inject(ChangeDetectorRef);
+  private readonly fotos = inject(FotoUsuarioService);
+  private carregamentoFoto?: Subscription;
 
   @Input() usuario: UsuarioResponseDTO | null = null;
   @Input() somenteLeitura = false;
@@ -51,6 +53,7 @@ export class UsuarioPerfilDadosPessoais implements OnChanges {
   avisoCep = '';
   fotoSelecionada: File | null = null;
   fotoPreviewUrl: string | null = null;
+  /** Foto atual carregada pela rota protegida (URL temporária `blob:`), exibida só quando existe. */
   fotoPerfilValidadaUrl: string | null = null;
   erroFoto = '';
   private valoresOriginais: unknown = null;
@@ -92,6 +95,8 @@ export class UsuarioPerfilDadosPessoais implements OnChanges {
   });
 
   constructor() {
+    inject(DestroyRef).onDestroy(() => this.descartarFotoCarregada());
+
     this.form.controls.cep.valueChanges.pipe(
       map(valor => String(valor ?? '').replace(/\D/g, '')),
       distinctUntilChanged(),
@@ -149,7 +154,7 @@ export class UsuarioPerfilDadosPessoais implements OnChanges {
 
   onErroFotoPreview(): void {
     this.fotoPreviewUrl = null;
-    this.fotoPerfilValidadaUrl = null;
+    this.descartarFotoCarregada();
   }
 
   editar(): void {
@@ -254,7 +259,6 @@ export class UsuarioPerfilDadosPessoais implements OnChanges {
     this.consultandoCep = false;
     this.avisoCep = '';
     this.editando = false;
-    this.fotoPerfilValidadaUrl = null;
     this.form.reset({
       nomeCompleto: this.usuario?.nomeCompleto ?? '',
       dataNascimento: this.normalizarData(this.usuario?.dataNascimento),
@@ -317,25 +321,23 @@ export class UsuarioPerfilDadosPessoais implements OnChanges {
     return valor ? valor.split('T')[0] : '';
   }
 
-  private obterUrlArquivo(valor?: string | null): string | null {
-    if (!valor) return null;
-    if (valor.startsWith('http://') || valor.startsWith('https://') || valor.startsWith('data:') || valor.startsWith('/images/')) {
-      return valor;
-    }
-    return `${environment.apiUrl}${valor}`;
-  }
-
   private validarFotoPerfilExistente(): void {
-    const url = this.obterUrlArquivo(this.usuario?.imagemPerfil);
-    if (!url) return;
+    this.descartarFotoCarregada();
+    const caminho = this.usuario?.imagemPerfil;
+    if (!caminho) return;
 
-    const imagem = new Image();
-    imagem.onload = () => {
-      if (this.obterUrlArquivo(this.usuario?.imagemPerfil) !== url) return;
+    this.carregamentoFoto = this.fotos.carregar(caminho).subscribe(url => {
       this.fotoPerfilValidadaUrl = url;
       this.changeDetectorRef.markForCheck();
-    };
-    imagem.src = url;
+    });
+  }
+
+  private descartarFotoCarregada(): void {
+    this.carregamentoFoto?.unsubscribe();
+    this.carregamentoFoto = undefined;
+    // Só URLs `blob:` criadas pelo serviço são liberadas; prévias `data:` são ignoradas.
+    this.fotos.liberar(this.fotoPerfilValidadaUrl);
+    this.fotoPerfilValidadaUrl = null;
   }
 
   abrirCalendario(campo: HTMLInputElement): void {
