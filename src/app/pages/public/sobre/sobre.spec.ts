@@ -96,6 +96,45 @@ describe('Sobre', () => {
     return fixture.nativeElement;
   }
 
+  it('exibe sete desenvolvedores após as unidades e oculta a cópia dos leitores de tela', () => {
+    const pagina = carregar();
+    const secao = pagina.querySelector('#desenvolvedores')!;
+    expect(pagina.querySelector('#unidades')!.nextElementSibling).toBe(secao);
+    expect(secao.querySelector('h2')!.textContent).toBe('Desenvolvedores');
+    const grupos = secao.querySelectorAll('.desenvolvedores-grupo');
+    expect(grupos[0].querySelectorAll('.desenvolvedor-card')).toHaveLength(7);
+    expect(grupos[0].querySelectorAll('img')).toHaveLength(7);
+    expect(grupos[0].querySelector('.desenvolvedor-card h3')!.textContent).toBe('Ana Beatriz Rocha Duarte');
+    expect(grupos[0].querySelector('img')!.getAttribute('src')).toBe('/images/desenvolvedores/ana.jpeg');
+    expect(grupos[1].getAttribute('aria-hidden')).toBe('true');
+    expect(grupos[1].querySelectorAll('[tabindex="-1"]')).toHaveLength(7);
+  });
+
+  it('permite pausar e retomar o carrossel de desenvolvedores pelo botão', () => {
+    const pagina = carregar();
+    const botao = pagina.querySelector<HTMLButtonElement>('.desenvolvedores-controle')!;
+    const trilho = pagina.querySelector('.desenvolvedores-trilho')!;
+    botao.click(); fixture.detectChanges();
+    expect(botao.getAttribute('aria-pressed')).toBe('true');
+    expect(trilho.classList.contains('pausado')).toBe(true);
+    expect(botao.getAttribute('aria-label')).toContain('Retomar');
+    botao.click(); fixture.detectChanges();
+    expect(botao.getAttribute('aria-pressed')).toBe('false');
+    expect(trilho.classList.contains('pausado')).toBe(false);
+  });
+
+  it('usa o avatar de fallback se a foto de um desenvolvedor falhar', () => {
+    const pagina = carregar();
+    const desenvolvedores = (fixture.componentInstance as any).desenvolvedores;
+    desenvolvedores[0].imagem = '/foto-indisponivel.jpg';
+    fixture.changeDetectorRef.markForCheck(); fixture.detectChanges();
+    const card = pagina.querySelector('.desenvolvedor-card')!;
+    card.querySelector('img')!.dispatchEvent(new Event('error'));
+    fixture.detectChanges();
+    expect(card.querySelector('img')).toBeNull();
+    expect(card.querySelector('.desenvolvedor-fallback')).not.toBeNull();
+  });
+
   it('exibe o carregamento enquanto aguarda o CMS', () => {
     const pagina: HTMLElement = fixture.nativeElement;
     expect(pagina.querySelector('[role="status"] .spinner-carregamento')).not.toBeNull();

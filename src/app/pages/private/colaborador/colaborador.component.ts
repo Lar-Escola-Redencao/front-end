@@ -46,7 +46,7 @@ import { ColaboradorService } from 'src/app/shared/services/colaborador/colabora
 import { PapelService } from 'src/app/shared/services/colaborador/papel.service';
 import { UnidadeService } from 'src/app/shared/services/colaborador/unidade.service';
 import { Alertas } from 'src/app/shared/utils/alerts';
-import { mapearErrosFormulario } from 'src/app/shared/utils/form-validations';
+import { validarCpf, mapearErrosFormulario } from 'src/app/shared/utils/form-validations';
 import {
   CampoOrdenacao,
   alternarOrdenacao,
@@ -153,10 +153,6 @@ export class ColaboradorComponent
       senhasDiferentes:
         'As senhas não coincidem.'
     },
-    cpf: {
-      minlength: 'CPF incompleto.',
-      maxlength: 'CPF incompleto.'
-    },
     telefone: {
       minlength: 'Telefone incompleto.',
       maxlength: 'Telefone incompleto.'
@@ -248,14 +244,7 @@ export class ColaboradorComponent
       ],
       senha: [''],
       confirmarSenha: [''],
-      cpf: [
-        '',
-        [
-          Validators.required,
-          Validators.minLength(14),
-          Validators.maxLength(14)
-        ]
-      ],
+      cpf: ['', [Validators.required, validarCpf]],
       endereco: [
         '',
         [

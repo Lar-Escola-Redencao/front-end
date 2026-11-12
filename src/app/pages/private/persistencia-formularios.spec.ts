@@ -80,7 +80,7 @@ const casos: CasoPersistencia[] = [
   { nome: 'colaboradores', componente: ColaboradorComponent, servico: ColaboradorService, formulario: 'formColaborador', salvar: 'salvar',
     original: { id: 1, nomeCompleto: 'Marcos Silva', email: 'marcos@example.org', cpf: '52998224725', endereco: 'Rua das Flores',
       telefone: '16999999999', idPapel: 3, unidades: [{ id: 1 }] },
-    alteracoes: { nomeCompleto: 'Marcos Souza', email: 'marcosnovo@example.org', cpf: '123.456.789-00', endereco: 'Rua das Rosas',
+    alteracoes: { nomeCompleto: 'Marcos Souza', email: 'marcosnovo@example.org', cpf: '111.444.777-35', endereco: 'Rua das Rosas',
       telefone: '(16) 98888-8888', idsUnidades: [2] }, preservados: { idsUnidades: [1] }, abrir: (c, o) => c.abrirEdicao(o) },
   { nome: 'meu perfil', componente: Perfil, servico: PerfilService, formulario: 'formDados', salvar: 'salvar', indiceDto: 0,
     original: { id: 1, nomeCompleto: 'Maria Silva', endereco: 'Rua das Flores', telefone: '16999999999', email: 'maria@example.org' },

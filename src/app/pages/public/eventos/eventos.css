@@ -16,7 +16,15 @@
   font-size: 2rem;
   text-align: center;
   color: var(--preto);
-  margin-bottom: 32px;
+  margin: 0 0 8px;
+}
+
+.descricao-pagina {
+  margin: 0 0 40px;
+  color: rgba(30, 30, 30, 0.7);
+  font-size: 1rem;
+  line-height: 1.5;
+  text-align: center;
 }
 
 .acoes-eventos {

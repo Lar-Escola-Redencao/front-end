@@ -59,6 +59,7 @@ import {
 } from 'src/app/shared/models/contato.model';
 import { Alertas } from 'src/app/shared/utils/alerts';
 import {
+  validarCpf,
   TAMANHO_MAXIMO_ARQUIVO_BYTES,
   mapearErrosFormulario,
   obterMensagemErro,
@@ -212,7 +213,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
     telefone: ['', [Validators.required, Validators.minLength(14)]],
     email: ['', Validators.email],
     endereco: [''],
-    cpf: ['', Validators.minLength(14)],
+    cpf: ['', validarCpf],
     localTrabalho: ['']
   });
 
@@ -802,7 +803,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
       nomeCompleto: ['', [Validators.required, Validators.minLength(3)]],
       dataNascimento: ['', Validators.required],
       usarOutroDocumento: [false],
-      cpf: ['', [Validators.required, Validators.minLength(14)]],
+      cpf: ['', [Validators.required, validarCpf]],
       tipoDocumento: [''], documentoAuxiliar: [''], cadUnico: [''],
       endereco: ['', Validators.required], bairro: ['', Validators.required],
       cep: ['', Validators.pattern(/^\d{5}-?\d{3}$/)],
@@ -919,7 +920,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
         tipoDocCtrl?.setValidators([Validators.required]);
         docAuxCtrl?.setValidators([Validators.required]);
       } else {
-        cpfCtrl?.setValidators([Validators.required, Validators.minLength(14)]);
+        cpfCtrl?.setValidators([Validators.required, validarCpf]);
         tipoDocCtrl?.clearValidators();
         docAuxCtrl?.clearValidators();
       }
@@ -1185,7 +1186,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
               parentesco: [c.parentesco, Validators.required],
               telefone: [formatarTelefone(c.telefone), [Validators.required, Validators.minLength(14)]],
               email: [c.email, Validators.email],
-              endereco: [c.endereco], cpf: [formatarCpf(c.cpf), Validators.minLength(14)], localTrabalho: [c.localTrabalho || ''],
+              endereco: [c.endereco], cpf: [formatarCpf(c.cpf), validarCpf], localTrabalho: [c.localTrabalho || ''],
               busca: [''], tipoBusca: ['Nome'], buscarExistente: [false], principal: [c.principal]
             });
 
@@ -1427,7 +1428,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
       parentesco: ['', Validators.required],
       telefone: ['', [Validators.required, Validators.minLength(14)]],
       email: ['', Validators.email],
-      endereco: [''], cpf: ['', Validators.minLength(14)], localTrabalho: [''],
+      endereco: [''], cpf: ['', validarCpf], localTrabalho: [''],
       busca: [''], tipoBusca: ['Nome'], buscarExistente: [false], principal: [isPrincipal]
     });
 
@@ -1700,9 +1701,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
     );
     const erroFoto = this.erros['foto'];
     this.erros = {
-      ...mapearErrosFormulario(this.formUsuario, {
-        cpf: { minlength: 'CPF incompleto.', maxlength: 'CPF incompleto.' }
-      }),
+      ...mapearErrosFormulario(this.formUsuario),
       ...errosServidor
     };
     if (erroFoto) this.erros['foto'] = erroFoto;
@@ -1712,6 +1711,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
   mensagemErro(ctrl: AbstractControl | null, rotulo?: string, chaveServidor?: string): string {
     const e = ctrl?.errors;
     if (!e) return '';
+    if (e['cpfInvalido']) return 'Informe um CPF válido.';
     if (e['cpfDuplicadoContato']) return 'Este CPF já foi informado em outro contato.';
     if (e['cpfDuplicado']) return this.mensagemCpfDuplicado;
     if (e['servidor']) return typeof e['servidor'] === 'string' ? e['servidor'] : (chaveServidor && this.erros[chaveServidor]) || 'Valor inválido.';
@@ -1834,7 +1834,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
     }
 
     const cpf = this.formUsuario.get('cpf')?.value?.replace(/\D/g, '') || '';
-    if (cpf.length !== 11) {
+    if (cpf.length !== 11 || this.formUsuario.get('cpf')?.hasError('cpfInvalido')) {
       this.limparErroCpfDuplicado();
       return;
     }

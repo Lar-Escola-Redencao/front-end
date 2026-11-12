@@ -1,3 +1,4 @@
+import { cpfValido } from 'src/app/shared/utils/form-validations';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, effect, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -32,7 +33,7 @@ function identifierValidator(control: AbstractControl): ValidationErrors | null 
   if (pareceEmail(value)) {
     return EMAIL_PATTERN.test(value) ? null : { identifier: true };
   }
-  return value.replace(/\D/g, '').length === 11 ? null : { identifier: true };
+  return cpfValido(value) ? null : { cpfInvalido: true };
 }
 
 @Component({

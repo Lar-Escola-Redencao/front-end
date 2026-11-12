@@ -14,7 +14,7 @@ import { CepService } from 'src/app/shared/services/usuario/cep.service';
 
 const usuario = {
   id: 1, nomeCompleto: 'Maria Silva', dataNascimento: '2015-01-01',
-  cpf: '12345678901', endereco: 'Rua A', bairro: 'Centro', cep: '14801000', escola: 'Escola',
+  cpf: '52998224725', endereco: 'Rua A', bairro: 'Centro', cep: '14801000', escola: 'Escola',
   periodoEscolar: 'MANHA', serieEscolar: 'PRIMEIRO_ANO', idUnidade: 1, idTurma: 2,
   contatos: [{ id: 8, nomeCompleto: 'Ana Silva', telefone: '11999999999', cpf: '', parentesco: 'MAE', principal: true }],
   composicaoFamiliar: [{ id: 12, nomeCompleto: 'Ana Silva', parentescoVinculo: 'MAE', idade: 0, escolaridade: 'MEDIO_COMPLETO', renda: 0, beneficios: 0 }],
@@ -362,14 +362,14 @@ describe('Contrato de edição de usuários', () => {
   it('carrega o preview completo em vez de depender da linha da listagem', () => {
     const contatoService = TestBed.inject(ContatoService);
     vi.mocked(contatoService.buscarDetalhe).mockReturnValue(of({
-      id: 8, nomeCompleto: 'Ana Silva', telefone: '11999999999', cpf: '12345678901',
+      id: 8, nomeCompleto: 'Ana Silva', telefone: '11999999999', cpf: '52998224725',
       email: 'ana@example.com', endereco: 'Rua Completa', localTrabalho: 'Escola', quantidadeVinculos: 1,
       vinculos: [{ idUsuario: 1, nomeUsuario: 'Maria Silva', parentesco: 'MAE', principal: true }]
     }));
     component.abrirPreviewContato({ id: 8, nomeCompleto: 'Ana', telefone: '', quantidadeVinculos: 0 });
     expect(contatoService.buscarDetalhe).toHaveBeenCalledWith(8);
     expect(component.contatoPreview).toMatchObject({
-      nomeCompleto: 'Ana Silva', cpf: '123.456.789-01', endereco: 'Rua Completa', localTrabalho: 'Escola'
+      nomeCompleto: 'Ana Silva', cpf: '529.982.247-25', endereco: 'Rua Completa', localTrabalho: 'Escola'
     });
     expect(component.contatoPreview?.vinculos).toHaveLength(1);
     expect(component.carregandoPreviewContato).toBe(false);
@@ -443,7 +443,7 @@ describe('Contrato de edição de usuários', () => {
     component.contatosArray.at(0).patchValue({ nomeCompleto: 'gg', telefone: '(11) 9', cpf: '123' });
     expect(component.mensagemErro(component.contatosArray.at(0).get('nomeCompleto'))).toBe('Mínimo de 3 caracteres.');
     expect(component.mensagemErro(component.contatosArray.at(0).get('telefone'), 'Telefone')).toBe('Telefone incompleto.');
-    expect(component.mensagemErro(component.contatosArray.at(0).get('cpf'), 'CPF')).toBe('CPF incompleto.');
+    expect(component.mensagemErro(component.contatosArray.at(0).get('cpf'), 'CPF')).toBe('Informe um CPF válido.');
   });
 
   it('confirma descarte do vínculo e mantém os dados ao continuar editando', async () => {

@@ -20,7 +20,7 @@
           <span class="material-symbols-outlined field-icon" aria-hidden="true">badge</span>
         </div>
         @if (form.controls.identifier.invalid && form.controls.identifier.touched) {
-          <p class="error-text">Informe um e-mail ou CPF válido.</p>
+          <p class="error-text">{{ form.controls.identifier.hasError('cpfInvalido') ? 'Informe um CPF válido.' : 'Informe um e-mail ou CPF válido.' }}</p>
         }
 
         <div class="field">

@@ -42,6 +42,25 @@ describe('Login', () => {
       .forEach((request) => request.flush([]));
   }
 
+  it('rejeita CPF inválido no campo de acesso e aceita CPF válido ou e-mail', () => {
+    setup();
+    const campo = fixture.nativeElement.querySelector('#identifier') as HTMLInputElement;
+    campo.value = '000.000.000-00';
+    campo.dispatchEvent(new Event('input'));
+    campo.dispatchEvent(new Event('blur'));
+    fixture.detectChanges();
+    expect(campo.classList.contains('ng-invalid')).toBe(true);
+    expect(fixture.nativeElement.textContent).toContain('Informe um CPF válido.');
+    campo.value = '529.982.247-25';
+    campo.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    expect(campo.classList.contains('ng-valid')).toBe(true);
+    campo.value = 'admin@exemplo.com';
+    campo.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    expect(campo.classList.contains('ng-valid')).toBe(true);
+  });
+
   it('does not show a session warning on a plain login visit', () => {
     setup();
     expect(toastr.warning).not.toHaveBeenCalled();
@@ -148,7 +167,7 @@ describe('Login', () => {
       setup();
       const httpMock = TestBed.inject(HttpTestingController);
 
-      typeIntoIdentifier('12345678901');
+      typeIntoIdentifier('52998224725');
       identifierInput().dispatchEvent(new Event('blur'));
       (fixture.nativeElement.querySelector('#password') as HTMLInputElement).value = 'secret';
       fixture.nativeElement
@@ -161,7 +180,7 @@ describe('Login', () => {
       );
 
       const req = httpMock.expectOne(`${environment.apiUrl}/auth/login`);
-      expect(req.request.body.identificador).toBe('12345678901');
+      expect(req.request.body.identificador).toBe('52998224725');
       httpMock.verify();
     });
 

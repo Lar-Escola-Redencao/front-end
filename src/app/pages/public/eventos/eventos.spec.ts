@@ -58,6 +58,7 @@ describe('Estados da página pública de eventos', () => {
     fixture.detectChanges();
     const pagina: HTMLElement = fixture.nativeElement;
     expect(pagina.textContent).toContain('Nenhum evento disponível no momento.');
+    expect(pagina.querySelector('.acoes-eventos')).toBeNull();
     resposta.next([{
       id: 1, titulo: 'Bazar', descricao: 'Evento', dataEvento: new Date('2030-01-01'),
       endereco: 'Rua', imagem: '', tipoEvento: TipoEvento.ARRECADACAO, parceiros: [],
@@ -66,6 +67,7 @@ describe('Estados da página pública de eventos', () => {
     fixture.changeDetectorRef.markForCheck();
     fixture.detectChanges();
     expect(pagina.textContent).toContain('Nenhum evento encontrado para a busca ou os filtros selecionados.');
+    expect(pagina.querySelector('.acoes-eventos')).not.toBeNull();
     expect(pagina.querySelector('app-erro-carregamento')).toBeNull();
   });
 });

@@ -161,6 +161,48 @@
     <section id="unidades" aria-label="Unidades de Atendimento">
       <app-public-unidades (carregado)="aoCarregarSecao('unidades', $event)"></app-public-unidades>
     </section>
+
+    <section id="desenvolvedores" class="desenvolvedores-section" aria-labelledby="titulo-desenvolvedores">
+      <div class="desenvolvedores-cabecalho">
+        <div class="desenvolvedores-apresentacao">
+          <h2 id="titulo-desenvolvedores"><span class="desenvolvedores-destaque">Desenvolvedores</span></h2>
+          <p>Conheça a equipe de formandos de Tecnologia em Sistemas para Internet do IFSP Campus Araraquara responsável pelo desenvolvimento deste site em 2026.</p>
+        </div>
+        <button type="button" class="desenvolvedores-controle"
+          [attr.aria-label]="desenvolvedoresPausados() ? 'Retomar carrossel de desenvolvedores' : 'Pausar carrossel de desenvolvedores'"
+          [attr.aria-pressed]="desenvolvedoresPausados()"
+          (click)="desenvolvedoresPausados.set(!desenvolvedoresPausados())">
+          <span class="material-symbols-outlined" aria-hidden="true">{{ desenvolvedoresPausados() ? 'play_arrow' : 'pause' }}</span>
+        </button>
+      </div>
+      <div class="desenvolvedores-carrossel" role="region" aria-label="Equipe de desenvolvimento" tabindex="0">
+        <div class="desenvolvedores-trilho" [class.pausado]="desenvolvedoresPausados()"
+          [style.--copias-desenvolvedores]="copiasDesenvolvedores().length">
+          @for (copia of copiasDesenvolvedores(); track copia) {
+            <div class="desenvolvedores-grupo" [attr.aria-hidden]="copia === 0 ? null : 'true'">
+              @for (desenvolvedor of desenvolvedores; track desenvolvedor.id) {
+                <article class="desenvolvedor-card" [attr.tabindex]="copia === 0 ? 0 : -1"
+                  [attr.aria-label]="desenvolvedor.nome">
+                  <div class="desenvolvedor-retrato">
+                    @if (desenvolvedor.imagem) {
+                      <img [src]="desenvolvedor.imagem" [alt]="desenvolvedor.nome"
+                        loading="lazy" width="224" height="280" (error)="desenvolvedor.imagem = null">
+                    } @else {
+                      <div class="desenvolvedor-fallback" aria-hidden="true">
+                        <span class="material-icons">person</span>
+                      </div>
+                    }
+                  </div>
+                  <div class="desenvolvedor-info">
+                    <h3>{{ desenvolvedor.nome }}</h3>
+                  </div>
+                </article>
+              }
+            </div>
+          }
+        </div>
+      </div>
+    </section>
   </div>
 </main>
 

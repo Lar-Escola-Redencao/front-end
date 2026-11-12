@@ -70,6 +70,22 @@ export class Sobre {
       hoje.getMonth() + 1 < mes || (hoje.getMonth() + 1 === mes && hoje.getDate() < dia);
     return hoje.getFullYear() - ano - (aniversarioPendente ? 1 : 0);
   });
+  protected readonly desenvolvedores: { id: number; nome: string; imagem: string | null }[] =
+    [
+      { id: 1, nome: 'Ana Beatriz Rocha Duarte', imagem: '/images/desenvolvedores/ana.jpeg' },
+      { id: 2, nome: 'Eduardo Ferreira Bonifacio', imagem: '/images/desenvolvedores/eduardo.jpeg' },
+      { id: 3, nome: 'Gabriel Albino', imagem: '/images/desenvolvedores/gabriel.jpeg' },
+      { id: 4, nome: 'Gabrielle Ulisses', imagem: '/images/desenvolvedores/gabrielle.jpeg' },
+      { id: 5, nome: 'Miguel Henrique Batista', imagem: '/images/desenvolvedores/miguel.jpeg' },
+      { id: 6, nome: 'Natan Mendes Araújo', imagem: '/images/desenvolvedores/natan.jpeg' },
+      { id: 7, nome: 'Tufy Elias Silva', imagem: '/images/desenvolvedores/tufy.jpeg' },
+    ];
+  protected readonly copiasDesenvolvedores = computed(() => {
+    const larguraGrupo = this.desenvolvedores.length * (224 + 24);
+    const quantidade = Math.max(2, Math.ceil(this.larguraTela() / larguraGrupo) + 1);
+    return Array.from({ length: quantidade }, (_, indice) => indice);
+  });
+  protected readonly desenvolvedoresPausados = signal(false);
   protected readonly imagensComErro = signal<string[]>([]);
   protected readonly colunasFotos = computed(() => {
     const fotos = this.conteudo().carrossel;

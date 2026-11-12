@@ -11,7 +11,7 @@ import { ToastrService } from 'ngx-toastr';
 
 import { Perfil as PerfilModel } from 'src/app/shared/models/perfil.model';
 import { PerfilService } from 'src/app/shared/services/colaborador/perfil.service';
-import { mapearErrosFormulario } from 'src/app/shared/utils/form-validations';
+import { validarCpf, mapearErrosFormulario } from 'src/app/shared/utils/form-validations';
 import { formatarCpf, formatarTelefone } from 'src/app/shared/utils/masks';
 import { Auth } from 'src/app/shared/services/auth/auth';
 import { ComponentComAlteracoesNaoSalvas } from 'src/app/shared/guards/can-deactivate.guard';
@@ -72,7 +72,7 @@ export class Perfil implements OnInit, ComponentComAlteracoesNaoSalvas {
     this.formDados.disable();
     this.formConta = this.fb.group({
       email: ['', [Validators.required, Validators.email, Validators.minLength(5), Validators.maxLength(100)]],
-      cpf: ['', [Validators.required, Validators.minLength(14), Validators.maxLength(14)]]
+      cpf: ['', [Validators.required, validarCpf]]
     });
     this.formConta.disable();
   }

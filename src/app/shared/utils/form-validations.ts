@@ -25,6 +25,9 @@ const MENSAGENS_GENERICAS: Record<string, (err: any) => string> = {
   email: () =>
     'Digite um e-mail válido.',
 
+  cpfInvalido: () =>
+    'Informe um CPF válido.',
+
   min: (err) =>
     `O valor não pode ser menor que ${err.min}.`,
 
@@ -48,6 +51,29 @@ const MENSAGENS_GENERICAS: Record<string, (err: any) => string> = {
 
 };
 
+
+export function cpfValido(valor: unknown): boolean {
+  const texto = String(valor ?? '').trim();
+  if (!/^(?:\d{11}|\d{3}\.\d{3}\.\d{3}-\d{2})$/.test(texto)) return false;
+  const digitos = texto.replace(/\D/g, '');
+  if (/^(\d)\1{10}$/.test(digitos)) return false;
+
+  for (let tamanhoBase = 9; tamanhoBase <= 10; tamanhoBase++) {
+    let soma = 0;
+    for (let indice = 0; indice < tamanhoBase; indice++) {
+      soma += Number(digitos[indice]) * (tamanhoBase + 1 - indice);
+    }
+    const resto = soma % 11;
+    const digitoEsperado = resto < 2 ? 0 : 11 - resto;
+    if (Number(digitos[tamanhoBase]) !== digitoEsperado) return false;
+  }
+  return true;
+}
+
+export const validarCpf: ValidatorFn = controle => {
+  if (controle.value == null || String(controle.value).trim() === '') return null;
+  return cpfValido(controle.value) ? null : { cpfInvalido: true };
+};
 
 // =========================================================
 // CONFIGURAÇÕES DE ARQUIVOS

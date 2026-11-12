@@ -13,7 +13,7 @@ import { CadastroUsuarioCompletoDTO, UsuarioResponseDTO } from 'src/app/shared/m
 import { UsuarioService } from 'src/app/shared/services/usuario/usuario.service';
 import { CepService } from 'src/app/shared/services/usuario/cep.service';
 import { montarEndereco, separarEndereco } from 'src/app/shared/utils/endereco';
-import { obterMensagemErro, validarArquivo, validarExtensaoArquivo } from 'src/app/shared/utils/form-validations';
+import { validarCpf, obterMensagemErro, validarArquivo, validarExtensaoArquivo } from 'src/app/shared/utils/form-validations';
 import { formatarCep, formatarCpf } from 'src/app/shared/utils/masks';
 import { environment } from 'src/environments/environment';
 import { montarBaseAtualizacaoUsuario } from '../../utils/usuario-atualizacao-dto';
@@ -78,7 +78,7 @@ export class UsuarioPerfilDadosPessoais implements OnChanges {
   form = this.fb.group({
     nomeCompleto: ['', [Validators.required, Validators.minLength(3)]],
     dataNascimento: ['', Validators.required],
-    cpf: [''],
+    cpf: ['', validarCpf],
     tipoDocumento: [''],
     documentoAuxiliar: [''],
     cadUnico: [''],
@@ -258,7 +258,7 @@ export class UsuarioPerfilDadosPessoais implements OnChanges {
     if (!controle || !controle.touched || !controle.errors) return '';
     if (controle.errors['required']) return 'Campo obrigatório.';
     if (controle.errors['minlength']) return 'Mínimo de 3 caracteres.';
-    return 'Campo inválido.';
+    return obterMensagemErro(controle.errors);
   }
 
   private preencherFormulario(): void {

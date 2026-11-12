@@ -1,3 +1,4 @@
+import { cpfValido } from 'src/app/shared/utils/form-validations';
 import { AbstractControl, ValidatorFn } from '@angular/forms';
 import { formatarCpf, formatarTelefone } from 'src/app/shared/utils/masks';
 
@@ -51,7 +52,10 @@ export function validarTipoChavePix(tipo: () => TipoChavePix): ValidatorFn {
     const valor = String(controle.value ?? '').trim();
     if (!valor) return null;
     const valido = chaveCompativelComTipo(valor, tipo());
-    return valido ? null : { custom: 'Informe uma chave válida para o tipo selecionado.' };
+    if (valido) return null;
+    return tipo() === 'cpf'
+      ? { cpfInvalido: true }
+      : { custom: 'Informe uma chave válida para o tipo selecionado.' };
   };
 }
 
@@ -62,7 +66,7 @@ function chaveCompativelComTipo(valor: string, tipo: TipoChavePix): boolean {
       return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(valor)
         && /^[\x21-\x7e]+$/.test(valor) && valor.length <= 77;
     case 'cpf':
-      return /^\d{11}$/.test(semMascara);
+      return cpfValido(valor);
     case 'cnpj':
       return /^[A-Z\d]{12}\d{2}$/.test(semMascara);
     case 'telefone': {

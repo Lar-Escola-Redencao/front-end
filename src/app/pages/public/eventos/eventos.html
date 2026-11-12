@@ -3,11 +3,14 @@
 <main class="eventos-page" [class.pagina-erro]="erroCarregamento" [class.pagina-carregando]="carregando" aria-label="Eventos">
   @if (!carregando && !erroCarregamento) {
   <h1 class="titulo-pagina">Eventos</h1>
+  <p class="descricao-pagina">Acompanhe nossas ações e os próximos eventos da organização.</p>
 
-  <div class="acoes-eventos">
-    <app-barra-busca placeholder="Buscar por nome do evento..." [valor]="filtroTitulo" (buscar)="buscar($event)" />
-    <app-filtros-eventos [filtros]="filtrosAplicados" (aplicar)="filtrar($event)" />
-  </div>
+  @if (eventos.length > 0) {
+    <div class="acoes-eventos">
+      <app-barra-busca placeholder="Buscar por nome do evento..." [valor]="filtroTitulo" (buscar)="buscar($event)" />
+      <app-filtros-eventos [filtros]="filtrosAplicados" (aplicar)="filtrar($event)" />
+    </div>
+  }
   }
 
   @if (carregando) {
