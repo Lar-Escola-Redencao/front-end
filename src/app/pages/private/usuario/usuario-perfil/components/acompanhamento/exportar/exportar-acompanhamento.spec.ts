@@ -99,4 +99,30 @@ describe('Exportar acompanhamento', () => {
     component.gerar();
     expect(api.exportarRelatorio).toHaveBeenCalledTimes(2);
   });
+  it('mostra a mensagem da API (Blob) e o botão "Tentar novamente", limpando ao editar o formulário', async () => {
+    montar('adm');
+    const mensagem = "Valor inválido para o parâmetro 'formato'. Valores aceitos: PDF, XLSX.";
+    api.exportarRelatorio.mockReturnValueOnce(throwError(() => new HttpErrorResponse({
+      status: 400, error: new Blob([JSON.stringify({ message: mensagem })], { type: 'application/json' }),
+    })));
+    const botao = () => fixture.nativeElement.querySelector('button[type="submit"]') as HTMLButtonElement;
+    expect(botao().textContent).toContain('Baixar relatório');
+    component.gerar();
+    await vi.waitFor(() => expect(component.erro()).toBe(mensagem));
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.erro-geracao[role="alert"]').textContent).toContain(mensagem);
+    expect(botao().textContent).toContain('Tentar novamente');
+    expect(botao().disabled).toBe(false);
+
+    api.exportarRelatorio.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 0 })));
+    botao().click();
+    expect(api.exportarRelatorio).toHaveBeenCalledTimes(2);
+    await vi.waitFor(() => expect(component.erro()).toContain('conectar ao servidor'));
+    fixture.detectChanges();
+
+    component.form.patchValue({ formato: 'XLSX' });
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.erro-geracao')).toBeNull();
+    expect(botao().textContent).toContain('Baixar relatório');
+  });
 });
