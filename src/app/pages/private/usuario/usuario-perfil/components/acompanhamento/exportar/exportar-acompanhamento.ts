@@ -1,3 +1,4 @@
+import { AjudaAcompanhamento } from '../compartilhado/ajuda-acompanhamento';
 import { Component, Input, OnDestroy, OnInit, Output, EventEmitter, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -17,7 +18,7 @@ import { PERIODOS_FREQUENCIA, PeriodoFrequencia, hojeBrasilia, intervaloPeriodo,
 @Component({
   selector: 'app-exportar-acompanhamento',
   standalone: true,
-  imports: [ReactiveFormsModule, ModalLayout, MatFormFieldModule, MatIconModule, MatInputModule, MatSelectModule],
+  imports: [AjudaAcompanhamento, ReactiveFormsModule, ModalLayout, MatFormFieldModule, MatIconModule, MatInputModule, MatSelectModule],
   templateUrl: './exportar-acompanhamento.html',
   styleUrl: './exportar-acompanhamento.css',
 })
@@ -32,8 +33,12 @@ export class ExportarAcompanhamento implements OnInit, OnDestroy {
   private geracao?: Subscription;
   private consultaMatriculas?: Subscription;
 
-  readonly periodos = PERIODOS_FREQUENCIA;
+  get periodos() {
+    return PERIODOS_FREQUENCIA.filter(periodo => periodo.valor === 'PERSONALIZADO'
+      || intervaloPeriodo(periodo.valor, hojeBrasilia()).dataFim >= this.dataMinima);
+  }
   readonly form = this.fb.nonNullable.group({
+    formato: this.fb.nonNullable.control<'PDF' | 'XLSX'>('PDF'),
     periodo: this.fb.nonNullable.control<PeriodoFrequencia>('ESTE_ANO'),
     matricula: this.fb.nonNullable.control(0),
     dataInicio: this.fb.nonNullable.control(''),
@@ -48,8 +53,10 @@ export class ExportarAcompanhamento implements OnInit, OnDestroy {
 
   get incluiEntrevistas(): boolean { return this.sessao.isAdministrador() || this.sessao.isCoordenador(); }
 
+  get dataMinima(): string { return this.usuario?.dataPrimeiraMatricula?.slice(0, 10) ?? ''; }
+
   ngOnInit(): void {
-    this.form.patchValue(intervaloPeriodo('ESTE_ANO', hojeBrasilia()));
+    this.form.patchValue(intervaloPeriodo('ESTE_ANO', hojeBrasilia(), this.dataMinima));
     this.carregarMatriculas();
     this.form.valueChanges.subscribe(() => { this.erro.set(null); this.erroPeriodo.set(null); });
   }
@@ -70,28 +77,25 @@ export class ExportarAcompanhamento implements OnInit, OnDestroy {
   alterarPeriodo(): void {
     const periodo = this.form.controls.periodo.value;
     if (periodo === 'PERSONALIZADO') return;
-    this.form.patchValue(intervaloPeriodo(periodo, hojeBrasilia()));
+    this.form.patchValue(intervaloPeriodo(periodo, hojeBrasilia(), this.dataMinima));
   }
 
   dataLegivel(data: string): string { return data.slice(0, 10).split('-').reverse().join('/'); }
 
   rotuloMatricula(m: MatriculaHistoricoDTO): string {
-    const hora = (valor: string) => String(valor).slice(0, 5);
-    const periodo = m.periodoTurma === 'MANHA' ? 'Manhã' : 'Tarde';
-    return `${m.nomeUnidade} - ${periodo} (${hora(m.horaInicio)} - ${hora(m.horaFim)}) · vínculo de `
-      + `${this.dataLegivel(m.dataIngresso)} a ${m.dataDesligamento ? this.dataLegivel(m.dataDesligamento) : 'hoje'}`;
+    return `${m.nomeUnidade} - ${m.periodoTurma === 'MANHA' ? 'Manhã' : 'Tarde'} (${this.dataLegivel(m.dataIngresso)} a ${m.dataDesligamento ? this.dataLegivel(m.dataDesligamento) : 'hoje'})`;
   }
 
   gerar(): void {
     if (this.gerando()) return;
     const filtros = this.form.getRawValue();
-    const erroPeriodo = validarIntervalo(filtros.dataInicio, filtros.dataFim);
+    const erroPeriodo = validarIntervalo(filtros.dataInicio, filtros.dataFim, this.dataMinima);
     this.erroPeriodo.set(erroPeriodo);
     if (erroPeriodo) return;
 
     this.gerando.set(true); this.erro.set(null);
     this.geracao = this.service.exportarRelatorio(this.usuario.id, {
-      inicio: filtros.dataInicio, fim: filtros.dataFim, matricula: filtros.matricula || null,
+      inicio: filtros.dataInicio, fim: filtros.dataFim, matricula: filtros.matricula || null, formato: filtros.formato,
     }).subscribe({
       next: resposta => {
         this.gerando.set(false);

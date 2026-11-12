@@ -39,17 +39,34 @@ describe('Exportar acompanhamento', () => {
     const fechou = vi.fn(); component.closed.subscribe(fechou);
     component.gerar();
     const ano = hojeBrasilia().slice(0, 4);
-    expect(api.exportarRelatorio).toHaveBeenCalledWith(10, { inicio: `${ano}-01-01`, fim: `${ano}-12-31`, matricula: null });
+    expect(api.exportarRelatorio).toHaveBeenCalledWith(10, { inicio: `${ano}-01-01`, fim: `${ano}-12-31`, matricula: null, formato: 'PDF' });
     expect(fechou).not.toHaveBeenCalled();
     expect(component.gerando()).toBe(false);
   });
 
-  it('envia a matrícula escolhida e rotula por unidade, turma e vínculo', () => {
+  it('exporta XLSX e bloqueia datas anteriores à primeira matrícula', () => {
+    montar('adm');
+    component.usuario = { id: 10, dataPrimeiraMatricula: '2026-02-01T08:00:00' } as any;
+    component.form.patchValue({ periodo: 'PERSONALIZADO', dataInicio: '2026-01-31', dataFim: '2026-03-01', formato: 'XLSX' });
+    component.gerar(); fixture.detectChanges();
+    expect(api.exportarRelatorio).not.toHaveBeenCalled();
+    expect(fixture.nativeElement.querySelector('#erro-periodo-exportacao-inicio').textContent).toContain('primeira matrícula');
+    expect(fixture.nativeElement.querySelector('input[formControlName="dataInicio"]').min).toBe('2026-02-01');
+    component.form.patchValue({ dataInicio: '2026-02-01' });
+    component.gerar();
+    expect(api.exportarRelatorio).toHaveBeenCalledWith(10, {
+      inicio: '2026-02-01', fim: '2026-03-01', matricula: null, formato: 'XLSX',
+    });
+    component.form.controls.periodo.setValue('ESTE_ANO'); component.alterarPeriodo();
+    expect(component.form.controls.dataInicio.value).toBe('2026-02-01');
+  });
+
+  it('envia a matrícula escolhida e usa o mesmo rótulo da frequência', () => {
     montar('coord');
     component.form.patchValue({ matricula: 7 });
     component.gerar();
     expect(api.exportarRelatorio.mock.calls[0][1].matricula).toBe(7);
-    expect(component.rotuloMatricula(matricula as any)).toBe('Sede - Manhã (07:00 - 12:00) · vínculo de 10/01/2025 a hoje');
+    expect(component.rotuloMatricula(matricula as any)).toBe('Sede - Manhã (10/01/2025 a hoje)');
   });
 
   it('descreve entrevistas somente para administradores e coordenadores', () => {
@@ -58,7 +75,7 @@ describe('Exportar acompanhamento', () => {
     expect(fixture.nativeElement.textContent).not.toContain('entrevistas');
     fixture.destroy(); TestBed.resetTestingModule(); vi.restoreAllMocks();
     montar('adm');
-    expect(fixture.nativeElement.textContent).toContain('frequências e ocorrências e entrevistas');
+    expect(fixture.nativeElement.textContent).toContain('frequências, ocorrências e entrevistas');
     expect(fixture.nativeElement.textContent).toContain('entrevistas são consultadas pelo usuário e pelo período');
   });
 

@@ -43,8 +43,9 @@ export class AcompanhamentoService {
   }
 
   // O modal de exportação exibe a mensagem de acesso negado no próprio formulário.
-  exportarRelatorio(usuario: number, filtros: FiltrosFrequencia): Observable<HttpResponse<Blob>> {
+  exportarRelatorio(usuario: number, filtros: FiltrosFrequencia & { formato?: 'PDF' | 'XLSX' }): Observable<HttpResponse<Blob>> {
     const params: Record<string, string> = { inicio: filtros.inicio, fim: filtros.fim };
+    params['formato'] = filtros.formato ?? 'PDF';
     if (filtros.matricula != null) params['matricula'] = String(filtros.matricula);
     return this.http.get(`${this.url(usuario)}/frequencias/relatorio`, {
       params, responseType: 'blob', observe: 'response', context: new HttpContext().set(SILENCIAR_TOAST_ACESSO, true),

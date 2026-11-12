@@ -1,3 +1,4 @@
+import { MatIconModule } from '@angular/material/icon';
 import { Component, Input, ViewChild, inject, signal } from '@angular/core';
 import { UsuarioResponseDTO } from 'src/app/shared/models/usuario.model';
 import { SessaoService } from 'src/app/shared/services/auth/sessao.service';
@@ -9,11 +10,14 @@ import { ExportarAcompanhamento } from './exportar/exportar-acompanhamento';
 @Component({
   selector: 'app-usuario-perfil-acompanhamento',
   standalone: true,
-  imports: [AcompanhamentoFrequencias, AcompanhamentoOcorrencias, AcompanhamentoEntrevistas, ExportarAcompanhamento],
+  imports: [MatIconModule, AcompanhamentoFrequencias, AcompanhamentoOcorrencias, AcompanhamentoEntrevistas, ExportarAcompanhamento],
   template: `
     <header class="titulo-aba">
       <h2>Acompanhamento</h2>
-      <button type="button" class="btn-primary" (click)="exportando.set(true)">Exportar relatório</button>
+      <button type="button" class="btn-exportar" (click)="exportando.set(true)">
+        <mat-icon fontSet="material-symbols-outlined" aria-hidden="true">file_export</mat-icon>
+        Relatório
+      </button>
     </header>
     <app-acompanhamento-frequencias [usuario]="usuario" />
     <app-acompanhamento-ocorrencias [usuario]="usuario" />
@@ -28,9 +32,38 @@ import { ExportarAcompanhamento } from './exportar/exportar-acompanhamento';
     :host { display: grid; gap: 36px; min-width: 0; }
     .titulo-aba { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: -12px; }
     .titulo-aba h2 { margin: 0; font: 700 1.5rem var(--fonte-titulo); }
+.btn-exportar {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid var(--primary-color);
+  border-radius: 6px;
+  background: var(--branco);
+  color: var(--primary-color);
+  cursor: pointer;
+  font-family: var(--fonte-texto);
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.btn-exportar:hover:not(:disabled) {
+  background: #f3f8fe;
+}
+
+.btn-exportar:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+.btn-exportar:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
     @media (max-width: 600px) {
       .titulo-aba { flex-direction: column; align-items: stretch; }
-      .titulo-aba button { width: 100%; }
+      .btn-exportar { width: 100%; }
     }
   `],
 })

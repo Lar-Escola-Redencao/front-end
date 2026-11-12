@@ -1,14 +1,14 @@
-<app-modal-layout titulo="Exportar relatório" (closed)="cancelar()">
-  <p id="instrucao-tipo" class="instrucao-tipo">Escolha o tipo de relatório que deseja exportar:</p>
-  <div class="tipos-relatorio" role="radiogroup" aria-labelledby="instrucao-tipo">
+<app-modal-layout titulo="Relatório" (closed)="cancelar()">
+  <span modal-title-extra><app-ajuda-acompanhamento [relatorio]="true" [incluiEntrevistas]="incluiEntrevistas" /></span>
+  <div class="tipos-relatorio" role="radiogroup" aria-label="Tipo de relatório">
     <label class="tipo-card ativo">
       <input type="radio" name="tipoRelatorio" checked>
       <mat-icon class="tipo-icone" aria-hidden="true">assignment</mat-icon>
       <span class="tipo-titulo">Dados de acompanhamento</span>
     </label>
   </div>
-  <p class="nota">
-    O relatório contém frequências e ocorrências{{ incluiEntrevistas ? ' e entrevistas' : '' }} do período.
+  <p class="nota nota-conteudo">
+    O relatório contém {{ incluiEntrevistas ? 'frequências, ocorrências e entrevistas' : 'frequências e ocorrências' }} do período.
   </p>
 
   <form class="form-exportar" [formGroup]="form" (ngSubmit)="gerar()" novalidate>
@@ -33,7 +33,7 @@
             }
           </mat-select>
         </mat-form-field>
-        @if (carregandoMatriculas()) { <p class="nota-campo" role="status">Carregando matrículas...</p> }
+        @if (carregandoMatriculas()) { <p class="nota-campo" role="status" aria-label="Carregando matrículas"><span class="spinner-carregamento" aria-hidden="true"></span></p> }
         @if (erroMatriculas()) {
           <div class="erro-campo" role="alert">{{ erroMatriculas() }}
             <button type="button" class="repetir" (click)="carregarMatriculas()">Tentar novamente</button>
@@ -47,19 +47,20 @@
         <div class="campo">
           <mat-form-field appearance="outline">
             <mat-label>Data inicial</mat-label>
-            <input matInput type="date" formControlName="dataInicio" #inicio aria-describedby="erro-periodo-exportacao">
+            <input matInput type="date" [min]="dataMinima" formControlName="dataInicio" #inicio aria-describedby="erro-periodo-exportacao-inicio">
             <button matSuffix type="button" class="btn-calendario" aria-label="Abrir calendário da data inicial"
               (click)="inicio.showPicker()"><mat-icon aria-hidden="true">calendar_month</mat-icon></button>
           </mat-form-field>
+          @if (erroPeriodo() && form.controls.dataInicio.value < dataMinima) { <p class="erro-campo" id="erro-periodo-exportacao-inicio" role="alert">{{ erroPeriodo() }}</p> }
         </div>
         <div class="campo">
           <mat-form-field appearance="outline">
             <mat-label>Data final</mat-label>
-            <input matInput type="date" formControlName="dataFim" #fim aria-describedby="erro-periodo-exportacao">
+            <input matInput type="date" [min]="dataMinima" formControlName="dataFim" #fim aria-describedby="erro-periodo-exportacao">
             <button matSuffix type="button" class="btn-calendario" aria-label="Abrir calendário da data final"
               (click)="fim.showPicker()"><mat-icon aria-hidden="true">calendar_month</mat-icon></button>
           </mat-form-field>
-          @if (erroPeriodo()) { <p id="erro-periodo-exportacao" class="erro-campo" role="alert">{{ erroPeriodo() }}</p> }
+          @if (erroPeriodo() && !(form.controls.dataInicio.value < dataMinima)) { <p id="erro-periodo-exportacao" class="erro-campo" role="alert">{{ erroPeriodo() }}</p> }
         </div>
       </div>
     }
@@ -71,7 +72,8 @@
 
     <fieldset class="formato">
       <legend>Formato</legend>
-      <label class="opcao-formato"><input type="radio" checked name="formato"><span>PDF</span></label>
+      <label class="opcao-formato"><input type="radio" formControlName="formato" value="PDF"><span>PDF</span></label>
+      <label class="opcao-formato"><input type="radio" formControlName="formato" value="XLSX"><span>XLSX (planilha)</span></label>
     </fieldset>
 
     @if (erro()) { <div class="erro-geracao" role="alert"><span>{{ erro() }}</span></div> }
@@ -79,7 +81,8 @@
     <div class="acoes-modal form-acoes">
       <button type="button" class="btn-cancelar" (click)="cancelar()">Cancelar</button>
       <button type="submit" class="btn-primary" [disabled]="gerando()" [attr.aria-busy]="gerando()">
-        @if (gerando()) { <span class="spinner"></span> Gerando... } @else { {{ erro() ? 'Tentar novamente' : 'Baixar' }} }
+        <span>{{ gerando() ? 'Gerando' : erro() ? 'Tentar novamente' : 'Baixar relatório' }}</span>
+        @if (gerando()) { <span class="spinner-carregamento" aria-hidden="true"></span> }
       </button>
     </div>
   </form>
