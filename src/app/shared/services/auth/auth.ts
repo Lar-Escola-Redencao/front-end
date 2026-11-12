@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable, computed, inject, signal } from '@angular/core';
+import { DestroyRef, Injectable, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { Observable, tap } from 'rxjs';
 
@@ -56,6 +56,13 @@ export class Auth {
 
   constructor() {
     this.scheduleExpiry(this.token());
+
+    // Mantém as abas do mesmo navegador coerentes: sair ou entrar em uma aba vale para todas.
+    if (typeof window !== 'undefined') {
+      const aoAlterarStorage = (evento: StorageEvent) => this.sincronizarComOutraAba(evento);
+      window.addEventListener('storage', aoAlterarStorage);
+      inject(DestroyRef).onDestroy(() => window.removeEventListener('storage', aoAlterarStorage));
+    }
   }
 
   login(credentials: LoginRequest, rememberMe: boolean): Observable<LoginResponse> {
@@ -120,6 +127,29 @@ export class Auth {
       clearTimeout(this.expiryTimer);
       this.expiryTimer = undefined;
     }
+  }
+
+  private sincronizarComOutraAba(evento: StorageEvent): void {
+    if (evento.storageArea !== localStorage) return;
+
+    const tokenAtual = this.token();
+    const tokenArmazenado = this.tokenStorage.getToken();
+    if (tokenArmazenado === tokenAtual) return;
+
+    const naAreaInterna = this.router.url.startsWith('/dashboard');
+    if (!tokenArmazenado || isJwtInvalid(tokenArmazenado)) {
+      this.clearExpiryTimer();
+      this.token.set(null);
+      this.sessao.limpar();
+      if (naAreaInterna) this.router.navigate(['/entrar']);
+      return;
+    }
+
+    // Outra aba entrou (possivelmente com outra conta): descarta o perfil carregado e assume a nova sessão.
+    this.token.set(tokenArmazenado);
+    this.sessao.limpar();
+    this.scheduleExpiry(tokenArmazenado);
+    this.router.navigateByUrl('/dashboard');
   }
 
   private handleExpiry(): void {

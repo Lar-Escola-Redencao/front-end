@@ -1,3 +1,4 @@
+import { destinoInternoSeguro } from '../../../shared/utils/destino-seguro';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, effect, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -121,7 +122,7 @@ export class Login {
 
     this.auth.login({ identifier: cleanedIdentifier, password }, remember).subscribe({
       next: () => {
-        const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl') ?? '/dashboard';
+        const returnUrl = destinoInternoSeguro(this.route.snapshot.queryParamMap.get('returnUrl'));
         this.router.navigateByUrl(returnUrl);
       },
       error: (error: unknown) => {

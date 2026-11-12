@@ -100,8 +100,9 @@
               <tr>
                 <td class="col-usuario">
                   <div class="usuario-info">
-                    <img *ngIf="usuario.imagemPerfil; else semFoto" [src]="usuario.imagemPerfil" alt="Foto" class="avatar">
-                    <ng-template #semFoto><div class="avatar placeholder"><mat-icon>image</mat-icon></div></ng-template>
+                    <app-foto-usuario [caminho]="usuario.imagemPerfil" [alt]="'Foto de ' + usuario.nomeUsuario" classeImagem="avatar">
+                      <div class="avatar placeholder"><mat-icon>image</mat-icon></div>
+                    </app-foto-usuario>
                     <div class="usuario-nome-linha">
                       @if (perfilAcessivel(usuario)) {
                         <a class="nome usuario-perfil-link" [routerLink]="['/dashboard/usuarios', usuario.idUsuario]" [queryParams]="perfilQueryParams">{{ usuario.nomeUsuario }}</a>
