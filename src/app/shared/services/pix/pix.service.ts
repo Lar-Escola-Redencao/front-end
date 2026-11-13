@@ -33,7 +33,7 @@ export class PixService {
   gerarCodigo(valor: number) {
     return this.http.post<CodigoPix>(`${this.url}/codigo`, { valor });
   }
-  enviarAgradecimento(identificador: string, email: string) {
-    return this.http.post<void>(`${this.url}/codigo/${encodeURIComponent(identificador)}/agradecimento`, { email });
+  enviarAgradecimento(identificador: string, email: string, captchaToken: string) {
+    return this.http.post<void>(`${this.url}/codigo/${encodeURIComponent(identificador)}/agradecimento`, { email, captchaToken });
   }
 }

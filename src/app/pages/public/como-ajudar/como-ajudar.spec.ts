@@ -3,7 +3,9 @@ import localePt from '@angular/common/locales/pt';
 import { Clipboard } from '@angular/cdk/clipboard';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { Component } from '@angular/core';
+import { Component, forwardRef, Input, output } from '@angular/core';
+import { By } from '@angular/platform-browser';
+import { CaptchaPix } from 'src/app/shared/components/captcha-pix/captcha-pix';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, provideRouter } from '@angular/router';
 import { BehaviorSubject } from 'rxjs';
@@ -21,6 +23,15 @@ registerLocaleData(localePt);
 class NavbarStub {}
 @Component({ selector: 'app-public-footer', template: '' })
 class FooterStub {}
+
+@Component({ selector: 'app-captcha-pix', template: '',
+  providers: [{ provide: CaptchaPix, useExisting: forwardRef(() => CaptchaStub) }],
+})
+class CaptchaStub {
+  @Input() identificador = '';
+  readonly tokenAlterado = output<string>();
+  resetar = vi.fn(() => this.tokenAlterado.emit(''));
+}
 
 describe('ComoAjudar — geração local de Pix', () => {
   let fixture: ComponentFixture<ComoAjudar>;
@@ -53,8 +64,8 @@ describe('ComoAjudar — geração local de Pix', () => {
         { provide: ActivatedRoute, useValue: { fragment: fragmento.asObservable() } }],
     })
       .overrideComponent(ComoAjudar, {
-        remove: { imports: [PublicNavbar, PublicFooter] },
-        add: { imports: [NavbarStub, FooterStub] },
+        remove: { imports: [PublicNavbar, PublicFooter, CaptchaPix] },
+        add: { imports: [NavbarStub, FooterStub, CaptchaStub] },
       })
       .compileComponents();
     http = TestBed.inject(HttpTestingController);
@@ -303,16 +314,104 @@ describe('ComoAjudar — geração local de Pix', () => {
     const email = elemento.querySelector<HTMLInputElement>('#email-agradecimento')!;
     email.value = 'doador@example.org';
     email.dispatchEvent(new Event('input'));
+    fixture.debugElement.query(By.directive(CaptchaStub)).componentInstance.tokenAlterado.emit('token');
     fixture.detectChanges();
     await fixture.whenStable();
     elemento.querySelector<HTMLFormElement>('.pix-form-agradecimento')!
       .dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
     const requisicao = http.expectOne(`${url}/codigo/${codigo.identificador}/agradecimento`);
-    expect(requisicao.request.body).toEqual({ email: 'doador@example.org' });
+    expect(requisicao.request.body).toEqual({ email: 'doador@example.org', captchaToken: 'token' });
     expect(elemento.querySelector('.pix-agradecimento')).toBeNull();
     requisicao.flush(null, { status: 204, statusText: 'No Content' });
     fixture.detectChanges();
     expect(elemento.querySelector('.pix-agradecimento')).not.toBeNull();
+  });
+
+  async function abrirFormularioEmail() {
+    await carregar();
+    enviar();
+    http.expectOne(`${url}/codigo`).flush(codigo);
+    await aguardarGeracao();
+    elemento.querySelector<HTMLButtonElement>('app-modal-layout .pix-informar')!.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const campo = elemento.querySelector<HTMLInputElement>('#email-agradecimento')!;
+    campo.value = 'doador@example.org';
+    campo.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    await fixture.whenStable();
+    return fixture.debugElement.query(By.directive(CaptchaStub)).componentInstance as CaptchaStub;
+  }
+
+  function enviarEmail() {
+    elemento.querySelector<HTMLFormElement>('.pix-form-agradecimento')!
+      .dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+    fixture.detectChanges();
+  }
+
+  it('não solicita e-mail com CAPTCHA ausente ou expirado e preserva conclusão sem e-mail', async () => {
+    const captcha = await abrirFormularioEmail();
+    enviarEmail();
+    http.expectNone(`${url}/codigo/${codigo.identificador}/agradecimento`);
+    captcha.tokenAlterado.emit('token');
+    fixture.detectChanges();
+    expect(elemento.querySelector<HTMLButtonElement>('.pix-form-agradecimento button[type=submit]')!.disabled).toBe(false);
+    captcha.tokenAlterado.emit('');
+    fixture.detectChanges();
+    expect(elemento.querySelector<HTMLButtonElement>('.pix-form-agradecimento button[type=submit]')!.disabled).toBe(true);
+    elemento.querySelector<HTMLButtonElement>('.pix-sem-email')!.click();
+    fixture.detectChanges();
+    expect(elemento.querySelector('.pix-agradecimento')).not.toBeNull();
+    http.expectNone(`${url}/codigo/${codigo.identificador}/agradecimento`);
+  });
+
+  it('impede submissão repetida enquanto o servidor processa', async () => {
+    const captcha = await abrirFormularioEmail();
+    captcha.tokenAlterado.emit('token');
+    enviarEmail();
+    enviarEmail();
+    const requisicao = http.expectOne(`${url}/codigo/${codigo.identificador}/agradecimento`);
+    expect(elemento.querySelector<HTMLButtonElement>('.pix-form-agradecimento button[type=submit]')!.disabled).toBe(true);
+    requisicao.flush(null, { status: 204, statusText: 'No Content' });
+  });
+
+  it('apresenta a espera retornada pela API e só libera após o prazo e uma nova verificação', async () => {
+    const captcha = await abrirFormularioEmail();
+    const instante = Date.now();
+    vi.spyOn(Date, 'now').mockReturnValue(instante);
+    captcha.tokenAlterado.emit('token');
+    enviarEmail();
+    http.expectOne(`${url}/codigo/${codigo.identificador}/agradecimento`).flush(
+      { message: 'Limite de solicitações atingido.', retryAfterSeconds: 60 },
+      { status: 429, statusText: 'Too Many Requests' },
+    );
+    fixture.detectChanges();
+    expect(elemento.textContent).toContain('Aguarde 60 segundos');
+    expect(captcha.resetar).toHaveBeenCalledOnce();
+    captcha.tokenAlterado.emit('novo-token');
+    enviarEmail();
+    http.expectNone(`${url}/codigo/${codigo.identificador}/agradecimento`);
+    vi.spyOn(Date, 'now').mockReturnValue(instante + 60000);
+    window.dispatchEvent(new Event('focus'));
+    fixture.detectChanges();
+    enviarEmail();
+    const nova = http.expectOne(`${url}/codigo/${codigo.identificador}/agradecimento`);
+    expect(nova.request.body.captchaToken).toBe('novo-token');
+    nova.flush(null, { status: 204, statusText: 'No Content' });
+  });
+
+  it.each([400, 503, 0])('mantém opção sem e-mail e exige novo CAPTCHA após falha %s', async status => {
+    const captcha = await abrirFormularioEmail();
+    captcha.tokenAlterado.emit('token');
+    enviarEmail();
+    const requisicao = http.expectOne(`${url}/codigo/${codigo.identificador}/agradecimento`);
+    if (status === 0) requisicao.error(new ProgressEvent('error'));
+    else requisicao.flush({ message: 'Tente novamente.' }, { status, statusText: 'Falha' });
+    fixture.detectChanges();
+    expect(captcha.resetar).toHaveBeenCalledOnce();
+    expect(elemento.querySelector('#erro-email')).not.toBeNull();
+    expect(elemento.querySelector<HTMLButtonElement>('.pix-form-agradecimento button[type=submit]')!.disabled).toBe(true);
+    expect(elemento.querySelector<HTMLButtonElement>('.pix-sem-email')!.disabled).toBe(false);
   });
 
   it('simplifica as ações e confirma a cópia no próprio botão, sem mensagem adicional', async () => {

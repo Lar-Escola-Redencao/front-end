@@ -83,14 +83,15 @@ export class AcompanhamentoOcorrencias implements OnChanges, OnDestroy {
   get hoje(): string { return hojeBrasilia(); }
 
   private validarMatricula(control: AbstractControl): ValidationErrors | null {
-    if (this.modal() !== 'NOVO' || !control.value || this.carregandoMatriculas()) return null;
+    if (!control.value || this.carregandoMatriculas()) return null;
     return this.matriculas().some(m => m.id === control.value) ? null : { regra: 'Selecione uma matrícula válida.' };
   }
 
   private validarData(control: AbstractControl): ValidationErrors | null {
     const erro = dataNaoFutura(control);
-    if (erro || !control.value || this.modal() !== 'NOVO') return erro;
-    if (this.sessao.isMonitor() && control.value < inicioPeriodoDiario(this.hoje)) {
+    if (erro || !control.value || (this.modal() !== 'NOVO' && this.modal() !== 'EDITAR')) return erro;
+    if (this.sessao.isMonitor() && (control.value !== this.selecionada()?.dataOcorrencia.slice(0, 10)
+        || this.form.controls.matricula.value !== this.selecionada()?.idMatricula) && control.value < inicioPeriodoDiario(this.hoje)) {
       return { regra: 'Monitores podem registrar ocorrências desde o primeiro dia do mês anterior.' };
     }
     const matricula = this.matriculas().find(m => m.id === control.parent?.get('matricula')?.value);
@@ -102,7 +103,8 @@ export class AcompanhamentoOcorrencias implements OnChanges, OnDestroy {
   }
   get dataMinima(): string | null {
     const ingresso = this.matriculas().find(m => m.id === this.form.controls.matricula.value)?.dataIngresso.slice(0, 10);
-    const periodo = this.sessao.isMonitor() && this.modal() === 'NOVO' ? inicioPeriodoDiario(this.hoje) : '';
+    const periodo = this.sessao.isMonitor() && (this.form.controls.data.value !== this.selecionada()?.dataOcorrencia.slice(0, 10)
+      || this.form.controls.matricula.value !== this.selecionada()?.idMatricula) ? inicioPeriodoDiario(this.hoje) : '';
     return [ingresso ?? '', periodo].sort().at(-1) || null;
   }
   get dataMaxima(): string {
@@ -125,18 +127,19 @@ export class AcompanhamentoOcorrencias implements OnChanges, OnDestroy {
     this.form.reset({ matricula: ocorrencia?.idMatricula ?? 0, data: ocorrencia?.dataOcorrencia.slice(0, 10) ?? '',
       horario: ocorrencia?.dataOcorrencia.slice(11, 16) ?? '',
       tipoOcorrencia: ocorrencia?.tipoOcorrencia ?? '', descricao: ocorrencia?.descricao ?? '' });
-    if (modo !== 'NOVO') this.bloquearVinculoEData();
     this.inicial = JSON.stringify(this.form.getRawValue());
     this.erro.set('');
-    if (modo === 'NOVO') this.carregarMatriculas();
+    if (modo === 'NOVO' || modo === 'EDITAR') this.carregarMatriculas();
   }
 
   carregarMatriculas(): void {
-    if (this.modal() !== 'NOVO' || this.salvando()) return;
+    if ((this.modal() !== 'NOVO' && this.modal() !== 'EDITAR') || this.salvando()) return;
     this.consultaMatriculas?.unsubscribe();
     this.carregandoMatriculas.set(true); this.erroMatriculas.set(''); this.matriculas.set([]);
     this.consultaMatriculas = this.service.matriculasFrequencia(this.usuario.id).subscribe({
       next: matriculas => {
+        const unidades = this.sessao.unidadesPermitidasIds();
+        matriculas = unidades === null ? matriculas : matriculas.filter(m => unidades.includes(m.idUnidade));
         this.matriculas.set(matriculas); this.carregandoMatriculas.set(false);
         if (matriculas.length === 1 && !this.form.controls.matricula.value) {
           this.form.controls.matricula.setValue(matriculas[0].id);
@@ -158,10 +161,6 @@ export class AcompanhamentoOcorrencias implements OnChanges, OnDestroy {
       + `(${data(matricula.dataIngresso)} a ${matricula.dataDesligamento ? data(matricula.dataDesligamento) : 'hoje'})`;
   }
 
-  private bloquearVinculoEData(): void {
-    this.form.controls.data.disable(); this.form.controls.matricula.disable();
-  }
-
   async fechar(): Promise<void> {
     if (this.salvando()) return;
     if (this.temAlteracoes && !await Alertas.confirmarDescarte()) return;
@@ -181,7 +180,7 @@ export class AcompanhamentoOcorrencias implements OnChanges, OnDestroy {
     if (modo === 'EDITAR' && (!ocorrencia || !this.podeAlterar(ocorrencia))) {
       this.erro.set('Você não tem permissão ou o prazo para alterar esta ocorrência foi encerrado.'); return;
     }
-    if (modo === 'NOVO' && (this.carregandoMatriculas() || this.erroMatriculas())) return;
+    if (this.carregandoMatriculas() || this.erroMatriculas()) return;
     this.form.controls.matricula.updateValueAndValidity({ emitEvent: false });
     this.form.controls.data.updateValueAndValidity({ emitEvent: false });
     this.form.controls.horario.updateValueAndValidity({ emitEvent: false });
@@ -194,7 +193,7 @@ export class AcompanhamentoOcorrencias implements OnChanges, OnDestroy {
     };
     const requisicao = modo === 'NOVO'
       ? this.diario.criarOcorrencia({ ...payload, idMatricula: dados.matricula })
-      : this.diario.atualizarOcorrencia(ocorrencia!.id, payload);
+      : this.diario.atualizarOcorrencia(ocorrencia!.id, { ...payload, idMatricula: dados.matricula });
     this.operacao = requisicao.subscribe({
       next: () => {
         this.salvando.set(false); this.cancelar();
@@ -202,7 +201,6 @@ export class AcompanhamentoOcorrencias implements OnChanges, OnDestroy {
       },
       error: (e: { error?: { message?: string } }) => {
         this.salvando.set(false); this.form.enable();
-        if (modo === 'EDITAR') this.bloquearVinculoEData();
         this.erro.set(e.error?.message ?? 'Não foi possível salvar a ocorrência. Tente novamente.');
       },
     });
