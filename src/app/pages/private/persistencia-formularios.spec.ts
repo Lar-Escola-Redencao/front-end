@@ -56,9 +56,9 @@ const unidade = { id: 1, nome: 'Unidade Central', endereco: 'Rua das Flores', te
 const casos: CasoPersistencia[] = [
   { nome: 'eventos', componente: EventoComponent, servico: EventoService, formulario: 'formEvento', salvar: 'salvar',
     original: { id: 1, titulo: 'Festival', descricao: 'Descrição original', dataEvento: '2026-11-20T10:15:00',
-      endereco: 'Rua das Flores', tipoEvento: 'CULTURAL', valor: 25.75, parceiros: [{ id: 2 }], imagem: '/uploads/evento.png' },
+      endereco: 'Rua das Flores', categorias: ['BENEFICENTE', 'CULTURAL'], valor: 25.75, parceiros: [{ id: 2 }], imagem: '/uploads/evento.png' },
     alteracoes: { titulo: 'Festival atualizado', descricao: 'Descrição atualizada', dataEvento: '2026-11-21T11:15',
-      endereco: 'Rua das Rosas', tipoEvento: 'COMEMORATIVO', parceirosIds: [3] },
+      endereco: 'Rua das Rosas', categorias: ['COMEMORATIVO', 'ESPORTIVO'], parceirosIds: [3] },
     preservados: { parceirosIds: [2], valor: 25.75 }, abrir: (c, o) => c.abrirEdicao(o) },
   { nome: 'diretoria', componente: DiretoriaComponent, servico: DiretoriaService, formulario: 'formDiretoria', salvar: 'salvar',
     original: { id: 1, nome: 'Maria Silva', cargo: 'Presidente', ativo: false, foto: '/uploads/diretora.png' },

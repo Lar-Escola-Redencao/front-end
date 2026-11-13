@@ -61,12 +61,12 @@ describe('Estados da página pública de eventos', () => {
     expect(pagina.querySelector('.acoes-eventos')).toBeNull();
     resposta.next([{
       id: 1, titulo: 'Bazar', descricao: 'Evento', dataEvento: new Date('2030-01-01'),
-      endereco: 'Rua', imagem: '', tipoEvento: TipoEvento.ARRECADACAO, parceiros: [],
+      endereco: 'Rua', imagem: '', categorias: [TipoEvento.BENEFICENTE], parceiros: [],
     }]);
     fixture.componentInstance.buscar('Inexistente');
     fixture.changeDetectorRef.markForCheck();
     fixture.detectChanges();
-    expect(pagina.textContent).toContain('Nenhum evento encontrado para a busca ou os filtros selecionados.');
+    expect(pagina.textContent).toContain('Nenhum evento encontrado para a busca ou filtros selecionados.');
     expect(pagina.querySelector('.acoes-eventos')).not.toBeNull();
     expect(pagina.querySelector('app-erro-carregamento')).toBeNull();
   });
@@ -110,7 +110,7 @@ describe('Eventos', () => {
     component.ngOnInit();
     expect(component.mensagemVazia).toBe('Nenhum evento disponível no momento.');
     component.buscar('Bazar');
-    expect(component.mensagemVazia).toBe('Nenhum evento encontrado para a busca ou os filtros selecionados.');
+    expect(component.mensagemVazia).toBe('Nenhum evento encontrado para a busca ou filtros selecionados.');
   });
 
   it('marca apenas o evento informado com imagem indisponivel', () => {
@@ -131,10 +131,10 @@ describe('Eventos', () => {
 
   it('combina categoria e valor com busca publica somente pelo titulo', () => {
     component.eventos = [
-      { id: 1, titulo: 'Bazar', descricao: 'Festa', tipoEvento: TipoEvento.CULTURAL, valor: 10 },
-      { id: 2, titulo: 'Festa', tipoEvento: TipoEvento.CULTURAL, valor: 10 },
-      { id: 3, titulo: 'Festa', tipoEvento: TipoEvento.CULTURAL, valor: 0 },
-      { id: 4, titulo: 'Festa', tipoEvento: TipoEvento.COMEMORATIVO, valor: 10 }
+      { id: 1, titulo: 'Bazar', descricao: 'Festa', categorias: [TipoEvento.CULTURAL], valor: 10 },
+      { id: 2, titulo: 'Festa', categorias: [TipoEvento.BENEFICENTE, TipoEvento.CULTURAL], valor: 10 },
+      { id: 3, titulo: 'Festa', categorias: [TipoEvento.CULTURAL], valor: 0 },
+      { id: 4, titulo: 'Festa', categorias: [TipoEvento.COMEMORATIVO], valor: 10 }
     ] as Evento[];
     component.buscar('Festa');
     component.filtrar({ dataInicial: '', dataFinal: '', valor: 'pago', tipo: TipoEvento.CULTURAL });

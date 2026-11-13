@@ -21,7 +21,7 @@ function criarEvento(sobrescrever: Partial<Evento> = {}): Evento {
     dataEvento: new Date('2020-01-01T12:00:00'),
     endereco: 'Rua teste',
     imagem: 'foto-principal.jpg',
-    tipoEvento: TipoEvento.CULTURAL,
+    categorias: [TipoEvento.CULTURAL],
     parceiros: [],
     ...sobrescrever
   };

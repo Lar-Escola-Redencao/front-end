@@ -32,9 +32,11 @@ export class FiltrosEventosComponent {
   aberto = false;
   rascunho = filtrosEventosVazios();
   readonly categorias = [
-    { valor: TipoEvento.ARRECADACAO, nome: 'Arrecadação' },
+    { valor: TipoEvento.BENEFICENTE, nome: 'Beneficente' },
     { valor: TipoEvento.CULTURAL, nome: 'Cultural' },
-    { valor: TipoEvento.COMEMORATIVO, nome: 'Comemorativo' }
+    { valor: TipoEvento.COMEMORATIVO, nome: 'Comemorativo' },
+    { valor: TipoEvento.ESPORTIVO, nome: 'Esportivo' },
+    { valor: TipoEvento.OUTRO, nome: 'Outro' }
   ];
 
   get quantidade(): number {

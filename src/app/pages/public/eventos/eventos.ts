@@ -133,7 +133,7 @@ export class Eventos implements OnInit {
         return false;
       }
 
-      return !this.filtroTipo || evento.tipoEvento === this.filtroTipo;
+      return !this.filtroTipo || evento.categorias.includes(this.filtroTipo);
     });
 
     if (this.paginaAtual >= this.totalPaginas) {
@@ -181,7 +181,7 @@ export class Eventos implements OnInit {
 
   get mensagemVazia(): string {
     return this.possuiFiltrosAplicados
-      ? 'Nenhum evento encontrado para a busca ou os filtros selecionados.'
+      ? 'Nenhum evento encontrado para a busca ou filtros selecionados.'
       : 'Nenhum evento disponível no momento.';
   }
 

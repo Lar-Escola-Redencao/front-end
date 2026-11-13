@@ -46,24 +46,20 @@
   }
   <form class="form-modal" [formGroup]="formEvento" (ngSubmit)="salvar()">
 
-    <div>
-      <mat-form-field appearance="outline">
-        <mat-label>
-          Categoria de evento
-        </mat-label>
-        <mat-select
-          formControlName="tipoEvento"
-          [canSelectNullableOptions]="false"
-          (selectionChange)="verificarErros()"
-          (blur)="verificarErros()">
-          <mat-option [value]="null">Selecione uma categoria</mat-option>
-          <mat-option [value]="TipoEvento.ARRECADACAO">Arrecadação</mat-option>
-          <mat-option [value]="TipoEvento.CULTURAL">Cultural</mat-option>
-          <mat-option [value]="TipoEvento.COMEMORATIVO">Comemorativo</mat-option>
-        </mat-select>
-      </mat-form-field>
+    <div class="form-group categorias-campo">
+      <span class="categorias-label" id="categorias-label">Categorias do evento*</span>
+      <div class="categorias-box" role="group" aria-labelledby="categorias-label"
+        [class.categorias-invalidas]="erros['categorias']"
+        [attr.aria-invalid]="erros['categorias'] ? 'true' : null"
+        [attr.aria-describedby]="erros['categorias'] ? 'categorias-erro' : null">
+        <label *ngFor="let categoria of tiposDisponiveis" class="categoria-item">
+          <input type="checkbox" [checked]="isCategoriaSelecionada(categoria)" [disabled]="isLoading"
+            (change)="onCategoriaToggle(categoria, $event)" />
+          <span>{{ formatarTextoExibicao(categoria) }}</span>
+        </label>
+      </div>
+      <span class="error-text" id="categorias-erro" *ngIf="erros['categorias']">{{ erros['categorias'] }}</span>
     </div>
-    <span class="error-text" *ngIf="erros['tipoEvento']">{{ erros['tipoEvento'] }}</span>
 
     <mat-form-field appearance="outline">
       <mat-label>Título do evento</mat-label>
@@ -111,19 +107,15 @@
     <span class="error-text" *ngIf="erros['endereco']">{{ erros['endereco'] }}</span>
 
 
-    <div class="form-group parceiros-campo">
-      <label class="parceiros-label">Parceiros vinculados</label>
-      <div class="parceiros-box">
-        <div *ngIf="parceiros.length === 0" class="sem-parceiros">
-          Nenhum parceiro disponível
-        </div>
-
-        <label *ngFor="let p of parceiros" class="parceiro-item">
-          <input type="checkbox" [checked]="isParceiroSelecionado(p.id)" (change)="onParceiroToggle(p.id, $event)" />
-          <span>{{ p.nome }}</span>
-        </label>
-      </div>
-    </div>
+    <mat-form-field appearance="outline">
+      <mat-label>Parceiros vinculados</mat-label>
+      <mat-select formControlName="parceirosIds" multiple [disabled]="isLoading">
+        <mat-option *ngIf="parceiros.length === 0" class="evento-parceiros-vazio" disabled>Nenhum parceiro disponível</mat-option>
+        <mat-option *ngFor="let parceiro of parceiros" [value]="parceiro.id">
+          {{ parceiro.nome }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
 
     <div class="form-group">
       <input [disabled]="isLoading"

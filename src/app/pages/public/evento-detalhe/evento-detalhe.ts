@@ -28,9 +28,11 @@ export class EventoDetalhe implements OnInit, OnDestroy {
   private readonly cdr = inject(ChangeDetectorRef);
 
   private readonly nomesTipoEvento: Record<TipoEvento, string> = {
-    [TipoEvento.ARRECADACAO]: 'Arrecadação',
+    [TipoEvento.BENEFICENTE]: 'Beneficente',
     [TipoEvento.CULTURAL]: 'Cultural',
-    [TipoEvento.COMEMORATIVO]: 'Comemorativo'
+    [TipoEvento.COMEMORATIVO]: 'Comemorativo',
+    [TipoEvento.ESPORTIVO]: 'Esportivo',
+    [TipoEvento.OUTRO]: 'Outro'
   };
 
   evento: Evento | null = null;

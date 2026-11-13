@@ -80,7 +80,7 @@
 
         <div class="evento-badges">
           <span class="badge-valor" [class.gratuito]="!evento.valor">{{ formatarValor() }}</span>
-          <span class="badge-tipo">{{ formatarTipo(evento.tipoEvento) }}</span>
+          <span class="badge-tipo" *ngFor="let categoria of evento.categorias">{{ formatarTipo(categoria) }}</span>
         </div>
 
         <p class="evento-meta">

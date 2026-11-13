@@ -49,7 +49,7 @@ export class EventoService {
     formData.append('endereco', evento.endereco);
     if (evento.imagem) formData.append('imagem', evento.imagem);
     if (evento.valor !== null && evento.valor !== undefined) formData.append('valor', evento.valor.toString());
-    formData.append('tipoEvento', evento.tipoEvento);
+    evento.categorias.forEach(categoria => formData.append('categorias', categoria));
     if (evento.parceirosIds && evento.parceirosIds.length > 0) {
       evento.parceirosIds.forEach(id => formData.append('parceirosIds', id.toString()));
     }
@@ -65,7 +65,7 @@ export class EventoService {
     if (evento.endereco) formData.append('endereco', evento.endereco);
     if (evento.imagem) formData.append('imagem', evento.imagem);
     if (evento.valor !== null && evento.valor !== undefined) formData.append('valor', evento.valor.toString());
-    if (evento.tipoEvento) formData.append('tipoEvento', evento.tipoEvento);
+    evento.categorias?.forEach(categoria => formData.append('categorias', categoria));
     if (evento.parceirosIds !== undefined && evento.parceirosIds !== null) {
       evento.parceirosIds.forEach(id => formData.append('parceirosIds', id.toString()));
     }

@@ -6,7 +6,7 @@ export interface Evento {
   endereco: string;
   imagem: string;
   valor?: number;
-  tipoEvento: TipoEvento;
+  categorias: TipoEvento[];
   // Calculado pelo back a partir da dataEvento.
   encerrado?: boolean;
   comentarioPosEvento?: string;
@@ -43,7 +43,7 @@ export interface CriarEventoDTO {
   endereco: string;
   imagem?: File;
   valor?: number;
-  tipoEvento: TipoEvento;
+  categorias: TipoEvento[];
   parceirosIds?: number[];
 }
 
@@ -54,14 +54,16 @@ export interface AtualizarEventoDTO {
   endereco?: string;
   imagem?: File;
   valor?: number;
-  tipoEvento?: TipoEvento;
+  categorias?: TipoEvento[];
   parceirosIds?: number[];
 }
 
 export enum TipoEvento {
-  ARRECADACAO  = 'ARRECADACAO',
+  BENEFICENTE  = 'BENEFICENTE',
   CULTURAL     = 'CULTURAL',
-  COMEMORATIVO = 'COMEMORATIVO'
+  COMEMORATIVO = 'COMEMORATIVO',
+  ESPORTIVO    = 'ESPORTIVO',
+  OUTRO        = 'OUTRO'
 }
 
 export interface Parceiro {
