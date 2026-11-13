@@ -64,14 +64,18 @@ describe('Transparência administrativa', () => {
     expect(navegar).toHaveBeenCalledWith([], expect.objectContaining({ queryParams: expect.objectContaining({ aba: 'documentos' }) }));
   });
 
-  it('intercepta o clique externo e só executa a ação após confirmar o descarte', async () => {
+  it.each(['navbar', 'header-gerenciamento'])('confirma o descarte antes de abrir a navegação em %s', async classe => {
     params.next(convertToParamMap({ aba: 'secoes' }));
     criar(); component.iniciarReordenacao(); component.moverSecao(0, 1);
     const confirmar = vi.spyOn(Alertas, 'confirmarDescarte').mockResolvedValue(false);
     const botao = document.createElement('button');
+    const container = document.createElement('div');
+    container.className = classe;
+    if (classe === 'header-gerenciamento') botao.className = 'seletor-secao';
+    container.append(botao);
     const abrir = vi.fn();
     botao.addEventListener('click', abrir);
-    document.body.append(botao);
+    document.body.append(container);
     try {
       botao.click();
       await vi.waitFor(() => expect(Reflect.get(component, 'confirmacaoDescarte')).toBeNull());
@@ -81,7 +85,20 @@ describe('Transparência administrativa', () => {
       botao.click();
       await vi.waitFor(() => expect(abrir).toHaveBeenCalledOnce());
       expect(component.reordenando).toBe(false);
-    } finally { botao.remove(); }
+    } finally { container.remove(); }
+  });
+
+  it('preserva a reordenação sem confirmação ao clicar na área em branco', () => {
+    params.next(convertToParamMap({ aba: 'secoes' }));
+    criar(); component.iniciarReordenacao(); component.moverSecao(0, 1);
+    const confirmar = vi.spyOn(Alertas, 'confirmarDescarte');
+    const lateral = document.createElement('div');
+    document.body.append(lateral);
+    try {
+      lateral.click();
+      expect(confirmar).not.toHaveBeenCalled();
+      expect(component.temAlteracoesOrdem).toBe(true);
+    } finally { lateral.remove(); }
   });
 
   it('sai sem confirmação quando a sequência original está preservada', async () => {

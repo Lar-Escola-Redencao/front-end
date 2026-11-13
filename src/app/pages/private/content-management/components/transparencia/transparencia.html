@@ -69,16 +69,15 @@
           @for (secao of secoesOrdenacao; track secao.id; let indice = $index; let primeira = $first; let ultima = $last) {
             <li cdkDrag cdkDragLockAxis="y" class="linha-ordenacao" (cdkDragStarted)="iniciarArraste()">
               <div *cdkDragPlaceholder class="posicao-soltura" aria-hidden="true"></div>
-              <button type="button" cdkDragHandle class="arrastar-secao" [disabled]="salvandoOrdem"
-                [attr.aria-label]="'Arrastar ' + secao.titulo + ' para reordenar'">
+              <span class="arrastar-secao" aria-hidden="true">
                 <span class="material-symbols-outlined" aria-hidden="true">drag_indicator</span>
-              </button>
+              </span>
               <span class="posicao-secao" [attr.aria-label]="'Posição ' + (indice + 1)">{{ indice + 1 }}</span>
               <div class="identificacao-secao">
                 <span class="nome-secao">{{ secao.titulo }}</span>
                 <span class="status-secao badge-status" [class.ativo]="secao.ativo" [class.inativo]="!secao.ativo">{{ secao.ativo ? 'Ativo' : 'Inativo' }}</span>
               </div>
-              <div class="setas-secao">
+              <div class="setas-secao" (mousedown)="$event.stopPropagation()" (touchstart)="$event.stopPropagation()">
                 <button type="button" class="mover-secao" [disabled]="primeira || salvandoOrdem" [attr.aria-label]="'Mover ' + secao.titulo + ' para cima'" title="Mover para cima" (click)="moverSecao(indice, -1, $event)"><span class="material-symbols-outlined" aria-hidden="true">arrow_upward</span></button>
                 <button type="button" class="mover-secao" [disabled]="ultima || salvandoOrdem" [attr.aria-label]="'Mover ' + secao.titulo + ' para baixo'" title="Mover para baixo" (click)="moverSecao(indice, 1, $event)"><span class="material-symbols-outlined" aria-hidden="true">arrow_downward</span></button>
               </div>

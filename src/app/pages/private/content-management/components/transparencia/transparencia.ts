@@ -172,10 +172,11 @@ export class Transparencia implements OnInit, OnDestroy, ComponentComAlteracoesN
     return this.confirmacaoDescarte;
   }
 
-  private readonly confirmarCliqueFora = (evento: MouseEvent): void => {
+  private readonly confirmarCliqueNavegacao = (evento: MouseEvent): void => {
     if (!this.temAlteracoesOrdem || !(evento.target instanceof Element)) return;
     const alvo = evento.target;
     if (alvo.closest('.swal2-container, .lista-ordenacao, .botoes-secoes, .orientacao-ordem, .aba-btn.ativa')) return;
+    if (!alvo.closest('.navbar, .header-gerenciamento .seletor-secao, a[href]')) return;
     evento.preventDefault();
     evento.stopImmediatePropagation();
     if (this.confirmacaoDescarte) return;
@@ -353,7 +354,7 @@ export class Transparencia implements OnInit, OnDestroy, ComponentComAlteracoesN
   }
 
   ngOnInit(): void {
-    document.addEventListener('click', this.confirmarCliqueFora, true);
+    document.addEventListener('click', this.confirmarCliqueNavegacao, true);
     this.carregarSecoesParaSelecao();
 
     this.routeSub = this.route.queryParamMap.subscribe(params => {
@@ -386,7 +387,7 @@ export class Transparencia implements OnInit, OnDestroy, ComponentComAlteracoesN
   }
 
   ngOnDestroy(): void {
-    document.removeEventListener('click', this.confirmarCliqueFora, true);
+    document.removeEventListener('click', this.confirmarCliqueNavegacao, true);
     this.encerrarAnimacoesOrdem();
     this.routeSub?.unsubscribe();
     this.listaSub?.unsubscribe();

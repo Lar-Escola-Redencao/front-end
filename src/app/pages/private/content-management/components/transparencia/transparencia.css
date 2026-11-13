@@ -43,7 +43,8 @@
 .cabecalho-ordenacao > span { justify-self: start; }
 .cabecalho-ordenacao > .titulo-mover { justify-self: stretch; text-align: center; }
 .secoes-ordenacao { list-style: none; margin: 0; padding: 0; }
-.linha-ordenacao { min-height: 72px; border-top: 1px solid #eee; color: var(--preto); font-size: 0.95rem; }
+.linha-ordenacao { min-height: 72px; border-top: 1px solid #eee; color: var(--preto); font-size: 0.95rem; cursor: grab; }
+.linha-ordenacao:active { cursor: grabbing; }
 .posicao-secao { color: inherit; }
 .identificacao-secao { display: contents; }
 .nome-secao { overflow-wrap: anywhere; }
@@ -254,7 +255,6 @@
   touch-action: none;
 }
 .arrastar-secao:active { cursor: grabbing; }
-.arrastar-secao:focus-visible { outline: 2px solid var(--primary-color); border-radius: 4px; }
 .posicao-soltura {
   min-height: 72px;
   box-sizing: border-box;
