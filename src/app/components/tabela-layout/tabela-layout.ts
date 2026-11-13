@@ -61,7 +61,7 @@ export interface TabelaOrdenacao {
   ],
 
   templateUrl: './tabela-layout.html',
-  styleUrl: './tabela-layout.css'
+  styleUrls: ['./tabela-layout.css', '../../shared/styles/badge-status.css']
 })
 export class TabelaLayout<T = any> {
 

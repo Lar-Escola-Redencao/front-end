@@ -23,8 +23,8 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/private/dashboard/dashboard').then(m => m.Dashboard),
         children: [
             { path: '', loadComponent: () => import('./pages/private/dashboard/dashboard-home/dashboard-home').then(m => m.DashboardHome) },
-            { path: 'conteudo-publico', loadComponent: () => import('./pages/private/content-management/content-management').then(m => m.ContentManagement), canActivate: [roleGuard], data: { modulo: 'conteudo-publico' } },
-            { path: 'conteudo-publico/:secao', loadComponent: () => import('./pages/private/content-management/content-management').then(m => m.ContentManagement), canActivate: [roleGuard], data: { modulo: 'conteudo-publico' } },
+            { path: 'conteudo-publico', canDeactivate: [canDeactivateGuard], loadComponent: () => import('./pages/private/content-management/content-management').then(m => m.ContentManagement), canActivate: [roleGuard], data: { modulo: 'conteudo-publico' } },
+            { path: 'conteudo-publico/:secao', canDeactivate: [canDeactivateGuard], loadComponent: () => import('./pages/private/content-management/content-management').then(m => m.ContentManagement), canActivate: [roleGuard], data: { modulo: 'conteudo-publico' } },
             { path: 'colaboradores', loadComponent: () => import('@pages/private/colaborador/colaborador.component').then(m => m.ColaboradorComponent), canActivate: [roleGuard], data: { modulo: 'colaboradores' } },
             { path: 'usuarios', canDeactivate: [canDeactivateGuard], loadComponent: () => import('@pages/private/usuario/usuario.component').then(m => m.UsuarioComponent), canActivate: [roleGuard], data: { modulo: 'usuarios' } },
             { path: 'usuarios/:id', canDeactivate: [canDeactivateGuard], loadComponent: () => import('@pages/private/usuario/usuario-perfil/usuario-perfil').then(m => m.UsuarioPerfil), canActivate: [roleGuard], data: { modulo: 'perfil-usuario' } },

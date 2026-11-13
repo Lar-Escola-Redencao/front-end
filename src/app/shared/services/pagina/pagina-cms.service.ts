@@ -186,6 +186,10 @@ export class PaginaCmsService {
     return this.http.put<void>(`${this.apiUrl}/secoes/reordenar`, secoes);
   }
 
+  listarSecoesTransparenciaParaOrdenacao(): Observable<Secao[]> {
+    return this.http.get<Secao[]>(`${this.apiUrl}/${ID_PAGINA_TRANSPARENCIA}/secoes/ordenacao`);
+  }
+
   adicionarDocumento(secaoId: number, titulo: string, arquivo: File): Observable<Documento> {
     const formData = new FormData();
     formData.append('titulo', titulo);

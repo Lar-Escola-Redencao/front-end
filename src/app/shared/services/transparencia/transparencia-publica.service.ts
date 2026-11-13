@@ -15,7 +15,7 @@ export class TransparenciaPublicaService {
 
   listarSecoes(): Observable<Secao[]> {
     return this.http.get<Secao[]>(`${this.apiUrl}/${ID_PAGINA_TRANSPARENCIA}/secoes`).pipe(
-      map((secoes) => [...secoes].sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0))),
+      map((secoes) => [...secoes].sort((a, b) => (a.ordem ?? 0) - (b.ordem ?? 0) || a.id - b.id)),
     );
   }
 
