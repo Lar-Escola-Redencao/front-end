@@ -643,7 +643,7 @@ body {
 
   padding: 12px 14px;
 
-  border: 1px dashed #dcdcdc;
+  border: 2px dashed #dcdcdc;
   border-radius: 8px;
 
   background: #fafafa;
@@ -693,7 +693,7 @@ body {
 
   color: #333;
 
-  font-family: 'Poppins', sans-serif;
+  font-family: var(--fonte-texto);
   font-size: 0.85rem;
   font-weight: 500;
 
@@ -704,7 +704,7 @@ body {
 .upload-arquivo-texto span {
   color: #888;
 
-  font-family: 'Poppins', sans-serif;
+  font-family: var(--fonte-texto);
   font-size: 0.75rem;
 }
 
@@ -788,7 +788,7 @@ body {
 
   color: #757575;
 
-  font-family: 'Poppins', sans-serif;
+  font-family: var(--fonte-texto);
   font-size: 0.85rem;
 }
 
@@ -820,7 +820,7 @@ body {
 
   color: #4a6f9e;
 
-  font-family: 'Poppins', sans-serif;
+  font-family: var(--fonte-texto);
   font-size: 0.78rem;
   line-height: 1.4;
 }
@@ -928,20 +928,20 @@ input::-ms-clear {
   position: relative;
 }
 .anexo-drop.anexo-arrastando {
-  box-shadow: 0 0 0 2px rgba(54, 130, 220, .05);
+  box-shadow: none;
 }
 .anexo-drop.anexo-arrastando::after {
   content: attr(data-anexo-soltar);
   position: absolute;
-  inset: 0;
+  inset: -2px;
   z-index: 1;
   display: grid;
   place-items: center;
   padding: 12px;
   box-sizing: border-box;
-  border: 1px dashed #8bb8ed;
+  border: 2px dashed var(--primary-color);
   border-radius: inherit;
-  background: #f5f9ff;
+  background: #edf5ff;
   color: var(--primary-color);
   font: 500 15px/1.4 var(--fonte-texto);
   text-align: center;

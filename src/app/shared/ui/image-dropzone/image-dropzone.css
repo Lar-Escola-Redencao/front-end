@@ -1,5 +1,6 @@
 .dropzone {
-  border: 1.5px solid var(--color-gray-300);
+  border: 2px dashed var(--color-gray-300);
+  box-sizing: border-box;
   border-radius: var(--radius-md);
   display: flex;
   flex-direction: column;

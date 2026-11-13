@@ -39,7 +39,7 @@
   min-height: 72px;
   margin-top: 5px;
   padding: 12px 14px;
-  border: 1px dashed #dcdcdc;
+  border: 2px dashed #dcdcdc;
   border-radius: 8px;
   background: #fafafa;
   text-align: center;
@@ -99,7 +99,7 @@
   max-width: 100%;
   overflow: hidden;
   color: #333;
-  font-family: 'Poppins', var(--fonte-texto);
+  font-family: var(--fonte-texto);
   font-size: 0.85rem;
   font-weight: 500;
   line-height: 1.25;
@@ -109,7 +109,7 @@
 
 .cadastro-form .upload-foto-formatos {
   color: #888;
-  font-family: 'Poppins', var(--fonte-texto);
+  font-family: var(--fonte-texto);
   font-size: 0.75rem;
   line-height: 1.2;
 }

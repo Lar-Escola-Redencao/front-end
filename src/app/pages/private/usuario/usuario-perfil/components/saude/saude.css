@@ -179,7 +179,7 @@ input[type='radio'] {
   min-height: 72px;
   margin-top: 5px;
   padding: 12px 14px;
-  border: 1px dashed #dcdcdc;
+  border: 2px dashed #dcdcdc;
   border-radius: 8px;
   background: #fafafa;
   text-align: center;

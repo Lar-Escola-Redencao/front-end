@@ -196,6 +196,15 @@
   overflow: hidden;
 }
 
+.upload-arquivo-slot.anexo-arrastando {
+  border-color: var(--primary-color);
+}
+
+.upload-arquivo-slot.anexo-arrastando::after {
+  inset: 0;
+  border: 0;
+}
+
 .slot-carrossel-imagem {
   position: absolute;
   inset: 0;
