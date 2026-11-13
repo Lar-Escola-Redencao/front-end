@@ -404,9 +404,6 @@ export class ColaboradorComponent
         this.papeis = this.somenteMonitores
           ? dados.filter(p => (p.nomePapel || p.nome || '').toUpperCase() === 'MONITOR')
           : dados;
-        if (this.somenteMonitores) {
-          this.carregarColaboradores();
-        }
         this.papeisDisponiveis = this.papeis
           .map((papel) => this.obterNomePapel(papel))
           .filter((nome): nome is string => Boolean(nome));
@@ -445,18 +442,10 @@ export class ColaboradorComponent
     // Uma nova busca/filtro cancela a requisição anterior em andamento: vale sempre a mais recente.
     this.listaSub?.unsubscribe();
 
-    // Para o coordenador a lista é sempre restrita a monitores; aguarda os papéis
-    // carregarem para saber o id do papel MONITOR (carregarPapeis recarrega a lista).
-    if (this.somenteMonitores && this.idPapelMonitor === null) {
-      return;
-    }
-
     this.carregandoLista = true;
     this.erroLista = false;
 
-    const idPapel = this.somenteMonitores
-      ? this.idPapelMonitor!
-      : this.filtroPapel ?? undefined;
+    const idPapel = this.somenteMonitores ? undefined : this.filtroPapel ?? undefined;
 
     this.listaSub = this.colaboradorService
       .listarTodos(
@@ -569,7 +558,7 @@ export class ColaboradorComponent
     const novoSort = alternarOrdenacao(this.ordenacao, campo);
     this.router.navigate([], {
       relativeTo: this.route,
-      queryParams: { sort: novoSort },
+      queryParams: { sort: novoSort, page: 0 },
       queryParamsHandling: 'merge'
     });
   }

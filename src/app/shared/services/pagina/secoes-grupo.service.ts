@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 import { PaginaResposta } from 'src/app/shared/models/pagina.model';
 import { construirHttpParams } from 'src/app/shared/utils/paginacao-url';
-import { CONTRATO_SECOES_GRUPO, GrupoSecao } from './secoes-grupo.contrato';
+import { CONTRATO_SECOES_GRUPO, GRUPOS_SECAO, GrupoSecao } from './secoes-grupo.contrato';
 
 export interface SecaoGrupo {
   id: number;
@@ -55,9 +55,10 @@ export class SecoesGrupoService {
     tamanho: number,
     search?: string,
   ): Observable<PaginaResposta<SecaoGrupo>> {
-    const params = construirHttpParams({
-      pagina, tamanho, sort: 'ordem,asc', extras: { grupo, search },
-    }).append('sort', 'id,asc');
+    let params = construirHttpParams({ pagina, tamanho, extras: { grupo, search } });
+    if (grupo !== GRUPOS_SECAO.produtos) {
+      params = params.append('sort', 'ordem,asc').append('sort', 'id,asc');
+    }
 
     return this.http.get<PaginaResposta<Record<string, any>>>(rotas.listarPaginado(idPagina), { params }).pipe(
       map((resposta) => ({
