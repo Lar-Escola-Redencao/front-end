@@ -1,6 +1,7 @@
 import { HistoricoContextual } from '@components/historico-contextual/historico-contextual';
 import { TipoRegistroHistorico } from 'src/app/shared/models/historico.model';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
+import { ComponentComAlteracoesNaoSalvas } from 'src/app/shared/guards/can-deactivate.guard';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Transparencia } from './components/transparencia/transparencia';
 import { Sobre } from './components/sobre/sobre';
@@ -20,7 +21,17 @@ import { CAPTACAO_RECURSOS_CONFIG, CaptacaoRecursosConfig } from './components/c
   templateUrl: './content-management.html',
   styleUrl: './content-management.css'
 })
-export class ContentManagement implements OnInit {
+export class ContentManagement implements OnInit, ComponentComAlteracoesNaoSalvas {
+  @ViewChild(Transparencia) transparencia?: Transparencia;
+
+  formularioTemAlteracoesNaoSalvas(): boolean {
+    return this.transparencia?.formularioTemAlteracoesNaoSalvas() ?? false;
+  }
+
+  confirmarDescarte(): Promise<boolean> {
+    return this.transparencia?.confirmarDescarte() ?? Promise.resolve(true);
+  }
+
   secaoSelecionada: string = 'evento';
   readonly historicos: Record<string, { tipo: TipoRegistroHistorico; titulo: string }> = {
     evento: { tipo: 'EVENTOS', titulo: 'Histórico de eventos' },

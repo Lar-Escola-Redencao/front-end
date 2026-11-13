@@ -1,10 +1,10 @@
 <section class="transparencia-admin">
 
   <div appAbasResponsivas class="abas-container">
-    <button type="button" class="aba-btn" [disabled]="reordenando || carregandoOrdem" [class.ativa]="abaAtiva === 'documentos'" (click)="mudarAba('documentos')">
+    <button type="button" class="aba-btn" [disabled]="salvandoOrdem || carregandoOrdem" [class.ativa]="abaAtiva === 'documentos'" (click)="mudarAba('documentos')">
       Documentos
     </button>
-    <button type="button" class="aba-btn" [disabled]="reordenando || carregandoOrdem" [class.ativa]="abaAtiva === 'secoes'" (click)="mudarAba('secoes')">
+    <button type="button" class="aba-btn" [disabled]="salvandoOrdem || carregandoOrdem" [class.ativa]="abaAtiva === 'secoes'" (click)="mudarAba('secoes')">
       Seções
     </button>
   </div>
@@ -46,7 +46,7 @@
         (buscar)="buscar($event)" />
       <div class="botoes-secoes">
         @if (reordenando) {
-          <button type="button" class="btn-reordenar" [disabled]="salvandoOrdem" (click)="cancelarReordenacao()">Cancelar</button>
+          <button type="button" class="btn-reordenar" [disabled]="salvandoOrdem" (click)="solicitarCancelarReordenacao()">Cancelar</button>
           <button type="button" class="btn-primary btn-primary-thick" [disabled]="!temAlteracoesOrdem || salvandoOrdem" (click)="salvarOrdem()">
             @if (salvandoOrdem) { <span class="spinner" aria-hidden="true"></span> }
             {{ salvandoOrdem ? 'Salvando...' : 'Salvar ordem' }}
@@ -63,10 +63,16 @@
     @if (reordenando) {
       <p class="orientacao-ordem" id="orientacao-ordem">Defina a ordem das seções na página pública de Transparência.</p>
       <div class="lista-ordenacao" [attr.aria-busy]="salvandoOrdem">
-        <div class="cabecalho-ordenacao" aria-hidden="true"><span>Ordem</span><span>Nome da Seção</span><span>Exibição</span><span class="titulo-mover">Mover</span></div>
-        <ol class="secoes-ordenacao" aria-label="Ordem das seções da Transparência" aria-describedby="orientacao-ordem">
+        <div class="cabecalho-ordenacao" aria-hidden="true"><span></span><span>Ordem</span><span>Nome da Seção</span><span>Exibição</span><span class="titulo-mover">Mover</span></div>
+        <ol cdkDropList [cdkDropListData]="secoesOrdenacao" [cdkDropListDisabled]="salvandoOrdem"
+          (cdkDropListDropped)="soltarSecao($event)" class="secoes-ordenacao" aria-label="Ordem das seções da Transparência" aria-describedby="orientacao-ordem">
           @for (secao of secoesOrdenacao; track secao.id; let indice = $index; let primeira = $first; let ultima = $last) {
-            <li class="linha-ordenacao">
+            <li cdkDrag cdkDragLockAxis="y" class="linha-ordenacao" (cdkDragStarted)="iniciarArraste()">
+              <div *cdkDragPlaceholder class="posicao-soltura" aria-hidden="true"></div>
+              <button type="button" cdkDragHandle class="arrastar-secao" [disabled]="salvandoOrdem"
+                [attr.aria-label]="'Arrastar ' + secao.titulo + ' para reordenar'">
+                <span class="material-symbols-outlined" aria-hidden="true">drag_indicator</span>
+              </button>
               <span class="posicao-secao" [attr.aria-label]="'Posição ' + (indice + 1)">{{ indice + 1 }}</span>
               <div class="identificacao-secao">
                 <span class="nome-secao">{{ secao.titulo }}</span>

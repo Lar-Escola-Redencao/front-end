@@ -50,6 +50,62 @@ describe('Transparência administrativa', () => {
     fixture.detectChanges();
   }
 
+  it('confirma a troca de aba apenas quando a ordem foi alterada', async () => {
+    params.next(convertToParamMap({ aba: 'secoes' }));
+    criar(); component.iniciarReordenacao(); component.moverSecao(0, 1);
+    const confirmar = vi.spyOn(Alertas, 'confirmarDescarte').mockResolvedValue(false);
+    await component.mudarAba('documentos');
+    expect(confirmar).toHaveBeenCalledOnce();
+    expect(navegar).not.toHaveBeenCalled();
+    expect(component.secoesOrdenacao.map(s => s.id)).toEqual([3, 8, 9]);
+    confirmar.mockResolvedValue(true);
+    await component.mudarAba('documentos');
+    expect(component.reordenando).toBe(false);
+    expect(navegar).toHaveBeenCalledWith([], expect.objectContaining({ queryParams: expect.objectContaining({ aba: 'documentos' }) }));
+  });
+
+  it('intercepta o clique externo e só executa a ação após confirmar o descarte', async () => {
+    params.next(convertToParamMap({ aba: 'secoes' }));
+    criar(); component.iniciarReordenacao(); component.moverSecao(0, 1);
+    const confirmar = vi.spyOn(Alertas, 'confirmarDescarte').mockResolvedValue(false);
+    const botao = document.createElement('button');
+    const abrir = vi.fn();
+    botao.addEventListener('click', abrir);
+    document.body.append(botao);
+    try {
+      botao.click();
+      await vi.waitFor(() => expect(Reflect.get(component, 'confirmacaoDescarte')).toBeNull());
+      expect(abrir).not.toHaveBeenCalled();
+      expect(component.temAlteracoesOrdem).toBe(true);
+      confirmar.mockResolvedValue(true);
+      botao.click();
+      await vi.waitFor(() => expect(abrir).toHaveBeenCalledOnce());
+      expect(component.reordenando).toBe(false);
+    } finally { botao.remove(); }
+  });
+
+  it('sai sem confirmação quando a sequência original está preservada', async () => {
+    params.next(convertToParamMap({ aba: 'secoes' }));
+    criar(); component.iniciarReordenacao();
+    const confirmar = vi.spyOn(Alertas, 'confirmarDescarte');
+    component.moverSecao(0, 1); component.moverSecao(1, -1);
+    await component.mudarAba('documentos');
+    expect(confirmar).not.toHaveBeenCalled();
+    expect(component.reordenando).toBe(false);
+    expect(navegar).toHaveBeenCalled();
+  });
+
+  it('reordena pelo arraste e mantém as setas e os indicadores disponíveis', () => {
+    params.next(convertToParamMap({ aba: 'secoes' }));
+    criar(); component.iniciarReordenacao(); fixture.detectChanges();
+    expect(fixture.nativeElement.querySelectorAll('.arrastar-secao')).toHaveLength(3);
+    component.soltarSecao({ previousIndex: 0, currentIndex: 2 } as Parameters<Transparencia['soltarSecao']>[0]);
+    expect(component.secoesOrdenacao.map(s => s.id)).toEqual([3, 9, 8]);
+    expect(component.temAlteracoesOrdem).toBe(true);
+    expect(component.anuncioOrdem).toContain('posição 3');
+    expect(fixture.nativeElement.querySelectorAll('.mover-secao')).toHaveLength(6);
+  });
+
   it('consulta a sequência salva por padrão e exibe a coluna Ordem', () => {
     params.next(convertToParamMap({ aba: 'secoes' }));
     api['listarSecoesAdmin'].mockReturnValue(of(pagina([{ ...secao, ordem: 2 }])));

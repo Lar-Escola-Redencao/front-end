@@ -1,3 +1,4 @@
+import { DragDropModule, CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 import { AnexoDrop } from 'src/app/shared/directives/anexo-drop';
 import { AbasResponsivas } from 'src/app/shared/directives/abas-responsivas';
 import { Component, OnInit, OnDestroy, ChangeDetectorRef, ElementRef, HostListener, NgZone } from '@angular/core';
@@ -45,6 +46,7 @@ interface DocumentoExibicao extends DocumentoAdmin {
   selector: 'app-transparencia',
   standalone: true,
   imports: [
+    DragDropModule,
     AnexoDrop,
     AbasResponsivas,
     CommonModule,
@@ -154,6 +156,55 @@ export class Transparencia implements OnInit, OnDestroy, ComponentComAlteracoesN
 
   get temAlteracoesOrdem(): boolean {
     return this.reordenando && this.secoesOrdenacao.some((secao, indice) => secao.id !== this.ordemSalva[indice]?.id);
+  }
+
+  private confirmacaoDescarte: Promise<boolean> | null = null;
+
+  async confirmarDescarte(): Promise<boolean> {
+    if (this.salvandoOrdem) return false;
+    if (!this.formularioTemAlteracoesNaoSalvas()) return true;
+    if (!this.confirmacaoDescarte) {
+      this.confirmacaoDescarte = Alertas.confirmarDescarte().then(confirmado => {
+        if (confirmado && this.reordenando) this.cancelarReordenacao();
+        return confirmado;
+      }).finally(() => { this.confirmacaoDescarte = null; });
+    }
+    return this.confirmacaoDescarte;
+  }
+
+  private readonly confirmarCliqueFora = (evento: MouseEvent): void => {
+    if (!this.temAlteracoesOrdem || !(evento.target instanceof Element)) return;
+    const alvo = evento.target;
+    if (alvo.closest('.swal2-container, .lista-ordenacao, .botoes-secoes, .orientacao-ordem, .aba-btn.ativa')) return;
+    evento.preventDefault();
+    evento.stopImmediatePropagation();
+    if (this.confirmacaoDescarte) return;
+    void this.confirmarDescarte().then(confirmado => {
+      if (confirmado && alvo instanceof HTMLElement && alvo.isConnected) {
+        this.ngZone.run(() => {
+          this.cdr.detectChanges();
+          alvo.click();
+        });
+      }
+    });
+  };
+
+  async solicitarCancelarReordenacao(): Promise<void> {
+    if (await this.confirmarDescarte()) this.cancelarReordenacao();
+    this.cdr.detectChanges();
+  }
+
+  iniciarArraste(): void {
+    this.encerrarAnimacoesOrdem();
+  }
+
+  soltarSecao(evento: CdkDragDrop<Secao[]>): void {
+    if (this.salvandoOrdem || evento.previousIndex === evento.currentIndex) return;
+    this.encerrarAnimacoesOrdem();
+    const secoes = [...this.secoesOrdenacao];
+    moveItemInArray(secoes, evento.previousIndex, evento.currentIndex);
+    this.secoesOrdenacao = secoes;
+    this.anuncioOrdem = `${secoes[evento.currentIndex].titulo}: posição ${evento.currentIndex + 1} de ${secoes.length}.`;
   }
 
   iniciarReordenacao(): void {
@@ -302,6 +353,7 @@ export class Transparencia implements OnInit, OnDestroy, ComponentComAlteracoesN
   }
 
   ngOnInit(): void {
+    document.addEventListener('click', this.confirmarCliqueFora, true);
     this.carregarSecoesParaSelecao();
 
     this.routeSub = this.route.queryParamMap.subscribe(params => {
@@ -334,6 +386,7 @@ export class Transparencia implements OnInit, OnDestroy, ComponentComAlteracoesN
   }
 
   ngOnDestroy(): void {
+    document.removeEventListener('click', this.confirmarCliqueFora, true);
     this.encerrarAnimacoesOrdem();
     this.routeSub?.unsubscribe();
     this.listaSub?.unsubscribe();
@@ -341,13 +394,17 @@ export class Transparencia implements OnInit, OnDestroy, ComponentComAlteracoesN
     this.ordemSub?.unsubscribe();
   }
 
-  mudarAba(aba: 'documentos' | 'secoes'): void {
-    if (this.reordenando || this.carregandoOrdem) return;
+  async mudarAba(aba: 'documentos' | 'secoes'): Promise<void> {
+    if (this.carregandoOrdem || this.salvandoOrdem) return;
     if (aba === this.abaAtiva) {
       return;
     }
 
-    this.navegar({ aba, page: 0, sort: null, search: null });
+    if (this.reordenando) {
+      if (!await this.confirmarDescarte()) return;
+      this.cancelarReordenacao();
+    }
+    await this.navegar({ aba, page: 0, sort: null, search: null });
   }
 
   /** Atualiza a URL (?search=termo); o queryParamMap.subscribe refaz o GET sem recarregar a página. */
