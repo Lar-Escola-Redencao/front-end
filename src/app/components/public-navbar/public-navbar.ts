@@ -36,7 +36,7 @@ export class PublicNavbar {
   }
 
   abrirMenuMobile() {
-    if (window.matchMedia('(max-width: 1000px)').matches) {
+    if (window.matchMedia('(max-width: 1200px)').matches) {
       this.menuAberto.set(true);
     }
   }
