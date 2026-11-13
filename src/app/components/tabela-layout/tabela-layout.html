@@ -262,12 +262,10 @@
                 [matMenuTriggerFor]="menuLinha">
                 <mat-icon class="material-symbols-outlined">more_vert</mat-icon>
               </button>
-              <mat-menu #menuLinha="matMenu">
-                @for (item of itensMenu; track item.acao; let primeiro = $first) {
-                @if (item.perigosa && !primeiro) {
-                <mat-divider></mat-divider>
-                }
+              <mat-menu #menuLinha="matMenu" class="menu-acoes-tabela">
+                @for (item of itensMenu; track item.acao) {
                 <button type="button" mat-menu-item class="menu-item-acao"
+                  [class.menu-item-reativar]="item.acao === 'reativar'"
                   [class.menu-item-perigoso]="item.perigosa" (click)="executarAcao(item, linha)">
                   <mat-icon class="material-symbols-outlined">{{ item.icone }}</mat-icon>
                   <span>{{ item.rotulo ?? item.tooltip }}</span>

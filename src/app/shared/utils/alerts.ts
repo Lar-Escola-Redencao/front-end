@@ -9,8 +9,8 @@ function escaparHtml(texto: string): string {
     .replace(/'/g, '&#39;');
 }
 
-const TEXTO_DESATIVAR_COLABORADOR = 'inativar-colaborador';
-const TEXTO_REATIVAR_COLABORADOR = 'ativar-colaborador';
+const TEXTO_DESATIVAR_ACESSO = 'desativar-acesso';
+const TEXTO_REATIVAR_ACESSO = 'reativar-acesso';
 
 function confirmarComTexto(opcoes: {
   titulo: string;
@@ -67,7 +67,7 @@ export const Alertas = {
       titulo: 'Desativar acesso?',
       htmlMensagem: `O acesso de <strong>${escaparHtml(nome)}</strong> será bloqueado, inclusive nas sessões abertas. `
         + 'Os dados e a autoria dos registros serão preservados, e o acesso poderá ser reativado depois.',
-      textoConfirmacao: TEXTO_DESATIVAR_COLABORADOR,
+      textoConfirmacao: TEXTO_DESATIVAR_ACESSO,
       botaoConfirmar: 'Desativar acesso',
       corConfirmar: '#e04b3a',
       icone: 'warning'
@@ -79,7 +79,7 @@ export const Alertas = {
       titulo: 'Reativar acesso?',
       htmlMensagem: `Deseja continuar com a reativação de <strong>${escaparHtml(nome)}</strong>? `
         + 'Na próxima etapa você poderá revisar os dados e definir uma nova senha.',
-      textoConfirmacao: TEXTO_REATIVAR_COLABORADOR,
+      textoConfirmacao: TEXTO_REATIVAR_ACESSO,
       botaoConfirmar: 'Continuar reativação',
       corConfirmar: '#3682dc',
       icone: 'question'

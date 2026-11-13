@@ -24,6 +24,7 @@
     </div>
 
     <app-tabela-layout
+      class="tabela-colaboradores"
       [colunas]="colunas"
       [dados]="colaboradores"
       [acoes]="acoesTabela"
@@ -171,13 +172,12 @@
 
     @if (modoReativacao) {
       <p class="aviso-inativo" role="status">
-        Este cadastro está inativo. Revise os dados e defina uma nova senha; o acesso só será liberado
+        Este cadastro está inativo. Revise os dados e defina uma nova senha. O acesso só será liberado
         depois que a reativação for salva com sucesso.
       </p>
     } @else if (modoEdicao && colaboradorEmEdicao?.ativo === false) {
       <p class="aviso-inativo" role="status">
-        Este cadastro está inativo. Salvar as alterações não libera o acesso; para isso, use
-        Reativar acesso na lista.
+        Este cadastro está inativo. Para liberar o acesso, use Reativar acesso na lista.
       </p>
     }
 

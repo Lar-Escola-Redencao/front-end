@@ -208,11 +208,16 @@ describe('ColaboradorComponent', () => {
       expect(acoesDe({ ...monitor([2]), ativo: false })).toEqual(['visualizar']);
     });
 
-    it('lista só ativos por padrão e filtra por situação', () => {
+    it('lista todos por padrão e permite filtrar ativos e inativos', () => {
       const listar = vi.spyOn(TestBed.inject(ColaboradorService), 'listarTodos')
         .mockReturnValue(of({ content: [], page: { totalElements: 0, totalPages: 0, number: 0, size: 10 } }));
       component.carregarColaboradores();
+      expect(listar.mock.calls.at(-1)![6]).toBeNull();
+      expect(component.quantidadeFiltrosAplicados).toBe(0);
+      component.filtroSituacao = 'ativos';
+      component.carregarColaboradores();
       expect(listar.mock.calls.at(-1)![6]).toBe(true);
+      expect(component.quantidadeFiltrosAplicados).toBe(1);
       component.filtroSituacao = 'inativos';
       component.carregarColaboradores();
       expect(listar.mock.calls.at(-1)![6]).toBe(false);
@@ -294,6 +299,27 @@ describe('ColaboradorComponent', () => {
       expect(component.modalAberto).toBe(true);
       expect(component.modoReativacao).toBe(true);
       expect(component.isLoading).toBe(false);
+    });
+
+    it('confirma o descarte ao clicar fora da reativação mesmo sem editar os dados', async () => {
+      configurarPerfil('ADMINISTRADOR');
+      component.abrirReativacao({ ...monitor([1]), ativo: false });
+      fixture.detectChanges();
+      const descarte = vi.spyOn(Alertas, 'confirmarDescarte').mockResolvedValue(false);
+      const reativar = vi.spyOn(TestBed.inject(ColaboradorService), 'reativar');
+
+      fixture.nativeElement.querySelector('.modal-backdrop').click();
+      await fixture.whenStable();
+      expect(descarte).toHaveBeenCalledWith(
+        'Deseja descartar a reativação deste colaborador? O cadastro continuará inativo.');
+      expect(component.modalAberto).toBe(true);
+      expect(component.modoReativacao).toBe(true);
+
+      descarte.mockResolvedValue(true);
+      fixture.nativeElement.querySelector('.modal-backdrop').click();
+      await fixture.whenStable();
+      expect(component.modalAberto).toBe(false);
+      expect(reativar).not.toHaveBeenCalled();
     });
 
     it('pede confirmação de descarte ao fechar a reativação com alterações e mantém o formulário se desistir', async () => {

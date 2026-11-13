@@ -110,9 +110,9 @@ export class ColaboradorComponent
   filtroUnidade: number | null = null;
   filtroModalPapel: number | null = null;
   filtroModalUnidade: number | null = null;
-  /** Situação do cadastro; a lista começa só com os ativos. */
-  filtroSituacao: SituacaoColaborador = 'ativos';
-  filtroModalSituacao: SituacaoColaborador = 'ativos';
+  /** Situação do cadastro; a lista começa com ativos e inativos. */
+  filtroSituacao: SituacaoColaborador = 'todos';
+  filtroModalSituacao: SituacaoColaborador = 'todos';
   filtrosAberto = false;
 
   /** Termo da barra de busca, espelhado em ?search= na URL. */
@@ -232,6 +232,7 @@ export class ColaboradorComponent
       rotulo: 'Desativar acesso',
       acao: 'desativar',
       menu: true,
+      perigosa: true,
       visivel: colaborador => colaborador.ativo !== false && this.podeGerenciarColaborador(colaborador)
     },
     {
@@ -350,7 +351,7 @@ export class ColaboradorComponent
       this.busca = params.get('search') ?? '';
 
       const situacao = params.get('situacao');
-      this.filtroSituacao = situacao === 'inativos' || situacao === 'todos' ? situacao : 'ativos';
+      this.filtroSituacao = situacao === 'inativos' || situacao === 'ativos' ? situacao : 'todos';
 
       this.carregarColaboradores();
     });
@@ -382,7 +383,7 @@ export class ColaboradorComponent
     const papelSelecionado = this.papeis.find(p => p.id === this.filtroPapel);
     const unidadeSelecionada = this.unidadesDisponiveis.find(u => u.id === this.filtroUnidade);
 
-    if (papelSelecionado || unidadeSelecionada || this.filtroSituacao !== 'ativos') {
+    if (papelSelecionado || unidadeSelecionada || this.filtroSituacao !== 'todos') {
       return 'Nenhum colaborador encontrado com os filtros selecionados.';
     }
 
@@ -424,7 +425,7 @@ export class ColaboradorComponent
   get quantidadeFiltrosAplicados(): number {
     return Number(Boolean(this.filtroUnidade)) +
       Number(Boolean(!this.somenteMonitores && this.filtroPapel)) +
-      Number(this.filtroSituacao !== 'ativos');
+      Number(this.filtroSituacao !== 'todos');
   }
 
   private get idPapelMonitor(): number | null {
@@ -489,18 +490,10 @@ export class ColaboradorComponent
     // Uma nova busca/filtro cancela a requisição anterior em andamento: vale sempre a mais recente.
     this.listaSub?.unsubscribe();
 
-    // Para o coordenador a lista é sempre restrita a monitores; aguarda os papéis
-    // carregarem para saber o id do papel MONITOR (carregarPapeis recarrega a lista).
-    if (this.somenteMonitores && this.idPapelMonitor === null) {
-      return;
-    }
-
     this.carregandoLista = true;
     this.erroLista = false;
 
-    const idPapel = this.somenteMonitores
-      ? this.idPapelMonitor!
-      : this.filtroPapel ?? undefined;
+    const idPapel = this.somenteMonitores ? undefined : this.filtroPapel ?? undefined;
 
     this.listaSub = this.colaboradorService
       .listarTodos(
@@ -568,7 +561,7 @@ export class ColaboradorComponent
       queryParams: {
         unidade: this.filtroModalUnidade || null,
         papel: this.somenteMonitores ? null : this.filtroModalPapel || null,
-        situacao: this.filtroModalSituacao === 'ativos' ? null : this.filtroModalSituacao,
+        situacao: this.filtroModalSituacao === 'todos' ? null : this.filtroModalSituacao,
         page: 0
       },
       queryParamsHandling: 'merge'
@@ -579,7 +572,7 @@ export class ColaboradorComponent
   limparFiltros(): void {
     this.filtroModalUnidade = null;
     this.filtroModalPapel = null;
-    this.filtroModalSituacao = 'ativos';
+    this.filtroModalSituacao = 'todos';
     this.router.navigate([], {
       relativeTo: this.route,
       queryParams: { unidade: null, papel: null, situacao: null, page: 0 },
@@ -790,13 +783,15 @@ export class ColaboradorComponent
   }
 
   fecharModal(): void {
-    if (!this.formularioTemAlteracoesNaoSalvas()) {
+    if (!this.modoReativacao && !this.formularioTemAlteracoesNaoSalvas()) {
       this.fecharModalSemConfirmacao();
       return;
     }
 
     Alertas
-      .confirmarDescarte()
+      .confirmarDescarte(this.modoReativacao
+        ? 'Deseja descartar a reativação deste colaborador? O cadastro continuará inativo.'
+        : undefined)
       .then((confirmado: boolean) => {
         this.ngZone.run(() => {
           if (confirmado) {

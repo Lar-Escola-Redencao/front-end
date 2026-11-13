@@ -8,7 +8,6 @@ import {
   Output
 } from '@angular/core';
 
-import { MatDividerModule } from '@angular/material/divider';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { Params, RouterLink } from '@angular/router';
@@ -49,7 +48,7 @@ export interface TabelaAcao<T = any> {
   menu?: boolean;
   /** Texto do item no menu; usa o tooltip quando ausente. */
   rotulo?: string;
-  /** Item destacado em vermelho e separado visualmente das demais opções do menu. */
+  /** Item destacado em vermelho no menu. */
   perigosa?: boolean;
 }
 
@@ -66,7 +65,6 @@ export interface TabelaOrdenacao {
     CommonModule,
     MatIconModule,
     MatMenuModule,
-    MatDividerModule,
     RouterLink
   ],
 

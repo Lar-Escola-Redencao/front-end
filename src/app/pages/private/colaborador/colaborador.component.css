@@ -2,6 +2,14 @@ h1{
   font-family: var(--fonte-titulo);
 }
 
+:host ::ng-deep .tabela-colaboradores td[data-label="CPF"] {
+  white-space: nowrap;
+}
+
+:host ::ng-deep .tabela-colaboradores td[data-label="E-mail"] .valor-celula {
+  overflow-wrap: anywhere;
+}
+
 .form-modal {
   display: flex;
   flex-direction: column;
@@ -450,8 +458,8 @@ h1{
   margin: 0 0 12px;
   padding: 10px 12px;
   border-radius: 8px;
-  background-color: #fee2e2;
-  color: rgb(122, 29, 29);
+  background-color: #fff8e1;
+  color: #d98200;
   font-size: 0.9rem;
   line-height: 1.4;
 }
