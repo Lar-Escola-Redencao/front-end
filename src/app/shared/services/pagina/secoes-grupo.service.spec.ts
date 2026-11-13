@@ -68,7 +68,7 @@ describe('SecoesGrupoService', () => {
     expect(req.request.params.get('page')).toBe('1');
     expect(req.request.params.get('size')).toBe('5');
     expect(req.request.params.get('search')).toBe('Caneca');
-    expect(req.request.params.getAll('sort')).toEqual(['ordem,asc', 'id,asc']);
+    expect(req.request.params.has('sort')).toBe(false);
     req.flush({
       content: [{ id: 2, grupo: 'produtos', titulo: 'Caneca', ativo: false }],
       page: { number: 1, size: 5, totalElements: 6, totalPages: 2 },

@@ -129,7 +129,6 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
   abaAtiva: 'usuarios' | 'contatos' = 'usuarios';
   todosUsuarios: UsuarioResponseDTO[] = [];
   /** Resultado do GET da listagem (filtrado por ?search= quando há busca); é o que a tabela pagina. */
-  usuariosListagem: UsuarioResponseDTO[] = [];
   usuarios: UsuarioResponseDTO[] = [];
   contatos: ContatoListagemDTO[] = [];
 
@@ -439,25 +438,17 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
       this.abaAtiva = aba;
 
       const novaBusca = params.get('search') ?? '';
-      const buscaMudou = novaBusca !== this.busca;
       this.busca = novaBusca;
 
       const novoFiltroUnidade = this.paramNumero(params.get('idUnidade'));
       const novoFiltroTurma = this.paramNumero(params.get('idTurma'));
       const novoFiltroStatus = this.paramStatusMatricula(params.get('statusMatricula'));
-      const filtrosMudaram = novoFiltroUnidade !== this.filtroUnidadeId
-        || novoFiltroTurma !== this.filtroTurmaId
-        || novoFiltroStatus !== this.filtroStatusMatricula;
       this.filtroUnidadeId = novoFiltroUnidade;
       this.filtroTurmaId = novoFiltroTurma;
       this.filtroStatusMatricula = novoFiltroStatus;
 
       if (this.abaAtiva === 'usuarios') {
-        if (buscaMudou || filtrosMudaram || (this.usuariosListagem.length === 0 && !this.carregandoLista)) {
-           this.carregarUsuarios();
-        } else {
-           this.aplicarPaginacao();
-        }
+        this.carregarUsuarios();
       } else {
         this.carregarContatos();
       }
@@ -644,21 +635,22 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
     this.erroLista = false;
     this.atualizarTela();
 
-    const busca = this.busca;
-    this.listaSub = this.usuarioService.listarUsuarios({
-      search: busca || undefined,
+    this.listaSub = this.usuarioService.listarUsuariosPaginados(this.pagina, this.tamanho, this.sort, {
+      search: this.busca || undefined,
       idUnidade: this.filtroUnidadeId,
       idTurma: this.filtroTurmaId,
       statusMatricula: this.filtroStatusMatricula
     }).subscribe({
       next: (resposta) => {
         this.ngZone.run(() => {
-          const ativos = resposta.filter(u => u.status !== 'EXCLUIDO');
-          this.usuariosListagem = ativos;
-          // Sem busca, a resposta é a lista completa — reaproveitada na checagem de CPF e nos vínculos.
-          if (!busca && !this.filtroUnidadeId && !this.filtroTurmaId && !this.filtroStatusMatricula) this.todosUsuarios = ativos;
-          this.aplicarPaginacao();
+          this.usuarios = resposta.content;
+          this.totalElementos = resposta.page.totalElements;
+          this.totalPaginas = resposta.page.totalPages;
           this.carregandoLista = false;
+          const ultimaPagina = Math.max(0, this.totalPaginas - 1);
+          if (this.pagina > ultimaPagina) {
+            this.irParaPagina(ultimaPagina);
+          }
           this.cdr.markForCheck();
           this.atualizarTela();
         });
@@ -682,10 +674,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
     this.atualizarTela();
 
     const busca = this.busca || undefined;
-    const consulta = this.ordenacao?.campo === 'quantidadeVinculos'
-      ? this.contatoService.listarOrdenadosPorVinculos(this.pagina, this.tamanho, this.ordenacao.direcao, busca)
-      : this.contatoService.listarContatos(this.pagina, this.tamanho, this.sort, busca);
-    this.listaSub = consulta.subscribe({
+    this.listaSub = this.contatoService.listarContatos(this.pagina, this.tamanho, this.sort, busca).subscribe({
       next: (resposta) => {
         this.ngZone.run(() => {
           this.contatos = resposta.content;
@@ -704,34 +693,6 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
         });
       }
     });
-  }
-
-  aplicarPaginacao(): void {
-    let lista = [...this.usuariosListagem];
-
-    if (this.ordenacao) {
-      const { campo, direcao } = this.ordenacao;
-      lista.sort((a, b) => {
-        const valor = (usuario: UsuarioResponseDTO): string => {
-          if (campo === 'cpf') return usuario.cpf || usuario.documentoAuxiliar || '';
-          if (campo === 'nomeTurma') return this.formatarUnidadeTurmaTabela(usuario);
-          return String(usuario[campo as keyof UsuarioResponseDTO] ?? '');
-        };
-        const comparacao = valor(a).localeCompare(valor(b), 'pt-BR', { numeric: true, sensitivity: 'base' });
-        return direcao === 'asc' ? comparacao : -comparacao;
-      });
-    }
-
-    this.totalElementos = lista.length;
-    this.totalPaginas = Math.ceil(this.totalElementos / this.tamanho) || 1;
-
-    if (this.pagina >= this.totalPaginas && this.totalPaginas > 0) {
-      this.irParaPagina(this.totalPaginas - 1);
-      return;
-    }
-
-    const inicio = this.pagina * this.tamanho;
-    this.usuarios = lista.slice(inicio, inicio + this.tamanho);
   }
 
   carregarUnidades() {
