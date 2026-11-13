@@ -37,6 +37,7 @@ describe('Login', () => {
     fixture = TestBed.createComponent(Login);
     fixture.detectChanges();
     TestBed.flushEffects();
+    TestBed.inject(HttpTestingController).match('/api/rede-social/todas').forEach(req => req.flush([]));
   }
 
   it('does not show a session warning on a plain login visit', () => {

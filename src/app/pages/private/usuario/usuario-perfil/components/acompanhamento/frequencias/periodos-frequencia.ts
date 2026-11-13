@@ -18,23 +18,27 @@ export function hojeBrasilia(): string {
   return `${obter('year')}-${obter('month')}-${obter('day')}`;
 }
 
-export function intervaloPeriodo(periodo: Exclude<PeriodoFrequencia, 'PERSONALIZADO'>, hoje: string) {
+export function intervaloPeriodo(periodo: Exclude<PeriodoFrequencia, 'PERSONALIZADO'>, hoje: string, primeiraMatricula = '') {
+  const limitar = (intervalo: { dataInicio: string; dataFim: string }) => ({
+    ...intervalo,
+    dataInicio: primeiraMatricula && intervalo.dataInicio < primeiraMatricula ? primeiraMatricula : intervalo.dataInicio,
+  });
   const data = new Date(`${hoje}T12:00:00Z`);
   const iso = (valor: Date) => valor.toISOString().slice(0, 10);
   let ano = data.getUTCFullYear(); let mes = data.getUTCMonth();
   if (periodo === 'ULTIMOS_15_DIAS' || periodo === 'ULTIMOS_30_DIAS') {
     data.setUTCDate(data.getUTCDate() - (periodo === 'ULTIMOS_15_DIAS' ? 14 : 29));
-    return { dataInicio: iso(data), dataFim: hoje };
+    return limitar({ dataInicio: iso(data), dataFim: hoje });
   }
   if (periodo === 'ESTE_ANO' || periodo === 'ANO_PASSADO') {
     if (periodo === 'ANO_PASSADO') ano--;
-    return { dataInicio: `${ano}-01-01`, dataFim: `${ano}-12-31` };
+    return limitar({ dataInicio: `${ano}-01-01`, dataFim: `${ano}-12-31` });
   }
   if (periodo === 'MES_PASSADO') { mes--; if (mes < 0) { mes = 11; ano--; } }
-  return { dataInicio: iso(new Date(Date.UTC(ano, mes, 1))), dataFim: iso(new Date(Date.UTC(ano, mes + 1, 0))) };
+  return limitar({ dataInicio: iso(new Date(Date.UTC(ano, mes, 1))), dataFim: iso(new Date(Date.UTC(ano, mes + 1, 0))) });
 }
 
-export function validarIntervalo(inicio: string, fim: string): string | null {
+export function validarIntervalo(inicio: string, fim: string, primeiraMatricula = ''): string | null {
   if (!inicio || !fim) return 'Informe a data inicial e a data final.';
   const valida = (valor: string) => {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(valor)) return false;
@@ -42,6 +46,7 @@ export function validarIntervalo(inicio: string, fim: string): string | null {
     return Number.isFinite(data.getTime()) && data.toISOString().slice(0, 10) === valor;
   };
   if (!valida(inicio) || !valida(fim)) return 'Informe datas válidas.';
+  if (primeiraMatricula && inicio < primeiraMatricula) return 'A data inicial não pode ser anterior à primeira matrícula do usuário.';
   if (fim < inicio) return 'A data final não pode ser anterior à data inicial.';
   return null;
 }
