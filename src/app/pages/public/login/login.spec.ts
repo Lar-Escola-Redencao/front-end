@@ -56,7 +56,7 @@ describe('Login', () => {
   it('uses the same standard toast for invalid authentication', () => {
     setup({ reason: 'invalid' });
     expect(toastr.warning).toHaveBeenCalledExactlyOnceWith(
-      expect.stringContaining('Acesso negado'), expect.any(String),
+      expect.stringContaining('não é mais válida'), expect.any(String),
       { positionClass: 'toast-top-right', timeOut: 6000, closeButton: true },
     );
   });

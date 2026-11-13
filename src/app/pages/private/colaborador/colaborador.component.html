@@ -59,6 +59,14 @@
         <div><dt>Endereço</dt><dd>{{ colaborador.endereco || '-' }}</dd></div>
         <div><dt>Papel</dt><dd>{{ formatarTextoExibicao(colaborador.nomePapel) || '-' }}</dd></div>
         <div>
+          <dt>Situação</dt>
+          <dd>
+            <span class="badge-situacao" [class.inativo]="colaborador.ativo === false">
+              {{ colaborador.ativo === false ? 'Inativo' : 'Ativo' }}
+            </span>
+          </dd>
+        </div>
+        <div>
           <dt>Unidades</dt>
           <dd>
             @for (unidade of colaborador.unidades; track unidade.id; let ultima = $last) {
@@ -87,6 +95,18 @@
           [value]="unidade.id">
           {{ unidade.nome }}
         </mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Situação</mat-label>
+      <mat-select
+        [ngModel]="filtroModalSituacao"
+        [ngModelOptions]="{ standalone: true }"
+        (ngModelChange)="selecionarSituacaoFiltro($event)">
+        <mat-option value="ativos">Ativos</mat-option>
+        <mat-option value="inativos">Inativos</mat-option>
+        <mat-option value="todos">Todos</mat-option>
       </mat-select>
     </mat-form-field>
 
@@ -136,11 +156,11 @@
 @if (modalAberto) {
 <app-modal-layout
   [class.tremer]="modalTremendo"
-  [titulo]="modoEdicao ? 'Editar colaborador' : 'Cadastrar novo colaborador'"
+  [titulo]="modoReativacao ? 'Reativar colaborador' : modoEdicao ? 'Editar colaborador' : 'Cadastrar novo colaborador'"
   (closed)="fecharModal()">
 
   <span modal-title-extra>
-    @if (modoEdicao && colaboradorSelecionadoId) {
+    @if ((modoEdicao || modoReativacao) && colaboradorSelecionadoId) {
       <app-historico-contextual tipo="COLABORADORES" [idRegistro]="colaboradorSelecionadoId" titulo="Histórico deste colaborador" />
     }
   </span>
@@ -148,6 +168,18 @@
     class="form-modal"
     [formGroup]="formColaborador"
     (ngSubmit)="salvar()">
+
+    @if (modoReativacao) {
+      <p class="aviso-inativo" role="status">
+        Este cadastro está inativo. Revise os dados e defina uma nova senha; o acesso só será liberado
+        depois que a reativação for salva com sucesso.
+      </p>
+    } @else if (modoEdicao && colaboradorEmEdicao?.ativo === false) {
+      <p class="aviso-inativo" role="status">
+        Este cadastro está inativo. Salvar as alterações não libera o acesso; para isso, use
+        Reativar acesso na lista.
+      </p>
+    }
 
     <mat-form-field appearance="outline">
       <mat-label>Nome completo</mat-label>
@@ -269,7 +301,7 @@
       </span>
     </div>
 
-    @if (!modoEdicao) {
+    @if (!modoEdicao || modoReativacao) {
     <div class="form-row">
       <div>
         <mat-form-field appearance="outline">
@@ -346,7 +378,7 @@
           aria-hidden="true">
         </span>
         <span>
-          {{ isLoading ? 'Salvando...' : 'Salvar' }}
+          {{ modoReativacao ? (isLoading ? 'Reativando...' : 'Confirmar reativação') : (isLoading ? 'Salvando...' : 'Salvar') }}
         </span>
       </button>
     </div>

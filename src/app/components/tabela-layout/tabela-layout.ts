@@ -8,7 +8,9 @@ import {
   Output
 } from '@angular/core';
 
+import { MatDividerModule } from '@angular/material/divider';
 import { MatIconModule } from '@angular/material/icon';
+import { MatMenuModule } from '@angular/material/menu';
 import { Params, RouterLink } from '@angular/router';
 
 import { environment } from 'src/environments/environment';
@@ -43,6 +45,12 @@ export interface TabelaAcao<T = any> {
   executar?: (linha: T) => void;
   /** Quando informado, a ação só aparece nas linhas em que retornar true. */
   visivel?: (linha: T) => boolean;
+  /** Agrupa a ação no menu de três pontos da linha, em vez de um botão próprio. */
+  menu?: boolean;
+  /** Texto do item no menu; usa o tooltip quando ausente. */
+  rotulo?: string;
+  /** Item destacado em vermelho e separado visualmente das demais opções do menu. */
+  perigosa?: boolean;
 }
 
 export interface TabelaOrdenacao {
@@ -57,6 +65,8 @@ export interface TabelaOrdenacao {
   imports: [EstadoVazio,
     CommonModule,
     MatIconModule,
+    MatMenuModule,
+    MatDividerModule,
     RouterLink
   ],
 
@@ -147,6 +157,16 @@ export class TabelaLayout<T = any> {
 
   acoesVisiveis(linha: T): TabelaAcao<T>[] {
     return this.acoes.filter(acao => !acao.visivel || acao.visivel(linha));
+  }
+
+  acoesDiretas(linha: T): TabelaAcao<T>[] {
+    return this.acoesVisiveis(linha).filter(acao => !acao.menu);
+  }
+
+  acoesMenu(linha: T): TabelaAcao<T>[] {
+    return this.acoesVisiveis(linha)
+      .filter(acao => acao.menu)
+      .sort((a, b) => Number(Boolean(a.perigosa)) - Number(Boolean(b.perigosa)));
   }
 
   obterUrlImagem(valor: any): string | null {

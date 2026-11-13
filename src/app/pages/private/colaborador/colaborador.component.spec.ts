@@ -65,7 +65,7 @@ describe('ColaboradorComponent', () => {
 
   function monitor(idsUnidades: number[], nomePapel = 'MONITOR'): Colaborador {
     return { id: 20, nomeCompleto: 'Monitor teste', email: 'monitor@teste.com', cpf: '12345678900',
-      endereco: 'Rua A', telefone: '11999999999', idPapel: 3, nomePapel,
+      endereco: 'Rua A', telefone: '11999999999', idPapel: 3, nomePapel, ativo: true,
       unidades: idsUnidades.map(id => ({ id, nome: `Unidade ${id}` })) };
   }
 
@@ -85,7 +85,7 @@ describe('ColaboradorComponent', () => {
       fixture.changeDetectorRef.markForCheck();
       fixture.detectChanges();
       expect(fixture.nativeElement.querySelector('button[title="Editar"]')).toBeNull();
-      expect(fixture.nativeElement.querySelector('button[title="Excluir"]')).toBeNull();
+      expect(fixture.nativeElement.querySelector('button[title="Mais ações"]')).toBeNull();
       component.executarAcao({ tipo: 'editar', linha: component.colaboradores[0] });
       expect(component.modalAberto).toBe(false);
     });
@@ -97,7 +97,7 @@ describe('ColaboradorComponent', () => {
     fixture.changeDetectorRef.markForCheck();
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('button[title="Editar"]')).toBeTruthy();
-    expect(fixture.nativeElement.querySelector('button[title="Excluir"]')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('button[title="Mais ações"]')).toBeTruthy();
     component.abrirEdicao(component.colaboradores[0]);
     expect(component.modalAberto).toBe(true);
   });
@@ -181,5 +181,149 @@ describe('ColaboradorComponent', () => {
     component.abrirEdicao(propriaConta);
     expect(component.modalAberto).toBe(false);
     expect(component.podeGerenciarColaborador(monitor([1]))).toBe(true);
+  });
+
+  describe('situação do colaborador', () => {
+    function acoesDe(colaborador: Colaborador): string[] {
+      return component.acoesTabela.filter(acao => !acao.visivel || acao.visivel(colaborador)).map(acao => acao.acao);
+    }
+
+    it('mantém visualizar e editar visíveis e agrupa as demais ações no menu', () => {
+      configurarPerfil('ADMINISTRADOR');
+      const diretas = component.acoesTabela.filter(acao => !acao.menu).map(acao => acao.acao);
+      expect(diretas).toEqual(['visualizar', 'meu-perfil', 'editar']);
+      expect(acoesDe(monitor([1]))).toEqual(['visualizar', 'editar', 'desativar', 'excluir']);
+      const inativo = { ...monitor([1]), ativo: false };
+      expect(acoesDe(inativo)).toEqual(['visualizar', 'editar', 'reativar', 'excluir']);
+      const excluir = component.acoesTabela.find(acao => acao.acao === 'excluir')!;
+      expect(excluir.perigosa).toBe(true);
+      expect(component.acoesTabela.find(acao => acao.acao === 'desativar')!.icone).toBe('person_off');
+      expect(component.acoesTabela.find(acao => acao.acao === 'reativar')!.icone).toBe('person_check');
+    });
+
+    it('não oferece desativar a própria conta nem inativos fora das unidades do coordenador', () => {
+      configurarPerfil('ADMINISTRADOR');
+      expect(acoesDe({ ...monitor([1], 'ADMINISTRADOR'), id: 10 })).toEqual(['visualizar', 'meu-perfil']);
+      configurarPerfil('COORDENADOR');
+      expect(acoesDe({ ...monitor([2]), ativo: false })).toEqual(['visualizar']);
+    });
+
+    it('lista só ativos por padrão e filtra por situação', () => {
+      const listar = vi.spyOn(TestBed.inject(ColaboradorService), 'listarTodos')
+        .mockReturnValue(of({ content: [], page: { totalElements: 0, totalPages: 0, number: 0, size: 10 } }));
+      component.carregarColaboradores();
+      expect(listar.mock.calls.at(-1)![6]).toBe(true);
+      component.filtroSituacao = 'inativos';
+      component.carregarColaboradores();
+      expect(listar.mock.calls.at(-1)![6]).toBe(false);
+      component.filtroSituacao = 'todos';
+      component.carregarColaboradores();
+      expect(listar.mock.calls.at(-1)![6]).toBeNull();
+    });
+
+    it('desativa somente após a confirmação e atualiza a listagem', async () => {
+      configurarPerfil('ADMINISTRADOR');
+      const confirmar = vi.spyOn(Alertas, 'confirmarDesativacaoColaborador').mockResolvedValue(true);
+      const desativar = vi.spyOn(TestBed.inject(ColaboradorService), 'desativar')
+        .mockReturnValue(of({ ...monitor([1]), ativo: false }));
+      const recarregar = vi.spyOn(component, 'carregarColaboradores').mockImplementation(() => {});
+      await component.desativarColaborador(monitor([1]));
+      expect(confirmar).toHaveBeenCalledWith('Monitor teste');
+      expect(desativar).toHaveBeenCalledWith(20);
+      expect(recarregar).toHaveBeenCalled();
+    });
+
+    it('não desativa quando a confirmação é cancelada nem a própria conta', async () => {
+      configurarPerfil('ADMINISTRADOR');
+      const desativar = vi.spyOn(TestBed.inject(ColaboradorService), 'desativar');
+      vi.spyOn(Alertas, 'confirmarDesativacaoColaborador').mockResolvedValue(false);
+      await component.desativarColaborador(monitor([1]));
+      await component.desativarColaborador({ ...monitor([1]), id: 10 });
+      expect(desativar).not.toHaveBeenCalled();
+    });
+
+    it('reativar abre o formulário preenchido, com senha vazia e obrigatória', async () => {
+      configurarPerfil('ADMINISTRADOR');
+      vi.spyOn(Alertas, 'confirmarReativacaoColaborador').mockResolvedValue(true);
+      component.executarAcao({ tipo: 'reativar', linha: { ...monitor([1]), ativo: false } });
+      await Promise.resolve(); await Promise.resolve();
+      fixture.detectChanges();
+      expect(component.modalAberto).toBe(true);
+      expect(component.modoReativacao).toBe(true);
+      expect(component.formColaborador.value.email).toBe('monitor@teste.com');
+      expect(component.formColaborador.value.senha).toBe('');
+      expect(component.formColaborador.get('senha')!.hasError('required')).toBe(true);
+      expect(fixture.nativeElement.querySelector('app-modal-layout h2, app-modal-layout .titulo')?.textContent)
+        .toContain('Reativar colaborador');
+      expect(fixture.nativeElement.textContent).toContain('Confirmar reativação');
+    });
+
+    it('cancelar a confirmação não abre o formulário de reativação', async () => {
+      configurarPerfil('ADMINISTRADOR');
+      vi.spyOn(Alertas, 'confirmarReativacaoColaborador').mockResolvedValue(false);
+      component.executarAcao({ tipo: 'reativar', linha: { ...monitor([1]), ativo: false } });
+      await Promise.resolve(); await Promise.resolve();
+      expect(component.modalAberto).toBe(false);
+    });
+
+    it('envia dados revisados e nova senha em uma única solicitação', () => {
+      configurarPerfil('ADMINISTRADOR');
+      const reativar = vi.spyOn(TestBed.inject(ColaboradorService), 'reativar').mockReturnValue(of(monitor([1])));
+      vi.spyOn(component, 'carregarColaboradores').mockImplementation(() => {});
+      component.abrirReativacao({ ...monitor([1]), ativo: false });
+      component.formColaborador.patchValue({ endereco: 'Rua Nova, 10', senha: 'Senha1ok', confirmarSenha: 'Senha1ok' });
+      component.salvar();
+      expect(reativar).toHaveBeenCalledTimes(1);
+      const [id, dto] = reativar.mock.calls[0];
+      expect(id).toBe(20);
+      expect(dto).toMatchObject({ endereco: 'Rua Nova, 10', senha: 'Senha1ok', confirmacaoSenha: 'Senha1ok', idsUnidades: [1] });
+      expect(component.modalAberto).toBe(false);
+    });
+
+    it('exige nova senha e mantém o formulário aberto e inativo em caso de erro', () => {
+      configurarPerfil('ADMINISTRADOR');
+      const reativar = vi.spyOn(TestBed.inject(ColaboradorService), 'reativar')
+        .mockReturnValue(throwError(() => ({ status: 409, error: { message: 'Este CPF já está em uso por outro usuário.' } })));
+      vi.spyOn(TestBed.inject(ToastrService), 'error').mockReturnValue({} as ReturnType<ToastrService['error']>);
+      component.abrirReativacao({ ...monitor([1]), ativo: false });
+      component.salvar();
+      expect(reativar).not.toHaveBeenCalled();
+      component.formColaborador.patchValue({ senha: 'Senha1ok', confirmarSenha: 'Senha1ok' });
+      component.salvar();
+      expect(reativar).toHaveBeenCalledTimes(1);
+      expect(component.modalAberto).toBe(true);
+      expect(component.modoReativacao).toBe(true);
+      expect(component.isLoading).toBe(false);
+    });
+
+    it('pede confirmação de descarte ao fechar a reativação com alterações e mantém o formulário se desistir', async () => {
+      configurarPerfil('ADMINISTRADOR');
+      component.abrirReativacao({ ...monitor([1]), ativo: false });
+      component.formColaborador.patchValue({ senha: 'Senha1ok' });
+      const descarte = vi.spyOn(Alertas, 'confirmarDescarte').mockResolvedValue(false);
+      component.fecharModal();
+      await Promise.resolve(); await Promise.resolve();
+      expect(descarte).toHaveBeenCalled();
+      expect(component.modalAberto).toBe(true);
+      expect(component.formColaborador.value.senha).toBe('Senha1ok');
+      descarte.mockResolvedValue(true);
+      component.fecharModal();
+      await Promise.resolve(); await Promise.resolve();
+      expect(component.modalAberto).toBe(false);
+      expect(component.modoReativacao).toBe(false);
+    });
+
+    it('informa no formulário de edição que o cadastro está inativo e salva sem reativar', () => {
+      configurarPerfil('ADMINISTRADOR');
+      component.abrirEdicao({ ...monitor([1]), ativo: false });
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('.aviso-inativo')?.textContent).toContain('inativo');
+      const atualizar = vi.spyOn(TestBed.inject(ColaboradorService), 'atualizar').mockReturnValue(of(monitor([1])));
+      vi.spyOn(component, 'carregarColaboradores').mockImplementation(() => {});
+      component.formColaborador.patchValue({ endereco: 'Outra rua, 5' });
+      component.salvar();
+      expect(atualizar).toHaveBeenCalledTimes(1);
+      expect(atualizar.mock.calls[0][1]).not.toHaveProperty('ativo');
+    });
   });
 });

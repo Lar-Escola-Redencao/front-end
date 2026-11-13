@@ -39,7 +39,13 @@ import { Paginacao } from '@components/paginacao/paginacao';
 import { BarraBusca } from '@components/barra-busca/barra-busca';
 
 import { ComponentComAlteracoesNaoSalvas } from 'src/app/shared/guards/can-deactivate.guard';
-import { AtualizarColaboradorDTO, Colaborador, CriarColaboradorDTO } from 'src/app/shared/models/colaborador.model';
+import {
+  AtualizarColaboradorDTO,
+  Colaborador,
+  CriarColaboradorDTO,
+  ReativarColaboradorDTO,
+  SituacaoColaborador
+} from 'src/app/shared/models/colaborador.model';
 import { Auth } from 'src/app/shared/services/auth/auth';
 import { SessaoService } from 'src/app/shared/services/auth/sessao.service';
 import { ColaboradorService } from 'src/app/shared/services/colaborador/colaborador.service';
@@ -104,6 +110,9 @@ export class ColaboradorComponent
   filtroUnidade: number | null = null;
   filtroModalPapel: number | null = null;
   filtroModalUnidade: number | null = null;
+  /** Situação do cadastro; a lista começa só com os ativos. */
+  filtroSituacao: SituacaoColaborador = 'ativos';
+  filtroModalSituacao: SituacaoColaborador = 'ativos';
   filtrosAberto = false;
 
   /** Termo da barra de busca, espelhado em ?search= na URL. */
@@ -127,8 +136,12 @@ export class ColaboradorComponent
   modalAberto = false;
   colaboradorPreview: Colaborador | null = null;
   modoEdicao = false;
+  /** Formulário aberto para reativar um colaborador inativo (dados revisados + nova senha). */
+  modoReativacao = false;
+  /** Evita solicitações duplicadas de desativação/reativação. */
+  private situacaoEmProcessamento = false;
   colaboradorSelecionadoId: number | null = null;
-  private colaboradorEmEdicao: Colaborador | null = null;
+  colaboradorEmEdicao: Colaborador | null = null;
   formColaborador: FormGroup;
   erros: { [key: string]: string } = {};
   mostrarSenha = false;
@@ -187,6 +200,11 @@ export class ColaboradorComponent
       formatar: (valor) => this.formatarTextoExibicao(String(valor || '')),
       ordenavel: true,
       campoOrdenacao: 'papel.nomePapel'
+    },
+    {
+      chave: 'ativo',
+      titulo: 'Situação',
+      tipo: 'status'
     }
   ];
 
@@ -209,9 +227,28 @@ export class ColaboradorComponent
       visivel: colaborador => this.podeGerenciarColaborador(colaborador)
     },
     {
+      icone: 'person_off',
+      tooltip: 'Desativar acesso',
+      rotulo: 'Desativar acesso',
+      acao: 'desativar',
+      menu: true,
+      visivel: colaborador => colaborador.ativo !== false && this.podeGerenciarColaborador(colaborador)
+    },
+    {
+      icone: 'person_check',
+      tooltip: 'Reativar acesso',
+      rotulo: 'Reativar acesso',
+      acao: 'reativar',
+      menu: true,
+      visivel: colaborador => colaborador.ativo === false && this.podeGerenciarColaborador(colaborador)
+    },
+    {
       icone: 'delete',
-      tooltip: 'Excluir',
+      tooltip: 'Excluir cadastro',
+      rotulo: 'Excluir cadastro',
       acao: 'excluir',
+      menu: true,
+      perigosa: true,
       visivel: colaborador => this.podeGerenciarColaborador(colaborador)
     }
   ];
@@ -312,6 +349,9 @@ export class ColaboradorComponent
 
       this.busca = params.get('search') ?? '';
 
+      const situacao = params.get('situacao');
+      this.filtroSituacao = situacao === 'inativos' || situacao === 'todos' ? situacao : 'ativos';
+
       this.carregarColaboradores();
     });
 
@@ -336,10 +376,13 @@ export class ColaboradorComponent
     if (this.busca) {
       return `Nenhum colaborador encontrado para "${this.busca}".`;
     }
+    if (this.filtroSituacao === 'inativos' && !this.filtroPapel && !this.filtroUnidade) {
+      return 'Nenhum colaborador inativo.';
+    }
     const papelSelecionado = this.papeis.find(p => p.id === this.filtroPapel);
     const unidadeSelecionada = this.unidadesDisponiveis.find(u => u.id === this.filtroUnidade);
 
-    if (papelSelecionado || unidadeSelecionada) {
+    if (papelSelecionado || unidadeSelecionada || this.filtroSituacao !== 'ativos') {
       return 'Nenhum colaborador encontrado com os filtros selecionados.';
     }
 
@@ -347,7 +390,7 @@ export class ColaboradorComponent
   }
 
   get temAlteracoes(): boolean {
-    if (!this.modoEdicao) {
+    if (!this.modoEdicao && !this.modoReativacao) {
       return this.formColaborador.dirty;
     }
 
@@ -380,7 +423,8 @@ export class ColaboradorComponent
 
   get quantidadeFiltrosAplicados(): number {
     return Number(Boolean(this.filtroUnidade)) +
-      Number(Boolean(!this.somenteMonitores && this.filtroPapel));
+      Number(Boolean(!this.somenteMonitores && this.filtroPapel)) +
+      Number(this.filtroSituacao !== 'ativos');
   }
 
   private get idPapelMonitor(): number | null {
@@ -465,7 +509,8 @@ export class ColaboradorComponent
         this.sort,
         idPapel,
         this.filtroUnidade,
-        this.busca || undefined
+        this.busca || undefined,
+        this.filtroSituacao === 'todos' ? null : this.filtroSituacao === 'ativos'
       )
       .subscribe({
         next: (resposta) => {
@@ -501,6 +546,7 @@ export class ColaboradorComponent
   abrirFiltros(): void {
     this.filtroModalUnidade = this.filtroUnidade;
     this.filtroModalPapel = this.filtroPapel;
+    this.filtroModalSituacao = this.filtroSituacao;
     this.filtrosAberto = true;
   }
 
@@ -522,6 +568,7 @@ export class ColaboradorComponent
       queryParams: {
         unidade: this.filtroModalUnidade || null,
         papel: this.somenteMonitores ? null : this.filtroModalPapel || null,
+        situacao: this.filtroModalSituacao === 'ativos' ? null : this.filtroModalSituacao,
         page: 0
       },
       queryParamsHandling: 'merge'
@@ -532,9 +579,10 @@ export class ColaboradorComponent
   limparFiltros(): void {
     this.filtroModalUnidade = null;
     this.filtroModalPapel = null;
+    this.filtroModalSituacao = 'ativos';
     this.router.navigate([], {
       relativeTo: this.route,
-      queryParams: { unidade: null, papel: null, page: 0 },
+      queryParams: { unidade: null, papel: null, situacao: null, page: 0 },
       queryParamsHandling: 'merge'
     });
   }
@@ -551,9 +599,14 @@ export class ColaboradorComponent
       : Number(valor);
   }
 
+  selecionarSituacaoFiltro(valor: SituacaoColaborador): void {
+    this.filtroModalSituacao = valor;
+  }
+
   private filtrosModalAlterados(): boolean {
     return this.filtroModalUnidade !== this.filtroUnidade ||
-      this.filtroModalPapel !== this.filtroPapel;
+      this.filtroModalPapel !== this.filtroPapel ||
+      this.filtroModalSituacao !== this.filtroSituacao;
   }
 
   /** Atualiza a URL (?search=termo); o queryParamMap.subscribe refaz o GET sem recarregar a página. */
@@ -616,6 +669,7 @@ export class ColaboradorComponent
   abrirCadastro(): void {
     this.colaboradorEmEdicao = null;
     this.modoEdicao = false;
+    this.modoReativacao = false;
     this.colaboradorSelecionadoId = null;
     this.erros = {};
     this.mostrarSenha = false;
@@ -660,6 +714,7 @@ export class ColaboradorComponent
     if (!this.podeGerenciarColaborador(colaborador)) return;
     this.colaboradorEmEdicao = colaborador;
     this.modoEdicao = true;
+    this.modoReativacao = false;
     this.colaboradorSelecionadoId = colaborador.id;
     this.erros = {};
     this.mostrarSenha = false;
@@ -691,6 +746,45 @@ export class ColaboradorComponent
     this.formColaborador.markAsPristine();
     this.valoresOriginaisDoFormulario =
       this.formColaborador.getRawValue();
+    this.modalAberto = true;
+    this.cdr.detectChanges();
+  }
+
+  /** Abre o mesmo formulário do cadastro, preenchido, para reativar o colaborador com nova senha. */
+  abrirReativacao(colaborador: Colaborador): void {
+    if (!this.podeGerenciarColaborador(colaborador) || colaborador.ativo !== false) return;
+    this.colaboradorEmEdicao = colaborador;
+    this.modoEdicao = false;
+    this.modoReativacao = true;
+    this.colaboradorSelecionadoId = colaborador.id;
+    this.erros = {};
+    this.mostrarSenha = false;
+    this.mostrarConfirmarSenha = false;
+    this.isLoading = false;
+    this.modalTremendo = false;
+
+    this.formColaborador.get('senha')?.setValidators([
+      Validators.required,
+      Validators.pattern(this.senhaRegex),
+      Validators.maxLength(50)
+    ]);
+    this.formColaborador.get('confirmarSenha')?.setValidators([Validators.required]);
+
+    this.formColaborador.reset({
+      nomeCompleto: colaborador.nomeCompleto,
+      email: colaborador.email,
+      senha: '',
+      confirmarSenha: '',
+      cpf: formatarCpf(colaborador.cpf),
+      endereco: colaborador.endereco,
+      telefone: formatarTelefone(colaborador.telefone),
+      idPapel: colaborador.idPapel,
+      idsUnidades: colaborador.unidades?.map(u => u.id) || []
+    });
+
+    this.atualizarValidadoresSenha();
+    this.formColaborador.markAsPristine();
+    this.valoresOriginaisDoFormulario = this.formColaborador.getRawValue();
     this.modalAberto = true;
     this.cdr.detectChanges();
   }
@@ -794,7 +888,9 @@ export class ColaboradorComponent
   }
 
   salvar(): void {
-    if (this.modoEdicao && (!this.colaboradorEmEdicao || !this.podeGerenciarColaborador(this.colaboradorEmEdicao))) return;
+    if (this.isLoading) return;
+    if ((this.modoEdicao || this.modoReativacao)
+      && (!this.colaboradorEmEdicao || !this.podeGerenciarColaborador(this.colaboradorEmEdicao))) return;
     this.formColaborador.markAllAsTouched();
     this.checarSenhasIguais();
     this.verificarErros();
@@ -815,6 +911,11 @@ export class ColaboradorComponent
     }
 
     this.isLoading = true;
+
+    if (this.modoReativacao) {
+      this.reativarColaborador();
+      return;
+    }
 
     if (this.modoEdicao) {
       this.atualizarColaborador();
@@ -845,8 +946,73 @@ export class ColaboradorComponent
       return;
     }
 
+    if (evento.tipo === 'desativar') {
+      void this.desativarColaborador(evento.linha);
+      return;
+    }
+
+    if (evento.tipo === 'reativar') {
+      void this.iniciarReativacao(evento.linha);
+      return;
+    }
+
     if (evento.tipo === 'excluir') {
       this.deletarColaborador(evento.linha);
+    }
+  }
+
+  async desativarColaborador(colaborador: Colaborador): Promise<void> {
+    if (this.situacaoEmProcessamento || colaborador.ativo === false
+      || !this.podeGerenciarColaborador(colaborador)) return;
+
+    this.situacaoEmProcessamento = true;
+    try {
+      const confirmado = await Alertas.confirmarDesativacaoColaborador(colaborador.nomeCompleto);
+      if (!confirmado || !this.podeGerenciarColaborador(colaborador)) {
+        this.situacaoEmProcessamento = false;
+        return;
+      }
+    } catch (erro) {
+      this.situacaoEmProcessamento = false;
+      throw erro;
+    }
+
+    this.isLoading = true;
+    this.colaboradorService.desativar(colaborador.id).subscribe({
+      next: () => this.ngZone.run(() => {
+        this.isLoading = false;
+        this.situacaoEmProcessamento = false;
+        this.carregarColaboradores();
+        this.toastr.success(`O acesso de ${colaborador.nomeCompleto} foi desativado.`, 'Sucesso');
+      }),
+      error: (erro) => this.ngZone.run(() => {
+        this.isLoading = false;
+        this.situacaoEmProcessamento = false;
+        const mensagem = erro.error?.message
+          || 'Não foi possível desativar o acesso. Tente novamente.';
+        if (erro.status === 409) {
+          this.toastr.warning(mensagem, 'Desativação não permitida');
+          this.carregarColaboradores();
+        } else if (erro.status !== 401) {
+          this.toastr.error(mensagem, 'Erro');
+        }
+        this.cdr.detectChanges();
+      })
+    });
+  }
+
+  private async iniciarReativacao(colaborador: Colaborador): Promise<void> {
+    if (this.situacaoEmProcessamento || colaborador.ativo !== false
+      || !this.podeGerenciarColaborador(colaborador)) return;
+
+    this.situacaoEmProcessamento = true;
+    try {
+      const confirmado = await Alertas.confirmarReativacaoColaborador(colaborador.nomeCompleto);
+      if (confirmado) {
+        this.ngZone.run(() => this.abrirReativacao(colaborador));
+      }
+    } finally {
+      this.situacaoEmProcessamento = false;
     }
   }
 
@@ -941,6 +1107,36 @@ export class ColaboradorComponent
       });
   }
 
+  private reativarColaborador(): void {
+    const { senha, confirmarSenha, ...dadosRevisados } = this.formColaborador.value;
+    const dto: ReativarColaboradorDTO = { ...dadosRevisados, senha, confirmacaoSenha: confirmarSenha };
+
+    this.colaboradorService
+      .reativar(this.colaboradorSelecionadoId!, dto)
+      .subscribe({
+        next: () => this.ngZone.run(() => {
+          this.isLoading = false;
+          this.fecharModalSemConfirmacao();
+          this.carregarColaboradores();
+          this.toastr.success(
+            'Colaborador reativado. Ele já pode entrar com as credenciais atualizadas.',
+            'Sucesso'
+          );
+        }),
+        error: (err: any) => this.ngZone.run(() => {
+          // O formulário continua aberto e o colaborador segue inativo até salvar com sucesso.
+          this.isLoading = false;
+          if (err.status !== 401) {
+            this.toastr.error(
+              err.error?.message || 'Não foi possível reativar o colaborador. Tente novamente.',
+              'Erro'
+            );
+          }
+          this.cdr.detectChanges();
+        })
+      });
+  }
+
   private atualizarColaborador(): void {
     const {
       senha,
@@ -1031,6 +1227,7 @@ export class ColaboradorComponent
 
   private fecharModalSemConfirmacao(): void {
     this.colaboradorEmEdicao = null;
+    this.modoReativacao = false;
     this.modalAberto = false;
     this.modalTremendo = false;
     this.isLoading = false;

@@ -1,5 +1,42 @@
 import Swal from 'sweetalert2';
 
+function escaparHtml(texto: string): string {
+  return texto
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+const TEXTO_DESATIVAR_COLABORADOR = 'inativar-colaborador';
+const TEXTO_REATIVAR_COLABORADOR = 'ativar-colaborador';
+
+function confirmarComTexto(opcoes: {
+  titulo: string;
+  htmlMensagem: string;
+  textoConfirmacao: string;
+  botaoConfirmar: string;
+  corConfirmar: string;
+  icone: 'warning' | 'question';
+}): Promise<boolean> {
+  return Swal.fire({
+    title: opcoes.titulo,
+    html: `${opcoes.htmlMensagem}<br><br>Digite <em>"${opcoes.textoConfirmacao}"</em> para confirmar.`,
+    icon: opcoes.icone,
+    input: 'text',
+    inputPlaceholder: opcoes.textoConfirmacao,
+    showCancelButton: true,
+    confirmButtonText: opcoes.botaoConfirmar,
+    cancelButtonText: 'Cancelar',
+    confirmButtonColor: opcoes.corConfirmar,
+    reverseButtons: false,
+    inputValidator: valor => valor?.trim().toLowerCase() === opcoes.textoConfirmacao
+      ? undefined
+      : `Digite exatamente: ${opcoes.textoConfirmacao}`
+  }).then(resultado => resultado.isConfirmed);
+}
+
 export const Alertas = {
   confirmarAlteracaoIdentificadores: (): Promise<boolean> => {
     return Swal.fire({
@@ -23,6 +60,30 @@ export const Alertas = {
       confirmButtonColor: '#e04b3a',
       reverseButtons: false
     }).then((resultado) => resultado.isConfirmed);
+  },
+
+  confirmarDesativacaoColaborador: (nome: string): Promise<boolean> => {
+    return confirmarComTexto({
+      titulo: 'Desativar acesso?',
+      htmlMensagem: `O acesso de <strong>${escaparHtml(nome)}</strong> será bloqueado, inclusive nas sessões abertas. `
+        + 'Os dados e a autoria dos registros serão preservados, e o acesso poderá ser reativado depois.',
+      textoConfirmacao: TEXTO_DESATIVAR_COLABORADOR,
+      botaoConfirmar: 'Desativar acesso',
+      corConfirmar: '#e04b3a',
+      icone: 'warning'
+    });
+  },
+
+  confirmarReativacaoColaborador: (nome: string): Promise<boolean> => {
+    return confirmarComTexto({
+      titulo: 'Reativar acesso?',
+      htmlMensagem: `Deseja continuar com a reativação de <strong>${escaparHtml(nome)}</strong>? `
+        + 'Na próxima etapa você poderá revisar os dados e definir uma nova senha.',
+      textoConfirmacao: TEXTO_REATIVAR_COLABORADOR,
+      botaoConfirmar: 'Continuar reativação',
+      corConfirmar: '#3682dc',
+      icone: 'question'
+    });
   },
 
   confirmarExclusao: (mensagem = 'Esta ação não poderá ser desfeita.', classePopup = ''): Promise<boolean> => {
