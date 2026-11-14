@@ -11,6 +11,7 @@ function escaparHtml(texto: string): string {
 
 const TEXTO_DESATIVAR_ACESSO = 'desativar-acesso';
 const TEXTO_REATIVAR_ACESSO = 'reativar-acesso';
+const TEXTO_EXCLUIR_CADASTRO = 'excluir-cadastro';
 
 function confirmarComTexto(opcoes: {
   titulo: string;
@@ -83,6 +84,17 @@ export const Alertas = {
       botaoConfirmar: 'Continuar reativação',
       corConfirmar: '#3682dc',
       icone: 'question'
+    });
+  },
+
+  confirmarExclusaoColaborador: (nome: string): Promise<boolean> => {
+    return confirmarComTexto({
+      titulo: 'Excluir cadastro?',
+      htmlMensagem: `O cadastro de <strong>${escaparHtml(nome)}</strong> será excluído. Esta ação não poderá ser desfeita.`,
+      textoConfirmacao: TEXTO_EXCLUIR_CADASTRO,
+      botaoConfirmar: 'Excluir cadastro',
+      corConfirmar: '#e04b3a',
+      icone: 'warning'
     });
   },
 

@@ -1016,7 +1016,7 @@ export class ColaboradorComponent
   ): void {
     if (!this.podeGerenciarColaborador(colaborador)) return;
     Alertas
-      .confirmarExclusao()
+      .confirmarExclusaoColaborador(colaborador.nomeCompleto)
       .then((confirmado: boolean) => {
         if (!confirmado || !this.podeGerenciarColaborador(colaborador)) {
           return;
