@@ -247,13 +247,31 @@
           @if (acoes.length > 0) {
           <td class="coluna-acoes" data-label="Ações">
             <div class="acoes">
-              @for (acao of acoesVisiveis(linha); track acao.acao) {
+              @for (acao of acoesDiretas(linha); track acao.acao) {
               <button type="button" class="botao-acao" [class.botao-excluir]="acao.acao === 'excluir'"
                 [title]="acao.tooltip" (click)="executarAcao(acao, linha)">
                 <mat-icon class="material-symbols-outlined">
                   {{ acao.icone }}
                 </mat-icon>
               </button>
+              }
+
+              @let itensMenu = acoesMenu(linha);
+              @if (itensMenu.length > 0) {
+              <button type="button" class="botao-acao" title="Mais ações" aria-label="Mais ações"
+                [matMenuTriggerFor]="menuLinha">
+                <mat-icon class="material-symbols-outlined">more_vert</mat-icon>
+              </button>
+              <mat-menu #menuLinha="matMenu" class="menu-acoes-tabela">
+                @for (item of itensMenu; track item.acao) {
+                <button type="button" mat-menu-item class="menu-item-acao"
+                  [class.menu-item-reativar]="item.acao === 'reativar'"
+                  [class.menu-item-perigoso]="item.perigosa" (click)="executarAcao(item, linha)">
+                  <mat-icon class="material-symbols-outlined">{{ item.icone }}</mat-icon>
+                  <span>{{ item.rotulo ?? item.tooltip }}</span>
+                </button>
+                }
+              </mat-menu>
               }
 
             </div>
