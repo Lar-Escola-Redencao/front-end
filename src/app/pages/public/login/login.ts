@@ -70,8 +70,8 @@ export class Login {
       if (reason !== 'expired' && reason !== 'invalid') return;
 
       const mensagem = reason === 'invalid'
-        ? 'Acesso negado. Autenticação inválida ou corrompida.'
-        : 'Sua autenticação expirou. Para sua segurança, faça login novamente.';
+        ? 'Sua sessão não é mais válida. Entre novamente ou, se o acesso continuar bloqueado, contate a administração.'
+        : 'Sua sessão expirou. Para sua segurança, entre novamente ou contate a administração se precisar de ajuda.';
       const aviso = this.toastr.warning(mensagem, 'Atenção', {
         positionClass: 'toast-top-right',
         timeOut: SESSION_EXPIRED_TOAST_MS,
