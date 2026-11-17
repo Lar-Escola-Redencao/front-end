@@ -109,28 +109,23 @@
         <article
           id="marco-historia"
           class="historia-card"
+          [class.historia-sem-imagem]="!historia.imagem || imagensComErro().includes(historia.imagem)"
           role="tabpanel"
           tabindex="0"
           [attr.aria-labelledby]="'ano-' + historia.id"
         >
           <span class="historia-ano">{{ historia.titulo }}</span>
-          <div class="historia-imagem">
-            @if (historia.imagem && !imagensComErro().includes(historia.imagem)) {
+          @if (historia.imagem && !imagensComErro().includes(historia.imagem)) {
+            <div class="historia-imagem">
               <img
                 [src]="historia.imagem"
                 [alt]="'Lar Escola Redenção em ' + historia.titulo"
                 loading="lazy"
                 (error)="imagemFalhou(historia.imagem || '')"
               />
-            } @else {
-              <span
-                class="material-symbols-outlined imagem-fallback"
-                aria-label="Imagem indisponível"
-                >image</span
-              >
-            }
-          </div>
-          <div class="historia-descricao" [innerHTML]="historia.conteudo || ''"></div>
+            </div>
+          }
+          <div class="historia-descricao" [innerHTML]="textoParaExibicao(historia.conteudo || '')"></div>
         </article>
       } @else {
         <app-estado-vazio icone="menu_book" mensagem="Nossa história estará disponível em breve." />

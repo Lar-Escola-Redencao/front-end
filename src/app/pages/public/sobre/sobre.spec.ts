@@ -200,6 +200,30 @@ describe('Sobre', () => {
     expect(texto.querySelector('script')).toBeNull();
   });
 
+  it('exibe o marco sem reservar espaço para uma imagem ausente', () => {
+    const pagina = carregar({ ...dados, historia: [{ ...dados.historia[0], imagem: undefined }] });
+    expect(pagina.querySelector('.historia-imagem')).toBeNull();
+    expect(pagina.querySelector('.historia-sem-imagem')).not.toBeNull();
+    expect(pagina.querySelector('.historia-ano')?.textContent).toBe('1978');
+    expect(pagina.querySelector('.historia-descricao')?.textContent).toBe('Fundação da instituição');
+  });
+
+  it('remove a área de imagem quando a foto do marco falha', () => {
+    const pagina = carregar();
+    pagina.querySelector('.historia-imagem img')!.dispatchEvent(new Event('error'));
+    fixture.detectChanges();
+    expect(pagina.querySelector('.historia-imagem')).toBeNull();
+    expect(pagina.querySelector('.historia-descricao')?.textContent).toBe('Fundação da instituição');
+  });
+
+  it('preserva parágrafos do marco e exibe texto comum com segurança', () => {
+    const conteudo = 'Primeiro parágrafo.\n\nSegundo parágrafo.\n<script>alert(1)</script>';
+    const pagina = carregar({ ...dados, historia: [{ ...dados.historia[0], conteudo }] });
+    const descricao = pagina.querySelector('.historia-descricao')!;
+    expect(descricao.textContent).toBe(conteudo);
+    expect(descricao.querySelector('script')).toBeNull();
+  });
+
   it('renderiza textos, imagens e o total de unidades recebidos', () => {
     const pagina = carregar();
     expect(pagina.querySelector('.texto-institucional')?.textContent).toContain(

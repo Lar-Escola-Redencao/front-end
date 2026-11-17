@@ -557,7 +557,7 @@ export class Sobre implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalvas
       this.blocoSelecionadoId = bloco.id;
       this.formHistoria.reset({
         titulo: bloco.titulo,
-        conteudo: bloco.conteudo ?? '',
+        conteudo: textoParaEdicao(bloco.conteudo ?? ''),
         imagem: null,
         ativo: bloco.ativo,
       });
