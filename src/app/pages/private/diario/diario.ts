@@ -1,3 +1,4 @@
+import { FotoUsuario } from 'src/app/shared/ui/foto-usuario/foto-usuario';
 import { HistoricoContextual } from '@components/historico-contextual/historico-contextual';
 import { EstadoVazio } from 'src/app/components/estado-vazio/estado-vazio';
 import { Component, OnInit, OnDestroy, inject, NgZone, ChangeDetectorRef, HostListener, ViewChild, ElementRef } from '@angular/core';
@@ -31,6 +32,7 @@ type FiltrosDiario = { idUnidade: number | null; idTurma: number | null; data: s
   selector: 'app-diario',
   standalone: true,
   imports: [
+    FotoUsuario,
     HistoricoContextual,
     AjudaAcompanhamento,
     EstadoVazio,

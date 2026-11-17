@@ -9,17 +9,24 @@ import { canDeactivateGuard } from './shared/guards/can-deactivate.guard';
 import { roleGuard } from './shared/guards/role-guard';
 
 export const routes: Routes = [
-    { path: '', component: Home, canActivate: [guestGuard]},
-    { path: 'conheca-a-osc', component: Sobre },
-    { path: 'eventos', component: Eventos},
-    { path: 'eventos/:id', component: EventoDetalhe},
+    /*
+     * Páginas públicas: guestGuard redireciona colaboradores com sessão aberta para /dashboard.
+     * Para navegar no site institucional é preciso sair da conta.
+     */
+    { path: '', component: Home, canActivate: [guestGuard] },
+    { path: 'conheca-a-osc', component: Sobre, canActivate: [guestGuard] },
+    { path: 'eventos', component: Eventos, canActivate: [guestGuard] },
+    { path: 'eventos/:id', component: EventoDetalhe, canActivate: [guestGuard] },
     {
       path: 'como-ajudar',
+      canActivate: [guestGuard],
       loadComponent: () => import('./pages/public/como-ajudar/como-ajudar').then((m) => m.ComoAjudar),
     },
     {
+        // Área interna: authGuard também nos filhos, para revalidar a sessão a cada navegação.
         path: 'dashboard',
         canActivate: [authGuard],
+        canActivateChild: [authGuard],
         loadComponent: () => import('./pages/private/dashboard/dashboard').then(m => m.Dashboard),
         children: [
             { path: '', loadComponent: () => import('./pages/private/dashboard/dashboard-home/dashboard-home').then(m => m.DashboardHome) },
@@ -51,10 +58,12 @@ export const routes: Routes = [
     },
     {
         path: 'transparencia',
+        canActivate: [guestGuard],
         loadComponent: () => import('./pages/public/transparencia/transparencia').then((m) => m.Transparencia),
     },
     {
         path: 'grafica',
+        canActivate: [guestGuard],
         loadComponent: () => import('./pages/public/grafica/grafica').then((m) => m.Grafica),
     },
     { path: '**', redirectTo: '' }

@@ -1,3 +1,4 @@
+import { FotoUsuario } from 'src/app/shared/ui/foto-usuario/foto-usuario';
 import { AnexoDrop } from 'src/app/shared/directives/anexo-drop';
 import { HistoricoContextual } from '@components/historico-contextual/historico-contextual';
 import { EstadoVazio } from 'src/app/components/estado-vazio/estado-vazio';
@@ -82,6 +83,7 @@ import { environment } from 'src/environments/environment';
   selector: 'app-usuario',
   standalone: true,
   imports: [
+    FotoUsuario,
     AnexoDrop,
     HistoricoContextual,
     EstadoVazio,
@@ -2310,11 +2312,6 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
     this.modalVinculosAberto = false;
     this.contatoSelecionado = null;
     this.vinculosDoContato = [];
-  }
-
-  /** Chamado quando a foto do vínculo falha ao carregar — cai para o placeholder. */
-  onErroImagemVinculo(vinculo: UsuarioVinculadoDTO) {
-    (vinculo as any).imagemPerfil = '';
   }
 
   podeRemoverEsteVinculo(vinculo: UsuarioVinculadoDTO): boolean {

@@ -1,3 +1,4 @@
+import { destinoInternoSeguro } from '../../../shared/utils/destino-seguro';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, DestroyRef, HostListener, ViewChild, computed, effect, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -138,7 +139,7 @@ export class Login {
     this.captchaToken.set('');
     this.auth.login({ identifier: cleanedIdentifier, password, ...(captchaToken ? { captchaToken } : {}) }, remember).subscribe({
       next: () => {
-        const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl') ?? '/dashboard';
+        const returnUrl = destinoInternoSeguro(this.route.snapshot.queryParamMap.get('returnUrl'));
         this.router.navigateByUrl(returnUrl);
       },
       error: (error: unknown) => {
