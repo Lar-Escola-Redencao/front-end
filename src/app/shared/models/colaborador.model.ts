@@ -8,6 +8,7 @@ export interface Colaborador {
   idPapel: number;
   nomePapel: string;
   unidades: { id: number, nome: string }[];
+  ativo: boolean;
 }
 
 export interface CriarColaboradorDTO {
@@ -30,3 +31,11 @@ export interface AtualizarColaboradorDTO {
   idPapel: number;
   idsUnidades: number[];
 }
+
+/** Dados revisados e nova senha, enviados juntos para reativar o acesso. */
+export interface ReativarColaboradorDTO extends AtualizarColaboradorDTO {
+  senha: string;
+  confirmacaoSenha: string;
+}
+
+export type SituacaoColaborador = 'ativos' | 'inativos' | 'todos';

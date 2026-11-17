@@ -924,6 +924,60 @@ input::-ms-clear {
   cursor: default;
 }
 
+.mat-mdc-menu-panel.menu-acoes-tabela {
+  --mat-menu-item-hover-state-layer-color: #f5f5f5;
+  --mat-menu-item-focus-state-layer-color: #f5f5f5;
+  min-width: 180px;
+  border-radius: 8px;
+  background-color: var(--branco);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+}
+
+.menu-acoes-tabela .mat-mdc-menu-content {
+  padding: 0;
+}
+
+.menu-acoes-tabela .mat-mdc-menu-item {
+  display: flex;
+  align-items: center;
+  min-height: 48px;
+  padding: 14px 18px;
+  gap: 10px;
+  color: #333;
+  font-family: var(--fonte-texto);
+  font-size: 14px;
+  line-height: 20px;
+  transition: background-color 0.15s ease;
+}
+
+.menu-acoes-tabela .mat-mdc-menu-item:hover,
+.menu-acoes-tabela .mat-mdc-menu-item.cdk-keyboard-focused {
+  background-color: #f5f5f5;
+}
+
+.menu-acoes-tabela .mat-mdc-menu-item .mat-icon {
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  font-size: 20px;
+  line-height: 20px;
+  color: inherit;
+}
+
+.menu-acoes-tabela .mat-mdc-menu-item-text {
+  font: inherit;
+  color: inherit;
+}
+
+.menu-acoes-tabela .menu-item-perigoso {
+  color: rgb(182, 43, 43);
+}
+
+.menu-acoes-tabela .menu-item-reativar {
+  color: var(--primary-color);
+}
+
 [appAnexoDrop].anexo-arrastando {
   outline: 2px dashed var(--primary-color);
   outline-offset: -2px;
