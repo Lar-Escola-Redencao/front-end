@@ -1,6 +1,10 @@
+import { ErroCarregamento } from '@components/erro-carregamento/erro-carregamento';
 import { ChangeDetectorRef, Component, DestroyRef, ElementRef, HostListener, Input, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
+import { EstadoVazio } from '@components/estado-vazio/estado-vazio';
+import { CdkTrapFocus } from '@angular/cdk/a11y';
 import { ActivatedRoute, Router } from '@angular/router';
 import { PublicNavbar } from '@components/public-navbar/public-navbar';
 import { PublicFooter } from '@components/public-footer/public-footer';
@@ -10,7 +14,7 @@ import { EventoPublicoService } from 'src/app/shared/services/evento-publico/eve
 @Component({
   selector: 'app-evento-detalhe',
   standalone: true,
-  imports: [CommonModule, PublicNavbar, PublicFooter],
+  imports: [ErroCarregamento, EstadoVazio, CommonModule, PublicNavbar, PublicFooter, CdkTrapFocus],
   templateUrl: './evento-detalhe.html',
   styleUrl: './evento-detalhe.css'
 })
@@ -24,17 +28,22 @@ export class EventoDetalhe implements OnInit, OnDestroy {
   private readonly cdr = inject(ChangeDetectorRef);
 
   private readonly nomesTipoEvento: Record<TipoEvento, string> = {
-    [TipoEvento.ARRECADACAO]: 'Arrecadação',
+    [TipoEvento.BENEFICENTE]: 'Beneficente',
     [TipoEvento.CULTURAL]: 'Cultural',
-    [TipoEvento.COMEMORATIVO]: 'Comemorativo'
+    [TipoEvento.COMEMORATIVO]: 'Comemorativo',
+    [TipoEvento.ESPORTIVO]: 'Esportivo',
+    [TipoEvento.OUTRO]: 'Outro'
   };
 
   evento: Evento | null = null;
-  carregando = true;
+  carregando = false;
+  erroCarregamento = false;
   naoEncontrado = false;
 
   imagemPrincipalIndisponivel = false;
   lightboxAberto = false;
+  parceiroAmpliado: Parceiro | null = null;
+  private readonly imagensParceirosIndisponiveis = new Set<number>();
   indiceParceiroAtual = 0;
   parceirosEmTransicao = true;
   parceirosAnimando = false;
@@ -79,6 +88,14 @@ export class EventoDetalhe implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.returnUrl = this.modoPreview ? null : this.obterReturnUrl();
+    this.carregarEvento();
+  }
+
+  carregarEvento(): void {
+    if (this.carregando) return;
+    this.carregando = true;
+    this.erroCarregamento = false;
+    this.naoEncontrado = false;
     const id = this.modoPreview ? this.eventoId : Number(this.route.snapshot.paramMap.get('id'));
 
     if (!id) {
@@ -94,9 +111,10 @@ export class EventoDetalhe implements OnInit, OnDestroy {
         this.carregando = false;
         this.atualizarTela();
       },
-      error: () => {
+      error: (erro: HttpErrorResponse) => {
         this.carregando = false;
-        this.naoEncontrado = true;
+        this.naoEncontrado = erro.status === 404;
+        this.erroCarregamento = !this.naoEncontrado;
         this.atualizarTela();
       }
     });
@@ -240,10 +258,19 @@ export class EventoDetalhe implements OnInit, OnDestroy {
     return this.eventoPublicoService.tratarImagem(caminho);
   }
 
-  onParceiroImageError(event: Event): void {
-    const img = event.target as HTMLImageElement;
-    img.style.display = 'none';
-    img.nextElementSibling?.classList.remove('imagem-fallback-hidden');
+  podeAmpliarParceiro(parceiro: Parceiro): boolean {
+    return !!this.obterUrlImagem(parceiro.logo) && !this.imagensParceirosIndisponiveis.has(parceiro.id);
+  }
+
+  onParceiroImageError(parceiro: Parceiro): void {
+    this.imagensParceirosIndisponiveis.add(parceiro.id);
+  }
+
+  abrirImagemParceiro(parceiro: Parceiro): void {
+    if (!this.podeAmpliarParceiro(parceiro)) return;
+    this.parceiroAmpliado = parceiro;
+    this.lightboxAberto = true;
+    if (!this.modoPreview) document.body.style.overflow = 'hidden';
   }
 
   onImagemPrincipalError(): void {
@@ -252,12 +279,16 @@ export class EventoDetalhe implements OnInit, OnDestroy {
 
   abrirLightbox(): void {
     if (!this.imagemPrincipal || this.imagemPrincipalIndisponivel) return;
+    this.parceiroAmpliado = null;
     this.lightboxAberto = true;
     if (!this.modoPreview) document.body.style.overflow = 'hidden';
   }
 
+  @HostListener('document:keydown.escape')
   fecharLightbox(): void {
+    if (!this.lightboxAberto) return;
     this.lightboxAberto = false;
+    this.parceiroAmpliado = null;
     if (!this.modoPreview) document.body.style.overflow = '';
   }
 

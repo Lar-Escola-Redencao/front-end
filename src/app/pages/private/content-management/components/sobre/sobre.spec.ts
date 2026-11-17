@@ -96,6 +96,20 @@ describe('Sobre', () => {
     await fixture.whenStable();
   });
 
+  it.each(['texto', 'carrossel'] as const)('mostra o erro padrão e permite nova tentativa na aba %s', aba => {
+    component.abaAtiva = aba;
+    component.erroPagina = true;
+    component.carregandoPagina = false;
+    fixture.changeDetectorRef.markForCheck();
+    fixture.detectChanges();
+    const tentarNovamente = vi.spyOn(component, 'tentarNovamentePagina');
+    const painel = fixture.nativeElement.querySelector('.estado-pagina-erro') as HTMLElement;
+    expect(painel.textContent).toContain('Não foi possível carregar os dados. Tente novamente.');
+    painel.querySelector('button')!.click();
+    expect(tentarNovamente).toHaveBeenCalledOnce();
+    expect(component.erroPagina).toBe(false);
+  });
+
   it('should create', () => {
     expect(component).toBeTruthy();
   });

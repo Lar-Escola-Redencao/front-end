@@ -38,7 +38,6 @@
       [acoes]="acoesTabela"
       [carregando]="carregando"
       [erro]="erroCarregamento"
-      [mensagemErro]="'Não foi possível carregar a lista de ' + grupoAtivo.rotuloAba + '.'"
       [mensagemVazia]="mensagemVazia"
       (acao)="executarAcao($event)"
       (tentarNovamente)="carregarTabela()"
@@ -59,19 +58,17 @@
   @if (ehContato) {
     @if (carregando) {
       <div class="estado-pagina">
-        <span class="spinner spinner-escuro" aria-hidden="true"></span>
-        <span>Carregando...</span>
+        <span role="status" aria-label="Carregando" class="spinner-carregamento"></span>
+
+      </div>
+    } @else if (erroCarregamento) {
+      <div class="aviso-carregamento" role="alert">
+        <p>Não foi possível carregar os dados. Tente novamente.</p>
+        <button type="button" class="botao-tentar-novamente" (click)="carregarContato()">
+          Tentar novamente
+        </button>
       </div>
     } @else {
-      @if (erroCarregamento) {
-        <div class="aviso-carregamento">
-          <p>Não foi possível carregar os dados salvos. Você ainda pode preencher e salvar o formulário.</p>
-          <button type="button" class="botao-tentar-novamente" (click)="carregarContato()">
-            Tentar novamente
-          </button>
-        </div>
-      }
-
       <form
         class="form-modal form-contato"
         [class.form-contato-disabled]="!editandoContato"
@@ -109,9 +106,10 @@
               Cancelar
             </button>
 
-            <button type="submit" class="btn-primary" [disabled]="salvando || (!!secaoContato && !temAlteracoes)">
-              <span *ngIf="salvando" class="spinner" aria-hidden="true"></span>
-              <span>{{ salvando ? 'Salvando...' : 'Salvar' }}</span>
+            <button type="submit" class="btn-primary" [disabled]="salvando || (!!secaoContato && !temAlteracoes)" [attr.aria-busy]="salvando">
+
+              <span>{{ salvando ? 'Salvando' : 'Salvar' }}</span>
+              @if (salvando) { <span class="spinner-carregamento" aria-hidden="true"></span> }
             </button>
           }
         </div>
@@ -169,7 +167,7 @@
 
       @if (grupoAtivo.imagem; as imagem) {
         <div class="form-group">
-          <input
+          <input [disabled]="salvando"
             #inputImagem
             type="file"
             class="input-arquivo-oculto"
@@ -177,7 +175,7 @@
             (change)="selecionarArquivo($event)"
           />
 
-          <div [appAnexoDrop]="inputImagem"
+          <div [appAnexoDrop]="inputImagem" [anexoDropDesabilitado]="salvando"
             class="upload-arquivo"
             [class.upload-arquivo-erro]="erros[CONTROLE_IMAGEM]"
             (click)="inputImagem.click()"
@@ -185,7 +183,7 @@
             <span class="material-symbols-outlined upload-arquivo-icone">upload_file</span>
 
             <div class="upload-arquivo-texto">
-              <strong>{{ arquivoSelecionado?.name || imagem.rotulo }}</strong>
+              <strong>{{ arquivoSelecionado?.name || ('Selecione ou arraste ' + imagem.rotulo.toLowerCase()) }}</strong>
               <span>PNG, JPEG, JPG ou WEBP</span>
             </div>
 
@@ -213,9 +211,10 @@
           Cancelar
         </button>
 
-        <button type="submit" class="btn-primary" [disabled]="salvando || (modoEdicao && !temAlteracoes)">
-          <span *ngIf="salvando" class="spinner" aria-hidden="true"></span>
-          <span>{{ salvando ? 'Salvando...' : 'Salvar' }}</span>
+        <button type="submit" class="btn-primary" [disabled]="salvando || (modoEdicao && !temAlteracoes)" [attr.aria-busy]="salvando">
+
+          <span>{{ salvando ? 'Salvando' : 'Salvar' }}</span>
+          @if (salvando) { <span class="spinner-carregamento" aria-hidden="true"></span> }
         </button>
       </div>
     </form>

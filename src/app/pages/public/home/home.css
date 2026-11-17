@@ -5,6 +5,12 @@
   flex-direction: column;
 }
 
+.home-main.pagina-erro { min-height: 100dvh; }
+
+.home-carregamento {
+  min-height: calc(100vh - 82px);
+}
+
 .home-section {
   scroll-margin-top: 82px;
   

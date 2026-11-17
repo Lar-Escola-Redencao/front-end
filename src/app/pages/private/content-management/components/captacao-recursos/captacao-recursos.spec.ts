@@ -1,7 +1,8 @@
 import { ChangeDetectorRef } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
 import { FormBuilder } from '@angular/forms';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
-import { BehaviorSubject, of } from 'rxjs';
+import { BehaviorSubject, of, throwError } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
 import { SecoesGrupoService } from 'src/app/shared/services/pagina/secoes-grupo.service';
 import { CaptacaoRecursos } from './captacao-recursos';
@@ -102,5 +103,41 @@ describe('CaptacaoRecursos pagination', () => {
     component.ngOnInit();
     expect(component.grupoAtivo.rotuloAba).toBe('Produtos e serviços');
     expect(component.mensagemVazia).toBe('Nenhum produto ou serviço cadastrado.');
+  });
+});
+
+
+describe('Feedback de carregamento do contato da Gráfica', () => {
+  it('oculta o formulário na falha e permite recarregar os dados salvos', async () => {
+    const service = {
+      listarPorGrupoPaginado: vi.fn(() => of({ content: [], page: { number: 0, totalElements: 0, totalPages: 0 } })),
+      listarPorGrupo: vi.fn()
+        .mockReturnValueOnce(throwError(() => ({ status: 0 })))
+        .mockReturnValueOnce(of([])),
+    };
+    await TestBed.configureTestingModule({
+      imports: [CaptacaoRecursos],
+      providers: [
+        { provide: SecoesGrupoService, useValue: service },
+        { provide: ToastrService, useValue: { error: vi.fn() } },
+        { provide: ActivatedRoute, useValue: { queryParamMap: of(convertToParamMap({})) } },
+        { provide: Router, useValue: { navigate: vi.fn() } },
+      ],
+    }).compileComponents();
+    const fixture = TestBed.createComponent(CaptacaoRecursos);
+    const config = CAPTACAO_RECURSOS_CONFIG.find(config => config.secao === 'grafica')!;
+    fixture.componentRef.setInput('config', config);
+    fixture.detectChanges();
+    fixture.componentInstance.mudarAba(config.grupos.find(grupo => grupo.exibicao === 'formulario')!);
+    fixture.changeDetectorRef.markForCheck();
+    fixture.detectChanges();
+    const painel = fixture.nativeElement.querySelector('.aviso-carregamento') as HTMLElement;
+    expect(painel.textContent).toContain('Não foi possível carregar os dados. Tente novamente.');
+    expect(fixture.nativeElement.querySelector('.form-contato')).toBeNull();
+    painel.querySelector('button')!.click();
+    fixture.detectChanges();
+    expect(service.listarPorGrupo).toHaveBeenCalledTimes(2);
+    expect(fixture.nativeElement.querySelector('.aviso-carregamento')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.form-contato')).not.toBeNull();
   });
 });

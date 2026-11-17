@@ -85,7 +85,7 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
   private route = inject(ActivatedRoute);
 
   filtroForm: FormGroup = this.fb.group({
-    idUnidade: [null, Validators.required],
+    idUnidade: [{ value: null, disabled: true }, Validators.required],
     idTurma: [{ value: null, disabled: true }, Validators.required],
     data: [this.hojeFormatada(), Validators.required]
   });
@@ -96,10 +96,17 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
   
   estadoTela: 'VAZIO' | 'INICIAL' | 'PREENCHENDO' | 'SALVO' = 'VAZIO';
   carregando = false;
+  carregandoUnidades = true;
+  carregandoTurmas = false;
+  erroCarregamento: 'unidades' | 'turmas' | 'diario' | null = null;
   salvando = false;
   declaracaoAceita = false;
   tentouSalvarDiario = false;
   confirmandoTrocaFiltro = false;
+
+  get carregandoDados(): boolean {
+    return this.carregando || this.carregandoUnidades || this.carregandoTurmas;
+  }
 
   private subs: Subscription = new Subscription();
   private recarregar = new Subject<void>();
@@ -155,21 +162,26 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
 
     this.subs.add(
       this.unidadeAlterada.pipe(
-        tap(() => {
+        tap(id => {
+          this.carregandoTurmas = !!id;
+          if (this.erroCarregamento === 'turmas') this.erroCarregamento = null;
           this.turmas = [];
           this.filtroForm.get('idTurma')?.disable({ emitEvent: false });
         }),
         switchMap(id => id ? this.turmaService.listar(id).pipe(
           catchError(() => {
-            this.toastr.error('Erro ao carregar as turmas.');
+            this.erroCarregamento = 'turmas';
             return of([]);
           })
         ) : of([]))
       ).subscribe(turmas => {
+        this.carregandoTurmas = false;
         const id = this.filtroForm.get('idUnidade')?.value;
         this.turmas = turmas.filter(t => t.unidade.id === id);
-        if (id) this.filtroForm.get('idTurma')?.enable({ emitEvent: false });
-        this.aplicarSelecaoInicialTurma();
+        if (id && this.erroCarregamento !== 'turmas') {
+          this.filtroForm.get('idTurma')?.enable({ emitEvent: false });
+          this.aplicarSelecaoInicialTurma();
+        }
         this.cdr.markForCheck();
       })
     );
@@ -186,6 +198,7 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
         startWith(null),
         switchMap(() => {
           this.carregando = false;
+          if (this.erroCarregamento === 'diario') this.erroCarregamento = null;
           this.usuarios = [];
           this.estadoTela = 'VAZIO';
           this.declaracaoAceita = false;
@@ -200,7 +213,7 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
           this.cdr.markForCheck();
           return this.diarioService.listarFrequencia(idTurma, data).pipe(
             catchError(() => {
-              this.toastr.error('Erro ao carregar o diário de turma. Altere os filtros para tentar novamente.');
+              this.erroCarregamento = 'diario';
               return EMPTY;
             }),
             finalize(() => {
@@ -262,12 +275,37 @@ export class Diario implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalva
   }
 
   private carregarUnidades() {
+    this.carregandoUnidades = true;
+    this.filtroForm.get('idUnidade')?.disable({ emitEvent: false });
+    if (this.erroCarregamento === 'unidades') this.erroCarregamento = null;
+    this.cdr.markForCheck();
     this.subs.add(this.unidadeService.listarTodas().subscribe({ next: dados => {
+      this.carregandoUnidades = false;
+      this.filtroForm.get('idUnidade')?.enable({ emitEvent: false });
       const permitidas = this.sessao.unidadesPermitidasIds();
       this.unidades = permitidas === null ? dados : dados.filter((u: any) => permitidas.includes(u.id));
       this.aplicarSelecaoInicialUnidade();
       this.cdr.markForCheck();
-    }, error: () => this.toastr.error('Erro ao carregar as unidades.') }));
+    }, error: () => {
+      this.carregandoUnidades = false;
+      this.erroCarregamento = 'unidades';
+      this.cdr.markForCheck();
+    } }));
+  }
+
+  tentarNovamente(): void {
+    if (this.carregando || this.carregandoUnidades || this.carregandoTurmas) return;
+    switch (this.erroCarregamento) {
+      case 'unidades':
+        this.carregarUnidades();
+        break;
+      case 'turmas':
+        this.unidadeAlterada.next(this.filtroForm.get('idUnidade')?.value);
+        break;
+      case 'diario':
+        this.recarregar.next();
+        break;
+    }
   }
 
   private aplicarSelecaoInicialUnidade(): void {

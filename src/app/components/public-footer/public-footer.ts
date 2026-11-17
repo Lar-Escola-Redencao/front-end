@@ -97,7 +97,7 @@ export class PublicFooter implements OnInit {
     const rotaAtual = this.router.url.split('?')[0].split('#')[0];
 
     if (rotaAtual !== rota) {
-      this.router.navigate([rota]).then(() => {
+      this.router.navigate([rota], { fragment: rota === '/' ? sectionId : undefined }).then(() => {
         setTimeout(() => this.executarScroll(sectionId), 100);
       });
       return;

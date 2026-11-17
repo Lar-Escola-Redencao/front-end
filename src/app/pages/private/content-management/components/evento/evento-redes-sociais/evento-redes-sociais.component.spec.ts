@@ -57,7 +57,7 @@ describe('EventoRedesSociaisComponent', () => {
       dataEvento: new Date('2026-10-03T12:00:00'),
       endereco: '',
       imagem: '',
-      tipoEvento: TipoEvento.CULTURAL,
+      categorias: [TipoEvento.CULTURAL],
       parceiros: []
     };
   });

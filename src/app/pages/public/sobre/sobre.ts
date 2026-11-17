@@ -1,3 +1,4 @@
+import { ErroCarregamento } from '@components/erro-carregamento/erro-carregamento';
 import {
   Component,
   DestroyRef,
@@ -8,7 +9,10 @@ import {
   inject,
   signal,
   viewChildren,
+  ViewChild,
 } from '@angular/core';
+import { catchError, forkJoin, of } from 'rxjs';
+import { textoParaExibicao } from 'src/app/shared/utils/texto-paragrafos';
 import { ActivatedRoute } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { PublicFooter } from '@components/public-footer/public-footer';
@@ -24,12 +28,13 @@ import {
 
 @Component({
   selector: 'app-sobre',
-  imports: [PublicNavbar, PublicFooter, PublicDiretoriaComponent, PublicUnidadesComponent, EstadoVazio],
+  imports: [ErroCarregamento, PublicNavbar, PublicFooter, PublicDiretoriaComponent, PublicUnidadesComponent, EstadoVazio],
   templateUrl: './sobre.html',
   styleUrl: './sobre.css',
   host: { '(window:resize)': 'atualizarLargura()' },
 })
 export class Sobre {
+  protected readonly textoParaExibicao = textoParaExibicao;
   private readonly sobrePublicoService = inject(SobrePublicoService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly injector = inject(Injector);
@@ -38,6 +43,13 @@ export class Sobre {
   private readonly larguraTela = signal(window.innerWidth);
   protected readonly carregando = signal(false);
   protected readonly erro = signal(false);
+  private readonly carregandoSecoes = signal(true);
+  private readonly secoesCarregadas = new Set<'diretoria' | 'unidades'>();
+  protected readonly carregandoPagina = computed(
+    () => this.carregando() || this.carregandoSecoes(),
+  );
+  @ViewChild(PublicDiretoriaComponent) private diretoria?: PublicDiretoriaComponent;
+  @ViewChild(PublicUnidadesComponent) private unidades?: PublicUnidadesComponent;
   protected readonly conteudo = signal<ConteudoSobre>({ texto: [], historia: [], carrossel: [] });
   protected readonly indiceHistoria = signal(0);
   protected readonly historiaSelecionada = computed(
@@ -58,6 +70,22 @@ export class Sobre {
       hoje.getMonth() + 1 < mes || (hoje.getMonth() + 1 === mes && hoje.getDate() < dia);
     return hoje.getFullYear() - ano - (aniversarioPendente ? 1 : 0);
   });
+  protected readonly desenvolvedores: { id: number; nome: string; imagem: string | null }[] =
+    [
+      { id: 1, nome: 'Ana Beatriz Rocha Duarte', imagem: '/images/desenvolvedores/ana.jpeg' },
+      { id: 2, nome: 'Eduardo Ferreira Bonifacio', imagem: '/images/desenvolvedores/eduardo.jpeg' },
+      { id: 3, nome: 'Gabriel Albino', imagem: '/images/desenvolvedores/gabriel.jpeg' },
+      { id: 4, nome: 'Gabrielle Ulisses', imagem: '/images/desenvolvedores/gabrielle.jpeg' },
+      { id: 5, nome: 'Miguel Henrique Batista', imagem: '/images/desenvolvedores/miguel.jpeg' },
+      { id: 6, nome: 'Natan Mendes Araújo', imagem: '/images/desenvolvedores/natan.jpeg' },
+      { id: 7, nome: 'Tufy Elias Silva', imagem: '/images/desenvolvedores/tufy.jpeg' },
+    ];
+  protected readonly copiasDesenvolvedores = computed(() => {
+    const larguraGrupo = this.desenvolvedores.length * (224 + 24);
+    const quantidade = Math.max(2, Math.ceil(this.larguraTela() / larguraGrupo) + 1);
+    return Array.from({ length: quantidade }, (_, indice) => indice);
+  });
+  protected readonly desenvolvedoresPausados = signal(false);
   protected readonly imagensComErro = signal<string[]>([]);
   protected readonly colunasFotos = computed(() => {
     const fotos = this.conteudo().carrossel;
@@ -84,44 +112,53 @@ export class Sobre {
     if (this.carregando()) return;
     this.carregando.set(true);
     this.erro.set(false);
+    this.secoesCarregadas.clear();
+    this.carregandoSecoes.set(true);
+    this.diretoria?.carregar();
+    this.unidades?.carregar();
     this.totalUnidades.set(null);
     this.indicadores.set(null);
-    this.sobrePublicoService
-      .obterIndicadores()
+    forkJoin({
+      indicadores: this.sobrePublicoService.obterIndicadores().pipe(catchError(() => of(null))),
+      totalUnidades: this.sobrePublicoService.obterTotalUnidades().pipe(catchError(() => of(null))),
+      conteudo: this.sobrePublicoService.obterConteudo(),
+    })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: (indicadores) => this.indicadores.set(indicadores),
-        error: () => this.indicadores.set(null),
-      });
-    this.sobrePublicoService
-      .obterTotalUnidades()
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (total) => this.totalUnidades.set(total),
-        error: () => this.totalUnidades.set(null),
-      });
-    this.sobrePublicoService
-      .obterConteudo()
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (conteudo) => {
+        next: ({ indicadores, totalUnidades, conteudo }) => {
+          this.indicadores.set(indicadores);
+          this.totalUnidades.set(totalUnidades);
           this.conteudo.set(conteudo);
           this.indiceHistoria.set(0);
           this.imagensComErro.set([]);
           this.carregando.set(false);
-          afterNextRender(
-            () => {
-              const fragmento = this.route.snapshot.fragment;
-              if (fragmento) document.getElementById(fragmento)?.scrollIntoView({ block: 'start' });
-            },
-            { injector: this.injector },
-          );
+          this.posicionarFragmento();
         },
         error: () => {
           this.erro.set(true);
           this.carregando.set(false);
         },
       });
+  }
+
+  protected aoCarregarSecao(secao: 'diretoria' | 'unidades', sucesso = true): void {
+    if (this.secoesCarregadas.has(secao)) return;
+    if (!sucesso) this.erro.set(true);
+    this.secoesCarregadas.add(secao);
+    if (this.secoesCarregadas.size < 2) return;
+    this.carregandoSecoes.set(false);
+    this.posicionarFragmento();
+  }
+
+  private posicionarFragmento(): void {
+    if (this.carregandoPagina() || this.erro()) return;
+    afterNextRender(
+      () => {
+        const fragmento = this.route.snapshot.fragment;
+        if (fragmento) document.getElementById(fragmento)?.scrollIntoView({ block: 'start' });
+      },
+      { injector: this.injector },
+    );
   }
 
   protected selecionarHistoria(indice: number, botao?: HTMLButtonElement): void {

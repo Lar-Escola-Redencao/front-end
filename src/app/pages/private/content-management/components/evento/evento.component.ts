@@ -8,7 +8,7 @@ import { Subscription } from 'rxjs';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
-import { MatOption, MatSelect } from '@angular/material/select';
+import { MatSelectModule } from '@angular/material/select';
 import { ToastrService } from 'ngx-toastr';
 import { ModalLayout } from '@components/modal-layout/modal-layout';
 import { Paginacao } from '@components/paginacao/paginacao';
@@ -48,8 +48,7 @@ import { EventoDetalhe } from 'src/app/pages/public/evento-detalhe/evento-detalh
     MatFormFieldModule,
     MatInputModule,
     MatIconModule,
-    MatSelect,
-    MatOption,
+    MatSelectModule,
     EventoRedesSociaisComponent,
     EventoDetalhe
   ],
@@ -57,11 +56,12 @@ import { EventoDetalhe } from 'src/app/pages/public/evento-detalhe/evento-detalh
   styleUrls: ['./evento.component.css']
 })
 export class EventoComponent implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalvas {
-  readonly TipoEvento = TipoEvento;
   private readonly nomesTipoEvento: Record<string, string> = {
-    ARRECADACAO: 'Arrecadação',
+    BENEFICENTE: 'Beneficente',
     CULTURAL: 'Cultural',
-    COMEMORATIVO: 'Comemorativo'
+    COMEMORATIVO: 'Comemorativo',
+    ESPORTIVO: 'Esportivo',
+    OUTRO: 'Outro'
   };
 
   eventos: Evento[] = [];
@@ -120,10 +120,9 @@ export class EventoComponent implements OnInit, OnDestroy, ComponentComAlteracoe
       ordenavel: true
     },
     {
-      chave: 'tipoEvento',
-      titulo: 'Tipo',
-      formatar: (valor: TipoEvento) => this.formatarTextoExibicao(valor),
-      ordenavel: true
+      chave: 'categorias',
+      titulo: 'Categorias',
+      formatar: (valor: TipoEvento[]) => this.formatarTextoExibicao(valor)
     },
     {
       chave: 'valor',
@@ -156,7 +155,7 @@ export class EventoComponent implements OnInit, OnDestroy, ComponentComAlteracoe
       descricao: ['', [Validators.required, Validators.minLength(10), Validators.maxLength(500)]],
       dataEvento: ['', Validators.required],
       endereco: ['', [Validators.required, Validators.minLength(5), Validators.maxLength(150)]],
-      tipoEvento: [null, Validators.required],
+      categorias: [[], Validators.required],
       valor: ['', [Validators.min(0)]],
       parceirosIds: [[]],
       imagem: [null, [Validators.required, validarImagem()]]
@@ -199,7 +198,10 @@ export class EventoComponent implements OnInit, OnDestroy, ComponentComAlteracoe
       : 'Nenhum evento cadastrado.';
   }
 
-  formatarTextoExibicao(valor: string | null | undefined): string {
+  formatarTextoExibicao(valor: string | string[] | null | undefined): string {
+    if (Array.isArray(valor)) {
+      return valor.map(categoria => this.formatarTextoExibicao(categoria)).join(', ');
+    }
     if (!valor) {
       return '';
     }
@@ -327,7 +329,7 @@ export class EventoComponent implements OnInit, OnDestroy, ComponentComAlteracoe
     this.prepararEstadoFormulario();
     this.formEvento.get('imagem')?.setValidators([Validators.required, validarImagem()]);
     this.formEvento.get('imagem')?.updateValueAndValidity();
-    this.formEvento.reset({ valor: '', parceirosIds: [], imagem: null });
+    this.formEvento.reset({ categorias: [], valor: '', parceirosIds: [], imagem: null });
     this.formEvento.markAsPristine();
     this.formEvento.markAsUntouched();
     this.valoresOriginaisDoFormulario = this.obterValorComparavelFormulario();
@@ -348,7 +350,7 @@ export class EventoComponent implements OnInit, OnDestroy, ComponentComAlteracoe
       descricao: evento.descricao,
       dataEvento: this.formatarDataParaInput(evento.dataEvento),
       endereco: evento.endereco,
-      tipoEvento: evento.tipoEvento,
+      categorias: evento.categorias,
       valor: evento.valor ? this.formatarMoeda(evento.valor) : '',
       parceirosIds: evento.parceiros ? evento.parceiros.map(p => p.id) : [],
       imagem: null
@@ -422,7 +424,7 @@ export class EventoComponent implements OnInit, OnDestroy, ComponentComAlteracoe
     this.prepararEstadoFormulario();
     this.formEvento.get('imagem')?.setValidators([Validators.required, validarImagem()]);
     this.formEvento.get('imagem')?.updateValueAndValidity();
-    this.formEvento.reset({ valor: '', parceirosIds: [], imagem: null });
+    this.formEvento.reset({ categorias: [], valor: '', parceirosIds: [], imagem: null });
     this.formEvento.markAsPristine();
   }
 
@@ -453,6 +455,7 @@ export class EventoComponent implements OnInit, OnDestroy, ComponentComAlteracoe
 
   verificarErros(): void {
     this.erros = mapearErrosFormulario(this.formEvento, {
+      categorias: { required: 'Selecione pelo menos uma categoria.' },
       imagem: {
         required: 'Imagem obrigatoria no cadastro.'
       }
@@ -571,7 +574,7 @@ export class EventoComponent implements OnInit, OnDestroy, ComponentComAlteracoe
         descricao: formValues.descricao,
         dataEvento: formValues.dataEvento,
         endereco: formValues.endereco,
-        tipoEvento: formValues.tipoEvento,
+        categorias: formValues.categorias,
         parceirosIds: formValues.parceirosIds,
         valor: this.valorNumerico ?? undefined,
         imagem: this.imagemSelecionada ?? undefined
@@ -598,7 +601,7 @@ export class EventoComponent implements OnInit, OnDestroy, ComponentComAlteracoe
       descricao: formValues.descricao,
       dataEvento: formValues.dataEvento,
       endereco: formValues.endereco,
-      tipoEvento: formValues.tipoEvento,
+      categorias: formValues.categorias,
       parceirosIds: formValues.parceirosIds,
       valor: this.valorNumerico ?? undefined,
       imagem: this.imagemSelecionada ?? formValues.imagem
@@ -655,27 +658,22 @@ export class EventoComponent implements OnInit, OnDestroy, ComponentComAlteracoe
     });
   }
 
-  isParceiroSelecionado(id: number): boolean {
-    const selecionados: number[] = this.formEvento.get('parceirosIds')?.value || [];
-    return selecionados.includes(id);
+  isCategoriaSelecionada(categoria: TipoEvento): boolean {
+    return (this.formEvento.get('categorias')?.value || []).includes(categoria);
   }
 
-  onParceiroToggle(id: number, event: Event): void {
-    const checkbox = event.target as HTMLInputElement;
-    const selecionados: number[] = [...(this.formEvento.get('parceirosIds')?.value || [])];
-
-    if (checkbox.checked && !selecionados.includes(id)) {
-      selecionados.push(id);
+  onCategoriaToggle(categoria: TipoEvento, event: Event): void {
+    const control = this.formEvento.get('categorias')!;
+    const selecionadas = new Set<TipoEvento>(control.value || []);
+    if ((event.target as HTMLInputElement).checked) {
+      selecionadas.add(categoria);
+    } else {
+      selecionadas.delete(categoria);
     }
-
-    if (!checkbox.checked) {
-      const index = selecionados.indexOf(id);
-      if (index !== -1) selecionados.splice(index, 1);
-    }
-
-    this.formEvento.patchValue({ parceirosIds: selecionados });
-    this.formEvento.get('parceirosIds')?.markAsDirty();
-    this.formEvento.markAsDirty();
+    control.setValue([...selecionadas]);
+    control.markAsDirty();
+    control.markAsTouched();
+    this.verificarErros();
   }
 
   private obterValorComparavelFormulario(): any {
@@ -685,7 +683,7 @@ export class EventoComponent implements OnInit, OnDestroy, ComponentComAlteracoe
       descricao: valor.descricao,
       dataEvento: valor.dataEvento,
       endereco: valor.endereco,
-      tipoEvento: valor.tipoEvento,
+      categorias: [...(valor.categorias || [])].sort(),
       valor: this.valorNumerico,
       parceirosIds: [...(valor.parceirosIds || [])].sort((a, b) => a - b)
     };

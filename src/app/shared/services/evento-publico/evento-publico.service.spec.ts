@@ -16,7 +16,7 @@ const eventoApi = {
   endereco: 'Parque Infantil',
   imagem: '/uploads/eventos/capa.jpg',
   valor: null,
-  tipoEvento: 'ARRECADACAO',
+  categorias: ['BENEFICENTE'],
   parceiros: [{ id: 1, nome: 'Lupo', logo: '/uploads/parceiros/lupo.png' }]
 };
 

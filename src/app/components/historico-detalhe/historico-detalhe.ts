@@ -199,8 +199,18 @@ export class HistoricoDetalheComponent implements OnChanges, OnDestroy {
         && typeof valor === 'string') {
       return valor.slice(0, 5);
     }
-    if (campo.campo === 'tipoEvento' && typeof valor === 'string') {
-      return ({ ARRECADACAO: 'Arrecadação', CULTURAL: 'Cultural', COMEMORATIVO: 'Comemorativo' } as Record<string, string>)[valor] ?? valor;
+    if (['tipoEvento', 'categorias'].includes(campo.campo) && (typeof valor === 'string' || Array.isArray(valor))) {
+      const nomes: Record<string, string> = {
+        ARRECADACAO: 'Arrecadação',
+        BENEFICENTE: 'Beneficente',
+        CULTURAL: 'Cultural',
+        COMEMORATIVO: 'Comemorativo',
+        ESPORTIVO: 'Esportivo',
+        OUTRO: 'Outro'
+      };
+      return Array.isArray(valor)
+        ? valor.map(categoria => nomes[String(categoria)] ?? String(categoria)).join(', ') || 'Nenhuma categoria'
+        : nomes[valor] ?? valor;
     }
     if (campo.campo === 'tipoOcorrencia' && typeof valor === 'string') {
       const nomes: Record<string, string> = {

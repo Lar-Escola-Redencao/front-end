@@ -248,7 +248,7 @@ export class UsuarioPerfilSaude implements OnChanges {
       error: () => {
         this.ngZone.run(() => {
           this.carregandoArquivos = false;
-          this.erroCarregarArquivos = 'Não foi possível carregar os anexos de saúde.';
+          this.erroCarregarArquivos = 'Não foi possível carregar os dados. Tente novamente.';
           this.toastr.error(this.erroCarregarArquivos, 'Erro');
           this.atualizarTela();
         });

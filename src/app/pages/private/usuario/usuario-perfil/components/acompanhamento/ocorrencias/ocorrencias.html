@@ -39,7 +39,7 @@
           </mat-form-field>
           @if (form.controls.matricula.touched && form.controls.matricula.invalid) { <span class="error-text" role="alert">{{ form.controls.matricula.getError('regra') || 'Selecione a matrícula.' }}</span> }
         </div>
-          @if (carregandoMatriculas()) { <p role="status">Carregando matrículas...</p> }
+          @if (carregandoMatriculas()) { <p role="status" aria-label="Carregando matrículas"><span class="spinner-carregamento" aria-hidden="true"></span></p> }
           @if (erroMatriculas()) {
             <p class="erro" role="alert">{{ erroMatriculas() }}</p>
             <button type="button" class="btn-cancelar" (click)="carregarMatriculas()">Tentar novamente</button>
@@ -74,7 +74,9 @@
         </div>
         @if (erro()) { <p class="erro" role="alert">{{ erro() }}</p> }
         <div class="acoes"><button type="button" class="btn-cancelar" [disabled]="salvando()" (click)="fechar()">Cancelar</button>
-          <button type="submit" class="btn-primary" [disabled]="salvando() || carregandoMatriculas() || (modal() === 'EDITAR' && !temAlteracoes)">{{ salvando() ? 'Salvando...' : 'Salvar' }}</button>
+          <button type="submit" class="btn-primary" [disabled]="salvando() || carregandoMatriculas() || (modal() === 'EDITAR' && !temAlteracoes)" [attr.aria-busy]="salvando()">{{ salvando() ? 'Salvando' : 'Salvar' }}
+            @if (salvando()) { <span class="spinner-carregamento" aria-hidden="true"></span> }
+          </button>
         </div>
       </form>
     }

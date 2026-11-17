@@ -1,3 +1,4 @@
+import { ErroCarregamento } from '@components/erro-carregamento/erro-carregamento';
 import { Component, inject, signal } from '@angular/core';
 import { PublicFooter } from '@components/public-footer/public-footer';
 import { EstadoVazio } from '@components/estado-vazio/estado-vazio';
@@ -11,7 +12,7 @@ import { baixarArquivoComVerificacao, visualizarArquivoComVerificacao } from 'sr
 @Component({
   selector: 'app-transparencia',
   standalone: true,
-  imports: [PublicNavbar, PublicFooter, EstadoVazio],
+  imports: [ErroCarregamento, PublicNavbar, PublicFooter, EstadoVazio],
   templateUrl: './transparencia.html',
   styleUrl: './transparencia.css',
 })
@@ -21,7 +22,7 @@ export class Transparencia {
 
   protected readonly secoes = signal<Secao[]>([]);
   protected readonly secoesAbertas = signal<Set<number>>(new Set());
-  protected readonly isLoading = signal(true);
+  protected readonly isLoading = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly arquivosIndisponiveis = signal<Set<string>>(new Set());
   private readonly timeoutsArquivosIndisponiveis = new Map<string, ReturnType<typeof setTimeout>>();
@@ -31,6 +32,7 @@ export class Transparencia {
   }
 
   protected carregar(): void {
+    if (this.isLoading()) return;
     this.isLoading.set(true);
     this.errorMessage.set(null);
 
