@@ -30,6 +30,7 @@ describe('Cadastro de ocorrências no perfil', () => {
       { provide: AcompanhamentoService, useValue: { matriculasFrequencia: matriculas,
         ocorrencias: vi.fn(() => of({ content: [], page: { number: 0, size: 5, totalPages: 0, totalElements: 0 } })) } },
       { provide: SessaoService, useValue: { isMonitor: () => perfil === 'MONITOR',
+        unidadesPermitidasIds: () => perfil === 'ADMINISTRADOR' ? null : [1],
         isAdministrador: () => perfil === 'ADMINISTRADOR', isCoordenador: () => perfil === 'COORDENADOR',
         membro: () => ({ id: 7, nomeCompleto: 'Colaborador logado' }) } },
       { provide: ToastrService, useValue: { success: vi.fn(), error: vi.fn() } },
@@ -80,7 +81,7 @@ describe('Cadastro de ocorrências no perfil', () => {
       expect(fixture.nativeElement.querySelector('.subtitulos-modal').textContent).toContain('Registrado por Autor original');
       c.form.controls.descricao.setValue('Corrigido'); c.salvar();
       expect(api.atualizarOcorrencia).toHaveBeenCalledWith(3, { dataOcorrencia: registro.dataOcorrencia,
-        tipoOcorrencia: 'OUTRO', descricao: 'Corrigido' });
+        tipoOcorrencia: 'OUTRO', descricao: 'Corrigido', idMatricula: 10 });
     });
   }
 
@@ -138,4 +139,68 @@ describe('Cadastro de ocorrências no perfil', () => {
     expect(c.form.controls.horario.invalid).toBe(false);
     expect(fixture.nativeElement.querySelector('.formulario > .erro')).toBeNull();
   });
+  it('permite corrigir a data na edição e preserva o vínculo após falha no salvamento', () => {
+    const fixture = abrir(); const c = fixture.componentInstance;
+    c.abrir('EDITAR', registro); fixture.detectChanges();
+    expect(c.form.controls.data.enabled).toBe(true);
+    expect(c.form.controls.matricula.enabled).toBe(true);
+    expect(fixture.nativeElement.querySelector('input[formControlName="data"]').disabled).toBe(false);
+    c.form.controls.data.setValue('2026-11-01');
+    api.atualizarOcorrencia.mockReturnValueOnce(throwError(() => ({ error: { message: 'Falha de envio' } })));
+    c.salvar();
+    expect(api.atualizarOcorrencia).toHaveBeenCalledWith(3, {
+      dataOcorrencia: '2026-11-01T07:00:00', tipoOcorrencia: 'OUTRO', descricao: 'Relato', idMatricula: 10,
+    });
+    expect(c.form.controls.data.enabled).toBe(true);
+    expect(c.form.controls.data.value).toBe('2026-11-01');
+    expect(c.form.controls.matricula.enabled).toBe(true);
+  });
+
+  it('valida a nova data da edição conforme o período do monitor e a vigência da matrícula', () => {
+    const c = abrir().componentInstance;
+    c.abrir('EDITAR', registro);
+    c.form.controls.data.setValue('2026-09-30'); c.salvar();
+    expect(c.form.controls.data.getError('regra')).toContain('mês anterior');
+    expect(api.atualizarOcorrencia).not.toHaveBeenCalled();
+    perfil = 'ADMINISTRADOR';
+    matriculas.mockReturnValue(of([{ ...matricula, dataIngresso: '2026-11-01T08:00:00' }]));
+    c.carregarMatriculas(); c.form.controls.data.setValue('2026-10-31'); c.salvar();
+    expect(c.form.controls.data.getError('regra')).toContain('matrícula');
+    expect(api.atualizarOcorrencia).not.toHaveBeenCalled();
+  });
+
+  it('exibe a matrícula na edição e permite trocar o vínculo respeitando a nova vigência', () => {
+    perfil = 'ADMINISTRADOR';
+    matriculas.mockReturnValue(of([matricula, { ...matricula, id: 20,
+      dataIngresso: '2026-11-01T00:00:00', periodoTurma: 'TARDE' }]));
+    const fixture = abrir(); const c = fixture.componentInstance;
+    c.abrir('EDITAR', registro); fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('mat-select[formControlName="matricula"]')).not.toBeNull();
+    expect(c.form.controls.matricula.value).toBe(10);
+    c.form.controls.matricula.setValue(20);
+    expect(c.temAlteracoes).toBe(true);
+    c.form.controls.data.setValue('2026-10-31'); c.salvar();
+    expect(api.atualizarOcorrencia).not.toHaveBeenCalled();
+    expect(c.form.controls.data.getError('regra')).toContain('matrícula');
+    c.form.controls.data.setValue('2026-11-01');
+    api.atualizarOcorrencia.mockReturnValueOnce(throwError(() => new Error('Falha')));
+    c.salvar();
+    expect(c.form.controls.matricula.enabled).toBe(true);
+    expect(c.form.controls.matricula.value).toBe(20);
+    c.salvar();
+    expect(api.atualizarOcorrencia).toHaveBeenLastCalledWith(3, {
+      idMatricula: 20, dataOcorrencia: '2026-11-01T07:00:00', tipoOcorrencia: 'OUTRO', descricao: 'Relato',
+    });
+    expect(c.modal()).toBeNull();
+  });
+
+  it('limita as opções de matrícula de ocorrências às unidades permitidas do monitor', () => {
+    matriculas.mockReturnValue(of([matricula, { ...matricula, id: 20, idUnidade: 99 }]));
+    const c = abrir().componentInstance;
+    expect(c.matriculas().map(m => m.id)).toEqual([10]);
+    c.form.controls.matricula.setValue(20); c.salvar();
+    expect(api.criarOcorrencia).not.toHaveBeenCalled();
+    expect(c.form.controls.matricula.getError('regra')).toContain('válida');
+  });
+
 });

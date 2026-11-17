@@ -70,6 +70,7 @@ export class Auth {
       identificador: credentials.identifier,
       senha: credentials.password,
       lembrarMe: rememberMe,
+      ...(credentials.captchaToken ? { captchaToken: credentials.captchaToken } : {}),
     };
     return this.http.post<LoginResponse>(`${environment.apiUrl}/auth/login`, payload).pipe(
       tap((response) => {

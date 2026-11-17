@@ -42,6 +42,21 @@ describe('Gráficos do acompanhamento', () => {
     c.form.patchValue({ dataFim: '2026-03-02' }); c.aplicar();
     expect(api.frequencias).toHaveBeenLastCalledWith(10, { inicio: '2026-03-02', fim: '2026-03-02', matricula: 2 });
   });
+  it('limita os períodos rápidos à primeira matrícula e bloqueia datas personalizadas anteriores', () => {
+    const fixture = TestBed.createComponent(AcompanhamentoFrequencias);
+    fixture.componentRef.setInput('usuario', { id: 10, dataPrimeiraMatricula: '2026-02-01T08:00:00' } as UsuarioResponseDTO);
+    fixture.detectChanges();
+    const c = fixture.componentInstance;
+    expect(api.frequencias).toHaveBeenCalledWith(10, { inicio: '2026-02-01', fim: '2026-12-31', matricula: null });
+    c.form.patchValue({ periodo: 'PERSONALIZADO', dataInicio: '2026-01-31', dataFim: '2026-03-01' });
+    c.aplicar(); fixture.detectChanges();
+    expect(api.frequencias).toHaveBeenCalledTimes(1);
+    expect(fixture.nativeElement.querySelector('#erro-periodo-frequencia-inicio').textContent).toContain('primeira matrícula');
+    expect(fixture.nativeElement.querySelector('input[formControlName="dataInicio"]').min).toBe('2026-02-01');
+    c.form.controls.dataInicio.setValue('2026-02-01'); c.aplicar();
+    expect(api.frequencias).toHaveBeenCalledTimes(2);
+  });
+
   it('ignora a resposta antiga quando os filtros mudam', () => {
     const antiga = new Subject<ResumoFrequencia>(); const atual = new Subject<ResumoFrequencia>();
     api.frequencias.mockReturnValueOnce(antiga).mockReturnValueOnce(atual);

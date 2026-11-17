@@ -22,7 +22,10 @@ export class AcompanhamentoFrequencias implements OnChanges, OnDestroy {
   private readonly fb = inject(FormBuilder);
   private consulta?: Subscription;
   private consultaMatriculas?: Subscription;
-  readonly periodos = PERIODOS_FREQUENCIA;
+  get periodos() {
+    return PERIODOS_FREQUENCIA.filter(periodo => periodo.valor === 'PERSONALIZADO'
+      || intervaloPeriodo(periodo.valor, hojeBrasilia()).dataFim >= this.dataMinima);
+  }
   readonly form = this.fb.group({
     periodo: this.fb.nonNullable.control<PeriodoFrequencia>('ESTE_ANO'),
     matricula: this.fb.nonNullable.control(0),
@@ -52,10 +55,12 @@ export class AcompanhamentoFrequencias implements OnChanges, OnDestroy {
     return dados?.totalRegistros ? Math.round(dados.presencas * 1000 / dados.totalRegistros) / 10 : 0;
   });
 
+  get dataMinima(): string { return this.usuario?.dataPrimeiraMatricula?.slice(0, 10) ?? ''; }
+
   ngOnChanges(): void {
     if (!this.usuario?.id) return;
     this.consulta?.unsubscribe(); this.consultaMatriculas?.unsubscribe();
-    this.form.reset({ periodo: 'ESTE_ANO', matricula: 0, ...intervaloPeriodo('ESTE_ANO', hojeBrasilia()) });
+    this.form.reset({ periodo: 'ESTE_ANO', matricula: 0, ...intervaloPeriodo('ESTE_ANO', hojeBrasilia(), this.dataMinima) });
     this.matriculas.set([]); this.carregarMatriculas(); this.aplicar();
   }
 
@@ -78,12 +83,12 @@ export class AcompanhamentoFrequencias implements OnChanges, OnDestroy {
     this.erroPeriodo.set(null);
     const periodo = this.form.controls.periodo.value;
     if (periodo === 'PERSONALIZADO') return;
-    this.form.patchValue(intervaloPeriodo(periodo, hojeBrasilia())); this.aplicar();
+    this.form.patchValue(intervaloPeriodo(periodo, hojeBrasilia(), this.dataMinima)); this.aplicar();
   }
 
   aplicar(): void {
     const filtros = this.form.getRawValue();
-    const erro = validarIntervalo(filtros.dataInicio, filtros.dataFim);
+    const erro = validarIntervalo(filtros.dataInicio, filtros.dataFim, this.dataMinima);
     this.erroPeriodo.set(erro);
     if (erro) return;
     this.consulta?.unsubscribe();

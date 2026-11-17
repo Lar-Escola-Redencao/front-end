@@ -37,6 +37,7 @@ describe('Login', () => {
     fixture = TestBed.createComponent(Login);
     fixture.detectChanges();
     TestBed.flushEffects();
+    TestBed.inject(HttpTestingController).match('/api/rede-social/todas').forEach(req => req.flush([]));
   }
 
   it('does not show a session warning on a plain login visit', () => {
@@ -56,7 +57,7 @@ describe('Login', () => {
   it('uses the same standard toast for invalid authentication', () => {
     setup({ reason: 'invalid' });
     expect(toastr.warning).toHaveBeenCalledExactlyOnceWith(
-      expect.stringContaining('Acesso negado'), expect.any(String),
+      expect.stringContaining('não é mais válida'), expect.any(String),
       { positionClass: 'toast-top-right', timeOut: 6000, closeButton: true },
     );
   });

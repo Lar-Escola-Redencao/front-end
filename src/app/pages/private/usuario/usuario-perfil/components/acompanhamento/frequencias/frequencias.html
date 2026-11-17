@@ -34,21 +34,22 @@
       <div class="campo">
         <mat-form-field appearance="outline">
           <mat-label>Data inicial</mat-label>
-          <input matInput type="date" formControlName="dataInicio" #inicio aria-describedby="erro-periodo-frequencia">
+          <input matInput type="date" [min]="dataMinima" formControlName="dataInicio" #inicio aria-describedby="erro-periodo-frequencia-inicio">
           <button matSuffix type="button" class="calendario" aria-label="Selecionar data inicial" (click)="inicio.showPicker()">
             <mat-icon aria-hidden="true">calendar_month</mat-icon>
           </button>
         </mat-form-field>
+          @if (erroPeriodo() && form.controls.dataInicio.value < dataMinima) { <p class="erro-campo" id="erro-periodo-frequencia-inicio" role="alert">{{ erroPeriodo() }}</p> }
       </div>
       <div class="campo">
         <mat-form-field appearance="outline">
           <mat-label>Data final</mat-label>
-          <input matInput type="date" formControlName="dataFim" #fim aria-describedby="erro-periodo-frequencia">
+          <input matInput type="date" [min]="dataMinima" formControlName="dataFim" #fim aria-describedby="erro-periodo-frequencia">
           <button matSuffix type="button" class="calendario" aria-label="Selecionar data final" (click)="fim.showPicker()">
             <mat-icon aria-hidden="true">calendar_month</mat-icon>
           </button>
         </mat-form-field>
-        @if (erroPeriodo()) { <p class="erro-campo" id="erro-periodo-frequencia" role="alert">{{ erroPeriodo() }}</p> }
+        @if (erroPeriodo() && !(form.controls.dataInicio.value < dataMinima)) { <p class="erro-campo" id="erro-periodo-frequencia" role="alert">{{ erroPeriodo() }}</p> }
       </div>
       <div class="acoes-filtros"><button type="submit" class="btn-primary">Filtrar</button></div>
     }

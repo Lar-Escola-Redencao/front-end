@@ -7,7 +7,7 @@ import { OverlayModule, ConnectedPosition } from '@angular/cdk/overlay';
   imports: [MatIconModule, OverlayModule],
   template: `
     <button type="button" cdkOverlayOrigin #origem="cdkOverlayOrigin"
-      [attr.aria-label]="frequencia ? 'Como funciona a frequência' : entrevista ? 'Orientações para registrar entrevistas' : 'Orientações para registrar ocorrências'"
+      [attr.aria-label]="relatorio ? 'Sobre o relatório do usuário' : frequencia ? 'Como funciona a frequência' : entrevista ? 'Orientações para registrar entrevistas' : 'Orientações para registrar ocorrências'"
       [attr.aria-expanded]="aberta()" [attr.aria-controls]="aberta() ? idPainel : null"
       (click)="aberta.set(!aberta())" (keydown.escape)="aberta.set(false); $event.stopPropagation()">
       <mat-icon aria-hidden="true">help_outline</mat-icon>
@@ -18,8 +18,8 @@ import { OverlayModule, ConnectedPosition } from '@angular/cdk/overlay';
       [cdkConnectedOverlayPositions]="posicoes" [cdkConnectedOverlayPush]="true" [cdkConnectedOverlayViewportMargin]="16"
       [cdkConnectedOverlayHasBackdrop]="true" cdkConnectedOverlayBackdropClass="cdk-overlay-transparent-backdrop"
       (backdropClick)="aberta.set(false)" (overlayKeydown)="aoTeclar($event)">
-      <section class="dica-painel" [id]="idPainel" role="region" [attr.aria-label]="frequencia ? 'Como funciona a frequência' : entrevista ? 'Orientações para entrevistas' : 'Orientações para ocorrências'">
-        <strong>{{ frequencia ? 'Frequência do usuário' : entrevista ? 'Registro da entrevista' : 'Registro da ocorrência' }}</strong>
+      <section class="dica-painel" [id]="idPainel" role="region" [attr.aria-label]="relatorio ? 'Sobre o relatório do usuário' : frequencia ? 'Como funciona a frequência' : entrevista ? 'Orientações para entrevistas' : 'Orientações para ocorrências'">
+        <strong>{{ relatorio ? 'Relatório do usuário' : frequencia ? 'Frequência do usuário' : entrevista ? 'Registro da entrevista' : 'Registro da ocorrência' }}</strong>
         <p>{{ texto }}</p>
       </section>
     </ng-template>
@@ -49,6 +49,8 @@ export class AjudaAcompanhamento {
     { originX: 'start', originY: 'bottom', overlayX: 'start', overlayY: 'top', offsetY: 8 },
     { originX: 'end', originY: 'top', overlayX: 'end', overlayY: 'bottom', offsetY: -8 },
   ];
+  @Input() relatorio = false;
+  @Input() incluiEntrevistas = false;
   @Input() entrevista = false;
   @Input() diario = false;
   @Input() frequencia = false;
@@ -56,6 +58,9 @@ export class AjudaAcompanhamento {
     if (evento.key === 'Escape') { this.aberta.set(false); evento.stopPropagation(); }
   }
   get texto(): string {
+    if (this.relatorio) return 'Exporte as ' + (this.incluiEntrevistas ? 'frequências, ocorrências e entrevistas' : 'frequências e ocorrências')
+      + ' do usuário em PDF ou XLSX, no período escolhido. '
+      + 'O filtro de matrícula se aplica às frequências e ocorrências. Dias sem registro não contam como faltas.';
     if (this.frequencia) return 'Os gráficos mostram as presenças e faltas registradas no período e nas matrículas selecionadas. '
       + 'Dias sem registro não são contabilizados como faltas. Os filtros desta seção afetam apenas os gráficos de frequência.';
     return this.entrevista

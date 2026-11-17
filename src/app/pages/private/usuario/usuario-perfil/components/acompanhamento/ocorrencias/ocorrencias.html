@@ -28,7 +28,6 @@
       </dl>
     } @else {
       <form class="formulario" [formGroup]="form" (ngSubmit)="salvar()">
-        @if (modal() === 'NOVO') {
           <div class="campo-com-erro">
           <mat-form-field appearance="outline"><mat-label>Matrícula</mat-label>
             <mat-select formControlName="matricula" required>
@@ -39,13 +38,13 @@
           </mat-form-field>
           @if (form.controls.matricula.touched && form.controls.matricula.invalid) { <span class="error-text" role="alert">{{ form.controls.matricula.getError('regra') || 'Selecione a matrícula.' }}</span> }
         </div>
-          @if (carregandoMatriculas()) { <p role="status">Carregando matrículas...</p> }
-          @if (erroMatriculas()) {
-            <p class="erro" role="alert">{{ erroMatriculas() }}</p>
-            <button type="button" class="btn-cancelar" (click)="carregarMatriculas()">Tentar novamente</button>
-          } @else if (!carregandoMatriculas() && !matriculas().length) {
+          @if (!erroMatriculas() && !carregandoMatriculas() && !matriculas().length) {
             <p class="erro" role="alert">Nenhuma matrícula disponível para registrar a ocorrência.</p>
           }
+        @if (carregandoMatriculas()) { <p role="status" aria-label="Carregando matrículas"><span class="spinner-carregamento" aria-hidden="true"></span></p> }
+        @if (erroMatriculas()) {
+          <p class="erro" role="alert">{{ erroMatriculas() }}</p>
+          <button type="button" class="btn-cancelar" (click)="carregarMatriculas()">Tentar novamente</button>
         }
         <div class="linha">
           <div class="campo-com-erro">
@@ -74,7 +73,7 @@
         </div>
         @if (erro()) { <p class="erro" role="alert">{{ erro() }}</p> }
         <div class="acoes"><button type="button" class="btn-cancelar" [disabled]="salvando()" (click)="fechar()">Cancelar</button>
-          <button type="submit" class="btn-primary" [disabled]="salvando() || carregandoMatriculas() || (modal() === 'EDITAR' && !temAlteracoes)">{{ salvando() ? 'Salvando...' : 'Salvar' }}</button>
+          <button type="submit" class="btn-primary" [disabled]="salvando() || carregandoMatriculas() || !!erroMatriculas() || (modal() === 'EDITAR' && !temAlteracoes)">{{ salvando() ? 'Salvando...' : 'Salvar' }}</button>
         </div>
       </form>
     }
