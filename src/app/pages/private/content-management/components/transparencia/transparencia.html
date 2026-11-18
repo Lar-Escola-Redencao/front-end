@@ -1,10 +1,10 @@
 <section class="transparencia-admin">
 
   <div appAbasResponsivas class="abas-container">
-    <button type="button" class="aba-btn" [class.ativa]="abaAtiva === 'documentos'" (click)="mudarAba('documentos')">
+    <button type="button" class="aba-btn" [disabled]="salvandoOrdem || carregandoOrdem" [class.ativa]="abaAtiva === 'documentos'" (click)="mudarAba('documentos')">
       Documentos
     </button>
-    <button type="button" class="aba-btn" [class.ativa]="abaAtiva === 'secoes'" (click)="mudarAba('secoes')">
+    <button type="button" class="aba-btn" [disabled]="salvandoOrdem || carregandoOrdem" [class.ativa]="abaAtiva === 'secoes'" (click)="mudarAba('secoes')">
       Seções
     </button>
   </div>
@@ -42,19 +42,63 @@
       <app-barra-busca
         placeholder="Buscar por título ou conteúdo..."
         [valor]="busca"
+        [desabilitada]="reordenando || carregandoOrdem"
         (buscar)="buscar($event)" />
-      <button type="button" class="btn-primary btn-primary-thick" (click)="abrirModal('secao')">
-        Nova seção
-      </button>
+      <div class="botoes-secoes">
+        @if (reordenando) {
+          <button type="button" class="btn-reordenar" [disabled]="salvandoOrdem" (click)="solicitarCancelarReordenacao()">Cancelar</button>
+          <button type="button" class="btn-primary btn-primary-thick" [disabled]="!temAlteracoesOrdem || salvandoOrdem" (click)="salvarOrdem()">
+            @if (salvandoOrdem) { <span class="spinner" aria-hidden="true"></span> }
+            {{ salvandoOrdem ? 'Salvando...' : 'Salvar ordem' }}
+          </button>
+        } @else {
+          <button type="button" class="btn-reordenar" [disabled]="carregandoOrdem" (click)="iniciarReordenacao()">
+            <span class="material-symbols-outlined" aria-hidden="true">swap_vert</span>
+            {{ carregandoOrdem ? 'Carregando...' : 'Reordenar seções' }}
+          </button>
+          <button type="button" class="btn-primary btn-primary-thick" [disabled]="carregandoOrdem" (click)="abrirModal('secao')">Nova seção</button>
+        }
+      </div>
     </div>
-    <app-tabela-layout [colunas]="colunasSecoes" [dados]="secoes" [acoes]="acoesTabela"
+    @if (reordenando) {
+      <p class="orientacao-ordem" id="orientacao-ordem">Defina a ordem das seções na página pública de Transparência.</p>
+      <div class="lista-ordenacao" [attr.aria-busy]="salvandoOrdem">
+        <div class="cabecalho-ordenacao" aria-hidden="true"><span></span><span>Ordem</span><span>Nome da Seção</span><span>Exibição</span><span class="titulo-mover">Mover</span></div>
+        <ol cdkDropList [cdkDropListData]="secoesOrdenacao" [cdkDropListDisabled]="salvandoOrdem"
+          (cdkDropListDropped)="soltarSecao($event)" class="secoes-ordenacao" aria-label="Ordem das seções da Transparência" aria-describedby="orientacao-ordem">
+          @for (secao of secoesOrdenacao; track secao.id; let indice = $index; let primeira = $first; let ultima = $last) {
+            <li cdkDrag cdkDragLockAxis="y" class="linha-ordenacao" (cdkDragStarted)="iniciarArraste()">
+              <div *cdkDragPlaceholder class="posicao-soltura" aria-hidden="true"></div>
+              <span class="arrastar-secao" aria-hidden="true">
+                <span class="material-symbols-outlined" aria-hidden="true">drag_indicator</span>
+              </span>
+              <span class="posicao-secao" [attr.aria-label]="'Posição ' + (indice + 1)">{{ indice + 1 }}</span>
+              <div class="identificacao-secao">
+                <span class="nome-secao">{{ secao.titulo }}</span>
+                <span class="status-secao badge-status" [class.ativo]="secao.ativo" [class.inativo]="!secao.ativo">{{ secao.ativo ? 'Ativo' : 'Inativo' }}</span>
+              </div>
+              <div class="setas-secao" (mousedown)="$event.stopPropagation()" (touchstart)="$event.stopPropagation()">
+                <button type="button" class="mover-secao" [disabled]="primeira || salvandoOrdem" [attr.aria-label]="'Mover ' + secao.titulo + ' para cima'" title="Mover para cima" (click)="moverSecao(indice, -1, $event)"><span class="material-symbols-outlined" aria-hidden="true">arrow_upward</span></button>
+                <button type="button" class="mover-secao" [disabled]="ultima || salvandoOrdem" [attr.aria-label]="'Mover ' + secao.titulo + ' para baixo'" title="Mover para baixo" (click)="moverSecao(indice, 1, $event)"><span class="material-symbols-outlined" aria-hidden="true">arrow_downward</span></button>
+              </div>
+            </li>
+          } @empty {
+            <li class="ordem-vazia">Nenhuma seção cadastrada.</li>
+          }
+        </ol>
+      </div>
+      <p class="somente-leitor" role="status" aria-live="polite" aria-atomic="true">{{ anuncioOrdem }}</p>
+    } @else {
+      <app-tabela-layout [colunas]="colunasSecoes" [dados]="secoes" [acoes]="acoesTabela"
       [carregando]="carregandoLista" [erro]="erroLista" [ordenacao]="ordenacao"
       [mensagemVazia]="mensagemVazia"
       (acao)="executarAcao($event)"
       (ordenar)="ordenarPor($event)"
       (tentarNovamente)="tentarNovamente()" />
+    }
   }
 
+  @if (!reordenando) {
   <app-paginacao
     [paginaAtual]="pagina"
     [totalPaginas]="totalPaginas"
@@ -63,6 +107,7 @@
     [carregando]="carregandoLista"
     (paginaChange)="irParaPagina($event)"
     (tamanhoChange)="mudarTamanhoPagina($event)" />
+  }
 
 </section>
 
