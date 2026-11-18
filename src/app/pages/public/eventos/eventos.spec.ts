@@ -1,5 +1,6 @@
 import { ChangeDetectorRef } from '@angular/core';
 import { of } from 'rxjs';
+import { vi } from 'vitest';
 
 import { Eventos } from './eventos';
 import { Evento, TipoEvento } from 'src/app/shared/models/evento.model';
@@ -9,6 +10,7 @@ describe('Eventos', () => {
   let component: Eventos;
 
   beforeEach(() => {
+    vi.spyOn(Date, 'now').mockReturnValue(new Date('2026-11-16T12:00:00').getTime());
     const eventoPublicoService = {
       listarPublicos: () => of([])
     } as unknown as EventoPublicoService;
@@ -19,11 +21,13 @@ describe('Eventos', () => {
     );
   });
 
+  afterEach(() => vi.restoreAllMocks());
+
   it('usa a imagem ja normalizada pela listagem publica', () => {
     expect(component.obterUrlImagem('/api/uploads/evento.jpg')).toBe('/api/uploads/evento.jpg');
   });
 
-  it('inicia sem filtros e lista eventos futuros e antigos em ordem decrescente', () => {
+  it('inicia sem filtros e prioriza os eventos futuros mais próximos', () => {
     const dados = [
       { id: 1, titulo: 'Antigo', dataEvento: '2020-01-01T10:00:00' },
       { id: 3, titulo: 'Futuro distante', dataEvento: '2030-12-01T10:00:00' },
@@ -35,8 +39,36 @@ describe('Eventos', () => {
     );
     pagina.ngOnInit();
     expect(pagina.possuiFiltrosAplicados).toBe(false);
-    expect(pagina.eventosPaginados.map(evento => evento.id)).toEqual([3, 2, 1]);
+    expect(pagina.eventosPaginados.map(evento => evento.id)).toEqual([2, 3, 1]);
     expect(dados.map(evento => evento.id)).toEqual([1, 3, 2]);
+  });
+
+  it('ordena futuros e encerrados antes de paginar, preservando busca, filtros e desempates', () => {
+    const dados = [
+      { id: 1, dataEvento: '2026-11-01T10:00:00' },
+      { id: 3, dataEvento: '2026-12-01T10:00:00' },
+      { id: 4, dataEvento: '2026-11-15T10:00:00' },
+      { id: 2, dataEvento: '2026-11-16T12:00:00' },
+      { id: 6, dataEvento: '2026-11-16T12:00:00', valor: 10 },
+      { id: 5, dataEvento: '2026-11-01T10:00:00' },
+    ].map(evento => ({ titulo: 'Teste', valor: 0, ...evento })) as unknown as Evento[];
+    const pagina = new Eventos(
+      { listarPublicos: () => of(dados) } as unknown as EventoPublicoService,
+      { detectChanges: () => undefined } as ChangeDetectorRef,
+    );
+    pagina.tamanhoPagina = 2;
+    pagina.ngOnInit();
+    expect(pagina.eventosFiltrados.map(evento => evento.id)).toEqual([6, 2, 3, 4, 5, 1]);
+    expect(pagina.eventosPaginados.map(evento => evento.id)).toEqual([6, 2]);
+    pagina.proximaPagina();
+    expect(pagina.eventosPaginados.map(evento => evento.id)).toEqual([3, 4]);
+    pagina.proximaPagina();
+    expect(pagina.eventosPaginados.map(evento => evento.id)).toEqual([5, 1]);
+    pagina.buscar('Teste');
+    expect(pagina.paginaAtual).toBe(0);
+    expect(pagina.eventosFiltrados).toHaveLength(6);
+    pagina.filtrar({ dataInicial: '', dataFinal: '', valor: 'gratuito', tipo: null });
+    expect(pagina.eventosFiltrados.map(evento => evento.id)).toEqual([2, 3, 4, 5, 1]);
   });
 
   it('distingue cadastro vazio de busca ou filtros sem resultados', () => {

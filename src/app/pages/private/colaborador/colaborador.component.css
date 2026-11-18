@@ -2,6 +2,14 @@ h1{
   font-family: var(--fonte-titulo);
 }
 
+:host ::ng-deep .tabela-colaboradores td[data-label="CPF"] {
+  white-space: nowrap;
+}
+
+:host ::ng-deep .tabela-colaboradores td[data-label="E-mail"] .valor-celula {
+  overflow-wrap: anywhere;
+}
+
 .form-modal {
   display: flex;
   flex-direction: column;
@@ -444,4 +452,29 @@ h1{
 .colaborador-preview {
   text-align: left;
   overflow-wrap: anywhere;
+}
+
+.aviso-inativo {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background-color: #fff8e1;
+  color: #d98200;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.badge-situacao {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background-color: #dcfce7;
+  color: #139445;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.badge-situacao.inativo {
+  background-color: #fee2e2;
+  color: rgb(182, 43, 43);
 }

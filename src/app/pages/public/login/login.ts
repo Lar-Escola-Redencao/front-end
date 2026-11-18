@@ -1,3 +1,4 @@
+import { destinoInternoSeguro } from '../../../shared/utils/destino-seguro';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, DestroyRef, HostListener, ViewChild, computed, effect, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -70,8 +71,8 @@ export class Login {
       if (reason !== 'expired' && reason !== 'invalid') return;
 
       const mensagem = reason === 'invalid'
-        ? 'Acesso negado. Autenticação inválida ou corrompida.'
-        : 'Sua autenticação expirou. Para sua segurança, faça login novamente.';
+        ? 'Sua sessão não é mais válida. Entre novamente ou, se o acesso continuar bloqueado, contate a administração.'
+        : 'Sua sessão expirou. Para sua segurança, entre novamente ou contate a administração se precisar de ajuda.';
       const aviso = this.toastr.warning(mensagem, 'Atenção', {
         positionClass: 'toast-top-right',
         timeOut: SESSION_EXPIRED_TOAST_MS,
@@ -138,7 +139,7 @@ export class Login {
     this.captchaToken.set('');
     this.auth.login({ identifier: cleanedIdentifier, password, ...(captchaToken ? { captchaToken } : {}) }, remember).subscribe({
       next: () => {
-        const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl') ?? '/dashboard';
+        const returnUrl = destinoInternoSeguro(this.route.snapshot.queryParamMap.get('returnUrl'));
         this.router.navigateByUrl(returnUrl);
       },
       error: (error: unknown) => {

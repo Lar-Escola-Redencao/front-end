@@ -504,7 +504,7 @@ export class Sobre implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalvas
 
     // tipo HISTORIA faz o back recortar a consulta nos blocos de ano antes de
     // paginar, então content, totalElements e totalPages já vêm só desta aba.
-    this.listaSub = this.sobreService.listarSecoesAdmin(this.pagina, this.tamanho, this.sort || 'titulo,asc', GRUPO_HISTORIA, this.busca || undefined).subscribe({
+    this.listaSub = this.sobreService.listarSecoesAdmin(this.pagina, this.tamanho, this.sort, GRUPO_HISTORIA, this.busca || undefined).subscribe({
       next: (resposta) => {
         this.ngZone.run(() => {
           this.blocosHistoria = resposta.content;

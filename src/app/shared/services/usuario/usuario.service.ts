@@ -1,6 +1,8 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpContext } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { PaginaResposta } from '../../models/pagina.model';
+import { construirHttpParams } from '../../utils/paginacao-url';
 import { environment } from 'src/environments/environment';
 import { ArquivoSaudeDTO, CadastroUsuarioCompletoDTO, MatriculaHistoricoDTO, UsuarioResponseDTO } from '../../models/usuario.model';
 import {
@@ -10,17 +12,19 @@ import {
 } from '../../models/contato.model';
 import { SILENCIAR_TOAST_ACESSO } from '../../interceptors/acesso-toast.context';
 
+interface FiltrosUsuarios {
+  search?: string;
+  idUnidade?: number | null;
+  idTurma?: number | null;
+  statusMatricula?: string | null;
+}
+
 @Injectable({ providedIn: 'root' })
 export class UsuarioService {
   private readonly http = inject(HttpClient);
   private readonly apiUrl = `${environment.apiUrl}/usuarios`;
 
-  listarUsuarios(filtros?: string | {
-    search?: string;
-    idUnidade?: number | null;
-    idTurma?: number | null;
-    statusMatricula?: string | null;
-  }): Observable<UsuarioResponseDTO[]> {
+  listarUsuarios(filtros?: string | FiltrosUsuarios): Observable<UsuarioResponseDTO[]> {
     if (typeof filtros === 'string') {
       filtros = { search: filtros };
     }
@@ -30,6 +34,12 @@ export class UsuarioService {
     if (filtros?.idTurma) params['idTurma'] = String(filtros.idTurma);
     if (filtros?.statusMatricula) params['statusMatricula'] = filtros.statusMatricula;
     return this.http.get<UsuarioResponseDTO[]>(this.apiUrl, { params });
+  }
+
+  listarUsuariosPaginados(pagina: number, tamanho: number, sort?: string, filtros?: FiltrosUsuarios):
+    Observable<PaginaResposta<UsuarioResponseDTO>> {
+    const params = construirHttpParams({ pagina, tamanho, sort, extras: { ...filtros } });
+    return this.http.get<PaginaResposta<UsuarioResponseDTO>>(`${this.apiUrl}/paginados`, { params });
   }
 
   buscarAutocomplete(termo: string, unidadeId: number): Observable<UsuarioResponseDTO[]> {
