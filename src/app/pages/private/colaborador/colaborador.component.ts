@@ -449,9 +449,6 @@ export class ColaboradorComponent
         this.papeis = this.somenteMonitores
           ? dados.filter(p => (p.nomePapel || p.nome || '').toUpperCase() === 'MONITOR')
           : dados;
-        if (this.somenteMonitores) {
-          this.carregarColaboradores();
-        }
         this.papeisDisponiveis = this.papeis
           .map((papel) => this.obterNomePapel(papel))
           .filter((nome): nome is string => Boolean(nome));
@@ -615,7 +612,7 @@ export class ColaboradorComponent
     const novoSort = alternarOrdenacao(this.ordenacao, campo);
     this.router.navigate([], {
       relativeTo: this.route,
-      queryParams: { sort: novoSort },
+      queryParams: { sort: novoSort, page: 0 },
       queryParamsHandling: 'merge'
     });
   }
