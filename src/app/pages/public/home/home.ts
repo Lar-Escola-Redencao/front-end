@@ -1,6 +1,6 @@
 import { ErroCarregamento } from '@components/erro-carregamento/erro-carregamento';
 import { Component, ElementRef, OnDestroy, ViewChild, inject, signal } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { PublicNavbar } from '@components/public-navbar/public-navbar';
 import { PublicFooter } from '@components/public-footer/public-footer';
 import { PublicParceirosComponent } from './public-parceiros/public-parceiros';
@@ -10,7 +10,7 @@ import { PublicUnidadesComponent } from './public-unidades/public-unidades';
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [ErroCarregamento, PublicNavbar, PublicFooter, PublicEventosComponent, PublicParceirosComponent, PublicUnidadesComponent],
+  imports: [RouterLink, ErroCarregamento, PublicNavbar, PublicFooter, PublicEventosComponent, PublicParceirosComponent, PublicUnidadesComponent],
   templateUrl: './home.html',
   styleUrl: './home.css',
 })

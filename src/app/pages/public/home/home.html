@@ -9,8 +9,24 @@
     <app-erro-carregamento (tentarNovamente)="carregar()" />
   }
   <div class="home-conteudo" [hidden]="carregando() || erro()">
-    <section id="inicio" class="home-section">
-      <p>Seção Início</p>
+    <section id="inicio" class="home-section inicio-section" aria-label="Lar Escola Redenção">
+      <div class="inicio-card">
+        <div class="inicio-desenhos" aria-hidden="true"></div>
+        <div class="inicio-apresentacao">
+          <h1 class="inicio-titulo">
+            <img class="inicio-logo" src="/images/logo_colorida_texto.png" alt="Lar Escola Redenção" fetchpriority="high">
+          </h1>
+          <a class="inicio-conhecer" routerLink="/conheca-a-osc">
+            Conheça a Organização
+          </a>
+        </div>
+        <span class="inicio-credito">
+          <a href="https://www.magnific.com/" target="_blank" rel="noopener noreferrer">Designed by Magnific</a>
+          <span aria-hidden="true"> · </span>
+          <a href="https://www.magnific.com/free-vector/crayon-kid-drawings-colorful-childlike-doodles_417895603.htm"
+            target="_blank" rel="noopener noreferrer">upklyak</a>
+        </span>
+      </div>
     </section>
 
     <section id="unidades" class="home-section">
