@@ -23,11 +23,15 @@ export class EventoService {
   constructor(private http: HttpClient) { }
 
   listarTodos(pagina: number, tamanho: number, sort?: string, tipo?: TipoEvento | '', search?: string, filtros?: FiltrosEventos): Observable<PaginaResposta<Evento>> {
-    const params = construirHttpParams({ pagina, tamanho, sort, extras: {
+    const ordenacao = sort ?? 'dataEvento,desc';
+    let params = construirHttpParams({ pagina, tamanho, sort: ordenacao, extras: {
       tipo: tipo || undefined, search, dataInicial: filtros?.dataInicial || undefined,
       dataFinal: filtros?.dataFinal || undefined,
       valor: filtros?.valor === 'todos' ? undefined : filtros?.valor
     } });
+    if (ordenacao.split(',')[0] !== 'id') {
+      params = params.append('sort', 'id,desc');
+    }
     return this.http.get<PaginaResposta<Evento>>(`${this.apiUrl}/todos`, { params });
   }
 

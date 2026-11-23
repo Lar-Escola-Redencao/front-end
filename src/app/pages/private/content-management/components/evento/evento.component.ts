@@ -169,8 +169,8 @@ export class EventoComponent implements OnInit, OnDestroy, ComponentComAlteracoe
       const { pagina, tamanho, sort } = lerParametrosPagina(params);
       this.pagina = pagina;
       this.tamanho = tamanho;
-      this.sort = sort;
-      this.ordenacao = analisarOrdenacao(sort);
+      this.sort = sort ?? 'dataEvento,desc';
+      this.ordenacao = analisarOrdenacao(this.sort);
       this.filtroTipo = (params.get('tipo') as TipoEvento | null) ?? null;
       this.filtroDataInicial = params.get('dataInicial') ?? '';
       this.filtroDataFinal = params.get('dataFinal') ?? '';
