@@ -1,6 +1,8 @@
+import { ErroCarregamento } from '@components/erro-carregamento/erro-carregamento';
 import { EstadoVazio } from '@components/estado-vazio/estado-vazio';
-import { Component, OnInit, OnDestroy, OnChanges, Input, HostListener, inject, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, OnChanges, Input, Output, EventEmitter, HostListener, inject, ChangeDetectorRef, ElementRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { BloquearScroll } from 'src/app/shared/directives/bloquear-scroll';
 import { PublicContentService } from 'src/app/shared/services/public-content/public-content.service';
 
 export interface ParceiroExibicao {
@@ -12,11 +14,12 @@ export interface ParceiroExibicao {
 @Component({
   selector: 'app-public-parceiros',
   standalone: true,
-  imports: [EstadoVazio, CommonModule],
+  imports: [ErroCarregamento, EstadoVazio, CommonModule, BloquearScroll],
   templateUrl: './public-parceiros.html',
   styleUrl: './public-parceiros.css'
 })
 export class PublicParceirosComponent implements OnInit, OnChanges, OnDestroy {
+  @Output() carregado = new EventEmitter<boolean>();
   private readonly publicContentService = inject(PublicContentService);
   private readonly cdr = inject(ChangeDetectorRef);
 
@@ -34,7 +37,11 @@ export class PublicParceirosComponent implements OnInit, OnChanges, OnDestroy {
 
   parceirosOriginal: ParceiroExibicao[] = [];
   parceirosCarousel: ParceiroExibicao[] = [];
-  carregando = true;
+  carregando = false;
+  erroCarregamento = false;
+  parceiroAmpliado: ParceiroExibicao | null = null;
+  @ViewChild('lightbox') private lightboxRef?: ElementRef<HTMLDialogElement>;
+  private readonly imagensIndisponiveis = new Set<number>();
 
   currentIndex = 0;
   itemsPerPage = 3;
@@ -45,7 +52,14 @@ export class PublicParceirosComponent implements OnInit, OnChanges, OnDestroy {
 
   ngOnInit(): void {
     this.atualizarItemsPerPage();
+    this.carregar();
+  }
 
+  carregar(): void {
+    if (this.carregando) return;
+    this.stopAutoPlay();
+    this.carregando = true;
+    this.erroCarregamento = false;
     if (this.parceiros) {
       this.definirParceiros(this.parceiros);
       return;
@@ -56,8 +70,10 @@ export class PublicParceirosComponent implements OnInit, OnChanges, OnDestroy {
         this.definirParceiros(dados);
       },
       error: () => {
+        this.erroCarregamento = true;
         this.carregando = false;
         this.cdr.detectChanges();
+        this.carregado.emit(false);
       }
     });
   }
@@ -90,6 +106,8 @@ export class PublicParceirosComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   private definirParceiros(dados: ParceiroExibicao[]): void {
+    this.imagensIndisponiveis.clear();
+    this.erroCarregamento = false;
     this.parceirosOriginal = dados;
     if (dados.length > 1) {
       this.parceirosCarousel = [...dados, ...dados, ...dados, ...dados, ...dados];
@@ -101,21 +119,45 @@ export class PublicParceirosComponent implements OnInit, OnChanges, OnDestroy {
     this.carregando = false;
     this.cdr.detectChanges();
     this.startAutoPlay();
+    this.carregado.emit(true);
   }
 
   obterUrlImagem(caminho: string | null | undefined): string {
     return this.publicContentService.tratarUrlImagem(caminho);
   }
 
-  onImageError(event: Event): void {
-    const img = event.target as HTMLImageElement;
-    img.style.display = 'none';
-    img.nextElementSibling?.classList.remove('imagem-fallback-hidden');
+  podeAmpliar(parceiro: ParceiroExibicao): boolean {
+    return !!this.obterUrlImagem(parceiro.logo) && !this.imagensIndisponiveis.has(parceiro.id);
+  }
+
+  onImageError(parceiro: ParceiroExibicao): void {
+    this.imagensIndisponiveis.add(parceiro.id);
+  }
+
+  abrirImagem(parceiro: ParceiroExibicao): void {
+    if (!this.podeAmpliar(parceiro)) return;
+    this.parceiroAmpliado = parceiro;
+    this.stopAutoPlay();
+    this.cdr.detectChanges();
+    this.lightboxRef?.nativeElement.showModal();
+  }
+
+  fecharImagem(): void {
+    this.lightboxRef?.nativeElement.close();
+  }
+
+  aoFecharImagem(): void {
+    this.parceiroAmpliado = null;
+    this.startAutoPlay();
+  }
+
+  fecharAoClicarFora(evento: MouseEvent): void {
+    if (evento.target === evento.currentTarget) this.fecharImagem();
   }
 
   startAutoPlay(): void {
     this.stopAutoPlay();
-    if (this.parceirosOriginal.length > 1) {
+    if (this.parceirosOriginal.length > 1 && !this.parceiroAmpliado) {
       this.autoPlayInterval = setInterval(() => {
         this.next();
         this.cdr.detectChanges();

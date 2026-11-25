@@ -11,6 +11,12 @@
   overflow-x: hidden;
 }
 
+.grafica-main.pagina-erro,
+.grafica-main.pagina-carregando {
+  min-height: 100dvh;
+  padding-block: 82px 0;
+}
+
 .container {
   max-width: 760px;
   margin: 0 auto;

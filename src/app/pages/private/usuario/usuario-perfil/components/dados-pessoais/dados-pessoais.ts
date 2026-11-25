@@ -13,7 +13,7 @@ import { CadastroUsuarioCompletoDTO, UsuarioResponseDTO } from 'src/app/shared/m
 import { UsuarioService } from 'src/app/shared/services/usuario/usuario.service';
 import { CepService } from 'src/app/shared/services/usuario/cep.service';
 import { montarEndereco, separarEndereco } from 'src/app/shared/utils/endereco';
-import { obterMensagemErro, validarArquivo, validarExtensaoArquivo } from 'src/app/shared/utils/form-validations';
+import { validarCpf, obterMensagemErro, validarArquivo, validarExtensaoArquivo } from 'src/app/shared/utils/form-validations';
 import { formatarCep, formatarCpf } from 'src/app/shared/utils/masks';
 import { FotoUsuarioService } from 'src/app/shared/services/usuario/foto-usuario.service';
 import { montarBaseAtualizacaoUsuario } from '../../utils/usuario-atualizacao-dto';
@@ -51,6 +51,7 @@ export class UsuarioPerfilDadosPessoais implements OnChanges {
   salvando = false;
   consultandoCep = false;
   avisoCep = '';
+  removerFotoPerfil = false;
   fotoSelecionada: File | null = null;
   fotoPreviewUrl: string | null = null;
   /** Foto atual carregada pela rota protegida (URL temporária `blob:`), exibida só quando existe. */
@@ -80,7 +81,7 @@ export class UsuarioPerfilDadosPessoais implements OnChanges {
   form = this.fb.group({
     nomeCompleto: ['', [Validators.required, Validators.minLength(3)]],
     dataNascimento: ['', Validators.required],
-    cpf: [''],
+    cpf: ['', validarCpf],
     tipoDocumento: [''],
     documentoAuxiliar: [''],
     cadUnico: [''],
@@ -141,7 +142,7 @@ export class UsuarioPerfilDadosPessoais implements OnChanges {
   }
 
   get temAlteracoes(): boolean {
-    return JSON.stringify(this.form.getRawValue()) !== JSON.stringify(this.valoresOriginais) || !!this.fotoSelecionada;
+    return JSON.stringify(this.form.getRawValue()) !== JSON.stringify(this.valoresOriginais) || !!this.fotoSelecionada || this.removerFotoPerfil;
   }
 
   get usaOutroDocumento(): boolean {
@@ -149,7 +150,15 @@ export class UsuarioPerfilDadosPessoais implements OnChanges {
   }
 
   get fotoPreview(): string | null {
-    return this.fotoPreviewUrl || this.fotoPerfilValidadaUrl;
+    return this.removerFotoPerfil ? null : this.fotoPreviewUrl || this.fotoPerfilValidadaUrl;
+  }
+
+  removerFoto(): void {
+    if (!this.editando || this.salvando || this.somenteLeitura) return;
+    this.fotoSelecionada = null;
+    this.fotoPreviewUrl = null;
+    this.removerFotoPerfil = !!this.usuario?.imagemPerfil;
+    this.erroFoto = '';
   }
 
   onErroFotoPreview(): void {
@@ -223,10 +232,13 @@ export class UsuarioPerfilDadosPessoais implements OnChanges {
       return;
     }
 
+    this.removerFotoPerfil = false;
     this.fotoSelecionada = arquivo;
     const reader = new FileReader();
     reader.onload = () => {
+      if (this.fotoSelecionada !== arquivo) return;
       this.fotoPreviewUrl = String(reader.result);
+      this.changeDetectorRef.detectChanges();
     };
     reader.readAsDataURL(arquivo);
     input.value = '';
@@ -251,7 +263,7 @@ export class UsuarioPerfilDadosPessoais implements OnChanges {
     if (!controle || !controle.touched || !controle.errors) return '';
     if (controle.errors['required']) return 'Campo obrigatório.';
     if (controle.errors['minlength']) return 'Mínimo de 3 caracteres.';
-    return 'Campo inválido.';
+    return obterMensagemErro(controle.errors);
   }
 
   private preencherFormulario(): void {
@@ -259,6 +271,9 @@ export class UsuarioPerfilDadosPessoais implements OnChanges {
     this.consultandoCep = false;
     this.avisoCep = '';
     this.editando = false;
+    this.removerFotoPerfil = false;
+    this.fotoSelecionada = null;
+    this.fotoPreviewUrl = null;
     this.form.reset({
       nomeCompleto: this.usuario?.nomeCompleto ?? '',
       dataNascimento: this.normalizarData(this.usuario?.dataNascimento),
@@ -293,6 +308,7 @@ export class UsuarioPerfilDadosPessoais implements OnChanges {
       tipoDocumento: dados.usarOutroDocumento ? dados.tipoDocumento || null : null
     } : {};
     return montarBaseAtualizacaoUsuario(this.usuario!, {
+      removerFotoPerfil: this.removerFotoPerfil,
       nomeCompleto: dados.nomeCompleto || '',
       dataNascimento: dados.dataNascimento || '',
       ...documentos,

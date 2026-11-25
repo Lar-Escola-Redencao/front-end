@@ -1,4 +1,12 @@
-<section class="public-eventos-section" *ngIf="!carregando">
+@if (carregando) {
+  <div class="carregamento-secao" role="status" aria-label="Carregando eventos">
+    <span class="spinner-carregamento" aria-hidden="true"></span>
+  </div>
+}
+@if (!carregando && erroCarregamento) {
+  <app-erro-carregamento (tentarNovamente)="carregar()" />
+}
+<section class="public-eventos-section" *ngIf="!carregando && !erroCarregamento">
   <div class="container">
     <div class="eventos-header">
       <h2>Próximos eventos</h2>

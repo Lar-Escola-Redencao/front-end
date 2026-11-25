@@ -86,6 +86,20 @@ describe('ComoAjudar — geração local de Pix', () => {
     await fixture.whenStable();
   }
 
+  it('apresenta somente o spinner centralizado antes de exibir o conteúdo da página', async () => {
+    expect(elemento.querySelector('.carregamento-pagina .spinner-carregamento')).not.toBeNull();
+    expect(elemento.querySelector('.abertura')).toBeNull();
+    expect(elemento.querySelector('.formas-ajuda')).toBeNull();
+    expect(elemento.querySelector('main')?.getAttribute('aria-busy')).toBe('true');
+
+    await carregar();
+
+    expect(elemento.querySelector('.carregamento-pagina')).toBeNull();
+    expect(elemento.querySelector('.abertura')).not.toBeNull();
+    expect(elemento.querySelector('.formas-ajuda')).not.toBeNull();
+    expect(elemento.querySelector('main')?.getAttribute('aria-busy')).toBe('false');
+  });
+
   it.each(['titulo-pix', 'titulo-nfp'])('leva ao título %s depois de carregar a seção Pix', destino => {
     const frames: FrameRequestCallback[] = [];
     vi.spyOn(window, 'requestAnimationFrame').mockImplementation(callback => { frames.push(callback); return frames.length; });
@@ -521,9 +535,9 @@ describe('ComoAjudar — geração local de Pix', () => {
     await aguardarGeracao();
   });
 
-  it('recusa valor zero sem chamar o back-end', async () => {
+  it.each(['0', '0,01', '0,99'])('recusa valor inferior a um real (%s) sem chamar o back-end', async valor => {
     await carregar();
-    await digitar('0');
+    await digitar(valor);
     enviar();
     fixture.detectChanges();
     expect(elemento.querySelector('#erro-valor')).not.toBeNull();

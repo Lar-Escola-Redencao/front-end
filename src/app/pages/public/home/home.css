@@ -5,6 +5,12 @@
   flex-direction: column;
 }
 
+.home-main.pagina-erro { min-height: 100dvh; }
+
+.home-carregamento {
+  min-height: calc(100vh - 82px);
+}
+
 .home-section {
   scroll-margin-top: 82px;
   
@@ -16,12 +22,135 @@
   
 }
 
-.home-section p {
-  font-family: var(--fonte-texto);
-  font-size: 1.5rem;
-  color: var(--input-color);
-  font-weight: 700;
-  text-transform: uppercase;
+.inicio-section {
+  min-height: auto;
+  padding: 16px 24px 20px;
+}
+
+.inicio-card {
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  max-width: 1240px;
+  min-height: 440px;
+  aspect-ratio: 2 / 1;
+  margin-inline: auto;
+  overflow: hidden;
+  border-radius: 20px;
+  background: #f4eae0;
+  box-shadow: 2px 3px 5px rgba(0, 0, 0, 0.2);
+}
+
+.inicio-apresentacao {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 24px;
+  width: fit-content;
+  max-width: 46%;
+  margin: 48px 0 0 7%;
+}
+
+.inicio-titulo {
+  margin: 0;
+  line-height: 0;
+}
+
+.inicio-logo {
+  display: block;
+  width: 320px;
+  max-width: 100%;
+  height: auto;
+}
+
+.inicio-conhecer {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 24px;
+  border-radius: 6px;
+  background: var(--primary-color);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.12);
+  color: var(--branco);
+  font: 500 14px var(--fonte-texto);
+  text-decoration: none;
+  transition: background-color 150ms ease, box-shadow 150ms ease;
+}
+
+.inicio-conhecer:hover {
+  background: var(--primary-hover-color);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.18);
+}
+
+.inicio-conhecer:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 4px;
+}
+
+.inicio-credito {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  z-index: 2;
+  max-width: calc(100% - 32px);
+  box-sizing: border-box;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.94);
+  color: #595959;
+  font: 400 13px/1.5 var(--fonte-texto);
+}
+
+.inicio-credito a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.inicio-credito a:hover {
+  color: var(--primary-color);
+}
+
+.inicio-credito a:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 3px;
+}
+
+.inicio-desenhos {
+  position: absolute;
+  top: 230px;
+  left: 50%;
+  width: 3000px;
+  height: 2000px;
+  background: url('/images/crayon_drawings.png') center top / 720px 450px repeat;
+  transform: translateX(-50%) rotate(-25deg);
+  transform-origin: center top;
+  pointer-events: none;
+}
+
+@media (max-width: 650px) {
+  .inicio-section {
+    padding: 12px 16px 20px;
+  }
+
+  .inicio-card {
+    height: 520px;
+    border-radius: 16px;
+  }
+
+  .inicio-apresentacao {
+    align-items: center;
+    gap: 24px;
+    width: calc(100% - 48px);
+    max-width: none;
+    margin: 32px auto 0;
+  }
+
+  .inicio-logo {
+    width: 240px;
+  }
 }
 #conheca-osc, #unidades, #eventos, #parceiros {
   display: block;

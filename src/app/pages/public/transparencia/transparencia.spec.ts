@@ -69,9 +69,15 @@ describe('Transparencia', () => {
     setup();
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.querySelector('.spinner')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.spinner-carregamento')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.page-header')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.spinner-carregamento').closest('.state-box')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.secoes')).toBeNull();
 
     httpMock.expectOne(`${environment.apiUrl}/paginas/1/secoes`).flush(secoesMock);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.spinner-carregamento')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.secoes')).not.toBeNull();
   });
 
   it('renders only sections with documents and keeps them closed once loaded', () => {
@@ -111,12 +117,15 @@ describe('Transparencia', () => {
       .flush('erro', { status: 500, statusText: 'Server Error' });
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.textContent).toContain('Não foi possível carregar os documentos');
+    expect(fixture.nativeElement.textContent).toContain('Não foi possível carregar as informações');
+    expect(fixture.nativeElement.querySelector('.page-header')).toBeNull();
+    expect(fixture.nativeElement.querySelector('app-estado-vazio')).toBeNull();
 
-    (fixture.nativeElement.querySelector('.btn-retry') as HTMLButtonElement).click();
+    (fixture.nativeElement.querySelector('app-erro-carregamento button') as HTMLButtonElement).click();
     httpMock.expectOne(`${environment.apiUrl}/paginas/1/secoes`).flush(secoesMock);
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.querySelector('.state-error')).toBeNull();
+    expect(fixture.nativeElement.querySelector('app-erro-carregamento')).toBeNull();
+    expect(fixture.nativeElement.querySelector('.page-header')).not.toBeNull();
   });
 });

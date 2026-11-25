@@ -32,7 +32,7 @@ const casos: CasoFormulario[] = [
   {
     nome: 'eventos', componente: EventoComponent, formulario: 'formEvento', campo: 'titulo',
     abrir: (c, editar) => editar ? c.abrirEdicao({ id: 1, titulo: 'Evento', descricao: 'Descrição',
-      dataEvento: '2026-10-20T10:00:00', endereco: 'Rua A', tipoEvento: 'GRATUITO', valor: 0, parceiros: [] }) : c.abrirCadastro()
+      dataEvento: '2026-10-20T10:00:00', endereco: 'Rua A', categorias: ['CULTURAL'], valor: 0, parceiros: [] }) : c.abrirCadastro()
   },
   {
     nome: 'diretoria', componente: DiretoriaComponent, formulario: 'formDiretoria', campo: 'nome',
@@ -121,6 +121,11 @@ describe.each(casos)('Ações de formulário: $nome', caso => {
     });
     const fixture = TestBed.createComponent(caso.componente);
     const componente = fixture.componentInstance;
+    // O cadastro de documentos exige uma seção já carregada.
+    if (componente instanceof Transparencia) {
+      Reflect.set(componente, 'secoesCarregadas', true);
+      componente.secoesParaSelecao = [{ id: 1, titulo: 'Relatórios', ativo: true }];
+    }
     // O teste abre o formulário diretamente; a consulta da listagem é independente.
     caso.abrir(componente, edicao);
     fixture.detectChanges();

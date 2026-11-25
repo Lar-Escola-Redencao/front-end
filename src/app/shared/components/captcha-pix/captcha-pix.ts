@@ -20,7 +20,7 @@ let carregamento: Promise<Turnstile> | undefined;
     <div class="captcha-area" [style.height.px]="65 * escala()" [attr.aria-busy]="carregando()">
       @if (carregando()) {
         <div class="captcha-carregando" role="status" aria-label="Carregando verificação de segurança">
-          <span class="spinner" aria-hidden="true"></span>
+          <span class="spinner-carregamento" aria-hidden="true"></span>
         </div>
       }
       <div class="captcha-escala" [style.width]="escala() < 1 ? '300px' : '100%'"
@@ -42,9 +42,6 @@ let carregamento: Promise<Turnstile> | undefined;
     :host { display: block; width: 100%; min-width: 0; margin: 12px 0; }
     .captcha-area { position: relative; display: flex; justify-content: center; width: 100%; min-width: 0; overflow: hidden; }
     .captcha-carregando { position: absolute; inset: 0; display: grid; place-items: center; }
-    .spinner { width: 28px; height: 28px; box-sizing: border-box; border: 3px solid var(--primary-color);
-      border-right-color: transparent; border-radius: 50%; animation: girar .8s linear infinite; }
-    @keyframes girar { to { transform: rotate(360deg); } }
     .captcha-escala { flex-shrink: 0; min-width: 300px; transform-origin: center top; }
     .desafio { width: 100%; min-height: 65px; }
     .mensagem-erro { color: var(--error-color, #c62828); }

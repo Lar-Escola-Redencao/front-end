@@ -12,7 +12,7 @@
   } @else if (carregando && dados.length === 0) {
 
   <div class="tabela-carregando">
-    <span class="spinner" aria-hidden="true"></span>
+    <span role="status" aria-label="Carregando" class="spinner-carregamento"></span>
   </div>
 
   } @else if (dados.length > 0) {
@@ -34,7 +34,7 @@
                 [attr.aria-label]="'Ordenar por ' + coluna.titulo + (direcaoOrdenacao(coluna) === 'asc' ? ' em ordem decrescente' : ' em ordem crescente')"
                 (click)="$event.stopPropagation(); ordenarPor(coluna)">
                 {{ coluna.titulo }}
-              @if (direcaoOrdenacao(coluna) === 'asc') {
+                @if (direcaoOrdenacao(coluna) === 'asc') {
                 <span class="icone-ordenacao">▲</span>
               } @else if (direcaoOrdenacao(coluna) === 'desc') {
                 <span class="icone-ordenacao">▼</span>

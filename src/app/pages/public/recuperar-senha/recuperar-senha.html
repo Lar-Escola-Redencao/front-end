@@ -31,8 +31,9 @@
                 @if (tempoEspera() > 0) {
                 <p role="status">Aguarde {{ formatarTempo() }} para tentar novamente.</p>
                 }
-                <button type="submit" class="btn-primary" [disabled]="loading() || !captchaToken() || tempoEspera() > 0">
-                    {{ loading() ? 'Enviando...' : 'Enviar código' }}
+                <button type="submit" class="btn-primary" [disabled]="loading() || !captchaToken() || tempoEspera() > 0" [attr.aria-busy]="loading()">
+                    {{ loading() ? 'Enviando' : 'Enviar código' }}
+                    @if (loading()) { <span class="spinner-carregamento" aria-hidden="true"></span> }
                 </button>
             </form>
             }
@@ -60,8 +61,9 @@
                 (tokenAlterado)="captchaToken.set($event)" />
             }
 
-            <button type="button" class="btn-primary btn-continuar" (click)="avancarParaSenha()" [disabled]="!codigoCompleto() || loading()">
-                {{ loading() ? 'Validando...' : 'Continuar' }}
+            <button type="button" class="btn-primary btn-continuar" (click)="avancarParaSenha()" [disabled]="!codigoCompleto() || loading()" [attr.aria-busy]="loading()">
+                {{ loading() && !reenviando() ? 'Validando' : 'Continuar' }}
+                @if (loading() && !reenviando()) { <span class="spinner-carregamento" aria-hidden="true"></span> }
             </button>
 
             <div class="resend-container">
@@ -69,8 +71,9 @@
                     Errou o e-mail? Trocar endereço
                 </button>
                 <button type="button" class="link-button" (click)="reenviarCodigo()"
-                    [disabled]="tempoEspera() > 0 || loading() || !captchaToken()">
-                    Reenviar código
+                    [disabled]="tempoEspera() > 0 || loading() || !captchaToken()" [attr.aria-busy]="reenviando()">
+                    {{ reenviando() ? 'Enviando' : 'Reenviar código' }}
+                    @if (reenviando()) { <span class="spinner-carregamento" aria-hidden="true"></span> }
                 </button>
                 @if (tempoEspera() > 0) {
                 <span class="timer-text" role="status">Aguarde {{ formatarTempo() }}</span>
@@ -108,8 +111,9 @@
                 <p class="field-error">As senhas não coincidem.</p>
                 }
 
-                <button type="submit" class="btn-primary" [disabled]="loading() || formSenha.invalid">
-                    {{ loading() ? 'Redefinindo...' : 'Redefinir Senha' }}
+                <button type="submit" class="btn-primary" [disabled]="loading() || formSenha.invalid" [attr.aria-busy]="loading()">
+                    {{ loading() ? 'Redefinindo' : 'Redefinir Senha' }}
+                    @if (loading()) { <span class="spinner-carregamento" aria-hidden="true"></span> }
                 </button>
             </form>
             }

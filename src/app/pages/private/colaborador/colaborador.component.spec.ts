@@ -42,7 +42,7 @@ describe('ColaboradorComponent', () => {
 
   it('mostra o motivo da API quando registros vinculados impedem excluir o colaborador', async () => {
     configurarPerfil('ADMINISTRADOR');
-    vi.spyOn(Alertas, 'confirmarExclusao').mockResolvedValue(true);
+    vi.spyOn(Alertas, 'confirmarExclusaoColaborador').mockResolvedValue(true);
     const mensagem = 'Não é possível excluir este colaborador porque existem registros vinculados a ele.';
     vi.spyOn(TestBed.inject(ColaboradorService), 'deletar').mockReturnValue(throwError(() => ({ status: 409, error: { message: mensagem } })));
     const toast = TestBed.inject(ToastrService);
@@ -64,7 +64,7 @@ describe('ColaboradorComponent', () => {
   }
 
   function monitor(idsUnidades: number[], nomePapel = 'MONITOR'): Colaborador {
-    return { id: 20, nomeCompleto: 'Monitor teste', email: 'monitor@teste.com', cpf: '12345678900',
+    return { id: 20, nomeCompleto: 'Monitor teste', email: 'monitor@teste.com', cpf: '52998224725',
       endereco: 'Rua A', telefone: '11999999999', idPapel: 3, nomePapel, ativo: true,
       unidades: idsUnidades.map(id => ({ id, nome: `Unidade ${id}` })) };
   }
@@ -75,7 +75,7 @@ describe('ColaboradorComponent', () => {
     fixture.detectChanges();
     const rotulo = Array.from(fixture.nativeElement.querySelectorAll('.detalhes-campos dt'))
       .find((campo: any) => campo.textContent.trim() === 'CPF') as HTMLElement;
-    expect(rotulo.nextElementSibling?.textContent?.trim()).toBe('123.456.789-00');
+    expect(rotulo.nextElementSibling?.textContent?.trim()).toBe('529.982.247-25');
   });
 
   for (const ids of [[2], [1, 2]]) {
@@ -118,7 +118,7 @@ describe('ColaboradorComponent', () => {
 
   it('bloqueia a chamada direta de exclusão antes de abrir a confirmação', () => {
     configurarPerfil('COORDENADOR');
-    const confirmar = vi.spyOn(Alertas, 'confirmarExclusao').mockResolvedValue(true);
+    const confirmar = vi.spyOn(Alertas, 'confirmarExclusaoColaborador').mockResolvedValue(true);
     const deletar = vi.spyOn(TestBed.inject(ColaboradorService), 'deletar');
     component.deletarColaborador(monitor([2]));
     expect(confirmar).not.toHaveBeenCalled();

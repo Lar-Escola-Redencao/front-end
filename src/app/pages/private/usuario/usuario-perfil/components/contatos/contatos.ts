@@ -19,7 +19,7 @@ import { ContatoService } from 'src/app/shared/services/usuario/contato.service'
 import { UsuarioService } from 'src/app/shared/services/usuario/usuario.service';
 import { SessaoService } from 'src/app/shared/services/auth/sessao.service';
 import { Alertas } from 'src/app/shared/utils/alerts';
-import { obterMensagemErro } from 'src/app/shared/utils/form-validations';
+import { validarCpf, obterMensagemErro } from 'src/app/shared/utils/form-validations';
 import { formatarCpf, formatarTelefone } from 'src/app/shared/utils/masks';
 
 type ModoModalContato = 'novo' | 'editar' | 'visualizar';
@@ -109,7 +109,7 @@ export class UsuarioPerfilContatos implements OnDestroy {
     telefone: ['', [Validators.required, Validators.minLength(14)]],
     email: ['', Validators.email],
     endereco: [''],
-    cpf: ['', Validators.minLength(14)],
+    cpf: ['', validarCpf],
     localTrabalho: [''],
     busca: [''],
     tipoBusca: ['Nome'],

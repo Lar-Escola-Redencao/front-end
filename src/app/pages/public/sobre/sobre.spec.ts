@@ -1,9 +1,12 @@
-import { Component } from '@angular/core';
+import { Component, EventEmitter, Output } from '@angular/core';
+import { By } from '@angular/platform-browser';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { Subject, of } from 'rxjs';
 import { vi } from 'vitest';
 import { Sobre } from './sobre';
+import { ErroCarregamento } from '@components/erro-carregamento/erro-carregamento';
+import { EstadoVazio } from 'src/app/components/estado-vazio/estado-vazio';
 import {
   ConteudoSobre,
   SobrePublicoService,
@@ -14,9 +17,9 @@ class NavbarTeste {}
 @Component({ selector: 'app-public-footer', template: '' })
 class FooterTeste {}
 @Component({ selector: 'app-public-diretoria', template: '' })
-class DiretoriaTeste {}
+class DiretoriaTeste { @Output() carregado = new EventEmitter<boolean>(); }
 @Component({ selector: 'app-public-unidades', template: '' })
-class UnidadesTeste {}
+class UnidadesTeste { @Output() carregado = new EventEmitter<boolean>(); }
 
 describe('Sobre', () => {
   let fixture: ComponentFixture<Sobre>;
@@ -70,7 +73,7 @@ describe('Sobre', () => {
       ],
     })
       .overrideComponent(Sobre, {
-        set: { imports: [NavbarTeste, FooterTeste, DiretoriaTeste, UnidadesTeste] },
+        set: { imports: [NavbarTeste, FooterTeste, DiretoriaTeste, UnidadesTeste, EstadoVazio, ErroCarregamento] },
       })
       .compileComponents();
     fixture = TestBed.createComponent(Sobre);
@@ -87,15 +90,92 @@ describe('Sobre', () => {
     resposta.next(conteudo);
     resposta.complete();
     fixture.detectChanges();
+    fixture.debugElement.query(By.directive(DiretoriaTeste)).componentInstance.carregado.emit(true);
+    fixture.debugElement.query(By.directive(UnidadesTeste)).componentInstance.carregado.emit(true);
+    fixture.detectChanges();
     return fixture.nativeElement;
   }
 
+  it('exibe sete desenvolvedores após as unidades e oculta a cópia dos leitores de tela', () => {
+    const pagina = carregar();
+    const secao = pagina.querySelector('#desenvolvedores')!;
+    expect(pagina.querySelector('#unidades')!.nextElementSibling).toBe(secao);
+    expect(secao.querySelector('h2')!.textContent).toBe('Desenvolvedores');
+    const grupos = secao.querySelectorAll('.desenvolvedores-grupo');
+    expect(grupos[0].querySelectorAll('.desenvolvedor-card')).toHaveLength(7);
+    expect(grupos[0].querySelectorAll('img')).toHaveLength(7);
+    expect(grupos[0].querySelector('.desenvolvedor-card h3')!.textContent).toBe('Ana Beatriz Rocha Duarte');
+    expect(grupos[0].querySelector('img')!.getAttribute('src')).toBe('/images/desenvolvedores/ana.jpeg');
+    expect(grupos[1].getAttribute('aria-hidden')).toBe('true');
+    expect(grupos[1].querySelectorAll('[tabindex="-1"]')).toHaveLength(7);
+  });
+
+  it('permite pausar e retomar o carrossel de desenvolvedores pelo botão', () => {
+    const pagina = carregar();
+    const botao = pagina.querySelector<HTMLButtonElement>('.desenvolvedores-controle')!;
+    const trilho = pagina.querySelector('.desenvolvedores-trilho')!;
+    botao.click(); fixture.detectChanges();
+    expect(botao.getAttribute('aria-pressed')).toBe('true');
+    expect(trilho.classList.contains('pausado')).toBe(true);
+    expect(botao.getAttribute('aria-label')).toContain('Retomar');
+    botao.click(); fixture.detectChanges();
+    expect(botao.getAttribute('aria-pressed')).toBe('false');
+    expect(trilho.classList.contains('pausado')).toBe(false);
+  });
+
+  it('usa o avatar de fallback se a foto de um desenvolvedor falhar', () => {
+    const pagina = carregar();
+    const desenvolvedores = (fixture.componentInstance as any).desenvolvedores;
+    desenvolvedores[0].imagem = '/foto-indisponivel.jpg';
+    fixture.changeDetectorRef.markForCheck(); fixture.detectChanges();
+    const card = pagina.querySelector('.desenvolvedor-card')!;
+    card.querySelector('img')!.dispatchEvent(new Event('error'));
+    fixture.detectChanges();
+    expect(card.querySelector('img')).toBeNull();
+    expect(card.querySelector('.desenvolvedor-fallback')).not.toBeNull();
+  });
+
   it('exibe o carregamento enquanto aguarda o CMS', () => {
     const pagina: HTMLElement = fixture.nativeElement;
-    expect(pagina.querySelector('[role="status"]')?.textContent).toContain('Carregando');
+    expect(pagina.querySelector('[role="status"] .spinner-carregamento')).not.toBeNull();
     expect(pagina.querySelector('main')?.getAttribute('aria-busy')).toBe('true');
-    expect(pagina.querySelector('app-public-unidades')).toBeNull();
-    expect(pagina.querySelector('app-public-diretoria')).toBeNull();
+    expect(pagina.querySelector<HTMLElement>('.sobre-conteudo')?.hidden).toBe(true);
+    expect(pagina.querySelector('.carregamento-pagina')).not.toBeNull();
+  });
+
+  it('aguarda também diretoria e unidades com um único spinner de página', () => {
+    resposta.next(dados);
+    resposta.complete();
+    fixture.detectChanges();
+    const pagina: HTMLElement = fixture.nativeElement;
+    expect(pagina.querySelector('main')?.getAttribute('aria-busy')).toBe('true');
+    fixture.debugElement.query(By.directive(DiretoriaTeste)).componentInstance.carregado.emit(true);
+    fixture.detectChanges();
+    expect(pagina.querySelector('.carregamento-pagina')).not.toBeNull();
+    fixture.debugElement.query(By.directive(UnidadesTeste)).componentInstance.carregado.emit(true);
+    fixture.detectChanges();
+    expect(pagina.querySelector('.carregamento-pagina')).toBeNull();
+    expect(pagina.querySelector<HTMLElement>('.sobre-conteudo')?.hidden).toBe(false);
+  });
+
+  it.each([false, true])('aguarda os indicadores e conclui também em caso de falha (%s)', falha => {
+    fixture.destroy();
+    const indicadores = new Subject<{ totalMeninos: number; dataFundacao: string }>();
+    service.obterIndicadores.mockReturnValue(indicadores.asObservable());
+    fixture = TestBed.createComponent(Sobre);
+    fixture.detectChanges();
+    const pagina = carregar();
+    expect(pagina.querySelector('.carregamento-pagina')).not.toBeNull();
+
+    if (falha) {
+      indicadores.error(new Error('Indicadores indisponíveis'));
+    } else {
+      indicadores.next({ totalMeninos: 97, dataFundacao: '1978-08-29' });
+      indicadores.complete();
+    }
+    fixture.detectChanges();
+    expect(pagina.querySelector('.carregamento-pagina')).toBeNull();
+    expect(pagina.querySelector<HTMLElement>('.sobre-conteudo')?.hidden).toBe(false);
   });
 
   it.each([
@@ -109,8 +189,39 @@ describe('Sobre', () => {
     fixture = TestBed.createComponent(Sobre);
     fixture.detectChanges();
     const pagina = carregar();
-    expect(pagina.querySelector('.numero-atendidos strong')?.textContent).toBe('97');
+    expect(pagina.querySelector('.numero-atendidos strong')?.textContent).toBe('+97');
     expect(pagina.querySelector('.numero-anos strong')?.textContent).toBe(idade);
+  });
+
+  it('exibe parágrafos comuns como texto e mantém o conteúdo seguro', () => {
+    const pagina = carregar({ ...dados, texto: [{ ...dados.texto[0], conteudo: 'Primeiro.\n\nSegundo <script>alert(1)</script>' }] });
+    const texto = pagina.querySelector('.texto-institucional')!;
+    expect(texto.textContent).toBe('Primeiro.\n\nSegundo <script>alert(1)</script>');
+    expect(texto.querySelector('script')).toBeNull();
+  });
+
+  it('exibe o marco sem reservar espaço para uma imagem ausente', () => {
+    const pagina = carregar({ ...dados, historia: [{ ...dados.historia[0], imagem: undefined }] });
+    expect(pagina.querySelector('.historia-imagem')).toBeNull();
+    expect(pagina.querySelector('.historia-sem-imagem')).not.toBeNull();
+    expect(pagina.querySelector('.historia-ano')?.textContent).toBe('1978');
+    expect(pagina.querySelector('.historia-descricao')?.textContent).toBe('Fundação da instituição');
+  });
+
+  it('remove a área de imagem quando a foto do marco falha', () => {
+    const pagina = carregar();
+    pagina.querySelector('.historia-imagem img')!.dispatchEvent(new Event('error'));
+    fixture.detectChanges();
+    expect(pagina.querySelector('.historia-imagem')).toBeNull();
+    expect(pagina.querySelector('.historia-descricao')?.textContent).toBe('Fundação da instituição');
+  });
+
+  it('preserva parágrafos do marco e exibe texto comum com segurança', () => {
+    const conteudo = 'Primeiro parágrafo.\n\nSegundo parágrafo.\n<script>alert(1)</script>';
+    const pagina = carregar({ ...dados, historia: [{ ...dados.historia[0], conteudo }] });
+    const descricao = pagina.querySelector('.historia-descricao')!;
+    expect(descricao.textContent).toBe(conteudo);
+    expect(descricao.querySelector('script')).toBeNull();
   });
 
   it('renderiza textos, imagens e o total de unidades recebidos', () => {
@@ -196,15 +307,16 @@ describe('Sobre', () => {
   });
 
   it('mostra mensagem amigável e permite tentar novamente após uma falha', () => {
+    fixture.debugElement.query(By.directive(DiretoriaTeste)).componentInstance.carregado.emit(true);
+    fixture.debugElement.query(By.directive(UnidadesTeste)).componentInstance.carregado.emit(true);
     resposta.error(new Error('Falha HTTP'));
     fixture.detectChanges();
     const pagina: HTMLElement = fixture.nativeElement;
     expect(pagina.querySelector('[role="alert"]')?.textContent).toContain('Não foi possível');
-    expect(pagina.querySelector('app-public-unidades')).toBeNull();
-    expect(pagina.querySelector('app-public-diretoria')).toBeNull();
+    expect(pagina.querySelector<HTMLElement>('.sobre-conteudo')?.hidden).toBe(true);
     resposta = new Subject<ConteudoSobre>();
     service.obterConteudo.mockReturnValue(resposta.asObservable());
-    pagina.querySelector<HTMLButtonElement>('.estado-pagina button')!.click();
+    pagina.querySelector<HTMLButtonElement>('app-erro-carregamento button')!.click();
     fixture.detectChanges();
     expect(service.obterConteudo).toHaveBeenCalledTimes(2);
     expect(pagina.querySelector('[role="status"]')).not.toBeNull();

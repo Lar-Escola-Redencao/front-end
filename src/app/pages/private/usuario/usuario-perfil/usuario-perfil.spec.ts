@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { vi } from 'vitest';
 
 import { UsuarioPerfil } from './usuario-perfil';
@@ -16,6 +16,7 @@ import { DiarioService } from 'src/app/shared/services/diario/diario.service';
 import { By } from '@angular/platform-browser';
 import { AcompanhamentoEntrevistas } from './components/acompanhamento/entrevistas/entrevistas';
 import Swal from 'sweetalert2';
+import { Alertas } from 'src/app/shared/utils/alerts';
 
 vi.mock('sweetalert2', () => ({
   default: {
@@ -110,6 +111,133 @@ describe('UsuarioPerfil', () => {
     await fixture.whenStable();
   });
 
+  it('mostra o erro padrão e recarrega o mesmo usuário ao tentar novamente', () => {
+    const usuario = component.usuario!;
+    usuarioService.buscarPorId.mockReturnValueOnce(throwError(() => ({ status: 0 })));
+    component.carregarPerfil();
+    fixture.detectChanges();
+    const painel = fixture.nativeElement.querySelector('.estado-erro') as HTMLElement;
+    expect(painel.textContent).toContain('Não foi possível carregar os dados. Tente novamente.');
+    expect(fixture.nativeElement.querySelector('.usuario-perfil-erro')).not.toBeNull();
+    const botao = painel.querySelector('button')!;
+    expect(botao.textContent).toBe('Tentar novamente');
+    usuarioService.buscarPorId.mockReturnValueOnce(of(usuario));
+    botao.click();
+    fixture.detectChanges();
+    expect(usuarioService.buscarPorId).toHaveBeenLastCalledWith(7, true);
+    expect(fixture.nativeElement.querySelector('.estado-erro')).toBeNull();
+    expect(component.usuario).toEqual(usuario);
+  });
+
+  function abrirMaisAcoes(): HTMLElement {
+    fixture.detectChanges();
+    (fixture.nativeElement.querySelector('.btn-mais-acoes') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    return fixture.nativeElement.querySelector('[aria-label="Ações do usuário"]');
+  }
+
+  it('abre opções descritivas sem seleção por rádio', () => {
+    const modal = abrirMaisAcoes();
+    expect(modal).not.toBeNull();
+    expect(modal.querySelectorAll('.acao-card').length).toBe(2);
+    expect(modal.textContent).toContain('Transferir');
+    expect(modal.textContent).toContain('Registrar desligamento');
+    expect(modal.textContent).toContain('preservando o histórico');
+    expect(modal.querySelector('input[type="radio"]')).toBeNull();
+  });
+
+  it('abre diretamente a transferência ao clicar no card', () => {
+    const modal = abrirMaisAcoes();
+    (modal.querySelectorAll('.acao-card')[0] as HTMLButtonElement).click();
+    expect(component.modalMaisAcoesAberto).toBe(false);
+    expect(component.modalTransferenciaAberto).toBe(true);
+    expect(component.modoSelecaoTurma).toBe('transferencia');
+    expect(usuarioService.transferirTurma).not.toHaveBeenCalled();
+  });
+
+  it('abre o formulário de desligamento ao clicar no card', () => {
+    const modal = abrirMaisAcoes();
+    (modal.querySelectorAll('.acao-card')[1] as HTMLButtonElement).click();
+    expect(component.modalMaisAcoesAberto).toBe(false);
+    expect(component.modalDesligamentoAberto).toBe(true);
+    expect(usuarioService.inativar).not.toHaveBeenCalled();
+  });
+
+  it('confirma a exclusão do cadastro inteiro e permite cancelar', async () => {
+    const modal = abrirMaisAcoes();
+    vi.mocked(Swal.fire).mockResolvedValue({ isConfirmed: false } as any);
+    (modal.querySelector('.acao-excluir') as HTMLButtonElement).click();
+    await fixture.whenStable();
+    expect(component.modalMaisAcoesAberto).toBe(true);
+    expect(Swal.fire).toHaveBeenCalledWith(expect.objectContaining({
+      html: expect.stringContaining('Todo o cadastro'),
+    }));
+    expect(usuarioService.deletar).not.toHaveBeenCalled();
+  });
+
+  it('oferece rematrícula para usuário desligado', () => {
+    component.usuario = { ...component.usuario!, statusMatricula: 'EGRESSO' };
+    fixture.changeDetectorRef.markForCheck();
+    const modal = abrirMaisAcoes();
+    expect(modal.querySelectorAll('.acao-card').length).toBe(1);
+    expect(modal.textContent).toContain('Matricular novamente');
+    (modal.querySelector('.acao-card') as HTMLButtonElement).click();
+    expect(component.modalMaisAcoesAberto).toBe(false);
+    expect(component.modoSelecaoTurma).toBe('rematricula');
+  });
+
+  it('oculta e bloqueia o menu para monitores', () => {
+    sessaoService.isMonitor.mockReturnValue(true);
+    fixture.changeDetectorRef.markForCheck(); fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.btn-mais-acoes')).toBeNull();
+    component.abrirMaisAcoes();
+    expect(component.modalMaisAcoesAberto).toBe(false);
+  });
+
+  it('fecha o menu pelo teclado sem realizar operações', () => {
+    const modal = abrirMaisAcoes();
+    modal.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    fixture.detectChanges();
+    expect(component.modalMaisAcoesAberto).toBe(false);
+    expect(usuarioService.inativar).not.toHaveBeenCalled();
+    expect(usuarioService.deletar).not.toHaveBeenCalled();
+  });
+
+  it('volta às opções ao fechar a transferência ou o desligamento', async () => {
+    abrirMaisAcoes(); component.abrirModalTransferencia();
+    await component.fecharModalTransferencia();
+    expect(component.modalTransferenciaAberto).toBe(false);
+    expect(component.modalMaisAcoesAberto).toBe(true);
+    component.abrirModalDesligamento();
+    await component.fecharModalDesligamento();
+    expect(component.modalDesligamentoAberto).toBe(false);
+    expect(component.modalMaisAcoesAberto).toBe(true);
+  });
+
+  it('preserva o formulário ao recusar o descarte e volta às opções ao confirmar', async () => {
+    abrirMaisAcoes(); component.abrirModalDesligamento();
+    component.formDesligamento.controls.justificativa.setValue('Mudança');
+    component.formDesligamento.markAsDirty();
+    const confirmar = vi.spyOn(Alertas, 'confirmarDescarte').mockResolvedValue(false);
+    await component.fecharModalDesligamento();
+    expect(component.modalDesligamentoAberto).toBe(true);
+    expect(component.modalMaisAcoesAberto).toBe(false);
+    expect(component.formDesligamento.controls.justificativa.value).toBe('Mudança');
+    confirmar.mockResolvedValue(true);
+    await component.fecharModalDesligamento();
+    expect(component.modalDesligamentoAberto).toBe(false);
+    expect(component.modalMaisAcoesAberto).toBe(true);
+    confirmar.mockRestore();
+  });
+
+  it('retorna às opções ao fechar a rematrícula', async () => {
+    component.usuario = { ...component.usuario!, statusMatricula: 'EGRESSO' };
+    component.abrirModalRematricula();
+    await component.fecharModalTransferencia();
+    expect(component.modalMaisAcoesAberto).toBe(true);
+    expect(component.modalTransferenciaAberto).toBe(false);
+  });
+
   it('should create', () => {
     expect(component).toBeTruthy();
   });
@@ -119,11 +247,12 @@ describe('UsuarioPerfil', () => {
     const entrevistas = fixture.debugElement.query(By.directive(AcompanhamentoEntrevistas)).componentInstance as AcompanhamentoEntrevistas;
     entrevistas.abrir('NOVO');
     entrevistas.form.controls.relato.setValue('Descrição em preenchimento');
-    vi.mocked(Swal.fire).mockResolvedValue({ isConfirmed: false } as any);
+    const confirmar = vi.spyOn(Alertas, 'confirmarDescarte').mockResolvedValue(false);
     await component.selecionarAba('contatos');
     expect(component.abaAtiva).toBe('acompanhamento');
     expect(entrevistas.modal()).toBe('NOVO');
     expect(component.formularioTemAlteracoesNaoSalvas()).toBe(true);
+    confirmar.mockRestore();
   });
 
   it('carrega o usuário da rota e exibe os dados principais no card lateral', () => {

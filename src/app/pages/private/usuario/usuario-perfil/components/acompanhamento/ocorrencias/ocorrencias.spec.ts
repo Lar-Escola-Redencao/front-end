@@ -99,6 +99,8 @@ describe('Cadastro de ocorrências no perfil', () => {
     expect(api.criarOcorrencia).not.toHaveBeenCalled();
     expect(fixture.nativeElement.textContent).toContain('Não foi possível carregar as matrículas');
     expect(fixture.nativeElement.textContent).toContain('Tentar novamente');
+    expect(fixture.nativeElement.querySelectorAll('p.erro[role="alert"]')).toHaveLength(1);
+    expect(fixture.nativeElement.querySelector('button[type="submit"]').disabled).toBe(true);
   });
 
   it('falha ao cadastrar mantém formulário, matrícula e dados preenchidos', () => {

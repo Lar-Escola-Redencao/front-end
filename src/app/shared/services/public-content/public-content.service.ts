@@ -15,22 +15,19 @@ export class PublicContentService {
 
   getDiretoriaAtiva(): Observable<Diretoria[]> {
     return this.http.get<PaginaResposta<Diretoria>>(`${this.apiUrl}/diretoria/todos?size=100`).pipe(
-      map(resposta => resposta.content.filter(m => m.ativo)),
-      catchError(() => of([]))
+      map(resposta => resposta.content.filter(m => m.ativo))
     );
   }
 
   getParceirosAtivos(): Observable<Partner[]> {
     return this.http.get<PaginaResposta<Partner>>(`${this.apiUrl}/parceiro/todos?size=100`).pipe(
-      map(resposta => resposta.content.filter(p => p.ativo)),
-      catchError(() => of([]))
+      map(resposta => resposta.content.filter(p => p.ativo))
     );
   }
 
   getUnidades(): Observable<Unidade[]> {
     return this.http.get<PaginaResposta<Unidade>>(`${this.apiUrl}/unidade/todas?size=100`).pipe(
-      map(resposta => resposta.content),
-      catchError(() => of([]))
+      map(resposta => resposta.content)
     );
   }
 

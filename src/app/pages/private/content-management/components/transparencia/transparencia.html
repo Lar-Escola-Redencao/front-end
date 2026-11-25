@@ -47,14 +47,15 @@
       <div class="botoes-secoes">
         @if (reordenando) {
           <button type="button" class="btn-reordenar" [disabled]="salvandoOrdem" (click)="solicitarCancelarReordenacao()">Cancelar</button>
-          <button type="button" class="btn-primary btn-primary-thick" [disabled]="!temAlteracoesOrdem || salvandoOrdem" (click)="salvarOrdem()">
-            @if (salvandoOrdem) { <span class="spinner" aria-hidden="true"></span> }
-            {{ salvandoOrdem ? 'Salvando...' : 'Salvar ordem' }}
+          <button type="button" class="btn-primary btn-primary-thick" [disabled]="!temAlteracoesOrdem || salvandoOrdem" [attr.aria-busy]="salvandoOrdem" (click)="salvarOrdem()">
+            {{ salvandoOrdem ? 'Salvando' : 'Salvar ordem' }}
+            @if (salvandoOrdem) { <span class="spinner-carregamento" aria-hidden="true"></span> }
           </button>
         } @else {
-          <button type="button" class="btn-reordenar" [disabled]="carregandoOrdem" (click)="iniciarReordenacao()">
-            <span class="material-symbols-outlined" aria-hidden="true">swap_vert</span>
-            {{ carregandoOrdem ? 'Carregando...' : 'Reordenar seções' }}
+          <button type="button" class="btn-reordenar" [disabled]="carregandoOrdem" [attr.aria-busy]="carregandoOrdem" (click)="iniciarReordenacao()">
+            @if (!carregandoOrdem) { <span class="material-symbols-outlined" aria-hidden="true">swap_vert</span> }
+            {{ carregandoOrdem ? 'Carregando' : 'Reordenar seções' }}
+            @if (carregandoOrdem) { <span class="spinner-carregamento" aria-hidden="true"></span> }
           </button>
           <button type="button" class="btn-primary btn-primary-thick" [disabled]="carregandoOrdem" (click)="abrirModal('secao')">Nova seção</button>
         }
@@ -143,12 +144,12 @@
     <!-- Container do Upload -->
     <div class="form-group">
 
-      <input #inputDocumento id="arquivo" type="file" class="input-arquivo-oculto" accept=".pdf,.docx,.xlsx,
+      <input [disabled]="isLoading" #inputDocumento id="arquivo" type="file" class="input-arquivo-oculto" accept=".pdf,.docx,.xlsx,
             application/pdf,
             application/vnd.openxmlformats-officedocument.wordprocessingml.document,
             application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" (change)="selecionarDocumento($event)">
 
-      <div [appAnexoDrop]="inputDocumento" class="upload-arquivo" [class.upload-arquivo-erro]="errosDocumento['arquivo']"
+      <div [appAnexoDrop]="inputDocumento" [anexoDropDesabilitado]="isLoading" class="upload-arquivo" [class.upload-arquivo-erro]="errosDocumento['arquivo']"
         (click)="inputDocumento.click()">
 
         <span class="material-symbols-outlined upload-arquivo-icone">
@@ -161,7 +162,7 @@
             {{
             nomeDocumentoSelecionado
             ? nomeDocumentoSelecionado
-            : 'Selecione um documento'
+            : 'Selecione ou arraste um documento'
             }}
           </strong>
 
@@ -189,9 +190,10 @@
       <button type="button" class="btn-cancelar" [disabled]="isLoading" (click)="fecharModal()">
         Cancelar
       </button>
-      <button type="submit" class="btn-primary" [disabled]="isLoading || (modoEdicao && !temAlteracoesDocumento)">
-        <span *ngIf="isLoading" class="spinner" aria-hidden="true"></span>
-        <span>{{ isLoading ? 'Salvando...' : 'Salvar' }}</span>
+      <button type="submit" class="btn-primary" [disabled]="isLoading || (modoEdicao && !temAlteracoesDocumento)" [attr.aria-busy]="isLoading">
+
+        <span>{{ isLoading ? 'Salvando' : 'Salvar' }}</span>
+        @if (isLoading) { <span class="spinner-carregamento" aria-hidden="true"></span> }
       </button>
     </div>
 
@@ -246,9 +248,10 @@
         Cancelar
       </button>
 
-      <button type="submit" class="btn-primary" [disabled]="isLoading || (modoEdicao && !temAlteracoesSecao)">
-        <span *ngIf="isLoading" class="spinner" aria-hidden="true"></span>
-        <span>{{ isLoading ? 'Salvando...' : 'Salvar' }}</span>
+      <button type="submit" class="btn-primary" [disabled]="isLoading || (modoEdicao && !temAlteracoesSecao)" [attr.aria-busy]="isLoading">
+
+        <span>{{ isLoading ? 'Salvando' : 'Salvar' }}</span>
+        @if (isLoading) { <span class="spinner-carregamento" aria-hidden="true"></span> }
       </button>
     </div>
 

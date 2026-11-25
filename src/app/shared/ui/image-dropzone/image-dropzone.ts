@@ -10,18 +10,19 @@ import { Component, ElementRef, input, output, viewChild } from '@angular/core';
 export class ImageDropzone {
   readonly imageUrl = input<string | null>(null);
   readonly invalid = input(false);
+  readonly disabled = input(false);
   readonly fileSelected = output<File>();
 
   private readonly fileInput = viewChild.required<ElementRef<HTMLInputElement>>('fileInput');
 
   openFilePicker(): void {
-    this.fileInput().nativeElement.click();
+    if (!this.disabled()) this.fileInput().nativeElement.click();
   }
 
   onFileInputChange(event: Event): void {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
-    if (file) {
+    if (file && !this.disabled()) {
       this.fileSelected.emit(file);
     }
     input.value = '';

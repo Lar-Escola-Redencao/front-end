@@ -23,11 +23,15 @@ export class EventoService {
   constructor(private http: HttpClient) { }
 
   listarTodos(pagina: number, tamanho: number, sort?: string, tipo?: TipoEvento | '', search?: string, filtros?: FiltrosEventos): Observable<PaginaResposta<Evento>> {
-    const params = construirHttpParams({ pagina, tamanho, sort, extras: {
+    const ordenacao = sort ?? 'dataEvento,desc';
+    let params = construirHttpParams({ pagina, tamanho, sort: ordenacao, extras: {
       tipo: tipo || undefined, search, dataInicial: filtros?.dataInicial || undefined,
       dataFinal: filtros?.dataFinal || undefined,
       valor: filtros?.valor === 'todos' ? undefined : filtros?.valor
     } });
+    if (ordenacao.split(',')[0] !== 'id') {
+      params = params.append('sort', 'id,desc');
+    }
     return this.http.get<PaginaResposta<Evento>>(`${this.apiUrl}/todos`, { params });
   }
 
@@ -49,7 +53,7 @@ export class EventoService {
     formData.append('endereco', evento.endereco);
     if (evento.imagem) formData.append('imagem', evento.imagem);
     if (evento.valor !== null && evento.valor !== undefined) formData.append('valor', evento.valor.toString());
-    formData.append('tipoEvento', evento.tipoEvento);
+    evento.categorias.forEach(categoria => formData.append('categorias', categoria));
     if (evento.parceirosIds && evento.parceirosIds.length > 0) {
       evento.parceirosIds.forEach(id => formData.append('parceirosIds', id.toString()));
     }
@@ -65,7 +69,7 @@ export class EventoService {
     if (evento.endereco) formData.append('endereco', evento.endereco);
     if (evento.imagem) formData.append('imagem', evento.imagem);
     if (evento.valor !== null && evento.valor !== undefined) formData.append('valor', evento.valor.toString());
-    if (evento.tipoEvento) formData.append('tipoEvento', evento.tipoEvento);
+    evento.categorias?.forEach(categoria => formData.append('categorias', categoria));
     if (evento.parceirosIds !== undefined && evento.parceirosIds !== null) {
       evento.parceirosIds.forEach(id => formData.append('parceirosIds', id.toString()));
     }

@@ -161,6 +161,12 @@ describe('Transparência administrativa', () => {
     const resposta = new Subject<void>(); api['reordenarSecoes'].mockReturnValue(resposta);
     component.salvarOrdem(); component.salvarOrdem(); component.moverSecao(0, 1);
     component.cancelarReordenacao();
+    fixture.changeDetectorRef.markForCheck();
+    fixture.detectChanges();
+    const botaoSalvar = fixture.nativeElement.querySelector('button[aria-busy="true"]');
+    expect(botaoSalvar.disabled).toBe(true);
+    expect(botaoSalvar.textContent).toContain('Salvando');
+    expect(botaoSalvar.querySelector('.spinner-carregamento')).not.toBeNull();
     expect(api['reordenarSecoes']).toHaveBeenCalledTimes(1);
     expect(api['reordenarSecoes']).toHaveBeenCalledWith([
       { id: 3, ordem: 1 }, { id: 8, ordem: 2 }, { id: 9, ordem: 3 },

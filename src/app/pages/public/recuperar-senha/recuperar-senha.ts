@@ -37,6 +37,7 @@ export class RecuperarSenha implements OnInit, OnDestroy {
 
     step = signal<1 | 2 | 3 | 4>(1);
     loading = signal(false);
+    reenviando = signal(false);
     email = signal('');
     tempoEspera = signal(0);
     codigo = signal<string[]>(['', '', '', '', '', '']);
@@ -219,6 +220,7 @@ export class RecuperarSenha implements OnInit, OnDestroy {
             return;
         }
 
+        this.reenviando.set(isReenvio);
         this.loading.set(true);
         this.erroEnvio.set('');
         this.captchaToken.set('');
@@ -244,6 +246,7 @@ export class RecuperarSenha implements OnInit, OnDestroy {
             })
             .finally(() => {
                 this.loading.set(false);
+                this.reenviando.set(false);
                 this.captcha?.resetar();
             });
     }

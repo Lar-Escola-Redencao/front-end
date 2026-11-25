@@ -371,15 +371,12 @@
       <button
         type="submit"
         class="btn-primary"
-        [disabled]="isLoading || (modoEdicao && !temAlteracoes)">
-        <span
-          *ngIf="isLoading"
-          class="spinner"
-          aria-hidden="true">
-        </span>
+        [disabled]="isLoading || (modoEdicao && !temAlteracoes)" [attr.aria-busy]="isLoading">
+
         <span>
-          {{ modoReativacao ? (isLoading ? 'Reativando...' : 'Confirmar reativação') : (isLoading ? 'Salvando...' : 'Salvar') }}
+          {{ modoReativacao ? (isLoading ? 'Reativando' : 'Confirmar reativação') : (isLoading ? 'Salvando' : 'Salvar') }}
         </span>
+        @if (isLoading) { <span class="spinner-carregamento" aria-hidden="true"></span> }
       </button>
     </div>
   </form>

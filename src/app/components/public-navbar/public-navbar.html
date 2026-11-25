@@ -15,14 +15,17 @@
 
   <div class="nav-content" [class.ativo]="menuAberto()" (click)="$event.stopPropagation()">
     <ul class="nav-links">
-      <li><a (click)="navegarParaHomeSection('inicio')">Início</a></li>
-      <li><a (click)="navegarParaHomeSection('unidades')">Unidades</a></li>
-      <li><a (click)="navegarParaHomeSection('parceiros')">Parceiros</a></li>
-      <li><a routerLink="/conheca-a-osc" (click)="fecharMenu()">Conheça a OSC</a></li>
-      <li><a routerLink="/como-ajudar" (click)="fecharMenu()">Como ajudar?</a></li>
-      <li><a routerLink="/eventos" (click)="fecharMenu()">Eventos</a></li>
-      <li><a routerLink="/grafica" (click)="fecharMenu()">Gráfica Redenção</a></li>
-      <li><a routerLink="/transparencia" (click)="fecharMenu()">Transparência</a></li>
+      <li><a href="/#inicio" [class.link-ativo]="homeAtiva('inicio')" [attr.aria-current]="homeAtiva('inicio') ? 'page' : null"
+        (click)="$event.preventDefault(); navegarParaHomeSection('inicio')">Início</a></li>
+      <li><a href="/#unidades" [class.link-ativo]="homeAtiva('unidades')" [attr.aria-current]="homeAtiva('unidades') ? 'location' : null"
+        (click)="$event.preventDefault(); navegarParaHomeSection('unidades')">Unidades</a></li>
+      <li><a href="/#parceiros" [class.link-ativo]="homeAtiva('parceiros')" [attr.aria-current]="homeAtiva('parceiros') ? 'location' : null"
+        (click)="$event.preventDefault(); navegarParaHomeSection('parceiros')">Parceiros</a></li>
+      <li><a routerLink="/conheca-a-osc" routerLinkActive="link-ativo" ariaCurrentWhenActive="page" (click)="fecharMenu()">Conheça a OSC</a></li>
+      <li><a routerLink="/como-ajudar" routerLinkActive="link-ativo" ariaCurrentWhenActive="page" (click)="fecharMenu()">Como ajudar?</a></li>
+      <li><a routerLink="/eventos" routerLinkActive="link-ativo" ariaCurrentWhenActive="page" (click)="fecharMenu()">Eventos</a></li>
+      <li><a routerLink="/grafica" routerLinkActive="link-ativo" ariaCurrentWhenActive="page" (click)="fecharMenu()">Gráfica Redenção</a></li>
+      <li><a routerLink="/transparencia" routerLinkActive="link-ativo" ariaCurrentWhenActive="page" (click)="fecharMenu()">Transparência</a></li>
     </ul>
     <div class="nav-action">
       <button type="button" class="btn-primary" (click)="realizarLogin()">

@@ -1,3 +1,4 @@
+import { ErroCarregamento } from '@components/erro-carregamento/erro-carregamento';
 import { ChangeDetectorRef, Component, DestroyRef, ElementRef, HostListener, OnDestroy, ViewChild, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { BloquearScroll } from 'src/app/shared/directives/bloquear-scroll';
@@ -30,7 +31,7 @@ export function normalizarTelefoneWhatsapp(telefone: string | null | undefined):
 
 @Component({
   selector: 'app-grafica',
-  imports: [PublicNavbar, PublicFooter, BloquearScroll, EstadoVazio],
+  imports: [ErroCarregamento, PublicNavbar, PublicFooter, BloquearScroll, EstadoVazio],
   templateUrl: './grafica.html',
   styleUrl: './grafica.css',
 })
@@ -58,7 +59,7 @@ export class Grafica implements OnDestroy {
 
   protected readonly produtos = signal<Secao[]>([]);
   protected readonly contato = signal<Secao | null>(null);
-  protected readonly isLoading = signal(true);
+  protected readonly isLoading = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly navegacaoAtiva = computed(() => this.produtos().length >= 5
     || this.produtos().length > this.itensPorPagina());
@@ -99,6 +100,7 @@ export class Grafica implements OnDestroy {
   }
 
   protected carregar(): void {
+    if (this.isLoading()) return;
     this.pararRotacao();
     this.isLoading.set(true);
     this.errorMessage.set(null);

@@ -1,3 +1,4 @@
+import { cpfValido } from 'src/app/shared/utils/form-validations';
 import { destinoInternoSeguro } from '../../../shared/utils/destino-seguro';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, DestroyRef, HostListener, ViewChild, computed, effect, inject, signal } from '@angular/core';
@@ -34,7 +35,7 @@ function identifierValidator(control: AbstractControl): ValidationErrors | null 
   if (pareceEmail(value)) {
     return EMAIL_PATTERN.test(value) ? null : { identifier: true };
   }
-  return value.replace(/\D/g, '').length === 11 ? null : { identifier: true };
+  return cpfValido(value) ? null : { cpfInvalido: true };
 }
 
 @Component({

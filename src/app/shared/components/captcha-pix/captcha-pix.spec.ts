@@ -57,7 +57,7 @@ describe('CaptchaPix — ciclo de verificação', () => {
     opcoes[callback]();
     fixture.detectChanges();
     expect(tokens.at(-1)).toBe('');
-    expect(fixture.nativeElement.querySelector('button').textContent).toContain('Tentar verificação novamente');
+    expect(fixture.nativeElement.querySelector('button').textContent).toContain('Tente novamente.');
     expect(fixture.nativeElement.querySelector('p').classList.contains('somente-leitor')).toBe(false);
   });
 
