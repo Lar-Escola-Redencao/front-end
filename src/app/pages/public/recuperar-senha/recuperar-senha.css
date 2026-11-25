@@ -37,6 +37,7 @@
 }
 
 .form-panel {
+  min-width: 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -44,9 +45,14 @@
 }
 
 .form-card {
+  min-width: 0;
   width: 100%;
   max-width: 380px;
 }
+
+app-captcha-pix { margin: 0 0 12px; }
+
+app-captcha-pix.captcha-codigo { margin-bottom: 16px; }
 
 .form-card h1 {
   font-family: var(--fonte-titulo);
@@ -173,6 +179,7 @@ form {
 }
 
 .otp-input {
+  min-width: 0;
   width: 48px;
   height: 56px;
   border: 1px solid var(--border);
@@ -291,4 +298,12 @@ form {
   color: #92400e;
   font-size: 0.85rem;
   line-height: 1.5;
+}
+
+@media (max-width: 380px) {
+  .form-panel { padding-inline: 10px; }
+}
+
+@media (max-width: 340px) {
+  .form-panel { padding-inline: 0; }
 }

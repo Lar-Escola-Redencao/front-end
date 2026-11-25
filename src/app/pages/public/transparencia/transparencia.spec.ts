@@ -3,6 +3,9 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
+import { of } from 'rxjs';
+import { vi } from 'vitest';
+import { PublicContentService } from 'src/app/shared/services/public-content/public-content.service';
 
 import { environment } from 'src/environments/environment';
 import { Secao } from 'src/app/shared/models/transparencia.model';
@@ -31,9 +34,9 @@ describe('Transparencia', () => {
   function setup(): void {
     TestBed.configureTestingModule({
       imports: [Transparencia],
-      providers: [
-        provideHttpClient(), provideHttpClientTesting(), provideRouter([]),
-        { provide: ToastrService, useValue: { error: vi.fn() } },
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([]),
+        { provide: ToastrService, useValue: { error: vi.fn(), warning: vi.fn() } },
+        { provide: PublicContentService, useValue: { getRedesSociaisAtivas: () => of([]) } },
       ],
     });
 
@@ -42,9 +45,24 @@ describe('Transparencia', () => {
   }
 
   afterEach(() => {
-    httpMock.match(`${environment.apiUrl}/rede-social/todas`)
-      .forEach((request) => request.flush([]));
-    httpMock.verify();
+    httpMock?.verify();
+    fixture?.destroy();
+    TestBed.resetTestingModule();
+  });
+
+  it('respeita a ordem salva, desempata por ID e preserva as regras de visibilidade', () => {
+    setup(); fixture.detectChanges();
+    const documento = secoesMock[0].documentos;
+    httpMock.expectOne(`${environment.apiUrl}/paginas/1/secoes`).flush([
+      { id: 8, titulo: 'Última', ordem: 3, ativo: true, documentos: documento },
+      { id: 5, titulo: 'Desempate', ordem: 1, ativo: true, documentos: documento },
+      { id: 2, titulo: 'Primeira', ordem: 1, ativo: true, documentos: documento },
+      { id: 3, titulo: 'Oculta', ordem: 2, ativo: false, documentos: documento },
+      { id: 4, titulo: 'Vazia', ordem: 2, ativo: true, documentos: [] },
+    ]);
+    fixture.detectChanges();
+    expect(Array.from(fixture.nativeElement.querySelectorAll('.secao-titulo'))
+      .map(el => (el as HTMLElement).textContent)).toEqual(['Primeira', 'Desempate', 'Última']);
   });
 
   it('shows a loading indicator while the request is in flight', () => {

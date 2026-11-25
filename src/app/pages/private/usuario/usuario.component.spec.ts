@@ -32,7 +32,10 @@ describe('Contrato de edição de usuários', () => {
     service = {
       buscarPorId: vi.fn(() => of(usuario)), listarArquivosSaude: vi.fn(() => of([])),
       atualizar: vi.fn(() => of(usuario)), criar: vi.fn(() => of(usuario)),
-      listarUsuarios: vi.fn(() => of([usuario]))
+      listarUsuarios: vi.fn(() => of([usuario])),
+      listarUsuariosPaginados: vi.fn(() => of({
+        content: [usuario], page: { number: 0, size: 10, totalElements: 1, totalPages: 1 }
+      }))
     };
     cep = { consultar: vi.fn(() => of({ logradouro: 'Praça da Sé', bairro: 'Sé' })) };
     TestBed.configureTestingModule({ providers: [
@@ -507,17 +510,20 @@ describe('Contrato de edição de usuários', () => {
     expect(service.buscarPorId).not.toHaveBeenCalled();
   });
 
-  it('ordena pelo documento alternativo e pela unidade exibida antes de paginar', () => {
-    component.usuariosListagem = [
-      { ...usuario, id: 1, cpf: '', documentoAuxiliar: 'DOC-20', nomeUnidade: 'Zulu', nomeTurma: 'MANHA' },
-      { ...usuario, id: 2, cpf: '', documentoAuxiliar: 'DOC-3', nomeUnidade: 'Alfa', nomeTurma: 'TARDE' }
-    ];
-    component.ordenacao = { campo: 'cpf', direcao: 'asc' };
-    component.aplicarPaginacao();
+  it('mantém a ordem e os totais da página retornada pela API', () => {
+    component.pagina = 1;
+    component.sort = 'nomeTurma,desc';
+    service.listarUsuariosPaginados.mockReturnValue(of({
+      content: [{ ...usuario, id: 2 }, { ...usuario, id: 1 }],
+      page: { number: 1, size: 10, totalElements: 12, totalPages: 2 }
+    }));
+
+    component.carregarUsuarios();
+
+    expect(service.listarUsuariosPaginados).toHaveBeenCalledWith(1, 10, 'nomeTurma,desc', expect.any(Object));
     expect(component.usuarios.map(u => u.id)).toEqual([2, 1]);
-    component.ordenacao = { campo: 'nomeTurma', direcao: 'desc' };
-    component.aplicarPaginacao();
-    expect(component.usuarios.map(u => u.id)).toEqual([1, 2]);
+    expect(component.totalElementos).toBe(12);
+    expect(component.totalPaginas).toBe(2);
   });
 
   it('envia filtros de unidade, turma e status na listagem de usuários', () => {
@@ -528,7 +534,7 @@ describe('Contrato de edição de usuários', () => {
 
     component.carregarUsuarios();
 
-    expect(service.listarUsuarios).toHaveBeenCalledWith({
+    expect(service.listarUsuariosPaginados).toHaveBeenCalledWith(0, 10, undefined, {
       search: 'maria',
       idUnidade: 1,
       idTurma: 2,

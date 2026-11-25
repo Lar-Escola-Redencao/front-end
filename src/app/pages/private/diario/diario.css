@@ -377,7 +377,8 @@
   gap: 12px;
 }
 
-.usuario-info .avatar {
+.usuario-info .avatar,
+:host ::ng-deep .usuario-info app-foto-usuario img.avatar {
   width: 44px;
   height: 44px;
   border-radius: 50%;
@@ -920,7 +921,8 @@
     gap: 0;
   }
 
-  .usuario-info .avatar {
+  .usuario-info .avatar,
+  :host ::ng-deep .usuario-info app-foto-usuario img.avatar {
     display: none;
   }
 

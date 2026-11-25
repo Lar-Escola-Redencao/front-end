@@ -16,6 +16,7 @@ import { DiarioService } from 'src/app/shared/services/diario/diario.service';
 import { By } from '@angular/platform-browser';
 import { AcompanhamentoEntrevistas } from './components/acompanhamento/entrevistas/entrevistas';
 import Swal from 'sweetalert2';
+import { Alertas } from 'src/app/shared/utils/alerts';
 
 vi.mock('sweetalert2', () => ({
   default: {
@@ -217,15 +218,16 @@ describe('UsuarioPerfil', () => {
     abrirMaisAcoes(); component.abrirModalDesligamento();
     component.formDesligamento.controls.justificativa.setValue('Mudança');
     component.formDesligamento.markAsDirty();
-    vi.mocked(Swal.fire).mockResolvedValue({ isConfirmed: false } as any);
+    const confirmar = vi.spyOn(Alertas, 'confirmarDescarte').mockResolvedValue(false);
     await component.fecharModalDesligamento();
     expect(component.modalDesligamentoAberto).toBe(true);
     expect(component.modalMaisAcoesAberto).toBe(false);
     expect(component.formDesligamento.controls.justificativa.value).toBe('Mudança');
-    vi.mocked(Swal.fire).mockResolvedValue({ isConfirmed: true } as any);
+    confirmar.mockResolvedValue(true);
     await component.fecharModalDesligamento();
     expect(component.modalDesligamentoAberto).toBe(false);
     expect(component.modalMaisAcoesAberto).toBe(true);
+    confirmar.mockRestore();
   });
 
   it('retorna às opções ao fechar a rematrícula', async () => {
@@ -245,11 +247,12 @@ describe('UsuarioPerfil', () => {
     const entrevistas = fixture.debugElement.query(By.directive(AcompanhamentoEntrevistas)).componentInstance as AcompanhamentoEntrevistas;
     entrevistas.abrir('NOVO');
     entrevistas.form.controls.relato.setValue('Descrição em preenchimento');
-    vi.mocked(Swal.fire).mockResolvedValue({ isConfirmed: false } as any);
+    const confirmar = vi.spyOn(Alertas, 'confirmarDescarte').mockResolvedValue(false);
     await component.selecionarAba('contatos');
     expect(component.abaAtiva).toBe('acompanhamento');
     expect(entrevistas.modal()).toBe('NOVO');
     expect(component.formularioTemAlteracoesNaoSalvas()).toBe(true);
+    confirmar.mockRestore();
   });
 
   it('carrega o usuário da rota e exibe os dados principais no card lateral', () => {

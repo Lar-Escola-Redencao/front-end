@@ -68,10 +68,16 @@ export class Eventos implements OnInit {
     this.erroCarregamento = false;
     this.eventoPublicoService.listarPublicos().subscribe({
       next: (dados) => {
-        this.eventos = [...dados].sort(
-          (eventoAtual, proximoEvento) =>
-            new Date(proximoEvento.dataEvento).getTime() - new Date(eventoAtual.dataEvento).getTime()
-        );
+        const agora = Date.now();
+        this.eventos = [...dados].sort((eventoAtual, proximoEvento) => {
+          const dataAtual = new Date(eventoAtual.dataEvento).getTime();
+          const proximaData = new Date(proximoEvento.dataEvento).getTime();
+          const atualEncerrado = dataAtual < agora;
+          const proximoEncerrado = proximaData < agora;
+          if (atualEncerrado !== proximoEncerrado) return atualEncerrado ? 1 : -1;
+          const ordemData = atualEncerrado ? proximaData - dataAtual : dataAtual - proximaData;
+          return ordemData || proximoEvento.id - eventoAtual.id;
+        });
         this.aplicarFiltros();
         this.carregando = false;
         this.cdr.detectChanges();

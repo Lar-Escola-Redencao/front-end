@@ -5,6 +5,7 @@ import { ToastrService } from 'ngx-toastr';
 import { UsuarioResponseDTO } from 'src/app/shared/models/usuario.model';
 import { UsuarioService } from 'src/app/shared/services/usuario/usuario.service';
 import { CepService } from 'src/app/shared/services/usuario/cep.service';
+import { FotoUsuarioService } from 'src/app/shared/services/usuario/foto-usuario.service';
 import { UsuarioPerfilDadosPessoais } from './dados-pessoais';
 
 describe('Documentos ao editar os dados pessoais', () => {
@@ -25,13 +26,16 @@ describe('Documentos ao editar os dados pessoais', () => {
   };
   let component: UsuarioPerfilDadosPessoais;
   let atualizar: ReturnType<typeof vi.fn>;
+  let fotos: { carregar: ReturnType<typeof vi.fn>; liberar: ReturnType<typeof vi.fn> };
 
   beforeEach(() => {
     atualizar = vi.fn(() => of(usuario));
+    fotos = { carregar: vi.fn(() => of('blob:foto-protegida')), liberar: vi.fn() };
     TestBed.configureTestingModule({
       providers: [
         { provide: UsuarioService, useValue: { atualizar } },
         { provide: CepService, useValue: { consultar: vi.fn() } },
+        { provide: FotoUsuarioService, useValue: fotos },
         { provide: ToastrService, useValue: { success: vi.fn(), error: vi.fn() } }
       ]
     });
@@ -57,6 +61,8 @@ describe('Documentos ao editar os dados pessoais', () => {
     component.usuario = { ...usuario, imagemPerfil: '/uploads/usuarios/foto.jpg' };
     component.ngOnChanges({ usuario: {} as any });
     component.editar(); component.removerFoto(); component.cancelar();
+    expect(fotos.liberar).toHaveBeenCalledWith('blob:foto-protegida');
+    expect(component.fotoPreview).toBe('blob:foto-protegida');
     expect(component.removerFotoPerfil).toBe(false);
     expect(component.usuario.imagemPerfil).toBe('/uploads/usuarios/foto.jpg');
     expect(atualizar).not.toHaveBeenCalled();
