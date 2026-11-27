@@ -76,6 +76,11 @@ export class PublicFooter implements OnInit {
       route: '/conheca-a-osc',
       fragment: 'unidades',
     },
+    {
+      label: 'Desenvolvedores',
+      route: '/conheca-a-osc',
+      fragment: 'desenvolvedores',
+    },
   ];
 
   ngOnInit(): void {
