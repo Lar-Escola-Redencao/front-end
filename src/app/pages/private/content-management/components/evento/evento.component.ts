@@ -158,7 +158,7 @@ export class EventoComponent implements OnInit, OnDestroy, ComponentComAlteracoe
       categorias: [[], Validators.required],
       valor: ['', [Validators.min(0)]],
       parceirosIds: [[]],
-      imagem: [null, [Validators.required, validarImagem()]]
+      imagem: [null, [validarImagem()]]
     });
   }
 
@@ -327,7 +327,7 @@ export class EventoComponent implements OnInit, OnDestroy, ComponentComAlteracoe
     this.modoEdicao = false;
     this.eventoSelecionadoId = null;
     this.prepararEstadoFormulario();
-    this.formEvento.get('imagem')?.setValidators([Validators.required, validarImagem()]);
+    this.formEvento.get('imagem')?.setValidators([validarImagem()]);
     this.formEvento.get('imagem')?.updateValueAndValidity();
     this.formEvento.reset({ categorias: [], valor: '', parceirosIds: [], imagem: null });
     this.formEvento.markAsPristine();
@@ -422,7 +422,7 @@ export class EventoComponent implements OnInit, OnDestroy, ComponentComAlteracoe
     this.isLoading = false;
     this.eventoSelecionadoId = null;
     this.prepararEstadoFormulario();
-    this.formEvento.get('imagem')?.setValidators([Validators.required, validarImagem()]);
+    this.formEvento.get('imagem')?.setValidators([validarImagem()]);
     this.formEvento.get('imagem')?.updateValueAndValidity();
     this.formEvento.reset({ categorias: [], valor: '', parceirosIds: [], imagem: null });
     this.formEvento.markAsPristine();
@@ -455,10 +455,7 @@ export class EventoComponent implements OnInit, OnDestroy, ComponentComAlteracoe
 
   verificarErros(): void {
     this.erros = mapearErrosFormulario(this.formEvento, {
-      categorias: { required: 'Selecione pelo menos uma categoria.' },
-      imagem: {
-        required: 'Imagem obrigatoria no cadastro.'
-      }
+      categorias: { required: 'Selecione pelo menos uma categoria.' }
     });
   }
 

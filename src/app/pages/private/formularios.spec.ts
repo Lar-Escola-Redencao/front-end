@@ -133,6 +133,22 @@ describe.each(casos)('Ações de formulário: $nome', caso => {
     return { fixture, componente, salvar };
   }
 
+  if (['eventos', 'diretoria', 'parceiros'].includes(caso.nome)) {
+    it('permite cadastro sem imagem e valida o arquivo quando preenchido', () => {
+      const { componente } = abrir(false);
+      const form = componente[caso.formulario];
+      form.patchValue(caso.nome === 'eventos'
+        ? { titulo: 'Evento teste', descricao: 'Descrição do evento teste', dataEvento: '2030-12-01T10:00',
+            endereco: 'Rua da Sede', categorias: ['CULTURAL'] }
+        : caso.nome === 'diretoria'
+          ? { nome: 'Maria Silva', cargo: 'Presidente' } : { nome: 'Parceiro teste' });
+      expect(form.valid).toBe(true);
+      const imagem = form.get(caso.nome === 'eventos' ? 'imagem' : caso.nome === 'diretoria' ? 'foto' : 'logo');
+      imagem.setValue(new File(['texto'], 'arquivo.txt', { type: 'text/plain' }));
+      expect(imagem.invalid).toBe(true);
+    });
+  }
+
   it('permite tentar salvar cadastro vazio e exibe a validação', () => {
     const { fixture, componente, salvar } = abrir(false);
     expect(salvar().disabled).toBe(false);

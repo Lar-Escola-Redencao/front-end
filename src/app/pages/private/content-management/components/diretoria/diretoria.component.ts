@@ -100,7 +100,7 @@ export class DiretoriaComponent implements OnInit, OnDestroy, ComponentComAltera
     this.formDiretoria = this.fb.group({
       nome: ['', [Validators.required, Validators.maxLength(150)]],
       cargo: ['', [Validators.required, Validators.maxLength(100)]],
-      foto: [null, [Validators.required, validarImagem()]],
+      foto: [null, [validarImagem()]],
       ativo: [true]
     });
   }
@@ -192,7 +192,7 @@ export class DiretoriaComponent implements OnInit, OnDestroy, ComponentComAltera
     this.isCarregandoEdicao = false;
     this.erros = {};
     this.definirArquivo(null);
-    this.configurarValidadoresFoto(true);
+    this.configurarValidadoresFoto();
     this.formDiretoria.reset({
       nome: '',
       cargo: '',
@@ -212,7 +212,7 @@ export class DiretoriaComponent implements OnInit, OnDestroy, ComponentComAltera
     this.isCarregandoEdicao = true;
     this.erros = {};
     this.definirArquivo(null);
-    this.configurarValidadoresFoto(false);
+    this.configurarValidadoresFoto();
 
     this.diretoriaService.buscarPorId(diretoria.id).subscribe({
       next: (dados: Diretoria) => {
@@ -387,7 +387,7 @@ export class DiretoriaComponent implements OnInit, OnDestroy, ComponentComAltera
     const dto: CriarDiretoriaDTO = {
       nome,
       cargo,
-      foto: this.arquivoSelecionado!
+      foto: this.arquivoSelecionado
     };
 
     this.diretoriaService.criar(dto).subscribe({
@@ -428,10 +428,8 @@ export class DiretoriaComponent implements OnInit, OnDestroy, ComponentComAltera
     });
   }
 
-  private configurarValidadoresFoto(obrigatoria: boolean): void {
-    const validadores = obrigatoria
-      ? [Validators.required, validarImagem()]
-      : [validarImagem()];
+  private configurarValidadoresFoto(): void {
+    const validadores = [validarImagem()];
 
     this.formDiretoria.get('foto')?.setValidators(validadores);
     this.formDiretoria.get('foto')?.updateValueAndValidity();
@@ -459,7 +457,7 @@ export class DiretoriaComponent implements OnInit, OnDestroy, ComponentComAltera
     this.diretoriaSelecionadaId = null;
     this.erros = {};
     this.definirArquivo(null);
-    this.configurarValidadoresFoto(true);
+    this.configurarValidadoresFoto();
     this.formDiretoria.reset({
       nome: '',
       cargo: '',

@@ -118,7 +118,6 @@ export class PartnersManager
       logo: [
         null,
         [
-          Validators.required,
           validarImagem()
         ]
       ],
@@ -373,11 +372,9 @@ export class PartnersManager
       this.partnerSelecionadoId = null;
 
       /*
-       * Para novo parceiro a logo é obrigatória
-       * e precisa ser uma imagem válida.
+       * A logo é opcional; quando preenchida, precisa ser uma imagem válida.
        */
       this.form.get('logo')?.setValidators([
-        Validators.required,
         validarImagem()
       ]);
       this.form.get('logo')?.updateValueAndValidity();
@@ -444,10 +441,9 @@ export class PartnersManager
 
     /*
      * Garante que o formulário volte ao estado
-     * de criação, com logo obrigatória.
+     * de criação, com logo opcional.
      */
     this.form.get('logo')?.setValidators([
-      Validators.required,
       validarImagem()
     ]);
     this.form.get('logo')?.updateValueAndValidity();
