@@ -1,3 +1,4 @@
+import { ErroCarregamento } from '@components/erro-carregamento/erro-carregamento';
 import { EstadoVazio } from '@components/estado-vazio/estado-vazio';
 import { ChangeDetectorRef, Component, EventEmitter, OnInit, Output, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -8,22 +9,30 @@ import { EventoPublicoService } from 'src/app/shared/services/evento-publico/eve
 @Component({
   selector: 'app-public-eventos',
   standalone: true,
-  imports: [EstadoVazio, CommonModule, RouterLink],
+  imports: [ErroCarregamento, EstadoVazio, CommonModule, RouterLink],
   templateUrl: './public-eventos.html',
   styleUrl: './public-eventos.css'
 })
 export class PublicEventosComponent implements OnInit {
-  @Output() carregado = new EventEmitter<void>();
+  @Output() carregado = new EventEmitter<boolean>();
   private readonly eventoPublicoService = inject(EventoPublicoService);
   private readonly cdr = inject(ChangeDetectorRef);
 
   eventosDestaque: Evento[] = [];
-  carregando = true;
+  carregando = false;
+  erroCarregamento = false;
 
   private readonly quantidadeDestaque = 4;
   private readonly imagensIndisponiveis = new Set<number>();
 
   ngOnInit(): void {
+    this.carregar();
+  }
+
+  carregar(): void {
+    if (this.carregando) return;
+    this.carregando = true;
+    this.erroCarregamento = false;
     this.eventoPublicoService.listarPublicos().subscribe({
       next: (eventos) => {
         const agora = Date.now();
@@ -32,12 +41,13 @@ export class PublicEventosComponent implements OnInit {
           .slice(0, this.quantidadeDestaque);
         this.carregando = false;
         this.cdr.detectChanges();
-        this.carregado.emit();
+        this.carregado.emit(true);
       },
       error: () => {
+        this.erroCarregamento = true;
         this.carregando = false;
         this.cdr.detectChanges();
-        this.carregado.emit();
+        this.carregado.emit(false);
       }
     });
   }

@@ -9,22 +9,29 @@ import { canDeactivateGuard } from './shared/guards/can-deactivate.guard';
 import { roleGuard } from './shared/guards/role-guard';
 
 export const routes: Routes = [
-    { path: '', component: Home, canActivate: [guestGuard]},
-    { path: 'conheca-a-osc', component: Sobre },
-    { path: 'eventos', component: Eventos},
-    { path: 'eventos/:id', component: EventoDetalhe},
+    /*
+     * Páginas públicas: guestGuard redireciona colaboradores com sessão aberta para /dashboard.
+     * Para navegar no site institucional é preciso sair da conta.
+     */
+    { path: '', component: Home, canActivate: [guestGuard] },
+    { path: 'conheca-a-osc', component: Sobre, canActivate: [guestGuard] },
+    { path: 'eventos', component: Eventos, canActivate: [guestGuard] },
+    { path: 'eventos/:id', component: EventoDetalhe, canActivate: [guestGuard] },
     {
       path: 'como-ajudar',
+      canActivate: [guestGuard],
       loadComponent: () => import('./pages/public/como-ajudar/como-ajudar').then((m) => m.ComoAjudar),
     },
     {
+        // Área interna: authGuard também nos filhos, para revalidar a sessão a cada navegação.
         path: 'dashboard',
         canActivate: [authGuard],
+        canActivateChild: [authGuard],
         loadComponent: () => import('./pages/private/dashboard/dashboard').then(m => m.Dashboard),
         children: [
             { path: '', loadComponent: () => import('./pages/private/dashboard/dashboard-home/dashboard-home').then(m => m.DashboardHome) },
-            { path: 'conteudo-publico', loadComponent: () => import('./pages/private/content-management/content-management').then(m => m.ContentManagement), canActivate: [roleGuard], data: { modulo: 'conteudo-publico' } },
-            { path: 'conteudo-publico/:secao', loadComponent: () => import('./pages/private/content-management/content-management').then(m => m.ContentManagement), canActivate: [roleGuard], data: { modulo: 'conteudo-publico' } },
+            { path: 'conteudo-publico', canDeactivate: [canDeactivateGuard], loadComponent: () => import('./pages/private/content-management/content-management').then(m => m.ContentManagement), canActivate: [roleGuard], data: { modulo: 'conteudo-publico' } },
+            { path: 'conteudo-publico/:secao', canDeactivate: [canDeactivateGuard], loadComponent: () => import('./pages/private/content-management/content-management').then(m => m.ContentManagement), canActivate: [roleGuard], data: { modulo: 'conteudo-publico' } },
             { path: 'colaboradores', loadComponent: () => import('@pages/private/colaborador/colaborador.component').then(m => m.ColaboradorComponent), canActivate: [roleGuard], data: { modulo: 'colaboradores' } },
             { path: 'usuarios', canDeactivate: [canDeactivateGuard], loadComponent: () => import('@pages/private/usuario/usuario.component').then(m => m.UsuarioComponent), canActivate: [roleGuard], data: { modulo: 'usuarios' } },
             { path: 'usuarios/:id', canDeactivate: [canDeactivateGuard], loadComponent: () => import('@pages/private/usuario/usuario-perfil/usuario-perfil').then(m => m.UsuarioPerfil), canActivate: [roleGuard], data: { modulo: 'perfil-usuario' } },
@@ -51,10 +58,12 @@ export const routes: Routes = [
     },
     {
         path: 'transparencia',
+        canActivate: [guestGuard],
         loadComponent: () => import('./pages/public/transparencia/transparencia').then((m) => m.Transparencia),
     },
     {
         path: 'grafica',
+        canActivate: [guestGuard],
         loadComponent: () => import('./pages/public/grafica/grafica').then((m) => m.Grafica),
     },
     { path: '**', redirectTo: '' }

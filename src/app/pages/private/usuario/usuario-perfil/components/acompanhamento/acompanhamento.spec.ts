@@ -37,11 +37,26 @@ describe('Acompanhamento', () => {
       { provide: ToastrService, useValue: { success: vi.fn(), error: vi.fn() } },
       { provide: SessaoService, useValue: {
         isAdministrador: () => perfil === 'ADMINISTRADOR', isCoordenador: () => perfil === 'COORDENADOR',
-        isMonitor: () => perfil === 'MONITOR', membro: () => ({ id: 7, nomeCompleto: 'Colaborador logado' }),
+        isMonitor: () => perfil === 'MONITOR',
+        unidadesPermitidasIds: () => perfil === 'ADMINISTRADOR' ? null : [1], membro: () => ({ id: 7, nomeCompleto: 'Colaborador logado' }),
       } },
     ] });
   });
   afterEach(() => vi.restoreAllMocks());
+
+  it('impede cadastrar e editar entrevista com data anterior à primeira matrícula', () => {
+    const fixture = TestBed.createComponent(AcompanhamentoEntrevistas);
+    fixture.componentRef.setInput('usuario', { ...usuario, dataPrimeiraMatricula: '2026-02-01T08:00:00' });
+    fixture.detectChanges();
+    const c = fixture.componentInstance;
+    for (const modo of ['NOVO', 'EDITAR'] as const) {
+      c.abrir(modo, modo === 'EDITAR' ? entrevista : null);
+      c.form.setValue({ data: '2026-01-31', horario: '09:00', relato: 'Relato' });
+      c.salvar();
+      expect(c.form.controls.data.getError('regra')).toContain('primeira matrícula');
+      expect(service.salvarEntrevista).not.toHaveBeenCalled();
+    }
+  });
 
   it('entrevista identifica o campo de data ou horário futuro e remove o erro ao corrigir', () => {
     vi.spyOn(Date, 'now').mockReturnValue(Date.parse('2026-10-29T12:00:30-03:00'));

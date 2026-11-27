@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
 
 import { EventoDetalhe } from './evento-detalhe';
 import { EventoPublicoService } from 'src/app/shared/services/evento-publico/evento-publico.service';
@@ -20,7 +21,7 @@ function criarEvento(sobrescrever: Partial<Evento> = {}): Evento {
     dataEvento: new Date('2020-01-01T12:00:00'),
     endereco: 'Rua teste',
     imagem: 'foto-principal.jpg',
-    tipoEvento: TipoEvento.CULTURAL,
+    categorias: [TipoEvento.CULTURAL],
     parceiros: [],
     ...sobrescrever
   };
@@ -67,6 +68,64 @@ describe('EventoDetalhe', () => {
     fixture.detectChanges();
     elemento = fixture.nativeElement;
   }
+
+  it('diferencia evento inexistente de falha de comunicação e permite repetir a consulta', async () => {
+    const evento = criarEvento();
+    await montar(evento);
+    const buscar = vi.mocked(TestBed.inject(EventoPublicoService).buscarPorId);
+    buscar.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 0 })));
+    component.carregarEvento();
+    fixture.detectChanges();
+    expect(elemento.querySelector('app-erro-carregamento')).not.toBeNull();
+    expect(elemento.querySelector('app-estado-vazio')).toBeNull();
+    buscar.mockReturnValueOnce(of(evento));
+    elemento.querySelector<HTMLButtonElement>('app-erro-carregamento button')!.click();
+    fixture.detectChanges();
+    expect(elemento.querySelector('app-erro-carregamento')).toBeNull();
+    expect(elemento.querySelector('h1')?.textContent).toBe(evento.titulo);
+
+    buscar.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 404 })));
+    component.carregarEvento();
+    fixture.detectChanges();
+    expect(elemento.querySelector('app-erro-carregamento')).toBeNull();
+    expect(elemento.querySelector('app-estado-vazio')?.textContent).toContain('Evento não encontrado.');
+  });
+
+  describe('ampliação das imagens dos parceiros', () => {
+    it('amplia o parceiro mesmo em um evento sem imagem principal e fecha com Escape', async () => {
+      await montar(criarEvento({ imagem: '', parceiros: [{ id: 1, nome: 'Parceiro', logo: '/logo.png' }] }));
+      elemento.querySelector<HTMLButtonElement>('.evento-parceiro-logo')!.click();
+      fixture.detectChanges();
+      expect(elemento.querySelector<HTMLImageElement>('.lightbox-imagem')?.getAttribute('src')).toBe('/logo.png');
+      expect(elemento.querySelector<HTMLImageElement>('.lightbox-imagem')?.alt).toBe('Parceiro');
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+      fixture.detectChanges();
+      expect(elemento.querySelector('.lightbox')).toBeNull();
+      expect(component.parceiroAmpliado).toBeNull();
+    });
+
+    it('preserva a imagem principal após ampliar e fechar o parceiro', async () => {
+      await montar(criarEvento({ parceiros: [{ id: 1, nome: 'Parceiro', logo: '/logo.png' }] }));
+      elemento.querySelector<HTMLButtonElement>('.evento-parceiro-logo')!.click();
+      fixture.detectChanges();
+      elemento.querySelector<HTMLButtonElement>('.lightbox-fechar')!.click();
+      fixture.detectChanges();
+      elemento.querySelector<HTMLElement>('.imagem-principal-wrapper')!.click();
+      fixture.detectChanges();
+      expect(elemento.querySelector<HTMLImageElement>('.lightbox-imagem')?.getAttribute('src')).toBe('foto-principal.jpg');
+      elemento.querySelector<HTMLButtonElement>('.lightbox-fechar')!.click();
+    });
+
+    it('bloqueia a ampliação do parceiro quando a imagem falha', async () => {
+      await montar(criarEvento({ parceiros: [{ id: 1, nome: 'Parceiro', logo: '/logo.png' }] }));
+      const botao = elemento.querySelector<HTMLButtonElement>('.evento-parceiro-logo')!;
+      botao.querySelector('img')!.dispatchEvent(new Event('error'));
+      fixture.detectChanges();
+      expect(botao.disabled).toBe(true);
+      botao.click();
+      expect(component.lightboxAberto).toBe(false);
+    });
+  });
 
   describe('parceiros em telas estreitas', () => {
     const parceiros = [
@@ -190,7 +249,7 @@ describe('EventoDetalhe', () => {
       expect(elemento.querySelector('.imagem-principal')?.getAttribute('src')).toBe('foto-principal.jpg');
       expect(overlay).toBeTruthy();
       expect(overlay?.querySelector('.imagem-overlay-texto')?.textContent?.trim()).toBe(
-        'Acompanhe o que aconteceu através das nossas redes'
+        'Acompanhe o que aconteceu através das nossas redes sociais'
       );
     });
 

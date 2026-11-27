@@ -19,12 +19,12 @@
   @if (abaAtiva === 'texto') {
     @if (carregandoPagina) {
       <div class="estado-pagina">
-        <span class="spinner spinner-escuro" aria-hidden="true"></span>
-        <span>Carregando...</span>
+        <span role="status" aria-label="Carregando" class="spinner-carregamento"></span>
+
       </div>
     } @else if (erroPagina) {
-      <div class="estado-pagina estado-pagina-erro">
-        <p>Não foi possível carregar a página Sobre.</p>
+      <div class="estado-pagina estado-pagina-erro" role="alert">
+        <p>Não foi possível carregar os dados. Tente novamente.</p>
         <button type="button" class="botao-tentar-novamente" (click)="tentarNovamentePagina()">
           Tentar novamente
         </button>
@@ -59,9 +59,10 @@
               type="submit"
               class="btn-primary"
               [disabled]="isLoadingTexto || (!!secaoTexto && !temAlteracoesTexto)"
-            >
-              <span *ngIf="isLoadingTexto" class="spinner" aria-hidden="true"></span>
-              <span>{{ isLoadingTexto ? 'Salvando...' : 'Salvar' }}</span>
+             [attr.aria-busy]="isLoadingTexto">
+
+              <span>{{ isLoadingTexto ? 'Salvando' : 'Salvar' }}</span>
+              @if (isLoadingTexto) { <span class="spinner-carregamento" aria-hidden="true"></span> }
             </button>
           }
         </div>
@@ -76,12 +77,12 @@
   @if (abaAtiva === 'carrossel') {
     @if (carregandoPagina) {
       <div class="estado-pagina">
-        <span class="spinner spinner-escuro" aria-hidden="true"></span>
-        <span>Carregando...</span>
+        <span role="status" aria-label="Carregando" class="spinner-carregamento"></span>
+
       </div>
     } @else if (erroPagina) {
-      <div class="estado-pagina estado-pagina-erro">
-        <p>Não foi possível carregar a página Sobre.</p>
+      <div class="estado-pagina estado-pagina-erro" role="alert">
+        <p>Não foi possível carregar os dados. Tente novamente.</p>
         <button type="button" class="botao-tentar-novamente" (click)="tentarNovamentePagina()">
           Tentar novamente
         </button>
@@ -92,7 +93,7 @@
           <div class="slot-carrossel" [class.slot-carrossel-carregando]="carregandoSlot[$index]">
             <span class="slot-carrossel-titulo">Imagem {{ $index + 1 }}</span>
 
-            <input
+            <input [disabled]="carregandoSlot[$index]"
               #inputSlot
               type="file"
               class="input-arquivo-oculto"
@@ -109,15 +110,14 @@
                 <img class="slot-carrossel-imagem" [src]="imagemSlot($index)" [alt]="'Imagem ' + ($index + 1)" />
               } @else {
                 <span class="material-symbols-outlined upload-arquivo-icone">upload_file</span>
+                <span class="slot-carrossel-dica">Selecione ou arraste uma imagem</span>
               }
             </div>
 
             @if (imagemSlot($index)) {
-              <button type="button" class="btn-primary slot-carrossel-botao" (click)="inputSlot.click()">
-                @if (carregandoSlot[$index]) {
-                  <span class="spinner" aria-hidden="true"></span>
-                }
-                <span>{{ carregandoSlot[$index] ? 'Enviando...' : 'Substituir' }}</span>
+              <button type="button" class="btn-primary slot-carrossel-botao" (click)="inputSlot.click()" [attr.aria-busy]="carregandoSlot[$index]" [disabled]="carregandoSlot[$index]">
+                <span>{{ carregandoSlot[$index] ? 'Enviando' : 'Substituir' }}</span>
+                @if (carregandoSlot[$index]) { <span class="spinner-carregamento" aria-hidden="true"></span> }
               </button>
             }
 
@@ -216,7 +216,7 @@
       <span class="error-text" *ngIf="errosHistoria['conteudo']">{{ errosHistoria['conteudo'] }}</span>
 
       <div class="form-group">
-        <input
+        <input [disabled]="isLoadingHistoria"
           #inputImagemHistoria
           type="file"
           class="input-arquivo-oculto"
@@ -224,7 +224,7 @@
           (change)="onImagemHistoriaSelecionada($event)"
         />
 
-        <div [appAnexoDrop]="inputImagemHistoria"
+        <div [appAnexoDrop]="inputImagemHistoria" [anexoDropDesabilitado]="isLoadingHistoria"
           class="upload-arquivo"
           [class.upload-arquivo-erro]="errosHistoria['imagem']"
           (click)="inputImagemHistoria.click()"
@@ -232,7 +232,7 @@
           <span class="material-symbols-outlined upload-arquivo-icone">upload_file</span>
 
           <div class="upload-arquivo-texto">
-            <strong>{{ nomeArquivoHistoria ? nomeArquivoHistoria : 'Selecione uma imagem (opcional)' }}</strong>
+            <strong>{{ nomeArquivoHistoria ? nomeArquivoHistoria : 'Selecione ou arraste uma imagem (opcional)' }}</strong>
             <span>PNG, JPEG, JPG ou WEBP</span>
           </div>
 
@@ -252,9 +252,10 @@
           Cancelar
         </button>
 
-        <button type="submit" class="btn-primary" [disabled]="isLoadingHistoria || validandoAnoHistoria || (modoEdicaoHistoria && !temAlteracoesHistoria)">
-          <span *ngIf="isLoadingHistoria" class="spinner" aria-hidden="true"></span>
-          <span>{{ isLoadingHistoria ? 'Salvando...' : 'Salvar' }}</span>
+        <button type="submit" class="btn-primary" [disabled]="isLoadingHistoria || validandoAnoHistoria || (modoEdicaoHistoria && !temAlteracoesHistoria)" [attr.aria-busy]="isLoadingHistoria">
+
+          <span>{{ isLoadingHistoria ? 'Salvando' : 'Salvar' }}</span>
+          @if (isLoadingHistoria) { <span class="spinner-carregamento" aria-hidden="true"></span> }
         </button>
       </div>
     </form>

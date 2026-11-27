@@ -52,8 +52,9 @@ export function analisarOrdenacao(sort?: string): CampoOrdenacao | null {
   return { campo, direcao: direcao === 'desc' ? 'desc' : 'asc' };
 }
 
-/** Alterna a direção quando o clique é no mesmo campo já ordenado, senão volta pra 'asc'. */
-export function alternarOrdenacao(atual: CampoOrdenacao | null, campo: string): string {
+/** Percorre crescente, decrescente e sem ordenação manual. Outro campo começa em crescente. */
+export function alternarOrdenacao(atual: CampoOrdenacao | null, campo: string): string | null {
+  if (atual?.campo === campo && atual.direcao === 'desc') return null;
   const direcao = atual?.campo === campo && atual.direcao === 'asc' ? 'desc' : 'asc';
   return `${campo},${direcao}`;
 }

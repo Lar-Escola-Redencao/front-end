@@ -21,6 +21,13 @@ describe('Cadastro da chave Pix', () => {
     expect(formatarChavePix('+12025550123', 'telefone')).toBe('+12025550123');
   });
 
+  it('valida os dígitos do CPF e apresenta a mensagem específica na chave Pix', () => {
+    const validar = validarTipoChavePix(() => 'cpf');
+    expect(validar(new FormControl('529.982.247-25'))).toBeNull();
+    expect(validar(new FormControl('529.982.247-24'))).toEqual({ cpfInvalido: true });
+    expect(validar(new FormControl('000.000.000-00'))).toEqual({ cpfInvalido: true });
+  });
+
   it('revalida o campo quando o tipo selecionado muda', () => {
     let tipo: 'email' | 'cpf' = 'email';
     const validar = validarTipoChavePix(() => tipo);

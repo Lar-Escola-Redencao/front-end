@@ -11,6 +11,12 @@
   min-height: 100vh;
 }
 
+.container.pagina-erro,
+.container.pagina-carregando {
+  min-height: 100dvh;
+  padding-block: 82px 0;
+}
+
 .page-header {
   margin-bottom: 40px;
   display: flex;

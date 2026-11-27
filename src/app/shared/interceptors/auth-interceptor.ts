@@ -37,7 +37,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
       if (error instanceof HttpErrorResponse && error.status === 403 && isApiRequest && !req.context.get(SILENCIAR_TOAST_ACESSO)) {
         const mensagem = typeof error.error === 'object' && error.error?.message
           ? error.error.message
-          : 'Usuário autenticado não possui permissão para acessar este recurso.';
+          : 'Você não tem permissão para acessar este recurso.';
         toastr.error(mensagem, 'Acesso negado');
       }
       return throwError(() => error);

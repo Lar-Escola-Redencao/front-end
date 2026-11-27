@@ -11,12 +11,12 @@
 
     @if (carregando) {
     <div class="vinculo-estado">
-      <span class="spinner spinner-escuro" aria-hidden="true"></span>
-      <p>Carregando redes sociais...</p>
+      <span role="status" aria-label="Carregando" class="spinner-carregamento"></span>
+
     </div>
     } @else if (erroCarregamento) {
     <div class="vinculo-estado vinculo-estado-erro">
-      <p>Não foi possível carregar as redes sociais.</p>
+      <p>Não foi possível carregar os dados. Tente novamente.</p>
       <button type="button" class="botao-tentar-novamente" (click)="carregar()">Tentar novamente</button>
     </div>
     } @else if (linhas.length === 0) {
@@ -74,7 +74,7 @@
           <td class="coluna-acoes">
             <div class="acoes">
               @if (linha.salvando) {
-              <span class="spinner spinner-escuro" aria-hidden="true"></span>
+              <span role="status" aria-label="Carregando" class="spinner-carregamento"></span>
               } @else if (!linha.vinculada) {
               <button type="button" class="botao-acao" title="Vincular ao evento" (click)="salvar(linha)">
                 <mat-icon>add_link</mat-icon>

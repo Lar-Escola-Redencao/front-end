@@ -72,16 +72,21 @@
 
   <div class="diario-conteudo">
     
-    @if (estadoTela === 'VAZIO' && !carregando) {
+    @if (carregandoDados) {
+      <div class="state-box" role="status" aria-label="Carregando diário">
+        <span class="spinner-carregamento" aria-hidden="true"></span>
+      </div>
+    }
+    @else if (erroCarregamento) {
+      <div class="diario-erro" role="alert">
+        <p>Não foi possível carregar os dados. Tente novamente.</p>
+        <button type="button" class="botao-tentar-novamente" (click)="tentarNovamente()">Tentar novamente</button>
+      </div>
+    }
+    @else if (estadoTela === 'VAZIO') {
       <app-estado-vazio icone="rule" mensagem="Selecione a unidade e a turma acima para carregar o diário."></app-estado-vazio>
     }
 
-    @else if (carregando) {
-      <div class="state-box">
-        <span class="spinner spinner-escuro"></span>
-        <p>Carregando usuários...</p>
-      </div>
-    } 
     @else if (usuarios.length === 0 && filtroForm.valid) {
       <app-estado-vazio icone="person_off" mensagem="Nenhum usuário matriculado nesta turma para a data selecionada."></app-estado-vazio>
     }
@@ -100,8 +105,9 @@
               <tr>
                 <td class="col-usuario">
                   <div class="usuario-info">
-                    <img *ngIf="usuario.imagemPerfil; else semFoto" [src]="usuario.imagemPerfil" alt="Foto" class="avatar">
-                    <ng-template #semFoto><div class="avatar placeholder"><mat-icon>image</mat-icon></div></ng-template>
+                    <app-foto-usuario [caminho]="usuario.imagemPerfil" [alt]="'Foto de ' + usuario.nomeUsuario" classeImagem="avatar">
+                      <div class="avatar placeholder"><mat-icon>image</mat-icon></div>
+                    </app-foto-usuario>
                     <div class="usuario-nome-linha">
                       @if (perfilAcessivel(usuario)) {
                         <a class="nome usuario-perfil-link" [routerLink]="['/dashboard/usuarios', usuario.idUsuario]" [queryParams]="perfilQueryParams">{{ usuario.nomeUsuario }}</a>
@@ -203,8 +209,8 @@
           <div class="acoes form-acoes">
             <ng-container *ngTemplateOutlet="historicoDiario" />
             <button type="button" class="btn-cancelar" [disabled]="salvando" (click)="cancelarPreenchimento()">Cancelar</button>
-            <button type="button" class="btn-primary" [disabled]="!podePreencherFrequencia" (click)="salvarDiarioLote()">
-               <span *ngIf="salvando" class="spinner"></span> Salvar
+            <button type="button" class="btn-primary" [disabled]="(!podePreencherFrequencia) || salvando" (click)="salvarDiarioLote()" [attr.aria-busy]="salvando">{{ salvando ? 'Salvando' : 'Salvar' }}
+              @if (salvando) { <span class="spinner-carregamento" aria-hidden="true"></span> }
             </button>
           </div>
         </div>
@@ -390,8 +396,8 @@
           <button type="button" class="btn-cancelar" [disabled]="salvando" (click)="fecharModalOcorrenciaDetalhe()">Cancelar</button>
           
           @if (modoOcorrencia !== 'VER') {
-            <button type="submit" class="btn-primary" [disabled]="!podeSalvarOcorrencia">
-              <span *ngIf="salvando" class="spinner"></span> {{ modoOcorrencia === 'NOVO' ? 'Salvar' : 'Salvar alterações' }}
+            <button type="submit" class="btn-primary" [disabled]="(!podeSalvarOcorrencia) || salvando" [attr.aria-busy]="salvando">{{ salvando ? 'Salvando' : (modoOcorrencia === 'NOVO' ? 'Salvar' : 'Salvar alterações') }}
+              @if (salvando) { <span class="spinner-carregamento" aria-hidden="true"></span> }
             </button>
           }
         </div>

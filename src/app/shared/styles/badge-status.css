@@ -1,0 +1,21 @@
+.badge-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.badge-status.ativo {
+  color: #139445;
+  background-color: #dcfce7;
+}
+
+.badge-status.inativo {
+  color: rgb(182, 43, 43);
+  background-color: #fee2e2;
+}

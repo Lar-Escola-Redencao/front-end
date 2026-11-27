@@ -1,21 +1,46 @@
 <app-public-navbar></app-public-navbar>
 
-<main class="home-main">
-  <section id="inicio" class="home-section">
-    <p>Seção Início</p>
-  </section>
+<main class="home-main" [class.pagina-erro]="erro() && !carregando()" [attr.aria-busy]="carregando()">
+  @if (carregando()) {
+    <div class="carregamento-secao home-carregamento" role="status" aria-label="Carregando página inicial">
+      <span class="spinner-carregamento" aria-hidden="true"></span>
+    </div>
+  } @else if (erro()) {
+    <app-erro-carregamento (tentarNovamente)="carregar()" />
+  }
+  <div class="home-conteudo" [hidden]="carregando() || erro()">
+    <section id="inicio" class="home-section inicio-section" aria-label="Lar Escola Redenção">
+      <div class="inicio-card">
+        <div class="inicio-desenhos" aria-hidden="true"></div>
+        <div class="inicio-apresentacao">
+          <h1 class="inicio-titulo">
+            <img class="inicio-logo" src="/images/logo_colorida_texto.png" alt="Lar Escola Redenção" fetchpriority="high">
+          </h1>
+          <a class="inicio-conhecer" routerLink="/conheca-a-osc">
+            Conheça a Organização
+          </a>
+        </div>
+        <span class="inicio-credito">
+          <a href="https://www.magnific.com/" target="_blank" rel="noopener noreferrer">Designed by Magnific</a>
+          <span aria-hidden="true"> · </span>
+          <a href="https://www.magnific.com/free-vector/crayon-kid-drawings-colorful-childlike-doodles_417895603.htm"
+            target="_blank" rel="noopener noreferrer">upklyak</a>
+        </span>
+      </div>
+    </section>
 
-  <section id="unidades" class="home-section">
-    <app-public-unidades (carregado)="aoCarregarSecao('unidades')"></app-public-unidades>
-  </section>
+    <section id="unidades" class="home-section">
+      <app-public-unidades (carregado)="aoCarregarSecao('unidades', $event)"></app-public-unidades>
+    </section>
 
-  <section id="eventos" class="home-section">
-    <app-public-eventos (carregado)="aoCarregarSecao('eventos')"></app-public-eventos>
-  </section>
+    <section id="eventos" class="home-section">
+      <app-public-eventos (carregado)="aoCarregarSecao('eventos', $event)"></app-public-eventos>
+    </section>
 
-  <section id="parceiros" class="home-section">
-    <app-public-parceiros></app-public-parceiros>
-  </section>
+    <section id="parceiros" class="home-section">
+      <app-public-parceiros (carregado)="aoCarregarSecao('parceiros', $event)"></app-public-parceiros>
+    </section>
+  </div>
 </main>
 
 <app-public-footer></app-public-footer>

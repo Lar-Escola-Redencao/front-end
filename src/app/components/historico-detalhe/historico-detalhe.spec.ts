@@ -23,6 +23,7 @@ describe('Exibição dos valores no histórico', () => {
     ['periodo', 'MANHA', 'TARDE', 'Manhã', 'Tarde'],
     ['parentesco', 'MAE', 'AVO', 'Mãe', 'Avô/Avó'],
     ['tipoEvento', 'ARRECADACAO', 'CULTURAL', 'Arrecadação', 'Cultural'],
+    ['categorias', ['BENEFICENTE', 'CULTURAL'], ['ESPORTIVO'], 'Beneficente, Cultural', 'Esportivo'],
     ['tipoOcorrencia', 'SAUDE', 'ASSISTENCIA', 'Saúde', 'Assistência'],
     ['horarioAbertura', '08:00:00', '09:30:00', '08:00', '09:30'],
     ['cpf', '12345678901', '98765432100', '123.456.789-01', '987.654.321-00'],

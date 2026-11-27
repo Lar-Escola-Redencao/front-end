@@ -39,6 +39,8 @@ import { environment } from 'src/environments/environment';
 /** Título fixo que identifica as seções do carrossel — nunca aparece na UI. */
 export const TITULO_CARROSSEL = 'Imagem Carrossel';
 
+import { textoParaEdicao } from 'src/app/shared/utils/texto-paragrafos';
+
 const GRUPO_TEXTO_SOBRE = 'texto-sobre';
 const GRUPO_HISTORIA = 'historia';
 const GRUPO_CARROSSEL = 'carrossel';
@@ -270,7 +272,6 @@ export class Sobre implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalvas
         this.ngZone.run(() => {
           this.carregandoPagina = false;
           this.erroPagina = true;
-          this.toastr.error('Não foi possível carregar a página Sobre.', 'Erro');
           this.cdr.detectChanges();
         });
       },
@@ -287,7 +288,7 @@ export class Sobre implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalvas
 
   private preencherFormTexto(): void {
     this.formTexto.reset({
-      conteudo: this.secaoTexto?.conteudo ?? '',
+      conteudo: textoParaEdicao(this.secaoTexto?.conteudo ?? ''),
     });
     this.formTexto.markAsPristine();
     this.valoresOriginaisTexto = this.formTexto.getRawValue();
@@ -504,7 +505,7 @@ export class Sobre implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalvas
 
     // tipo HISTORIA faz o back recortar a consulta nos blocos de ano antes de
     // paginar, então content, totalElements e totalPages já vêm só desta aba.
-    this.listaSub = this.sobreService.listarSecoesAdmin(this.pagina, this.tamanho, this.sort || 'titulo,asc', GRUPO_HISTORIA, this.busca || undefined).subscribe({
+    this.listaSub = this.sobreService.listarSecoesAdmin(this.pagina, this.tamanho, this.sort, GRUPO_HISTORIA, this.busca || undefined).subscribe({
       next: (resposta) => {
         this.ngZone.run(() => {
           this.blocosHistoria = resposta.content;
@@ -556,7 +557,7 @@ export class Sobre implements OnInit, OnDestroy, ComponentComAlteracoesNaoSalvas
       this.blocoSelecionadoId = bloco.id;
       this.formHistoria.reset({
         titulo: bloco.titulo,
-        conteudo: bloco.conteudo ?? '',
+        conteudo: textoParaEdicao(bloco.conteudo ?? ''),
         imagem: null,
         ativo: bloco.ativo,
       });

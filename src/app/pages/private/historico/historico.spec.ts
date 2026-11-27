@@ -302,6 +302,21 @@ describe('Histórico de atividades', () => {
     }) }));
     componente.ordenarPor('nomeResponsavel');
     expect(componente.sort).toBe('nomeResponsavel,desc');
+    componente.ordenarPor('nomeResponsavel');
+    expect(componente.sort).toBeUndefined();
+    expect(componente.ordenacao).toBeNull();
+    expect(navegar).toHaveBeenLastCalledWith([], expect.objectContaining({ queryParams: expect.objectContaining({
+      idUsuario: 12, idResponsavel: 3, page: null, sort: null
+    }) }));
+    componente.ordenarPor('nomeResponsavel');
+    expect(componente.sort).toBe('nomeResponsavel,asc');
+  });
+
+  it('inicia o ciclo crescente ao clicar na coluna que tem ordenação padrão', () => {
+    expect(componente.sort).toBeUndefined();
+    expect(componente.ordenacao).toEqual({ campo: 'dataHora', direcao: 'desc' });
+    componente.ordenarPor('dataHora');
+    expect(componente.sort).toBe('dataHora,asc');
   });
 
   it('restaura ordenação ao reabrir a URL e envia ao back-end', () => {

@@ -755,7 +755,6 @@ textarea {
 }
 
 .erro {
-  margin-top: 10px;
   color: #b3261e;
   font-size: 0.8125rem;
   line-height: 1.5;
@@ -923,14 +922,26 @@ textarea:focus-visible {
 }
 
 .pix-form-agradecimento {
+  display: grid;
+  gap: 12px;
   width: 100%;
   text-align: left;
 }
 
+.pix-form-agradecimento app-captcha-pix {
+  margin: 0;
+}
+
 .pix-form-agradecimento .btn-primary {
   width: 100%;
-  margin-block: 16px 0;
+  margin: 0;
   justify-content: center;
+}
+
+@media (max-width: 600px) {
+  .pix-modal-email {
+    --modal-padding-inline-mobile: 16px;
+  }
 }
 
 .pix-form-agradecimento > .nota-pagamento {

@@ -1,5 +1,5 @@
 import { Component, Input, OnChanges, OnDestroy, inject, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
@@ -36,7 +36,9 @@ export class AcompanhamentoEntrevistas implements OnChanges, OnDestroy {
   readonly salvando = signal(false);
   readonly erro = signal('');
   readonly form = this.fb.nonNullable.group({
-    data: ['', [Validators.required, dataNaoFutura]], horario: ['', [Validators.required, horarioNaoFuturo]],
+    data: ['', [Validators.required, dataNaoFutura, (control: AbstractControl) =>
+      this.dataMinima && control.value && control.value < this.dataMinima
+        ? { regra: 'A data da entrevista não pode ser anterior à primeira matrícula do usuário.' } : null]], horario: ['', [Validators.required, horarioNaoFuturo]],
     relato: ['', [Validators.required, Validators.pattern(/\S/), Validators.maxLength(20000)]],
   });
   private readonly validacao = this.form.controls.data.valueChanges.subscribe(() =>
@@ -51,6 +53,8 @@ export class AcompanhamentoEntrevistas implements OnChanges, OnDestroy {
     { acao: 'editar', icone: 'edit', tooltip: 'Editar', executar: e => this.abrir('EDITAR', e) },
     { acao: 'excluir', icone: 'delete', tooltip: 'Excluir', executar: e => void this.excluir(e) },
   ];
+
+  get dataMinima(): string { return this.usuario?.dataPrimeiraMatricula?.slice(0, 10) ?? ''; }
 
   ngOnChanges(): void { this.cancelar(); this.lista.reiniciar(); }
   ngOnDestroy(): void { this.lista.destruir(); this.operacao?.unsubscribe(); this.validacao.unsubscribe(); }

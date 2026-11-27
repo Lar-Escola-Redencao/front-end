@@ -1,3 +1,4 @@
+import { FotoUsuario } from 'src/app/shared/ui/foto-usuario/foto-usuario';
 import { AnexoDrop } from 'src/app/shared/directives/anexo-drop';
 import { HistoricoContextual } from '@components/historico-contextual/historico-contextual';
 import { EstadoVazio } from 'src/app/components/estado-vazio/estado-vazio';
@@ -59,6 +60,7 @@ import {
 } from 'src/app/shared/models/contato.model';
 import { Alertas } from 'src/app/shared/utils/alerts';
 import {
+  validarCpf,
   TAMANHO_MAXIMO_ARQUIVO_BYTES,
   mapearErrosFormulario,
   obterMensagemErro,
@@ -82,6 +84,7 @@ import { environment } from 'src/environments/environment';
   selector: 'app-usuario',
   standalone: true,
   imports: [
+    FotoUsuario,
     AnexoDrop,
     HistoricoContextual,
     EstadoVazio,
@@ -129,7 +132,6 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
   abaAtiva: 'usuarios' | 'contatos' = 'usuarios';
   todosUsuarios: UsuarioResponseDTO[] = [];
   /** Resultado do GET da listagem (filtrado por ?search= quando há busca); é o que a tabela pagina. */
-  usuariosListagem: UsuarioResponseDTO[] = [];
   usuarios: UsuarioResponseDTO[] = [];
   contatos: ContatoListagemDTO[] = [];
 
@@ -199,6 +201,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
   contatoExpandidoIndex = 0;
   familiarExpandidoIndex = -1;
   usuarioSelecionadoId: number | null = null;
+  removerFotoPerfil = false;
   fotoSelecionada: File | null = null;
 
   // Modal Rápido de Contato
@@ -211,7 +214,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
     telefone: ['', [Validators.required, Validators.minLength(14)]],
     email: ['', Validators.email],
     endereco: [''],
-    cpf: ['', Validators.minLength(14)],
+    cpf: ['', validarCpf],
     localTrabalho: ['']
   });
 
@@ -402,11 +405,13 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
         event.target.value = '';
         return;
       }
+      this.removerFotoPerfil = false;
       this.fotoSelecionada = file;
       delete this.erros['foto'];
 
       const reader = new FileReader();
       reader.onload = e => {
+        if (this.fotoSelecionada !== file) return;
         this.fotoPreviewUrl = reader.result;
         this.atualizarTela();
       };
@@ -439,25 +444,17 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
       this.abaAtiva = aba;
 
       const novaBusca = params.get('search') ?? '';
-      const buscaMudou = novaBusca !== this.busca;
       this.busca = novaBusca;
 
       const novoFiltroUnidade = this.paramNumero(params.get('idUnidade'));
       const novoFiltroTurma = this.paramNumero(params.get('idTurma'));
       const novoFiltroStatus = this.paramStatusMatricula(params.get('statusMatricula'));
-      const filtrosMudaram = novoFiltroUnidade !== this.filtroUnidadeId
-        || novoFiltroTurma !== this.filtroTurmaId
-        || novoFiltroStatus !== this.filtroStatusMatricula;
       this.filtroUnidadeId = novoFiltroUnidade;
       this.filtroTurmaId = novoFiltroTurma;
       this.filtroStatusMatricula = novoFiltroStatus;
 
       if (this.abaAtiva === 'usuarios') {
-        if (buscaMudou || filtrosMudaram || (this.usuariosListagem.length === 0 && !this.carregandoLista)) {
-           this.carregarUsuarios();
-        } else {
-           this.aplicarPaginacao();
-        }
+        this.carregarUsuarios();
       } else {
         this.carregarContatos();
       }
@@ -644,21 +641,22 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
     this.erroLista = false;
     this.atualizarTela();
 
-    const busca = this.busca;
-    this.listaSub = this.usuarioService.listarUsuarios({
-      search: busca || undefined,
+    this.listaSub = this.usuarioService.listarUsuariosPaginados(this.pagina, this.tamanho, this.sort, {
+      search: this.busca || undefined,
       idUnidade: this.filtroUnidadeId,
       idTurma: this.filtroTurmaId,
       statusMatricula: this.filtroStatusMatricula
     }).subscribe({
       next: (resposta) => {
         this.ngZone.run(() => {
-          const ativos = resposta.filter(u => u.status !== 'EXCLUIDO');
-          this.usuariosListagem = ativos;
-          // Sem busca, a resposta é a lista completa — reaproveitada na checagem de CPF e nos vínculos.
-          if (!busca && !this.filtroUnidadeId && !this.filtroTurmaId && !this.filtroStatusMatricula) this.todosUsuarios = ativos;
-          this.aplicarPaginacao();
+          this.usuarios = resposta.content;
+          this.totalElementos = resposta.page.totalElements;
+          this.totalPaginas = resposta.page.totalPages;
           this.carregandoLista = false;
+          const ultimaPagina = Math.max(0, this.totalPaginas - 1);
+          if (this.pagina > ultimaPagina) {
+            this.irParaPagina(ultimaPagina);
+          }
           this.cdr.markForCheck();
           this.atualizarTela();
         });
@@ -682,10 +680,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
     this.atualizarTela();
 
     const busca = this.busca || undefined;
-    const consulta = this.ordenacao?.campo === 'quantidadeVinculos'
-      ? this.contatoService.listarOrdenadosPorVinculos(this.pagina, this.tamanho, this.ordenacao.direcao, busca)
-      : this.contatoService.listarContatos(this.pagina, this.tamanho, this.sort, busca);
-    this.listaSub = consulta.subscribe({
+    this.listaSub = this.contatoService.listarContatos(this.pagina, this.tamanho, this.sort, busca).subscribe({
       next: (resposta) => {
         this.ngZone.run(() => {
           this.contatos = resposta.content;
@@ -704,34 +699,6 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
         });
       }
     });
-  }
-
-  aplicarPaginacao(): void {
-    let lista = [...this.usuariosListagem];
-
-    if (this.ordenacao) {
-      const { campo, direcao } = this.ordenacao;
-      lista.sort((a, b) => {
-        const valor = (usuario: UsuarioResponseDTO): string => {
-          if (campo === 'cpf') return usuario.cpf || usuario.documentoAuxiliar || '';
-          if (campo === 'nomeTurma') return this.formatarUnidadeTurmaTabela(usuario);
-          return String(usuario[campo as keyof UsuarioResponseDTO] ?? '');
-        };
-        const comparacao = valor(a).localeCompare(valor(b), 'pt-BR', { numeric: true, sensitivity: 'base' });
-        return direcao === 'asc' ? comparacao : -comparacao;
-      });
-    }
-
-    this.totalElementos = lista.length;
-    this.totalPaginas = Math.ceil(this.totalElementos / this.tamanho) || 1;
-
-    if (this.pagina >= this.totalPaginas && this.totalPaginas > 0) {
-      this.irParaPagina(this.totalPaginas - 1);
-      return;
-    }
-
-    const inicio = this.pagina * this.tamanho;
-    this.usuarios = lista.slice(inicio, inicio + this.tamanho);
   }
 
   carregarUnidades() {
@@ -799,7 +766,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
       nomeCompleto: ['', [Validators.required, Validators.minLength(3)]],
       dataNascimento: ['', Validators.required],
       usarOutroDocumento: [false],
-      cpf: ['', [Validators.required, Validators.minLength(14)]],
+      cpf: ['', [Validators.required, validarCpf]],
       tipoDocumento: [''], documentoAuxiliar: [''], cadUnico: [''],
       endereco: ['', Validators.required], bairro: ['', Validators.required],
       cep: ['', Validators.pattern(/^\d{5}-?\d{3}$/)],
@@ -916,7 +883,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
         tipoDocCtrl?.setValidators([Validators.required]);
         docAuxCtrl?.setValidators([Validators.required]);
       } else {
-        cpfCtrl?.setValidators([Validators.required, Validators.minLength(14)]);
+        cpfCtrl?.setValidators([Validators.required, validarCpf]);
         tipoDocCtrl?.clearValidators();
         docAuxCtrl?.clearValidators();
       }
@@ -1099,6 +1066,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
     this.arquivosSaude = [];
     this.arquivosSaudeSalvos = [];
     this.arquivosSaudeCarregados = false;
+    this.removerFotoPerfil = false;
     this.fotoSelecionada = null;
     this.fotoPreviewUrl = null;
     this.adicionarContato(true);
@@ -1125,6 +1093,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
     this.isLoading = false;
     this.isCarregandoEdicao = true;
     this.iniciarFormulario();
+    this.removerFotoPerfil = false;
     this.fotoSelecionada = null;
     this.arquivosSaude = [];
     this.arquivosSaudeSalvos = [];
@@ -1180,7 +1149,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
               parentesco: [c.parentesco, Validators.required],
               telefone: [formatarTelefone(c.telefone), [Validators.required, Validators.minLength(14)]],
               email: [c.email, Validators.email],
-              endereco: [c.endereco], cpf: [formatarCpf(c.cpf), Validators.minLength(14)], localTrabalho: [c.localTrabalho || ''],
+              endereco: [c.endereco], cpf: [formatarCpf(c.cpf), validarCpf], localTrabalho: [c.localTrabalho || ''],
               busca: [''], tipoBusca: ['Nome'], buscarExistente: [false], principal: [c.principal]
             });
 
@@ -1326,6 +1295,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
     this.contatosArray.clear();
     this.familiaresArray.clear();
     this.familiarExpandidoIndex = -1;
+    this.removerFotoPerfil = false;
     this.fotoSelecionada = null;
     this.arquivosSaude = [];
     this.arquivosSaudeSalvos = [];
@@ -1421,7 +1391,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
       parentesco: ['', Validators.required],
       telefone: ['', [Validators.required, Validators.minLength(14)]],
       email: ['', Validators.email],
-      endereco: [''], cpf: ['', Validators.minLength(14)], localTrabalho: [''],
+      endereco: [''], cpf: ['', validarCpf], localTrabalho: [''],
       busca: [''], tipoBusca: ['Nome'], buscarExistente: [false], principal: [isPrincipal]
     });
 
@@ -1694,9 +1664,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
     );
     const erroFoto = this.erros['foto'];
     this.erros = {
-      ...mapearErrosFormulario(this.formUsuario, {
-        cpf: { minlength: 'CPF incompleto.', maxlength: 'CPF incompleto.' }
-      }),
+      ...mapearErrosFormulario(this.formUsuario),
       ...errosServidor
     };
     if (erroFoto) this.erros['foto'] = erroFoto;
@@ -1706,6 +1674,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
   mensagemErro(ctrl: AbstractControl | null, rotulo?: string, chaveServidor?: string): string {
     const e = ctrl?.errors;
     if (!e) return '';
+    if (e['cpfInvalido']) return 'Informe um CPF válido.';
     if (e['cpfDuplicadoContato']) return 'Este CPF já foi informado em outro contato.';
     if (e['cpfDuplicado']) return this.mensagemCpfDuplicado;
     if (e['servidor']) return typeof e['servidor'] === 'string' ? e['servidor'] : (chaveServidor && this.erros[chaveServidor]) || 'Valor inválido.';
@@ -1828,7 +1797,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
     }
 
     const cpf = this.formUsuario.get('cpf')?.value?.replace(/\D/g, '') || '';
-    if (cpf.length !== 11) {
+    if (cpf.length !== 11 || this.formUsuario.get('cpf')?.hasError('cpfInvalido')) {
       this.limparErroCpfDuplicado();
       return;
     }
@@ -1877,6 +1846,14 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
     if (this.erros['cpf'] === this.mensagemCpfDuplicado) {
       delete this.erros['cpf'];
     }
+  }
+
+  removerFoto(): void {
+    if (this.isLoading) return;
+    this.fotoSelecionada = null;
+    this.fotoPreviewUrl = null;
+    this.removerFotoPerfil = this.modoEdicao && !!this.usuarioOriginalEdicao?.imagemPerfil;
+    delete this.erros['foto'];
   }
 
   fotoValida(): boolean {
@@ -1941,7 +1918,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
   }
 
   get temAlteracoes(): boolean {
-    if (this.fotoSelecionada || this.arquivosSaude.length > 0) return true;
+    if (this.removerFotoPerfil || this.fotoSelecionada || this.arquivosSaude.length > 0) return true;
     if (!this.modoEdicao) return this.formUsuario.dirty;
     return JSON.stringify(this.formUsuario.getRawValue()) !== JSON.stringify(this.valoresOriginaisDoFormulario);
   }
@@ -2039,7 +2016,7 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
     };
 
     if (this.modoEdicao) {
-      const dtoEdicao: Partial<CadastroUsuarioCompletoDTO> = { ...dto };
+      const dtoEdicao: Partial<CadastroUsuarioCompletoDTO> = { ...dto, removerFotoPerfil: this.removerFotoPerfil };
       if (this.usuarioOriginalEdicao?.fichaSocioeconomica) {
         dtoEdicao.fichaSocioeconomica = preservarCamposNaoEditados(
           this.usuarioOriginalEdicao.fichaSocioeconomica,
@@ -2310,11 +2287,6 @@ export class UsuarioComponent implements OnInit, OnDestroy, ComponentComAlteraco
     this.modalVinculosAberto = false;
     this.contatoSelecionado = null;
     this.vinculosDoContato = [];
-  }
-
-  /** Chamado quando a foto do vínculo falha ao carregar — cai para o placeholder. */
-  onErroImagemVinculo(vinculo: UsuarioVinculadoDTO) {
-    (vinculo as any).imagemPerfil = '';
   }
 
   podeRemoverEsteVinculo(vinculo: UsuarioVinculadoDTO): boolean {

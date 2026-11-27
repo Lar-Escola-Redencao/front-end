@@ -45,4 +45,14 @@ describe('Dicas do acompanhamento', () => {
     (overlay.querySelector('.cdk-overlay-backdrop') as HTMLElement).click(); fixture.detectChanges();
     expect(botao.getAttribute('aria-expanded')).toBe('false');
   });
+  it('descreve o relatório conforme as seções permitidas para o perfil', () => {
+    const fixture = TestBed.createComponent(AjudaAcompanhamento);
+    fixture.componentRef.setInput('relatorio', true);
+    fixture.componentRef.setInput('incluiEntrevistas', true);
+    expect(fixture.componentInstance.texto).toBe('Exporte as frequências, ocorrências e entrevistas do usuário em PDF ou XLSX, no período escolhido. O filtro de matrícula se aplica às frequências e ocorrências. Dias sem registro não contam como faltas.');
+    fixture.componentRef.setInput('incluiEntrevistas', false);
+    expect(fixture.componentInstance.texto).toContain('Exporte as frequências e ocorrências do usuário');
+    expect(fixture.componentInstance.texto).not.toContain('entrevistas');
+  });
+
 });

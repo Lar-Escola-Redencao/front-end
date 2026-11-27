@@ -96,7 +96,13 @@
                 <mat-label>{{ form.get('tipoBusca')?.value }}*</mat-label>
                 <input matInput appFecharAutocompleteFora formControlName="busca" [matAutocomplete]="autoContato" (input)="onBuscaContatoAlterada($any($event.target).value)">
                 <mat-autocomplete #autoContato="matAutocomplete" [displayWith]="exibirNomeContatoBusca" (optionSelected)="selecionarContatoExistente($event.option.value)">
-                  <mat-option *ngIf="mensagemBuscaContato" disabled>{{ mensagemBuscaContato }}</mat-option>
+                  <mat-option *ngIf="mensagemBuscaContato" disabled>
+                    @if (mensagemBuscaContato === 'Carregando...') {
+                      <span class="spinner-carregamento" role="status" aria-label="Carregando contatos"></span>
+                    } @else {
+                      {{ mensagemBuscaContato }}
+                    }
+                  </mat-option>
                   <mat-option *ngFor="let op of opcoesAutocomplete" [value]="op">{{ op.nomeCompleto }} - {{ formatarTelefoneContato(op.telefone) }}</mat-option>
                 </mat-autocomplete>
               </mat-form-field>
@@ -162,9 +168,10 @@
 
         <div class="modal-acoes form-acoes">
           <button type="button" class="btn-cancelar" [disabled]="salvando" (click)="fecharModal()">Cancelar</button>
-          <button type="submit" class="btn-primary" [disabled]="salvando || (modoModal === 'editar' && !temAlteracoes)">
-            <span *ngIf="salvando" class="spinner" aria-hidden="true"></span>
-            <span>{{ salvando ? 'Salvando...' : 'Salvar' }}</span>
+          <button type="submit" class="btn-primary" [disabled]="salvando || (modoModal === 'editar' && !temAlteracoes)" [attr.aria-busy]="salvando">
+
+            <span>{{ salvando ? 'Salvando' : 'Salvar' }}</span>
+            @if (salvando) { <span class="spinner-carregamento" aria-hidden="true"></span> }
           </button>
         </div>
       </form>
@@ -178,7 +185,7 @@
 
     @if (carregandoVisualizacao && !vinculosContato.length) {
       <div class="vinculos-carregando">
-        <span class="spinner azul" aria-hidden="true"></span>
+        <span role="status" aria-label="Carregando" class="spinner-carregamento"></span>
       </div>
     } @else if (!vinculosContato.length) {
       <app-estado-vazio icone="group_off" mensagem="Nenhum usuário vinculado a este contato." [compacto]="true"></app-estado-vazio>

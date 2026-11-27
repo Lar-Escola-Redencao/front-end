@@ -230,7 +230,8 @@ h1 {
   width: 100%;
 }
 
-.avatar-preview-inferior {
+.avatar-preview-inferior,
+:host ::ng-deep app-foto-usuario img.avatar-preview-inferior {
   width: 150px;
   height: 150px;
   border-radius: 50%;
@@ -611,7 +612,8 @@ h1 {
   min-width: 0;
 }
 
-.vinculo-avatar {
+.vinculo-avatar,
+:host ::ng-deep app-foto-usuario img.vinculo-avatar {
   width: 42px;
   height: 42px;
   min-width: 42px;
@@ -1188,7 +1190,8 @@ h1 {
   line-height: 1.5;
 }
 
-.cadastro-form .avatar-preview-inferior {
+.cadastro-form .avatar-preview-inferior,
+:host ::ng-deep .cadastro-form app-foto-usuario img.avatar-preview-inferior {
   width: 128px;
   height: 128px;
   margin: 0;
@@ -1745,7 +1748,7 @@ h1 {
   min-height: 72px;
   margin-top: 5px;
   padding: 12px 14px;
-  border: 1px dashed #dcdcdc;
+  border: 2px dashed #dcdcdc;
   border-radius: 8px;
   background: #fafafa;
   text-align: center;
@@ -1805,7 +1808,7 @@ h1 {
   max-width: 100%;
   overflow: hidden;
   color: #333;
-  font-family: 'Poppins', var(--fonte-texto);
+  font-family: var(--fonte-texto);
   font-size: 0.85rem;
   font-weight: 500;
   line-height: 1.25;
@@ -1815,7 +1818,7 @@ h1 {
 
 .cadastro-form .upload-foto-formatos {
   color: #888;
-  font-family: 'Poppins', var(--fonte-texto);
+  font-family: var(--fonte-texto);
   font-size: 0.75rem;
   line-height: 1.2;
 }

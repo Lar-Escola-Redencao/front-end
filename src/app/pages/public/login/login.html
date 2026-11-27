@@ -20,7 +20,7 @@
           <span class="material-symbols-outlined field-icon" aria-hidden="true">badge</span>
         </div>
         @if (form.controls.identifier.invalid && form.controls.identifier.touched) {
-          <p class="error-text">Informe um e-mail ou CPF válido.</p>
+          <p class="error-text">{{ form.controls.identifier.hasError('cpfInvalido') ? 'Informe um CPF válido.' : 'Informe um e-mail ou CPF válido.' }}</p>
         }
 
         <div class="field">
@@ -56,8 +56,15 @@
           <a routerLink="/recuperar-senha" class="link-button">Esqueci a senha</a>
         </div>
 
-        <button type="submit" class="btn-primary" [disabled]="loading()">
-          {{ loading() ? 'Entrando...' : 'Entrar' }}
+        @if (captchaObrigatorio()) {
+          <app-captcha-pix acao="login" identificador="login" (tokenAlterado)="captchaToken.set($event)" />
+        }
+        @if (tempoEspera() > 0) {
+          <p role="status">Tente novamente em {{ tempoEspera() }} segundos.</p>
+        }
+        <button type="submit" class="btn-primary" [disabled]="loading() || tempoEspera() > 0 || (captchaObrigatorio() && !captchaToken())" [attr.aria-busy]="loading()">
+          {{ loading() ? 'Entrando' : 'Entrar' }}
+          @if (loading()) { <span class="spinner-carregamento" aria-hidden="true"></span> }
         </button>
                 @if (errorMessage()) {
           <p class="error-text" role="alert">{{ errorMessage() }}</p>

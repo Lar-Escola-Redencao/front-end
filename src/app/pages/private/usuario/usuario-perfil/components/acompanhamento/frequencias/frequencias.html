@@ -23,44 +23,39 @@
           }
         </mat-select>
       </mat-form-field>
-      @if (carregandoMatriculas()) { <p class="nota-campo" role="status">Carregando matrículas...</p> }
-      @if (erroMatriculas()) {
-        <div class="erro-campo" role="alert">{{ erroMatriculas() }}
-          <button type="button" class="repetir-matriculas" (click)="carregarMatriculas()">Tentar novamente</button>
-        </div>
-      }
     </div>
     @if (form.controls.periodo.value === 'PERSONALIZADO') {
       <div class="campo">
         <mat-form-field appearance="outline">
           <mat-label>Data inicial</mat-label>
-          <input matInput type="date" formControlName="dataInicio" #inicio aria-describedby="erro-periodo-frequencia">
+          <input matInput type="date" [min]="dataMinima" formControlName="dataInicio" #inicio aria-describedby="erro-periodo-frequencia-inicio">
           <button matSuffix type="button" class="calendario" aria-label="Selecionar data inicial" (click)="inicio.showPicker()">
             <mat-icon aria-hidden="true">calendar_month</mat-icon>
           </button>
         </mat-form-field>
+          @if (erroPeriodo() && form.controls.dataInicio.value < dataMinima) { <p class="erro-campo" id="erro-periodo-frequencia-inicio" role="alert">{{ erroPeriodo() }}</p> }
       </div>
       <div class="campo">
         <mat-form-field appearance="outline">
           <mat-label>Data final</mat-label>
-          <input matInput type="date" formControlName="dataFim" #fim aria-describedby="erro-periodo-frequencia">
+          <input matInput type="date" [min]="dataMinima" formControlName="dataFim" #fim aria-describedby="erro-periodo-frequencia">
           <button matSuffix type="button" class="calendario" aria-label="Selecionar data final" (click)="fim.showPicker()">
             <mat-icon aria-hidden="true">calendar_month</mat-icon>
           </button>
         </mat-form-field>
-        @if (erroPeriodo()) { <p class="erro-campo" id="erro-periodo-frequencia" role="alert">{{ erroPeriodo() }}</p> }
+        @if (erroPeriodo() && !(form.controls.dataInicio.value < dataMinima)) { <p class="erro-campo" id="erro-periodo-frequencia" role="alert">{{ erroPeriodo() }}</p> }
       </div>
       <div class="acoes-filtros"><button type="submit" class="btn-primary">Filtrar</button></div>
     }
   </form>
 
-  <div class="conteudo" [attr.aria-busy]="carregando()">
-    @if (carregando()) {
-      <div class="estado" role="status"><span class="spinner" aria-hidden="true"></span><span class="sr-only">Carregando frequência...</span></div>
-    } @else if (erro()) {
-      <div class="estado" role="alert">
-        <p class="erro">{{ erro() }}</p>
-        <button type="button" class="btn-outline" (click)="aplicar()">Tentar novamente</button>
+  <div class="conteudo" [attr.aria-busy]="carregando() || carregandoMatriculas()">
+    @if (carregando() || carregandoMatriculas()) {
+      <div class="estado" role="status"><span role="status" aria-label="Carregando" class="spinner-carregamento"></span><span class="sr-only">Carregando frequência...</span></div>
+    } @else if (erro() || erroMatriculas()) {
+      <div class="estado estado-erro" role="alert">
+        <p class="erro">Não foi possível carregar os dados. Tente novamente.</p>
+        <button type="button" class="btn-outline" (click)="tentarNovamente()">Tentar novamente</button>
       </div>
     } @else if (resumo(); as dados) {
       <p class="periodo-aplicado">{{ dataLegivel(dados.dataInicio) }} a {{ dataLegivel(dados.dataFim) }} · {{ dados.totalRegistros }} {{ dados.totalRegistros === 1 ? 'registro' : 'registros' }}</p>

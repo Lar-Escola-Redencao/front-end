@@ -1,5 +1,6 @@
+import { ErroCarregamento } from '@components/erro-carregamento/erro-carregamento';
 import { EstadoVazio } from '@components/estado-vazio/estado-vazio';
-import { Component, OnInit, OnDestroy, HostListener, inject, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, Output, EventEmitter, HostListener, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Diretoria } from 'src/app/shared/models/diretoria.model';
 import { PublicContentService } from 'src/app/shared/services/public-content/public-content.service';
@@ -7,17 +8,19 @@ import { PublicContentService } from 'src/app/shared/services/public-content/pub
 @Component({
   selector: 'app-public-diretoria',
   standalone: true,
-  imports: [EstadoVazio, CommonModule],
+  imports: [ErroCarregamento, EstadoVazio, CommonModule],
   templateUrl: './public-diretoria.html',
   styleUrl: './public-diretoria.css'
 })
 export class PublicDiretoriaComponent implements OnInit, OnDestroy {
+  @Output() carregado = new EventEmitter<boolean>();
   private readonly publicContentService = inject(PublicContentService);
   private readonly cdr = inject(ChangeDetectorRef);
   
   diretoresOriginal: Diretoria[] = [];
   diretoresCarousel: Diretoria[] = [];
-  carregando = true;
+  carregando = false;
+  erroCarregamento = false;
 
   currentIndex = 0;
   itemsPerPage = 3;
@@ -28,6 +31,14 @@ export class PublicDiretoriaComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.atualizarItemsPerPage();
+    this.carregar();
+  }
+
+  carregar(): void {
+    if (this.carregando) return;
+    this.stopAutoPlay();
+    this.carregando = true;
+    this.erroCarregamento = false;
     this.publicContentService.getDiretoriaAtiva().subscribe({
       next: (dados) => {
         this.diretoresOriginal = dados;
@@ -41,10 +52,13 @@ export class PublicDiretoriaComponent implements OnInit, OnDestroy {
         this.carregando = false;
         this.cdr.detectChanges();
         this.startAutoPlay();
+        this.carregado.emit(true);
       },
       error: () => {
+        this.erroCarregamento = true;
         this.carregando = false;
         this.cdr.detectChanges();
+        this.carregado.emit(false);
       }
     });
   }
@@ -160,4 +174,5 @@ export class PublicDiretoriaComponent implements OnInit, OnDestroy {
     if (this.itemsPerPage === 1) return index !== this.currentIndex;
     return !this.isCenter(index) && !this.isSide(index);
   }
+
 }

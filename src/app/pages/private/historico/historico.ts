@@ -410,7 +410,7 @@ export class Historico implements OnInit, OnDestroy {
 
   ordenarPor(campo: string): void {
     if (!this.colunas.some(coluna => coluna.chave === campo)) return;
-    this.sort = alternarOrdenacao(this.ordenacao, campo);
+    this.sort = alternarOrdenacao(analisarOrdenacao(this.sort), campo) ?? undefined;
     this.ordenacao = analisarOrdenacao(this.sort);
     this.pagina = 0;
     this.atualizarConsulta();

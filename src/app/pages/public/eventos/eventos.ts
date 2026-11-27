@@ -1,3 +1,4 @@
+import { ErroCarregamento } from '@components/erro-carregamento/erro-carregamento';
 import {
   ChangeDetectorRef,
   Component,
@@ -20,6 +21,7 @@ type FiltroValor = 'todos' | 'gratuito' | 'pago';
   selector: 'app-eventos',
   standalone: true,
   imports: [
+    ErroCarregamento,
     CommonModule,
     RouterLink,
     FormsModule,
@@ -37,6 +39,7 @@ export class Eventos implements OnInit {
   eventosFiltrados: Evento[] = [];
   eventosPaginados: Evento[] = [];
   carregando = false;
+  erroCarregamento = false;
 
   filtroTitulo = '';
   filtroDataInicial = '';
@@ -60,18 +63,27 @@ export class Eventos implements OnInit {
   }
 
   carregarEventos(): void {
+    if (this.carregando) return;
     this.carregando = true;
+    this.erroCarregamento = false;
     this.eventoPublicoService.listarPublicos().subscribe({
       next: (dados) => {
-        this.eventos = [...dados].sort(
-          (eventoAtual, proximoEvento) =>
-            new Date(proximoEvento.dataEvento).getTime() - new Date(eventoAtual.dataEvento).getTime()
-        );
+        const agora = Date.now();
+        this.eventos = [...dados].sort((eventoAtual, proximoEvento) => {
+          const dataAtual = new Date(eventoAtual.dataEvento).getTime();
+          const proximaData = new Date(proximoEvento.dataEvento).getTime();
+          const atualEncerrado = dataAtual < agora;
+          const proximoEncerrado = proximaData < agora;
+          if (atualEncerrado !== proximoEncerrado) return atualEncerrado ? 1 : -1;
+          const ordemData = atualEncerrado ? proximaData - dataAtual : dataAtual - proximaData;
+          return ordemData || proximoEvento.id - eventoAtual.id;
+        });
         this.aplicarFiltros();
         this.carregando = false;
         this.cdr.detectChanges();
       },
       error: () => {
+        this.erroCarregamento = true;
         this.carregando = false;
         this.cdr.detectChanges();
       }
@@ -127,7 +139,7 @@ export class Eventos implements OnInit {
         return false;
       }
 
-      return !this.filtroTipo || evento.tipoEvento === this.filtroTipo;
+      return !this.filtroTipo || evento.categorias.includes(this.filtroTipo);
     });
 
     if (this.paginaAtual >= this.totalPaginas) {
@@ -175,7 +187,7 @@ export class Eventos implements OnInit {
 
   get mensagemVazia(): string {
     return this.possuiFiltrosAplicados
-      ? 'Nenhum evento encontrado para a busca ou os filtros selecionados.'
+      ? 'Nenhum evento encontrado para a busca ou filtros selecionados.'
       : 'Nenhum evento disponível no momento.';
   }
 

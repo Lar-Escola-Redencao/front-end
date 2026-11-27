@@ -1,5 +1,7 @@
+import { FotoUsuario } from 'src/app/shared/ui/foto-usuario/foto-usuario';
 import { HistoricoContextual } from '@components/historico-contextual/historico-contextual';
 import { AbasResponsivas } from 'src/app/shared/directives/abas-responsivas';
+import { CdkTrapFocus } from '@angular/cdk/a11y';
 import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, HostListener, NgZone, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -11,7 +13,6 @@ import { MatSelectModule } from '@angular/material/select';
 import { Subscription, switchMap } from 'rxjs';
 import Swal from 'sweetalert2';
 import { ToastrService } from 'ngx-toastr';
-import { environment } from 'src/environments/environment';
 import { Turma } from 'src/app/shared/models/turma.model';
 import { Unidade } from 'src/app/shared/models/unidade.model';
 import { UsuarioResponseDTO } from 'src/app/shared/models/usuario.model';
@@ -35,9 +36,11 @@ type AbaPerfil = 'acompanhamento' | 'contatos' | 'saude' | 'dados-pessoais' | 'd
   selector: 'app-usuario-perfil',
   standalone: true,
   imports: [
+    FotoUsuario,
     HistoricoContextual,
     AbasResponsivas,
     CommonModule,
+    CdkTrapFocus,
     ReactiveFormsModule,
     MatFormFieldModule,
     MatIconModule,
@@ -77,6 +80,7 @@ export class UsuarioPerfil implements OnInit, OnDestroy, ComponentComAlteracoesN
   carregando = true;
   erro = '';
   abaAtiva: AbaPerfil = 'acompanhamento';
+  modalMaisAcoesAberto = false;
   modalDesligamentoAberto = false;
   modalTransferenciaAberto = false;
   modoSelecaoTurma: 'transferencia' | 'rematricula' = 'transferencia';
@@ -86,7 +90,6 @@ export class UsuarioPerfil implements OnInit, OnDestroy, ComponentComAlteracoesN
   carregandoTurmasTransferencia = false;
   unidadesTransferencia: Unidade[] = [];
   turmasTransferencia: Turma[] = [];
-  fotoPerfilIndisponivel = false;
   private returnUrl: string | null = null;
 
   readonly formDesligamento = this.fb.group({
@@ -144,7 +147,6 @@ export class UsuarioPerfil implements OnInit, OnDestroy, ComponentComAlteracoesN
       next: usuario => {
         this.ngZone.run(() => {
           this.usuario = usuario;
-          this.fotoPerfilIndisponivel = false;
           this.carregando = false;
           this.atualizarTela();
         });
@@ -166,7 +168,7 @@ export class UsuarioPerfil implements OnInit, OnDestroy, ComponentComAlteracoesN
             this.voltarAposAcessoNegado('O usuário informado não foi encontrado.');
             return;
           }
-          this.erro = 'Não foi possível carregar o perfil do usuário.';
+          this.erro = 'Não foi possível carregar os dados. Tente novamente.';
           this.carregando = false;
           this.atualizarTela();
         });
@@ -192,7 +194,6 @@ export class UsuarioPerfil implements OnInit, OnDestroy, ComponentComAlteracoesN
 
   atualizarUsuario(usuario: UsuarioResponseDTO): void {
     this.usuario = usuario;
-    this.fotoPerfilIndisponivel = false;
   }
 
   voltar(): void {
@@ -228,11 +229,6 @@ export class UsuarioPerfil implements OnInit, OnDestroy, ComponentComAlteracoesN
     return valor?.startsWith('/dashboard/') ? valor : null;
   }
 
-  get fotoPerfil(): string | null {
-    return this.fotoPerfilIndisponivel ? null : this.obterUrlArquivo(this.usuario?.imagemPerfil);
-  }
-
-  onErroFotoPerfil(): void { this.fotoPerfilIndisponivel = true; }
 
   get idade(): string {
     const anos = this.calcularIdade(this.usuario?.dataNascimento);
@@ -263,15 +259,28 @@ export class UsuarioPerfil implements OnInit, OnDestroy, ComponentComAlteracoesN
     return this.abas.filter(aba => ['acompanhamento', 'contatos', 'saude'].includes(aba.id));
   }
 
+  abrirMaisAcoes(): void {
+    if (!this.usuario?.id || this.monitor || this.salvandoDesligamento || this.salvandoTransferencia) return;
+    this.modalMaisAcoesAberto = true;
+  }
+
+  fecharMaisAcoes(): void {
+    this.modalMaisAcoesAberto = false;
+  }
+
   abrirModalDesligamento(): void {
     if (!this.usuario?.id || this.desligado || this.monitor) return;
+    this.fecharMaisAcoes();
     this.formDesligamento.reset({ dataDesligamento: this.dataHoje(), justificativa: '' });
     this.modalDesligamentoAberto = true;
   }
 
-  fecharModalDesligamento(): void {
+  async fecharModalDesligamento(): Promise<void> {
     if (this.salvandoDesligamento) return;
+    if (this.formDesligamento.dirty && !(await Alertas.confirmarDescarte())) return;
     this.modalDesligamentoAberto = false;
+    this.abrirMaisAcoes();
+    this.atualizarTela();
   }
 
   async confirmarDesligamento(): Promise<void> {
@@ -322,6 +331,7 @@ export class UsuarioPerfil implements OnInit, OnDestroy, ComponentComAlteracoesN
   abrirModalTransferencia(): void {
     if (!this.usuario?.id || this.desligado || this.monitor) return;
 
+    this.fecharMaisAcoes();
     this.modoSelecaoTurma = 'transferencia';
     this.formTransferencia.reset({
       idUnidade: this.usuario.idUnidade || null,
@@ -340,6 +350,7 @@ export class UsuarioPerfil implements OnInit, OnDestroy, ComponentComAlteracoesN
 
   abrirModalRematricula(): void {
     if (!this.usuario?.id || !this.desligado || this.monitor) return;
+    this.fecharMaisAcoes();
     this.modoSelecaoTurma = 'rematricula';
     this.formTransferencia.reset({ idUnidade: null, idTurmaNova: null, dataTransferencia: this.dataHoje() });
     this.formTransferencia.get('idTurmaNova')?.disable();
@@ -348,9 +359,12 @@ export class UsuarioPerfil implements OnInit, OnDestroy, ComponentComAlteracoesN
     this.carregarUnidadesTransferencia();
   }
 
-  fecharModalTransferencia(): void {
+  async fecharModalTransferencia(): Promise<void> {
     if (this.salvandoTransferencia) return;
+    if (this.formTransferencia.dirty && !(await Alertas.confirmarDescarte())) return;
     this.modalTransferenciaAberto = false;
+    this.abrirMaisAcoes();
+    this.atualizarTela();
   }
 
   onUnidadeTransferenciaChange(idUnidade: number | null): void {
@@ -527,15 +541,20 @@ export class UsuarioPerfil implements OnInit, OnDestroy, ComponentComAlteracoesN
       return;
     }
 
+    this.fecharMaisAcoes();
     const confirmado = await this.confirmarAcaoCritica(
       'Confirmar exclusão?',
-      'Este usuário e seus dados serão excluídos permanentemente.',
+      'Todo o cadastro deste usuário e seus dados serão excluídos permanentemente, incluindo suas matrículas.',
       'excluir-usuario',
       'Excluir usuário',
       'warning',
       '#e04b3a'
     );
-    if (!confirmado) return;
+    if (!confirmado) {
+      this.abrirMaisAcoes();
+      this.atualizarTela();
+      return;
+    }
 
     this.usuarioService.deletar(usuario.id).subscribe({
       next: () => this.ngZone.run(() => {
@@ -685,14 +704,6 @@ export class UsuarioPerfil implements OnInit, OnDestroy, ComponentComAlteracoesN
 
   private erroJaExibidoPeloInterceptor(erro: { status?: number }): boolean {
     return erro.status === 401 || erro.status === 403;
-  }
-
-  private obterUrlArquivo(valor?: string | null): string | null {
-    if (!valor) return null;
-    if (valor.startsWith('http://') || valor.startsWith('https://') || valor.startsWith('data:') || valor.startsWith('/images/')) {
-      return valor;
-    }
-    return `${environment.apiUrl}${valor}`;
   }
 
   private atualizarTela(): void {

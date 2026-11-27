@@ -14,7 +14,7 @@ import { CepService } from 'src/app/shared/services/usuario/cep.service';
 
 const usuario = {
   id: 1, nomeCompleto: 'Maria Silva', dataNascimento: '2015-01-01',
-  cpf: '12345678901', endereco: 'Rua A', bairro: 'Centro', cep: '14801000', escola: 'Escola',
+  cpf: '52998224725', endereco: 'Rua A', bairro: 'Centro', cep: '14801000', escola: 'Escola',
   periodoEscolar: 'MANHA', serieEscolar: 'PRIMEIRO_ANO', idUnidade: 1, idTurma: 2,
   contatos: [{ id: 8, nomeCompleto: 'Ana Silva', telefone: '11999999999', cpf: '', parentesco: 'MAE', principal: true }],
   composicaoFamiliar: [{ id: 12, nomeCompleto: 'Ana Silva', parentescoVinculo: 'MAE', idade: 0, escolaridade: 'MEDIO_COMPLETO', renda: 0, beneficios: 0 }],
@@ -32,7 +32,10 @@ describe('Contrato de edição de usuários', () => {
     service = {
       buscarPorId: vi.fn(() => of(usuario)), listarArquivosSaude: vi.fn(() => of([])),
       atualizar: vi.fn(() => of(usuario)), criar: vi.fn(() => of(usuario)),
-      listarUsuarios: vi.fn(() => of([usuario]))
+      listarUsuarios: vi.fn(() => of([usuario])),
+      listarUsuariosPaginados: vi.fn(() => of({
+        content: [usuario], page: { number: 0, size: 10, totalElements: 1, totalPages: 1 }
+      }))
     };
     cep = { consultar: vi.fn(() => of({ logradouro: 'Praça da Sé', bairro: 'Sé' })) };
     TestBed.configureTestingModule({ providers: [
@@ -362,14 +365,14 @@ describe('Contrato de edição de usuários', () => {
   it('carrega o preview completo em vez de depender da linha da listagem', () => {
     const contatoService = TestBed.inject(ContatoService);
     vi.mocked(contatoService.buscarDetalhe).mockReturnValue(of({
-      id: 8, nomeCompleto: 'Ana Silva', telefone: '11999999999', cpf: '12345678901',
+      id: 8, nomeCompleto: 'Ana Silva', telefone: '11999999999', cpf: '52998224725',
       email: 'ana@example.com', endereco: 'Rua Completa', localTrabalho: 'Escola', quantidadeVinculos: 1,
       vinculos: [{ idUsuario: 1, nomeUsuario: 'Maria Silva', parentesco: 'MAE', principal: true }]
     }));
     component.abrirPreviewContato({ id: 8, nomeCompleto: 'Ana', telefone: '', quantidadeVinculos: 0 });
     expect(contatoService.buscarDetalhe).toHaveBeenCalledWith(8);
     expect(component.contatoPreview).toMatchObject({
-      nomeCompleto: 'Ana Silva', cpf: '123.456.789-01', endereco: 'Rua Completa', localTrabalho: 'Escola'
+      nomeCompleto: 'Ana Silva', cpf: '529.982.247-25', endereco: 'Rua Completa', localTrabalho: 'Escola'
     });
     expect(component.contatoPreview?.vinculos).toHaveLength(1);
     expect(component.carregandoPreviewContato).toBe(false);
@@ -443,7 +446,7 @@ describe('Contrato de edição de usuários', () => {
     component.contatosArray.at(0).patchValue({ nomeCompleto: 'gg', telefone: '(11) 9', cpf: '123' });
     expect(component.mensagemErro(component.contatosArray.at(0).get('nomeCompleto'))).toBe('Mínimo de 3 caracteres.');
     expect(component.mensagemErro(component.contatosArray.at(0).get('telefone'), 'Telefone')).toBe('Telefone incompleto.');
-    expect(component.mensagemErro(component.contatosArray.at(0).get('cpf'), 'CPF')).toBe('CPF incompleto.');
+    expect(component.mensagemErro(component.contatosArray.at(0).get('cpf'), 'CPF')).toBe('Informe um CPF válido.');
   });
 
   it('confirma descarte do vínculo e mantém os dados ao continuar editando', async () => {
@@ -507,17 +510,20 @@ describe('Contrato de edição de usuários', () => {
     expect(service.buscarPorId).not.toHaveBeenCalled();
   });
 
-  it('ordena pelo documento alternativo e pela unidade exibida antes de paginar', () => {
-    component.usuariosListagem = [
-      { ...usuario, id: 1, cpf: '', documentoAuxiliar: 'DOC-20', nomeUnidade: 'Zulu', nomeTurma: 'MANHA' },
-      { ...usuario, id: 2, cpf: '', documentoAuxiliar: 'DOC-3', nomeUnidade: 'Alfa', nomeTurma: 'TARDE' }
-    ];
-    component.ordenacao = { campo: 'cpf', direcao: 'asc' };
-    component.aplicarPaginacao();
+  it('mantém a ordem e os totais da página retornada pela API', () => {
+    component.pagina = 1;
+    component.sort = 'nomeTurma,desc';
+    service.listarUsuariosPaginados.mockReturnValue(of({
+      content: [{ ...usuario, id: 2 }, { ...usuario, id: 1 }],
+      page: { number: 1, size: 10, totalElements: 12, totalPages: 2 }
+    }));
+
+    component.carregarUsuarios();
+
+    expect(service.listarUsuariosPaginados).toHaveBeenCalledWith(1, 10, 'nomeTurma,desc', expect.any(Object));
     expect(component.usuarios.map(u => u.id)).toEqual([2, 1]);
-    component.ordenacao = { campo: 'nomeTurma', direcao: 'desc' };
-    component.aplicarPaginacao();
-    expect(component.usuarios.map(u => u.id)).toEqual([1, 2]);
+    expect(component.totalElementos).toBe(12);
+    expect(component.totalPaginas).toBe(2);
   });
 
   it('envia filtros de unidade, turma e status na listagem de usuários', () => {
@@ -528,7 +534,7 @@ describe('Contrato de edição de usuários', () => {
 
     component.carregarUsuarios();
 
-    expect(service.listarUsuarios).toHaveBeenCalledWith({
+    expect(service.listarUsuariosPaginados).toHaveBeenCalledWith(0, 10, undefined, {
       search: 'maria',
       idUnidade: 1,
       idTurma: 2,

@@ -21,7 +21,7 @@
         (click)="$event.stopPropagation(); alternarMenuUsuario()"
         [attr.aria-expanded]="menuUsuarioAberto"
         aria-label="Menu do usuário">
-        {{ iniciaisUsuario() || '...' }}
+        {{ iniciaisUsuario() }}
       </button>
 
       <div class="menu-usuario" *ngIf="menuUsuarioAberto" (click)="$event.stopPropagation()">
