@@ -9,7 +9,7 @@ export interface Diretoria {
 export interface CriarDiretoriaDTO {
   nome: string;
   cargo: string;
-  foto: File;
+  foto?: File | null;
 }
 
 export interface AtualizarDiretoriaDTO {

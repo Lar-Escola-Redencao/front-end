@@ -27,7 +27,9 @@ export class DiretoriaService {
     const formData = new FormData();
     formData.append('nome', dto.nome);
     formData.append('cargo', dto.cargo);
-    formData.append('foto', dto.foto);
+    if (dto.foto) {
+      formData.append('foto', dto.foto);
+    }
     return this.http.post<Diretoria>(`${this.apiUrl}/criar`, formData);
   }
 
