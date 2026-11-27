@@ -57,8 +57,11 @@ describe('CaptchaPix — ciclo de verificação', () => {
     opcoes[callback]();
     fixture.detectChanges();
     expect(tokens.at(-1)).toBe('');
-    expect(fixture.nativeElement.querySelector('button').textContent).toContain('Tente novamente.');
+    const botao = fixture.nativeElement.querySelector('button');
+    expect(botao.textContent.trim()).toBe('Tente novamente.');
     expect(fixture.nativeElement.querySelector('p').classList.contains('somente-leitor')).toBe(false);
+    botao.click();
+    expect(reset).toHaveBeenCalledWith('widget');
   });
 
   it('usa largura flexível e destaca a solicitação de nova verificação em vermelho', () => {
